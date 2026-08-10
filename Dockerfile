@@ -24,8 +24,14 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . /var/www/html
 
+# Copy .env.example to .env if .env doesn't exist
+RUN cp .env.example .env
+
 # Run composer install to generate vendor folder
 RUN composer install --no-dev --optimize-autoloader
+
+# Generate App Key
+RUN php artisan key:generate
 
 # Set Apache document root to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
