@@ -24,8 +24,10 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . /var/www/html
 
-# Copy .env.example to .env if .env doesn't exist
-RUN cp .env.example .env
+# Setup .env file
+RUN cp .env.example .env \
+    && sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/g' .env \
+    && sed -i 's/# DB_DATABASE=/DB_DATABASE=/g' .env
 
 # Run composer install to generate vendor folder
 RUN composer install --no-dev --optimize-autoloader
