@@ -33,19 +33,13 @@ RUN composer install --no-dev --optimize-autoloader
 # Generate App Key
 RUN php artisan key:generate
 
-# Create SQLite database file
-RUN mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite
-
-# Run database migrations (optional if tables are needed)
-RUN php artisan migrate --force
-
 # Set Apache document root to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/conf-available/*.conf
 
-# Set permissions for storage, database and bootstrap cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/database /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/database /var/www/html/bootstrap/cache
+# Set permissions for storage and bootstrap cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
