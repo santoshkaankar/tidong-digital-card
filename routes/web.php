@@ -11,14 +11,24 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 
 // ==========================================
-// SETUP LIVE DATABASE & PINCODE SEEDER ROUTE
+// SETUP LIVE DATABASE & AUTOMATIC FILE CREATION
 // ==========================================
 Route::get('/setup-live-database', function () {
     try {
-        // 1. Run Migrations
+        // 1. Ensure /var/data directory exists and sqlite file is created
+        $dbPath = '/var/data/database.sqlite';
+        $dir = dirname($dbPath);
+        if (!file_exists($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        if (!file_exists($dbPath)) {
+            touch($dbPath);
+        }
+
+        // 2. Run Migrations
         Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         
-        // 2. Create Admin User if not exists
+        // 3. Create Admin User if not exists
         $email = 'santoshkaankar@gmail.com';
         $user = User::where('email', $email)->first();
         if (!$user) {
@@ -30,10 +40,10 @@ Route::get('/setup-live-database', function () {
             ]);
         }
 
-        // 3. Seed Pincodes from Public CSV
+        // 4. Seed Pincodes from Public CSV
         app(Database\Seeders\PincodeSeeder::class)->run();
 
-        return "<h1>Success! Database migrated, Admin ready, and Pincodes Seeded!</h1><p><a href='/login'>Go to Login</a></p>";
+        return "<h1>Success! Database file created, migrated, Admin ready, and Pincodes Seeded!</h1><p><a href='/login'>Go to Login</a></p>";
     } catch (\Exception $e) {
         return "<h1>Error:</h1><p>" . $e->getMessage() . "</p>";
     }
