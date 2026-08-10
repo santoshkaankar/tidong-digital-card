@@ -6,4 +6,8 @@ services:
     startCommand: "php artisan serve --host=0.0.0.0 --port=$PORT"
     envVars:
       - key: PHP_VERSION
+<<<<<<< HEAD
         value: 8.2
+=======
+        value: 8.2
+>>>>>>> 0ca7211bc72aa09f8c49ebe9eeb2a120478e7f16
