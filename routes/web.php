@@ -11,23 +11,32 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 
 // ==========================================
-// TEMPORARY ADMIN CREATION ROUTE (FREE PLAN FIX)
+// SETUP LIVE DATABASE & PINCODE SEEDER ROUTE
 // ==========================================
-Route::get('/create-admin-now', function () {
-    $email = 'santoshkaankar@gmail.com';
-    $user = User::where('email', $email)->first();
+Route::get('/setup-live-database', function () {
+    try {
+        // 1. Run Migrations
+        Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        
+        // 2. Create Admin User if not exists
+        $email = 'santoshkaankar@gmail.com';
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            User::create([
+                'name' => 'Admin',
+                'email' => $email,
+                'role' => 'admin',
+                'password' => Hash::make('password')
+            ]);
+        }
 
-    if (!$user) {
-        User::create([
-            'name' => 'Admin',
-            'email' => $email,
-            'role' => 'admin',
-            'password' => Hash::make('password')
-        ]);
-        return "<h1>Admin user successfully created!</h1><p>Email: <b>santoshkaankar@gmail.com</b><br>Password: <b>password</b></p><a href='/login'>Go to Login</a>";
+        // 3. Seed Pincodes from Public CSV
+        app(Database\Seeders\PincodeSeeder::class)->run();
+
+        return "<h1>Success! Database migrated, Admin ready, and Pincodes Seeded!</h1><p><a href='/login'>Go to Login</a></p>";
+    } catch (\Exception $e) {
+        return "<h1>Error:</h1><p>" . $e->getMessage() . "</p>";
     }
-
-    return "<h1>Admin user already exists!</h1><a href='/login'>Go to Login</a>";
 });
 
 // 1. Welcome Page
