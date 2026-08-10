@@ -1,6 +1,6 @@
 FROM php:8.3-apache
 
-# Install system dependencies
+# Install system dependencies & Node.js (for Vite assets building)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -10,7 +10,9 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     sqlite3 \
-    libsqlite3-dev
+    libsqlite3-dev \
+    nodejs \
+    npm
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -30,8 +32,11 @@ COPY . .
 # Copy environment file
 RUN cp .env.example .env
 
-# Install dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
+
+# Install Node dependencies and build Vite frontend assets
+RUN npm install && npm run build
 
 # Create SQLite database and set permissions
 RUN mkdir -p database && touch database/database.sqlite
