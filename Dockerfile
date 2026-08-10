@@ -33,8 +33,9 @@ RUN composer install --no-dev --optimize-autoloader
 # Generate App Key
 RUN php artisan key:generate
 
-# Create SQLite database file and folder
+# Create SQLite database file and run migrations
 RUN mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite
+RUN php artisan migrate --force
 
 # Set Apache document root to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
