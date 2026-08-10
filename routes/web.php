@@ -1,12 +1,34 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use App\Http\Controllers\VisitingCardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
+
+// ==========================================
+// TEMPORARY ADMIN CREATION ROUTE (FREE PLAN FIX)
+// ==========================================
+Route::get('/create-admin-now', function () {
+    $email = 'santoshkaankar@gmail.com';
+    $user = User::where('email', $email)->first();
+
+    if (!$user) {
+        User::create([
+            'name' => 'Admin',
+            'email' => $email,
+            'role' => 'admin',
+            'password' => Hash::make('password')
+        ]);
+        return "<h1>Admin user successfully created!</h1><p>Email: <b>santoshkaankar@gmail.com</b><br>Password: <b>password</b></p><a href='/login'>Go to Login</a>";
+    }
+
+    return "<h1>Admin user already exists!</h1><a href='/login'>Go to Login</a>";
+});
 
 // 1. Welcome Page
 Route::get('/', function () {
