@@ -4,91 +4,68 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Pincode; // Agar aapka model Pincode hai, ya direct DB use kar sakte hain
 
 class PincodeSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        ini_set('memory_limit', '512M');
-        set_time_limit(0);
-
-        $path = public__path('app/all_india_pincode_directory_2025.csv');
-
-        if (!file_exists($path) || !is_readable($path)) {
-            $this->command->error("CSV file not found at: {$path}");
+        $path = public_path('all_india_pincode_directory_2025.csv');
+        
+        if (!file_exists($path)) {
             return;
         }
 
-        $header = null;
-        $rows = [];
+        $file = fopen($path, 'r');
+        $header = fgetcsv($file); // Skip header
+
         $batchSize = 1000;
-        $rowCount = 0;
-        
-        if (($handle = fopen($path, 'r')) !== false) {
-            $this->command->info('Reading CSV and seeding data...');
+        $batch = [];
+
+        // Purana data clear karein agar dobara run karein
+        DB::table('pincodes')->truncate();
+
+        while (($row = fgetcsv($file)) !== false) {
+            // CSV columns mapping based on your file:
+            // 0: circlename, 1: regionname, 2: divisionname, 3: officename, 4: pincode, 
+            // 5: officetype, 6: delivery, 7: district, 8: statename, 9: latitude, 10: longitude
             
-            while (($data = fgetcsv($handle, 0, ',')) !== false) {
-                if (!$header) {
-                    $header = $data;
-                } else {
-                    if (count($header) == count($data)) {
-                        $row = array_combine($header, $data);
+            $lat = is_numeric($row[9]) ? (float)$row[9] : null;
+            $long = is_numeric($row[10]) ? (float)$row[10] : null;
 
-                        $lat = $row['latitude'] ?? null;
-                        $lon = $row['longitude'] ?? null;
-
-                        $cleanLat = null;
-                        $cleanLon = null;
-
-                        if (!empty($lat) && preg_match('/-?\d+(\.\d+)?/', $lat, $matchLat)) {
-                            $val = (float)$matchLat[0];
-                            if ($val >= -90 && $val <= 90) {
-                                $cleanLat = round($val, 6);
-                            }
-                        }
-
-                        if (!empty($lon) && preg_match('/-?\d+(\.\d+)?/', $lon, $matchLon)) {
-                            $val = (float)$matchLon[0];
-                            if ($val >= -180 && $val <= 180) {
-                                $cleanLon = round($val, 6);
-                            }
-                        }
-
-                        $rows[] = [
-                            'circle_name'     => $row['circlename'] ?? null,
-                            'region_name'     => $row['regionname'] ?? null,
-                            'division_name'   => $row['divisionname'] ?? null,
-                            'office_name'     => $row['officename'] ?? null,
-                            'pincode'         => $row['pincode'] ?? null,
-                            'office_type'     => $row['officetype'] ?? null,
-                            'delivery_status' => $row['delivery'] ?? null,
-                            'district'        => $row['district'] ?? null,
-                            'state_name'      => $row['statename'] ?? null,
-                            'latitude'        => $cleanLat,
-                            'longitude'       => $cleanLon,
-                            'created_at'      => now(),
-                            'updated_at'      => now(),
-                        ];
-
-                        $rowCount++;
-
-                        if (count($rows) === $batchSize) {
-                            DB::table('pincodes')->insert($rows);
-                            $rows = [];
-                        }
-                    }
-                }
-            }
-            fclose($handle);
-
-            if (!empty($rows)) {
-                DB::table('pincodes')->insert($rows);
+            // Double check swap safety
+            if ($lat !== null && $long !== null && $lat >= 65 && $lat <= 98 && $long >= 6 && $long <= 40) {
+                $temp = $lat;
+                $lat = $long;
+                $long = $temp;
             }
 
-            $this->command->info("Total Processed & Inserted Rows: {$rowCount}");
-            $this->command->info('All 1.6 Lakh+ Pincodes seeded successfully!');
-        } else {
-            $this->command->error('Could not open CSV file.');
+            $batch[] = [
+                'circlename'   => $row[0] ?? null,
+                'regionname'   => $row[1] ?? null,
+                'divisionname' => $row[2] ?? null,
+                'officename'   => $row[3] ?? null,
+                'pincode'      => $row[4] ?? null,
+                'officetype'   => $row[5] ?? null,
+                'delivery'     => $row[6] ?? null,
+                'district'     => $row[7] ?? null,
+                'statename'    => $row[8] ?? null,
+                'latitude'     => $lat,
+                'longitude'    => $long,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ];
+
+            if (count($batch) >= $batchSize) {
+                DB::table('pincodes')->insert($batch);
+                $batch = [];
+            }
         }
+
+        if (!empty($batch)) {
+            DB::table('pincodes')->insert($batch);
+        }
+
+        fclose($file);
     }
 }
