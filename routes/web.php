@@ -9,7 +9,7 @@ Route::get('/setup-live-database', function () {
         }
 
         Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        
+
         $email = 'santoshkaankar@gmail.com';
         if (!App\Models\User::where('email', $email)->exists()) {
             App\Models\User::create([
