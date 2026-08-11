@@ -11,6 +11,20 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 
 // ==========================================
+// TEMPORARY ADMIN CREATION ROUTE FOR RENDER
+// ==========================================
+Route::get('/create-admin-user', function () {
+    $user = User::firstOrCreate(
+        ['email' => 'admin@tidong.in'], // Apna login email yahan change kar sakte hain
+        [
+            'name' => 'Santosh Kumar Sharma',
+            'password' => Hash::make('password123'), // Apna password yahan rakh lein
+        ]
+    );
+    return "<h1>Admin User Created Successfully!</h1><p>Email: <b>admin@tidong.in</b></p><p>Password: <b>password123</b></p><p><a href='/login'>Click here to go to Login</a></p>";
+});
+
+// ==========================================
 // TEMPORARY STABLE ROUTE FOR LIVE RUNNING
 // ==========================================
 Route::get('/setup-live-database', function () {
