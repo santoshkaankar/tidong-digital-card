@@ -1,6 +1,6 @@
 FROM php:8.3-apache
 
-# Install system dependencies & PHP extensions
+# Install system dependencies & Node.js (needed for Vite build)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip
+    unzip \
+    nodejs \
+    npm
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -22,14 +24,17 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
-# Install dependencies via composer safely
+# Install PHP dependencies via composer safely
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+# Install NPM dependencies and build Vite assets (Fixes manifest.json error)
+RUN npm install && npm run build
 
 # Set permissions for storage and bootstrap cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Enable Apache Rewrite Module for Laravel routes (/login, /dashboard etc.)
+# Enable Apache Rewrite Module for Laravel routes
 RUN a2enmod rewrite
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
