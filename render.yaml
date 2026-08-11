@@ -2,8 +2,17 @@ services:
   - type: web
     name: tidong-digital-card
     env: php
-    buildCommand: "composer install --no-dev --optimize-autoloader"
-    startCommand: "php artisan serve --host=0.0.0.0 --port=$PORT"
+    plan: free
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+    staticPublishPath: public
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.php
     envVars:
-      - key: PHP_VERSION
+      - key: APP_PHP_VERSION
         value: 8.2
