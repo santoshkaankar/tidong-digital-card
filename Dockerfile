@@ -22,8 +22,8 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
-# Install dependencies via composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install dependencies via composer safely bypassing platform requirements
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # Set correct permissions for storage and cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
