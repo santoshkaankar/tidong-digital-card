@@ -7,8 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #333; }
-        .hero-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 100px 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #333; overflow-x: hidden; }
+        .hero-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 70px 0; }
         
         /* Enhanced Feature Cards with Modern Shadows and Borders */
         .feature-card { 
@@ -62,7 +62,7 @@
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center gap-3">
                     <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#features">Features</a></li>
-                    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#howitworks">How It Works</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#ads-section">Sponsored Ads</a></li>
                     
                     @auth
                         <!-- Dashboard Link Based on Role (Fixed Routes) -->
@@ -131,7 +131,7 @@
                     <p class="lead text-muted mb-5">Create your stunning personal visiting card or business profile. Share it instantly with anyone—allowing them to chat on WhatsApp, call, or browse your product catalogs with a single tap.</p>
                     <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start">
                         @auth
-                            <a href="{{ $dashboardRoute ?? route('vendor.dashboard') }}" class="btn btn-custom-primary btn-lg shadow">Go to Dashboard</a>
+                            <a href="{{ $dashboardRoute ?? route('customer.dashboard') }}" class="btn btn-custom-primary btn-lg shadow">Go to Dashboard</a>
                         @else
                             <a href="{{ route('register') }}" class="btn btn-custom-primary btn-lg shadow">Create Your Card Now</a>
                         @endauth
@@ -153,9 +153,48 @@
         </div>
     </section>
 
+    <!-- Main Ad Platform Section: Top Continuous Sliding Ad Carousel (Sequence Maintained) -->
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center mb-4">
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold"><i class="fas fa-bullhorn me-1"></i> Live Platform Advertisements</span>
+                </div>
+                <div id="homeAdCarousel" class="carousel slide shadow-sm rounded-4 overflow-hidden" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active text-white p-5" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); min-height: 180px;">
+                            <span class="badge bg-warning text-dark mb-2">Featured Slide Ad 1</span>
+                            <h3 class="fw-bold">Super Saver Restaurant Combo Deals!</h3>
+                            <p class="mb-3 text-white-50">Order food from verified local vendors with exciting seasonal discounts and fast home drop.</p>
+                            <a href="#" class="btn btn-light btn-sm fw-bold text-indigo px-4">Explore Stores</a>
+                        </div>
+                        <div class="carousel-item text-white p-5" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); min-height: 180px;">
+                            <span class="badge bg-warning text-dark mb-2">Featured Slide Ad 2</span>
+                            <h3 class="fw-bold">Get Your Business Digital Menu Online</h3>
+                            <p class="mb-3 text-white-50">Expand your reach instantly to thousands of local buyers in your city with custom catalog codes.</p>
+                            <a href="#" class="btn btn-light btn-sm fw-bold text-success px-4">Register Business</a>
+                        </div>
+                        <div class="carousel-item text-white p-5" style="background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); min-height: 180px;">
+                            <span class="badge bg-dark text-white mb-2">Featured Slide Ad 3</span>
+                            <h3 class="fw-bold">Fastest Local Delivery Service</h3>
+                            <p class="mb-3 text-white-50">Grocery, dairy, electronics, and clothing items delivered securely within 30 minutes.</p>
+                            <a href="#" class="btn btn-light btn-sm fw-bold text-dark px-4">Order Now</a>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#homeAdCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#homeAdCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Features Section -->
     <section id="features" class="py-5 bg-white">
-        <div class="container py-5">
+        <div class="container py-4">
             <div class="text-center mb-5">
                 <h2 class="fw-bold text-dark">Why Everyone Loves Tidong® Platform</h2>
                 <p class="text-muted">Designed for seamless networking, personal branding, and multi-business management</p>
@@ -186,6 +225,42 @@
         </div>
     </section>
 
+    <!-- Fixed Advertising Boards Section (Changes Order dynamically on every reload for ad rotation) -->
+    <section id="ads-section" class="py-5 bg-light border-top">
+        <div class="container py-4">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-dark"><i class="fas fa-ad text-warning me-2"></i> Sponsored Ads & Partner Offers</h3>
+                <p class="text-muted small">Explore featured advertisements from our trusted business partners.</p>
+            </div>
+            <div class="row g-4" id="homeRandomAdContainer">
+                <div class="col-md-4 ad-box">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-white h-100" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);">
+                        <span class="badge bg-warning text-dark align-self-start mb-2">Sponsored Ad</span>
+                        <h5 class="fw-bold">Promote Your Business Here</h5>
+                        <p class="small text-white-50 mb-3">Reach thousands of daily active visitors and boost your brand visibility instantly.</p>
+                        <a href="#" class="btn btn-light btn-sm fw-bold w-100 text-indigo mt-auto">Book Ad Space</a>
+                    </div>
+                </div>
+                <div class="col-md-4 ad-box">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-white h-100" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                        <span class="badge bg-warning text-dark align-self-start mb-2">Special Offer</span>
+                        <h5 class="fw-bold">Special Restaurant Discount</h5>
+                        <p class="small text-white-50 mb-3">Get flat 20% off on your first online digital menu food order today at participating outlets.</p>
+                        <a href="#" class="btn btn-light btn-sm fw-bold w-100 text-primary mt-auto">Order Now</a>
+                    </div>
+                </div>
+                <div class="col-md-4 ad-box">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-white h-100" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
+                        <span class="badge bg-warning text-dark align-self-start mb-2">Partner Ad</span>
+                        <h5 class="fw-bold">Local Grocery Delivery</h5>
+                        <p class="small text-white-50 mb-3">Fresh items and daily essentials delivered directly to your doorstep within 30 minutes.</p>
+                        <a href="#" class="btn btn-light btn-sm fw-bold w-100 text-success mt-auto">Explore Store</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer class="bg-dark text-white py-4 text-center">
         <div class="container">
@@ -201,6 +276,36 @@
         </div>
     </footer>
 
+    <!-- Bootstrap JS & Carousel Persistence / Ad Randomizer Script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Persistent Carousel Slide Index Across Page Reloads for Home
+            var homeCarouselEl = document.getElementById('homeAdCarousel');
+            if(homeCarouselEl) {
+                var homeCarousel = new bootstrap.Carousel(homeCarouselEl, {
+                    interval: 4000,
+                    ride: 'carousel'
+                });
+
+                let savedSlide = localStorage.getItem('homeActiveAdSlideIndex');
+                if (savedSlide !== null) {
+                    homeCarousel.to(parseInt(savedSlide));
+                }
+
+                homeCarouselEl.addEventListener('slid.bs.carousel', function (e) {
+                    localStorage.setItem('homeActiveAdSlideIndex', e.to);
+                });
+            }
+
+            // Randomize/Shuffle Fixed Ads on every page load
+            let container = document.getElementById('homeRandomAdContainer');
+            if(container) {
+                let boxes = Array.from(container.getElementsByClassName('ad-box'));
+                boxes.sort(() => Math.random() - 0.5);
+                boxes.forEach(box => container.appendChild(box));
+            }
+        });
+    </script>
 </body>
 </html>
