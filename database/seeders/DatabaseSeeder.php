@@ -14,12 +14,14 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-    {
-        // User::factory(10)->create();
-$this->call(PincodeSeeder::class);
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-    }
+{
+    \App\Models\User::firstOrCreate(
+        ['email' => 'santoshkaankar@gmail.com'], // Yahan apna email likhein
+        [
+            'name' => 'Santosh Sharma', // Yahan apna naam likhein
+            'username' => 'santosh',            // Aapka alag se username (agar column hai toh)
+            'password' => bcrypt('password'), // Yahan apna password likhein
+        ]
+    );
+}
 }
