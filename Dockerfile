@@ -25,12 +25,7 @@ COPY . /var/www/html
 # Install dependencies via composer safely
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
-# Cache configuration, routes, and views so all pages open properly
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
-# Set correct permissions for storage and cache
+# Set correct permissions for storage and cache so 500 error doesn't occur
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
