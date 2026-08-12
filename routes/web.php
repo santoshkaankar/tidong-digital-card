@@ -10,6 +10,23 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 
+
+
+Route::get('/debug-pincodes', function () {
+    try {
+        $count = \Illuminate\Support\Facades\DB::table('pincodes')->count();
+        $sample = \Illuminate\Support\Facades\DB::table('pincodes')->limit(5)->get();
+        return response()->json([
+            'total_pincodes_in_db' => $count,
+            'sample_data' => $sample
+        ]);
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+
+
+
 // ==========================================
 // SECURE & LOCKED DATABASE INITIALIZATION
 // ==========================================
