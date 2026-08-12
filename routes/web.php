@@ -14,11 +14,21 @@ use App\Http\Controllers\UpdateController;
 // MAKE REGISTERED USER ADMIN ROUTE
 // ==========================================
 Route::get('/check-database', function () {
+    // Check if admin already exists, if not create one automatically
+    $admin = User::firstOrCreate(
+        ['email' => 'admin@tidong.in'],
+        [
+            'name' => 'Santosh Kumar Sharma',
+            'password' => Hash::make('password123'),
+            'role' => 'admin'
+        ]
+    );
+
     $users = User::all();
-    if ($users->isEmpty()) {
-        return "Database khali hai, koi user nahi mila!";
-    }
-    return response()->json($users);
+    return response()->json([
+        'message' => 'Default admin ensured / Database users list:',
+        'users' => $users
+    ]);
 });
 
 // ==========================================
