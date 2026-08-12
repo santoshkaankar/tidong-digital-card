@@ -191,3 +191,14 @@ Route::middleware(['auth'])->group(function () {
     })->name('customer.dashboard');
 
 });
+
+
+
+
+Route::get('/seed-pincodes-now', function () {
+    // Agar aapke paas seeder file hai, toh aap use yahan direct chala sakte hain
+    // Ya fir agar data CSV/Array mein hai toh insert kar sakte hain.
+    // Sabse behtareen tareeka hai ki Artisan command run kar dein:
+    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'PincodeSeeder', '--force' => true]);
+    return "Pincodes Seeded Successfully on Live Server! Ab aap check kar sakte hain.";
+});
