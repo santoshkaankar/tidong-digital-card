@@ -193,12 +193,40 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-
-
+// ==========================================
+// DIRECT EMERGENCY PINCODE INJECTION ROUTE
+// ==========================================
 Route::get('/seed-pincodes-now', function () {
-    // Agar aapke paas seeder file hai, toh aap use yahan direct chala sakte hain
-    // Ya fir agar data CSV/Array mein hai toh insert kar sakte hain.
-    // Sabse behtareen tareeka hai ki Artisan command run kar dein:
-    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'PincodeSeeder', '--force' => true]);
-    return "Pincodes Seeded Successfully on Live Server! Ab aap check kar sakte hain.";
+    try {
+        // Pehle seeder try karega
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'PincodeSeeder', '--force' => true]);
+        
+        // Agar table khali rahi toh direct emergency test data daal dega
+        $count = \Illuminate\Support\Facades\DB::table('pincodes')->count();
+        if($count == 0) {
+            \Illuminate\Support\Facades\DB::table('pincodes')->insert([
+                [
+                    'pincode' => '282001',
+                    'office_name' => 'Agra Head Post Office',
+                    'district' => 'Agra',
+                    'state_name' => 'Uttar Pradesh',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ],
+                [
+                    'pincode' => '324001',
+                    'office_name' => 'Kota Head Post Office',
+                    'district' => 'Kota',
+                    'state_name' => 'Rajasthan',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]
+            ]);
+            return "Seeder failed, but Emergency Pincodes (Agra & Kota) successfully injected!";
+        }
+        
+        return "Pincodes Seeded Successfully via Seeder! Total records: " . $count;
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
 });
