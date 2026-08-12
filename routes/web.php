@@ -13,14 +13,12 @@ use App\Http\Controllers\UpdateController;
 // ==========================================
 // MAKE REGISTERED USER ADMIN ROUTE
 // ==========================================
-Route::get('/make-admin-now', function () {
-    $user = auth()->user(); // Jo user abhi login hai
-    if ($user) {
-        $user->role = 'admin';
-        $user->save();
-        return "<h1>Success!</h1><p><b>{$user->email}</b> is now an Admin.</p><p><a href='/admin/dashboard'>Go to Admin Dashboard</a></p>";
+Route::get('/check-database', function () {
+    $users = User::all();
+    if ($users->isEmpty()) {
+        return "Database khali hai, koi user nahi mila!";
     }
-    return "<h1>Please Login First!</h1><p>Pehle aap /login par jakar login karein, phir is link ko kholein.</p>";
+    return response()->json($users);
 });
 
 // ==========================================
