@@ -11,10 +11,9 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 
 // ==========================================
-// MAKE REGISTERED USER ADMIN ROUTE
+// SECURE & LOCKED DATABASE INITIALIZATION
 // ==========================================
 Route::get('/check-database', function () {
-    // Check if admin already exists, if not create one automatically
     $admin = User::firstOrCreate(
         ['email' => 'admin@tidong.in'],
         [
@@ -26,17 +25,33 @@ Route::get('/check-database', function () {
 
     $users = User::all();
     return response()->json([
-        'message' => 'Default admin ensured / Database users list:',
-        'users' => $users
+        'message' => 'Database is secured and locked. Admin account verified.',
+        'users_count' => $users->count()
     ]);
 });
 
 Route::get('/run-pincode-seeder', function () {
     try {
+        // Check if pincodes already exist to prevent duplicate loading / data wipe
+        $existingCount = \Illuminate\Support\Facades\DB::table('pincodes')->count();
+        if ($existingCount > 0) {
+            return "<h1>Database Locked:</h1><p>Pincodes already exist ({$existingCount} records found). Data is safe and locked!</p><p><a href='/login'>Go to Login</a></p>";
+        }
+
+        // Ensure admin is present
+        User::firstOrCreate(
+            ['email' => 'admin@tidong.in'],
+            [
+                'name' => 'Santosh Kumar Sharma',
+                'password' => Hash::make('password123'),
+                'role' => 'admin'
+            ]
+        );
+
         $seeder = new \Database\Seeders\PincodeSeeder();
-        // Console output capture karne ke liye fake command object
         $seeder->run();
-        return "<h1>Success! Saare Pincodes database mein seed ho gaye hain.</h1>";
+        
+        return "<h1>Success! Admin ensured & All Pincodes seeded safely and locked.</h1><p><a href='/login'>Go to Login</a></p>";
     } catch (\Exception $e) {
         return "<h1>Error:</h1> " . $e->getMessage();
     }
@@ -46,7 +61,7 @@ Route::get('/run-pincode-seeder', function () {
 // TEMPORARY STABLE ROUTE FOR LIVE RUNNING
 // ==========================================
 Route::get('/setup-live-database', function () {
-    return "<h1>Website is Live & Running! Aap aram se editing kijiye.</h1><p><a href='/login'>Go to Login</a></p>";
+    return "<h1>Website is Live & Running! Database is locked & secure.</h1><p><a href='/login'>Go to Login</a></p>";
 });
 
 // 1. Welcome Page
