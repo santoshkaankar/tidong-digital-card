@@ -27,8 +27,14 @@ COPY . /var/www/html
 # Install PHP dependencies via composer safely
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
-# Install NPM dependencies and build Vite assets (Fixes manifest.json error)
+# Install NPM dependencies and build Vite assets
 RUN npm install && npm run build
+
+# Create SQLite database directory & file with absolute path, then run migrations
+RUN mkdir -p /var/www/html/database && \
+    touch /var/www/html/database/database.sqlite && \
+    chown -R www-data:www-data /var/www/html/database && \
+    chmod -R 775 /var/www/html/database
 
 # Set permissions for storage and bootstrap cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
