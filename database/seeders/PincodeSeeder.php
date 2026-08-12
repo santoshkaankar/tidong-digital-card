@@ -9,13 +9,16 @@ class PincodeSeeder extends Seeder
 {
     public function run(): void
     {
+        // Increase limits for processing large 1.6 lakh+ rows dataset
         ini_set('memory_limit', '512M');
         set_time_limit(0);
 
         $path = storage_path('app/all_india_pincode_directory_2025.csv');
 
         if (!file_exists($path) || !is_readable($path)) {
-            $this->command->error("CSV file not found at: {$path}");
+            if ($this->command) {
+                $this->command->error("CSV file not found at: {$path}");
+            }
             return;
         }
 
@@ -25,7 +28,9 @@ class PincodeSeeder extends Seeder
         $rowCount = 0;
         
         if (($handle = fopen($path, 'r')) !== false) {
-            $this->command->info('Reading CSV and seeding data...');
+            if ($this->command) {
+                $this->command->info('Reading CSV and seeding data...');
+            }
             
             while (($data = fgetcsv($handle, 0, ',')) !== false) {
                 if (!$header) {
@@ -85,10 +90,14 @@ class PincodeSeeder extends Seeder
                 DB::table('pincodes')->insert($rows);
             }
 
-            $this->command->info("Total Processed & Inserted Rows: {$rowCount}");
-            $this->command->info('All 1.6 Lakh+ Pincodes seeded successfully!');
+            if ($this->command) {
+                $this->command->info("Total Processed & Inserted Rows: {$rowCount}");
+                $this->command->info('All 1.6 Lakh+ Pincodes seeded successfully!');
+            }
         } else {
-            $this->command->error('Could not open CSV file.');
+            if ($this->command) {
+                $this->command->error('Could not open CSV file.');
+            }
         }
     }
 }
