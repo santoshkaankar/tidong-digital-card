@@ -9,8 +9,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
-
-
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\CardController;
 
 Route::get('/debug-pincodes', function () {
     try {
@@ -24,8 +24,6 @@ Route::get('/debug-pincodes', function () {
         return "Error: " . $e->getMessage();
     }
 });
-
-
 
 // ==========================================
 // SECURE & LOCKED DATABASE INITIALIZATION
@@ -94,7 +92,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // 3. Public Menu & QR / Card Routes (No Login Required)
 Route::get('/card/{id}', [VisitingCardController::class, 'show'])->name('card.show');
-Route::get('/search-locations', [VisitingCardController::class, 'searchLocations']);
+Route::get('/search-locations', [CardController::class, 'searchLocations']);
 Route::get('/menu/{slug}', [MenuController::class, 'showPublicMenu'])->name('menu.public');
 Route::post('/menu/{slug}/order', [MenuController::class, 'placeOrder'])->name('menu.order');
 Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'])->name('order.complete');
@@ -104,6 +102,19 @@ Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'
 // 4. AUTHENTICATED & ROLE-BASED ROUTES
 // ==========================================
 Route::middleware(['auth'])->group(function () {
+
+    // --- PROFILE ROUTE FIX (Missing route fix) ---
+    Route::get('/profile', function () {
+        return redirect()->route('customer.dashboard');
+    })->name('profile.edit');
+
+    // --- GENERIC DASHBOARD FALLBACK ROUTE ---
+    Route::get('/dashboard', function () {
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('customer.dashboard');
+    })->name('dashboard');
 
     // --- ADMIN ROUTES ---
     Route::prefix('admin')->name('admin.')->group(function () {
@@ -184,10 +195,23 @@ Route::middleware(['auth'])->group(function () {
     })->name('employee.dashboard');
 
 
-    // --- CUSTOMER DASHBOARD ---
-    Route::get('/customer/dashboard', function () {
-        return view('customer.dashboard');
-    })->name('customer.dashboard');
+    // --- CUSTOMER DASHBOARD & VISITING CARD ROUTES ---
+    Route::prefix('customer')->name('customer.')->group(function () {
+        Route::get('/dashboard', function () {
+            return view('customer.dashboard');
+        })->name('dashboard');
+
+        Route::get('/search', function () {
+            return view('customer.search');
+        })->name('search');
+
+        // Customer Visiting Card Form & Listing Routes
+        Route::get('/card/create', [CardController::class, 'create'])->name('card.create');
+        Route::post('/card/store', [CardController::class, 'store'])->name('card.store');
+        
+        // Add index route if needed for My Cards
+        Route::get('/cards', [CardController::class, 'index'])->name('cards.index');
+    });
 
 });
 

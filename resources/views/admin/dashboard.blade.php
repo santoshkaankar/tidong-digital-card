@@ -61,7 +61,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ route('card.create') }}" class="nav-link {{ request()->routeIs('card.create') ? 'active' : '' }}">
+                <a href="{{ route('admin.cards.index') }}" class="nav-link {{ request()->routeIs('admin.cards*') ? 'active' : '' }}">
                     <i class="fas fa-id-card me-2"></i> Manage Cards
                 </a>
             </li>
@@ -228,16 +228,17 @@
         <!-- SECONDARY STATS ROW -->
         <div class="row g-4">
             <div class="col-md-6">
+                <!-- Visiting Cards Ratio Card connected to Admin Index Route -->
                 <div class="card stat-card p-4 bg-white h-100">
                     <h5 class="fw-bold text-dark mb-3"><i class="fas fa-id-badge text-primary me-2"></i> Visiting Cards Ratio</h5>
-                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2">
+                    <a href="{{ route('admin.cards.index') }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 text-decoration-none text-dark">
                         <span class="fw-semibold text-muted">Total Digital Cards</span>
                         <span class="badge bg-primary fs-6">{{ $totalCards ?? 0 }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
+                    </a>
+                    <a href="{{ route('admin.cards.index') }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 text-decoration-none text-dark">
                         <span class="fw-semibold text-muted">Pending Cards Approval</span>
                         <span class="badge bg-warning text-dark fs-6">{{ $pendingCards ?? 0 }}</span>
-                    </div>
+                    </a>
                 </div>
             </div>
             

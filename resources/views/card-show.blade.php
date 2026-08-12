@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card-container { max-width: 480px; margin: 30px auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .card-container { max-width: 480px; margin: 30px auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; margin-bottom: 80px; }
         .header-bg { background: linear-gradient(135deg, #0d6efd, #0dcaf0); padding: 30px 20px; text-align: center; color: white; }
         
         /* Strict CSS for Perfect Round Profile Image */
@@ -33,6 +33,19 @@
 
         .action-btn { border-radius: 50px; font-weight: 600; padding: 10px 20px; transition: all 0.3s; }
         .action-btn:hover { transform: translateY(-2px); }
+        
+        /* Floating Share/Save Bar */
+        .floating-actions {
+            background: #ffffff;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 480px;
+            margin: 0 auto;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -153,5 +166,57 @@
         </div>
     </div>
 
+    <!-- Sticky Share & Save Action Bar -->
+    <div class="floating-actions p-3 text-center">
+        <div class="row g-2">
+            <div class="col-6">
+                <button onclick="shareCard()" class="btn btn-dark w-100 rounded-pill py-2 fw-bold">
+                    <i class="fas fa-share-alt me-1"></i> Share Card
+                </button>
+            </div>
+            <div class="col-6">
+                <button onclick="saveContact()" class="btn btn-success w-100 rounded-pill py-2 fw-bold">
+                    <i class="fas fa-user-plus me-1"></i> Save Contact
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Share and vCard Download -->
+    <script>
+        function shareCard() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '{{ $card->business_name }}',
+                    text: 'Check out the digital visiting card of {{ $card->name }} ({{ $card->business_name }})',
+                    url: window.location.href,
+                }).catch((error) => console.log('Sharing failed', error));
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Card link copied to clipboard!');
+            }
+        }
+
+        function saveContact() {
+            let vCardData = "BEGIN:VCARD\n" +
+                            "VERSION:3.0\n" +
+                            "FN:{{ $card->name }}\n" +
+                            "ORG:{{ $card->business_name }}\n" +
+                            "TEL;TYPE=WORK,VOICE:{{ $card->phone }}\n" +
+                            "EMAIL:{{ $card->gmail ?? $card->other_email }}\n" +
+                            "URL:{{ $card->website_link }}\n" +
+                            "ADR:;;{{ $card->address }};{{ $card->city }};{{ $card->state }};{{ $card->pincode }}\n" +
+                            "END:VCARD";
+
+            let blob = new Blob([vCardData], { type: "text/vcard;charset=utf-8" });
+            let url = window.URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = "{{ Str::slug($card->name) }}.vcf";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
 </body>
 </html>
