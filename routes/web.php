@@ -11,17 +11,16 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 
 // ==========================================
-// TEMPORARY ADMIN CREATION ROUTE FOR RENDER
+// MAKE REGISTERED USER ADMIN ROUTE
 // ==========================================
-Route::get('/create-admin-user', function () {
-    $user = User::firstOrCreate(
-        ['email' => 'admin@tidong.in'], // Apna login email yahan change kar sakte hain
-        [
-            'name' => 'Santosh Kumar Sharma',
-            'password' => Hash::make('password123'), // Apna password yahan rakh lein
-        ]
-    );
-    return "<h1>Admin User Created Successfully!</h1><p>Email: <b>admin@tidong.in</b></p><p>Password: <b>password123</b></p><p><a href='/login'>Click here to go to Login</a></p>";
+Route::get('/make-admin-now', function () {
+    $user = User::where('email', 'santoshkaankar@gmail.com')->first();
+    if ($user) {
+        $user->role = 'admin'; // Role ko admin set kar rahe hain
+        $user->save();
+        return "<h1>Success!</h1><p><b>santoshkaankar@gmail.com</b> is now an Admin.</p><p><a href='/login'>Click here to Login</a></p>";
+    }
+    return "<h1>User not found!</h1><p>Pehle is email se website par register zaroor karein.</p>";
 });
 
 // ==========================================
