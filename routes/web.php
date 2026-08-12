@@ -14,13 +14,13 @@ use App\Http\Controllers\UpdateController;
 // MAKE REGISTERED USER ADMIN ROUTE
 // ==========================================
 Route::get('/make-admin-now', function () {
-    $user = User::where('email', 'santoshkaankar@gmail.com')->first();
+    $user = auth()->user(); // Jo user abhi login hai
     if ($user) {
-        $user->role = 'admin'; // Role ko admin set kar rahe hain
+        $user->role = 'admin';
         $user->save();
-        return "<h1>Success!</h1><p><b>santoshkaankar@gmail.com</b> is now an Admin.</p><p><a href='/login'>Click here to Login</a></p>";
+        return "<h1>Success!</h1><p><b>{$user->email}</b> is now an Admin.</p><p><a href='/admin/dashboard'>Go to Admin Dashboard</a></p>";
     }
-    return "<h1>User not found!</h1><p>Pehle is email se website par register zaroor karein.</p>";
+    return "<h1>Please Login First!</h1><p>Pehle aap /login par jakar login karein, phir is link ko kholein.</p>";
 });
 
 // ==========================================
