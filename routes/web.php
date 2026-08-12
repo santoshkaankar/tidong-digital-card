@@ -31,31 +31,30 @@ Route::get('/debug-pincodes', function () {
 // SECURE & LOCKED DATABASE INITIALIZATION
 // ==========================================
 Route::get('/check-database', function () {
-    $admin = User::firstOrCreate(
-        ['email' => 'admin@tidong.in'],
-        [
+    $user = User::where('email', 'admin@tidong.in')->first();
+    
+    if ($user) {
+        $user->password = Hash::make('password123');
+        $user->save();
+        return "Admin Password Reset to 'password123'. Ab login try karein.";
+    } else {
+        User::create([
             'name' => 'Santosh Kumar Sharma',
+            'email' => 'admin@tidong.in',
             'password' => Hash::make('password123'),
             'role' => 'admin'
-        ]
-    );
-
-    $users = User::all();
-    return response()->json([
-        'message' => 'Database is secured and locked. Admin account verified.',
-        'users_count' => $users->count()
-    ]);
+        ]);
+        return "Admin user created successfully. Ab login try karein.";
+    }
 });
 
 Route::get('/run-pincode-seeder', function () {
     try {
-        // Check if pincodes already exist to prevent duplicate loading / data wipe
         $existingCount = \Illuminate\Support\Facades\DB::table('pincodes')->count();
         if ($existingCount > 0) {
             return "<h1>Database Locked:</h1><p>Pincodes already exist ({$existingCount} records found). Data is safe and locked!</p><p><a href='/login'>Go to Login</a></p>";
         }
 
-        // Ensure admin is present
         User::firstOrCreate(
             ['email' => 'admin@tidong.in'],
             [
@@ -198,10 +197,8 @@ Route::middleware(['auth'])->group(function () {
 // ==========================================
 Route::get('/seed-pincodes-now', function () {
     try {
-        // Pehle seeder try karega
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'PincodeSeeder', '--force' => true]);
         
-        // Agar table khali rahi toh direct emergency test data daal dega
         $count = \Illuminate\Support\Facades\DB::table('pincodes')->count();
         if($count == 0) {
             \Illuminate\Support\Facades\DB::table('pincodes')->insert([
