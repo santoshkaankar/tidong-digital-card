@@ -31,6 +31,17 @@ Route::get('/check-database', function () {
     ]);
 });
 
+Route::get('/run-pincode-seeder', function () {
+    try {
+        $seeder = new \Database\Seeders\PincodeSeeder();
+        // Console output capture karne ke liye fake command object
+        $seeder->run();
+        return "<h1>Success! Saare Pincodes database mein seed ho gaye hain.</h1>";
+    } catch (\Exception $e) {
+        return "<h1>Error:</h1> " . $e->getMessage();
+    }
+});
+
 // ==========================================
 // TEMPORARY STABLE ROUTE FOR LIVE RUNNING
 // ==========================================
