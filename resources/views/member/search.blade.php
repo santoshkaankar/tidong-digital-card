@@ -18,11 +18,11 @@
     </style>
 </head>
 <body>
-    @include('customer.sidebar')
+    @include('member.sidebar')
 
     <div id="content">
         <nav class="navbar navbar-light bg-white px-4 py-3 shadow-sm">
-            <a href="{{ route('customer.dashboard') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-arrow-left me-1"></i> Dashboard</a>
+            <a href="{{ route('member.dashboard') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-arrow-left me-1"></i> Dashboard</a>
             <span class="fw-bold text-dark">Advanced Search Studio</span>
         </nav>
 

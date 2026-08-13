@@ -38,7 +38,7 @@ class AuthController extends Controller
             if ($role == 'business') return redirect()->route('vendor.dashboard'); // Updated to vendor dashboard
             if ($role == 'employee') return redirect()->route('employee.dashboard');
             
-            return redirect()->route('customer.dashboard');
+            return redirect()->route('member.dashboard');
         }
 
         return back()->withErrors([
@@ -57,7 +57,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            'role' => 'required|in:admin,employee,business,customer',
+            'role' => 'required|in:admin,employee,business,member',
             'business_type' => 'nullable|string|max:255'
         ]);
 
@@ -80,7 +80,7 @@ class AuthController extends Controller
             return redirect()->route('employee.dashboard');
         }
         
-        return redirect()->route('customer.dashboard');
+        return redirect()->route('member.dashboard');
     }
 
     public function logout(Request $request)

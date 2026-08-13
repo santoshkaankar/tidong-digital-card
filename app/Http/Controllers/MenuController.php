@@ -38,7 +38,7 @@ class MenuController extends Controller
             ->with('orderItems')
             ->first();
 
-        return view('customer.menu', compact('business', 'menuItems', 'location', 'runningOrder'));
+        return view('member.menu', compact('business', 'menuItems', 'location', 'runningOrder'));
     }
 
     // 3. Order Place ya Update Karna (Beech mein items add karna)

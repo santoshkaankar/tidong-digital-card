@@ -24,7 +24,7 @@
 <body>
 
     <!-- Include Sidebar Component -->
-    @include('customer.sidebar')
+    @include('member.sidebar')
 
     <!-- Page Content Holder -->
     <div id="content">
@@ -55,7 +55,7 @@
         <div class="container-fluid py-4 px-4">
             
             <!-- Include Advertising Component -->
-            @include('customer.advertising')
+            @include('member.advertising')
 
             <!-- Analytics & Stats Row -->
             <div class="row g-4 mb-4">

@@ -24,7 +24,7 @@
 </head>
 <body>
 
-    @include('customer.sidebar')
+    @include('member.sidebar')
 
     <div id="content">
         <nav class="top-navbar">
@@ -35,7 +35,7 @@
                 <i class="fas fa-id-badge text-primary"></i> Digital Visiting Card Studio
             </div>
             <div class="ms-auto">
-                <a href="{{ route('customer.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="{{ route('member.dashboard') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="fas fa-arrow-left me-1"></i> Dashboard
                 </a>
             </div>
@@ -68,7 +68,7 @@
                             </div>
                         @endif
 
-                        <form action="{{ route('customer.card.store') }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('member.card.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
 
                             <div class="form-section-title">1. Basic & Personal Details</div>

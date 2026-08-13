@@ -4,11 +4,11 @@
         <i class="fas fa-layer-group"></i> Tidong® Portal
     </div>
     <ul class="list-unstyled components">
-        <li class="{{ request()->routeIs('customer.dashboard') ? 'active' : '' }}">
-            <a href="{{ route('customer.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
+        <li class="{{ request()->routeIs('member.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('member.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
         </li>
-        <li>
-            <a href="{{ route('customer.search') }}"><i class="fas fa-search"></i> Advanced Search</a>
+        <li class="{{ request()->routeIs('member.search') ? 'active' : '' }}">
+            <a href="{{ route('member.search') }}"><i class="fas fa-search"></i> Advanced Search</a>
         </li>
         <li>
             <a href="#"><i class="fas fa-wallet text-warning"></i> My Wallet</a>
@@ -16,11 +16,14 @@
         <li>
             <a href="#"><i class="fas fa-users"></i> Friend Circle</a>
         </li>
-        <li>
-            <a href="{{ route('customer.card.create') }}"><i class="fas fa-id-badge"></i> Digital Visiting Card</a>
+        <li class="{{ request()->routeIs('member.card.create') ? 'active' : '' }}">
+            <a href="{{ route('member.card.create') }}"><i class="fas fa-id-badge"></i> Card Detail</a>
         </li>
-        <li>
-            <a href="{{ route('customer.cards.index') }}"><i class="fas fa-id-card"></i> My Visiting Cards</a>
+        <li class="{{ request()->routeIs('member.card.customize*') ? 'active' : '' }}">
+    <a href="{{ route('member.card.customize', 1) }}"><i class="fas fa-plus-circle text-success"></i> Create Card</a>
+</li>
+        <li class="{{ request()->routeIs('member.cards.index') ? 'active' : '' }}">
+            <a href="{{ route('member.cards.index') }}"><i class="fas fa-id-card"></i> My Visiting Cards</a>
         </li>
         <li>
             <a href="#"><i class="fas fa-user-circle"></i> My Profile & Stats</a>

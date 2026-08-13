@@ -20,7 +20,7 @@
         <div class="mt-4">
             <x-input-label for="role" :value="__('Select Role')" />
             <select id="role" name="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required onchange="toggleBusinessType(this)">
-                <option value="customer" {{ old('role') == 'customer' ? 'selected' : '' }}>User / Member</option>
+                <option value="member" {{ old('role') == 'member' ? 'selected' : '' }}>User / Member</option>
                 <option value="business" {{ old('role') == 'business' ? 'selected' : '' }}>Business</option>
                 <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee</option>
             </select>

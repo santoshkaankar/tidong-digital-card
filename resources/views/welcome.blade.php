@@ -73,8 +73,8 @@
                                     'admin' => route('admin.dashboard'),
                                     'business' => route('vendor.dashboard'), 
                                     'employee' => route('employee.dashboard'),
-                                    'customer' => route('customer.dashboard'),
-                                    default => route('customer.dashboard')
+                                    'customer' => route('member.dashboard'),
+                                    default => route('member.dashboard')
                                 };
                             @endphp
                             <a href="{{ $dashboardRoute }}" class="btn btn-dark btn-sm px-3 rounded-pill">

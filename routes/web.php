@@ -103,9 +103,9 @@ Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'
 // ==========================================
 Route::middleware(['auth'])->group(function () {
 
-    // --- PROFILE ROUTE FIX (Missing route fix) ---
+    // --- PROFILE ROUTE FIX ---
     Route::get('/profile', function () {
-        return redirect()->route('customer.dashboard');
+        return redirect()->route('member.dashboard');
     })->name('profile.edit');
 
     // --- GENERIC DASHBOARD FALLBACK ROUTE ---
@@ -113,7 +113,7 @@ Route::middleware(['auth'])->group(function () {
         if (auth()->check() && auth()->user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
-        return redirect()->route('customer.dashboard');
+        return redirect()->route('member.dashboard');
     })->name('dashboard');
 
     // --- ADMIN ROUTES ---
@@ -153,30 +153,18 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/menu/item/store', [MenuController::class, 'storeItem'])->name('menu.item.store');
     });
 
-    // Global Aliases for Compatibility with Views
-    Route::get('/admin/create-card', [VisitingCardController::class, 'create'])->name('card.create');
-    Route::post('/admin/store-card', [VisitingCardController::class, 'store'])->name('card.store');
-    Route::get('/admin/menu/create', [MenuController::class, 'createMenu'])->name('menu.create');
-    Route::post('/admin/menu/store', [MenuController::class, 'storeMenu'])->name('menu.store');
-    Route::post('/admin/menu/item/store', [MenuController::class, 'storeItem'])->name('menu.item.store');
-
-
     // --- VENDOR DASHBOARD & CATALOG ROUTES ---
     Route::prefix('vendor')->name('vendor.')->group(function () {
         Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('dashboard');
         
-        // Separate Pages for Categories and Inventory
         Route::get('/categories', [VendorController::class, 'categoriesPage'])->name('categories.index');
         Route::get('/inventory', [VendorController::class, 'inventoryPage'])->name('inventory.index');
         
-        // Pricing Master & Menu Cards (Catalog) Routes
         Route::get('/pricing', [VendorController::class, 'pricingPage'])->name('pricing.index');
         Route::put('/pricing/update/{id}', [VendorController::class, 'updatePricing'])->name('pricing.update');
         Route::get('/menus', [MenuController::class, 'index'])->name('menus.index');
 
-        // Legacy Catalog Route (optional fallback)
         Route::get('/catalog', [VendorController::class, 'index'])->name('catalog');
-
         Route::get('/items', [VendorController::class, 'inventoryPage'])->name('items');
 
         Route::post('/categories/save', [VendorController::class, 'saveCategories'])->name('categories.save');
@@ -195,22 +183,26 @@ Route::middleware(['auth'])->group(function () {
     })->name('employee.dashboard');
 
 
-    // --- CUSTOMER DASHBOARD & VISITING CARD ROUTES ---
-    Route::prefix('customer')->name('customer.')->group(function () {
+    // --- MEMBER DASHBOARD & VISITING CARD ROUTES (Replaced customer with member) ---
+    Route::prefix('member')->name('member.')->group(function () {
         Route::get('/dashboard', function () {
-            return view('customer.dashboard');
+            return view('member.dashboard');
         })->name('dashboard');
 
         Route::get('/search', function () {
-            return view('customer.search');
+            return view('member.search');
         })->name('search');
 
-        // Customer Visiting Card Form & Listing Routes
+        // Card Management Routes
+        Route::get('/cards', [CardController::class, 'index'])->name('cards.index');
         Route::get('/card/create', [CardController::class, 'create'])->name('card.create');
         Route::post('/card/store', [CardController::class, 'store'])->name('card.store');
-        
-        // Add index route if needed for My Cards
-        Route::get('/cards', [CardController::class, 'index'])->name('cards.index');
+        Route::get('/card/{id}', [CardController::class, 'show'])->name('card.show');
+        Route::get('/search-locations', [CardController::class, 'searchLocations'])->name('search.locations');
+
+        // Card Customization Routes
+        Route::get('/card/{id}/customize', [CardController::class, 'customize'])->name('card.customize');
+        Route::put('/card/{id}/customize', [CardController::class, 'updateDisplay'])->name('card.update.display');
     });
 
 });

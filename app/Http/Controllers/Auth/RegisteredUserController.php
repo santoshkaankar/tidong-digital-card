@@ -49,7 +49,7 @@ class RegisteredUserController extends Controller
         } elseif ($user->role === 'employee') {
             return redirect(route('employee.dashboard', absolute: false));
         } else {
-            return redirect(route('customer.dashboard', absolute: false));
+            return redirect(route('member.dashboard', absolute: false));
         }
     }
 }
