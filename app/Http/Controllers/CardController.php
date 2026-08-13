@@ -5,143 +5,219 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\VisitingCard;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CardController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $cards = VisitingCard::where('user_id', Auth::id())->get();
-        return view('member.card.index', compact('cards'));
+        return view('member.card.cards-index', compact('cards'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(Request $request)
     {
-        return view('member.card.create');
+        // Defaulting to visiting-card so 'Card Detail' opens the correct input form
+        $type = $request->get('type', 'visiting-card');
+        $viewName = "member.card.{$type}-create";
+        
+        if (view()->exists($viewName)) {
+            return view($viewName);
+        }
+        
+        return view('member.card.visiting-card-create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
             'business_name' => 'nullable|string|max:255',
+            'phone' => 'required|string|max:20',
+            'alt_phone' => 'nullable|string|max:20',
+            'whatsapp' => 'nullable|string|max:20',
+            'gmail' => 'nullable|email|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'design_type' => 'nullable|string|max:50',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'qr_code' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $validated['user_id'] = Auth::id();
-        $card = VisitingCard::create($validated);
+        // Photo Upload
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('photos', 'public');
+        }
 
-        return redirect()->route('member.card.show', $card->id);
+        // QR Code Upload
+        $qrPath = null;
+        if ($request->hasFile('qr_code')) {
+            $qrPath = $request->file('qr_code')->store('qrcodes', 'public');
+        }
+
+        $designType = $request->input('design_type', 'visiting-card');
+
+        $data = $request->all();
+        $data['user_id'] = Auth::id();
+        $data['plan_type'] = 'free';
+        $data['card_type'] = $designType;
+        $data['card_no'] = 'TDC-' . strtoupper(Str::random(6));
+        $data['photo'] = $photoPath;
+        $data['qr_code'] = $qrPath;
+
+        // Visibility Toggles
+        $data['show_business'] = $request->has('show_business') ? 1 : 0;
+        $data['show_phone'] = $request->has('show_phone') ? 1 : 0;
+        $data['show_whatsapp'] = $request->has('show_whatsapp') ? 1 : 0;
+        $data['show_gmail'] = $request->has('show_gmail') ? 1 : 0;
+        $data['show_facebook'] = $request->has('show_facebook') ? 1 : 0;
+        $data['show_instagram'] = $request->has('show_instagram') ? 1 : 0;
+        $data['show_website'] = $request->has('show_website') ? 1 : 0;
+        $data['show_address'] = $request->has('show_address') ? 1 : 0;
+
+        VisitingCard::create($data);
+
+        return redirect()->route('member.cards.index')
+                         ->with('success', 'Digital Visiting Card successfully create ho gaya!');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show($id)
     {
-        $card = VisitingCard::findOrFail($id);
-        return view('member.card.show', compact('card'));
+        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $type = $card->card_type ?? $card->design_type ?? 'visiting-card';
+
+        $viewName = "member.card.{$type}-view";
+        if (view()->exists($viewName)) {
+            return view($viewName, compact('card'));
+        }
+
+        return view('member.card.visiting-card-view', compact('card'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit($id)
     {
-        $card = VisitingCard::findOrFail($id);
-        return view('member.card.edit', compact('card'));
+        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $type = $card->card_type ?? $card->design_type ?? 'visiting-card';
+        
+        $viewName = "member.card.{$type}-create";
+        if (view()->exists($viewName)) {
+            return view($viewName, compact('card'));
+        }
+
+        return view('member.card.visiting-card-create', compact('card'));
     }
 
-    /**
-     * Show the customize/display settings view.
-     */
-    public function customize($id)
-    {
-        $card = VisitingCard::findOrFail($id);
-        return view('member.card.customize', compact('card'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id)
     {
-        $card = VisitingCard::findOrFail($id);
+        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
             'business_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
-            'whatsapp' => 'nullable|string|max:20',
-            'gmail' => 'nullable|email|max:255',
-            'facebook' => 'nullable|url|max:255',
-            'instagram' => 'nullable|url|max:255',
-            'website_link' => 'nullable|url|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'qr_code' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $card->update($validated);
+        $photoPath = $card->photo;
+        if ($request->has('remove_photo')) {
+            if ($card->photo && Storage::disk('public')->exists($card->photo)) {
+                Storage::disk('public')->delete($card->photo);
+            }
+            $photoPath = null;
+        } elseif ($request->hasFile('photo')) {
+            if ($card->photo && Storage::disk('public')->exists($card->photo)) {
+                Storage::disk('public')->delete($card->photo);
+            }
+            $photoPath = $request->file('photo')->store('photos', 'public');
+        }
 
-        return redirect()->route('member.card.show', $card->id)
-                         ->with('success', 'Visiting card updated successfully!');
+        $qrPath = $card->qr_code;
+        if ($request->has('remove_qr')) {
+            if ($card->qr_code && Storage::disk('public')->exists($card->qr_code)) {
+                Storage::disk('public')->delete($card->qr_code);
+            }
+            $qrPath = null;
+        } elseif ($request->hasFile('qr_code')) {
+            if ($card->qr_code && Storage::disk('public')->exists($card->qr_code)) {
+                Storage::disk('public')->delete($card->qr_code);
+            }
+            $qrPath = $request->file('qr_code')->store('qrcodes', 'public');
+        }
+
+        $data = $request->all();
+        $data['photo'] = $photoPath;
+        $data['qr_code'] = $qrPath;
+
+        $card->update($data);
+
+        return redirect()->route('member.cards.index')
+                         ->with('success', 'Visiting card successfully update ho gaya!');
     }
 
-    /**
-     * Update the display toggles/preferences for the card.
-     */
     public function updateDisplay(Request $request, $id)
     {
-        $card = VisitingCard::findOrFail($id);
+        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         
         $card->update([
             'show_business' => $request->has('show_business') ? 1 : 0,
-            'show_tagline' => $request->has('show_tagline') ? 1 : 0,
             'show_phone' => $request->has('show_phone') ? 1 : 0,
-            'show_alt_phone' => $request->has('show_alt_phone') ? 1 : 0,
             'show_whatsapp' => $request->has('show_whatsapp') ? 1 : 0,
             'show_gmail' => $request->has('show_gmail') ? 1 : 0,
-            'show_yahoo_email' => $request->has('show_yahoo_email') ? 1 : 0,
-            'show_other_email' => $request->has('show_other_email') ? 1 : 0,
             'show_facebook' => $request->has('show_facebook') ? 1 : 0,
             'show_instagram' => $request->has('show_instagram') ? 1 : 0,
-            'show_twitter_x' => $request->has('show_twitter_x') ? 1 : 0,
-            'show_linkedin' => $request->has('show_linkedin') ? 1 : 0,
-            'show_youtube' => $request->has('show_youtube') ? 1 : 0,
-            'show_telegram' => $request->has('show_telegram') ? 1 : 0,
             'show_website' => $request->has('show_website') ? 1 : 0,
-            'show_phonepe' => $request->has('show_phonepe') ? 1 : 0,
-            'show_gpay' => $request->has('show_gpay') ? 1 : 0,
-            'show_paytm' => $request->has('show_paytm') ? 1 : 0,
-            'show_upi' => $request->has('show_upi') ? 1 : 0,
-            'show_about_us' => $request->has('show_about_us') ? 1 : 0,
-            'show_services' => $request->has('show_services') ? 1 : 0,
-            'show_photo' => $request->has('show_photo') ? 1 : 0,
-            'show_qr_code' => $request->has('show_qr_code') ? 1 : 0,
             'show_address' => $request->has('show_address') ? 1 : 0,
-            'show_map' => $request->has('show_map') ? 1 : 0,
         ]);
 
-        return redirect()->route('member.card.show', $card->id)
-                         ->with('success', 'Card display preferences updated successfully!');
+        return redirect()->route('member.cards.index')
+                         ->with('success', 'Card preferences updated successfully!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
-        $card = VisitingCard::findOrFail($id);
+        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        
+        if ($card->photo && Storage::disk('public')->exists($card->photo)) {
+            Storage::disk('public')->delete($card->photo);
+        }
+        if ($card->qr_code && Storage::disk('public')->exists($card->qr_code)) {
+            Storage::disk('public')->delete($card->qr_code);
+        }
+
         $card->delete();
 
         return redirect()->route('member.cards.index')
-                         ->with('success', 'Visiting card deleted successfully!');
+                         ->with('success', 'Visiting card successfully delete ho gaya!');
+    }
+
+    public function searchLocations(Request $request)
+    {
+        $search = $request->get('q');
+        
+        $locations = DB::table('pincodes')
+            ->where('office_name', 'LIKE', "%{$search}%")
+            ->orWhere('pincode', 'LIKE', "%{$search}%")
+            ->orWhere('district', 'LIKE', "%{$search}%")
+            ->orWhere('state_name', 'LIKE', "%{$search}%")
+            ->limit(30)
+            ->get();
+
+        $formattedData = [];
+        foreach ($locations as $loc) {
+            $formattedData[] = [
+                'id' => $loc->pincode,
+                'text' => $loc->office_name . ' - ' . ($loc->pincode ?? '') . ' (' . $loc->district . ', ' . $loc->state_name . ')',
+                'area' => $loc->office_name,
+                'pincode' => $loc->pincode,
+                'city' => $loc->district,
+                'state' => $loc->state_name
+            ];
+        }
+
+        return response()->json($formattedData);
     }
 }

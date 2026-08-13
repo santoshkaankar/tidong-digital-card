@@ -48,7 +48,7 @@
                         <div class="text-center mb-5">
                             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-2">✨ User Portal Studio</span>
                             <h2 class="fw-bold text-dark">Create Your Digital Visiting Card</h2>
-                            <p class="text-muted">Stand out digitally with your own customized interactive business card & catalog.</p>
+                            <p class="text-muted">Stand out digitally with your own standardd interactive business card & catalog.</p>
                         </div>
 
                         @if(session('success'))

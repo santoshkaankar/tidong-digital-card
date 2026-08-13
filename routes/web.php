@@ -3,13 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Http\Controllers\VisitingCardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
-use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CardController;
 
 Route::get('/debug-pincodes', function () {
@@ -71,9 +69,6 @@ Route::get('/run-pincode-seeder', function () {
     }
 });
 
-// ==========================================
-// TEMPORARY STABLE ROUTE FOR LIVE RUNNING
-// ==========================================
 Route::get('/setup-live-database', function () {
     return "<h1>Website is Live & Running! Database is locked & secure.</h1><p><a href='/login'>Go to Login</a></p>";
 });
@@ -91,7 +86,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // 3. Public Menu & QR / Card Routes (No Login Required)
-Route::get('/card/{id}', [VisitingCardController::class, 'show'])->name('card.show');
+Route::get('/card/{id}', [CardController::class, 'show'])->name('card.show');
 Route::get('/search-locations', [CardController::class, 'searchLocations']);
 Route::get('/menu/{slug}', [MenuController::class, 'showPublicMenu'])->name('menu.public');
 Route::post('/menu/{slug}/order', [MenuController::class, 'placeOrder'])->name('menu.order');
@@ -122,32 +117,26 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/delete/{id}', [AdminController::class, 'destroy'])->name('delete');
         Route::post('/register-user', [AdminController::class, 'storeUser'])->name('store.user');
 
-        // Pending Items
         Route::get('/pending-items', [AdminController::class, 'pendingItems'])->name('pending.items');
         Route::post('/item/approve/{id}', [AdminController::class, 'approveItem'])->name('item.approve');
         Route::delete('/item/reject/{id}', [AdminController::class, 'rejectItem'])->name('item.reject');
         
-        // Global Master & Item Categories Routes
         Route::get('/global-item/create', [AdminController::class, 'createGlobalItem'])->name('global.item.create');
         Route::post('/global-item', [AdminController::class, 'storeGlobalItem'])->name('global.item.store');
         Route::post('/item-category/store', [AdminController::class, 'storeItemCategory'])->name('item.category.store');
 
-        // Vendor Categories Routes
         Route::get('/vendor-categories', [AdminController::class, 'createVendorCategory'])->name('vendor.categories');
         Route::post('/vendor-categories', [AdminController::class, 'storeVendorCategory'])->name('vendor.categories.store');
         Route::delete('/vendor-categories/{id}', [AdminController::class, 'destroyVendorCategory'])->name('vendor.categories.delete');
 
-        // Website Updates
         Route::get('/update', [UpdateController::class, 'showUploadForm'])->name('update');
         Route::post('/update', [UpdateController::class, 'uploadUpdate'])->name('upload_update');
 
-        // Card Management
-        Route::get('/create-card', [VisitingCardController::class, 'create'])->name('card.create');
-        Route::post('/store-card', [VisitingCardController::class, 'store'])->name('card.store');
-        Route::get('/card/{id}/edit', [VisitingCardController::class, 'edit'])->name('card.edit');
-        Route::post('/card/{id}/update', [VisitingCardController::class, 'update'])->name('card.update');
+        Route::get('/create-card', [CardController::class, 'create'])->name('card.create');
+        Route::post('/store-card', [CardController::class, 'store'])->name('card.store');
+        Route::get('/card/{id}/edit', [CardController::class, 'edit'])->name('card.edit');
+        Route::post('/card/{id}/update', [CardController::class, 'update'])->name('card.update');
 
-        // Menu Management
         Route::get('/menu/create', [MenuController::class, 'createMenu'])->name('menu.create');
         Route::post('/menu/store', [MenuController::class, 'storeMenu'])->name('menu.store');
         Route::post('/menu/item/store', [MenuController::class, 'storeItem'])->name('menu.item.store');
@@ -176,14 +165,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/qr-code', [VendorController::class, 'showQrCode'])->name('qrcode');
     });
 
-
     // --- EMPLOYEE DASHBOARD ---
     Route::get('/employee/dashboard', function () {
         return view('employee.dashboard');
     })->name('employee.dashboard');
 
-
-    // --- MEMBER DASHBOARD & VISITING CARD ROUTES (Replaced customer with member) ---
+    // --- MEMBER DASHBOARD & VISITING CARD ROUTES ---
     Route::prefix('member')->name('member.')->group(function () {
         Route::get('/dashboard', function () {
             return view('member.dashboard');
@@ -193,20 +180,21 @@ Route::middleware(['auth'])->group(function () {
             return view('member.search');
         })->name('search');
 
-        // Card Management Routes
+        // Card Management Routes (Registered with all potential aliases cleanly)
         Route::get('/cards', [CardController::class, 'index'])->name('cards.index');
+        Route::get('/cards-list', [CardController::class, 'index'])->name('card.index');
+        Route::get('/cards-group', [CardController::class, 'index'])->name('cards'); 
+        
         Route::get('/card/create', [CardController::class, 'create'])->name('card.create');
         Route::post('/card/store', [CardController::class, 'store'])->name('card.store');
         Route::get('/card/{id}', [CardController::class, 'show'])->name('card.show');
         Route::get('/search-locations', [CardController::class, 'searchLocations'])->name('search.locations');
-
-        // Card Customization Routes
-        Route::get('/card/{id}/customize', [CardController::class, 'customize'])->name('card.customize');
-        Route::put('/card/{id}/customize', [CardController::class, 'updateDisplay'])->name('card.update.display');
+        
+        // Card Display Update Route
+        Route::put('/card/{id}/update-display', [CardController::class, 'updateDisplay'])->name('card.update.display');
     });
 
 });
-
 
 // ==========================================
 // DIRECT EMERGENCY PINCODE INJECTION ROUTE

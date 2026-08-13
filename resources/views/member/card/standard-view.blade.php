@@ -84,7 +84,7 @@
 
     <!-- Action Buttons -->
     <div class="mt-4">
-        <a href="{{ route('member.card.customize', $card->id) }}" class="btn btn-primary px-4 fw-bold me-2">⚙️ Customize Card</a>
+        <a href="{{ route('member.card.standard', $card->id) }}" class="btn btn-primary px-4 fw-bold me-2">⚙️ standard Card</a>
         <a href="https://wa.me/?text={{ urlencode(route('member.card.show', $card->id)) }}" target="_blank" class="btn btn-success px-4 fw-bold">🔗 Share on WhatsApp</a>
     </div>
 </div>
