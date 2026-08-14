@@ -26,21 +26,25 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
-# Install PHP dependencies via composer safely
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
-
-# Install NPM dependencies and build Vite assets
-RUN npm install && npm run build
-
-# Create SQLite database directory & file with absolute path, and set permissions
+# Create SQLite database directory & file FIRST before composer/npm
 RUN mkdir -p /var/www/html/database && \
     touch /var/www/html/database/database.sqlite && \
     chown -R www-data:www-data /var/www/html/database && \
     chmod -R 775 /var/www/html/database
 
 # Set permissions for storage and bootstrap cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN mkdir -p /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/views \
+    /var/www/html/storage/framework/cache \
+    /var/www/html/bootstrap/cache && \
+    chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Install PHP dependencies via composer safely
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+# Install NPM dependencies and build Vite assets
+RUN npm install && npm run build
 
 # Enable Apache Rewrite Module for Laravel routes
 RUN a2enmod rewrite
@@ -53,5 +57,5 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
 EXPOSE 80
 
-# Use an entrypoint or CMD script to clear config cache and run migrations safely when container starts
-CMD mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite && php artisan config:clear && php artisan migrate --force && apache2-foreground
+# Run migrations on startup and start apache
+CMD php artisan config:clear && php artisan migrate --force && apache2-foreground
