@@ -13,7 +13,7 @@ class PincodeSeeder extends Seeder
         ini_set('memory_limit', '512M');
         set_time_limit(0);
 
-        $path = storage_path('app/all_india_pincode_directory_2025.csv');
+        $path = public_path('all_india_pincode_directory_2025.csv');
 
         if (!file_exists($path) || !is_readable($path)) {
             if ($this->command) {
