@@ -11,23 +11,29 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
+        // 1. Pehla Admin User (Default)
         User::firstOrCreate(
-            ['email' => 'santoshkaankar@gmail.com'],
+            ['email' => 'admin@tidong.in'],
             [
-                'name' => 'SANTOSH KUMAR SHARMA',
-                'username' => 'santosh',
-                'password' => Hash::make('San@#$321'), // Apna secure password
-                'role' => 'admin',
-                'status' => 'active'
+                'name' => 'System Admin',
+                'password' => Hash::make('password123'),
+                'role' => 'admin'
             ]
         );
 
-        // Baaki ke seeders jo aapke project me zaroori hain
+        // 2. Dusra Admin User (Aapke naam se - SANTOSH KUMAR SHARMA)
+        User::firstOrCreate(
+            ['email' => 'santoshkaankar@gmail.com'],
+            [
+                'name' => 'SANTOSH KUMARSHARMA',
+                'password' => Hash::make('12345678'),
+                'role' => 'admin'
+            ]
+        );
+
+        // Baaki ke seeders (Data safe aur locked rahega, overwrite nahi hoga)
         $this->call([
             CountrySeeder::class,
             PincodeSeeder::class,

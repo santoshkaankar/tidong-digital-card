@@ -10,6 +10,7 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\CardController;
 
+
 Route::get('/debug-pincodes', function () {
     try {
         $count = \Illuminate\Support\Facades\DB::table('pincodes')->count();
@@ -69,9 +70,54 @@ Route::get('/run-pincode-seeder', function () {
     }
 });
 
+
+Route::get('/fix-and-setup-db', function () {
+    try {
+        // Dono admin ensure karega bina purana data delete kiye
+        User::firstOrCreate(
+            ['email' => 'admin@tidong.in'],
+            ['name' => 'System Admin', 'password' => Hash::make('password123'), 'role' => 'admin']
+        );
+
+        User::firstOrCreate(
+            ['email' => 'santoshkaankar@gmail.com'],
+            ['name' => 'SANTOSH KUMAR SHARMA', 'password' => Hash::make('12345678'), 'role' => 'admin']
+        );
+
+        // Pincodes seeder run karega agar table khali hai
+        $existingCount = \Illuminate\Support\Facades\DB::table('pincodes')->count();
+        if ($existingCount == 0) {
+            $seeder = new \Database\Seeders\PincodeSeeder();
+            $seeder->run();
+            return "Success! Dono Admin ban gaye aur Pincodes safely seed ho gaye.";
+        }
+
+        return "Database already locked & safe! Dono Admin active hain.";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+
+
+
+
 Route::get('/setup-live-database', function () {
     return "<h1>Website is Live & Running! Database is locked & secure.</h1><p><a href='/login'>Go to Login</a></p>";
 });
+
+
+
+Route::get('/clean-migration', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate:rollback', ['--force' => true]);
+        return "Migration rolled back successfully! Naye columns hata diye gaye hain.";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+
+
+
 
 // 1. Welcome Page
 Route::get('/', function () {
