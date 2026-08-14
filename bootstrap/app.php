@@ -20,3 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*'),
         );
     })->create();
+    // Yahan app start hote hi automatic migration aur seeding chal jayegi (Sirf ek baar check karke)
+try {
+    Artisan::call('migrate', ['--force' => true]);
+    Artisan::call('db:seed', ['--force' => true]);
+} catch (\Exception $e) {
+    // Agar koi error aaye toh ignore ho jaye taaki site band na ho
+}

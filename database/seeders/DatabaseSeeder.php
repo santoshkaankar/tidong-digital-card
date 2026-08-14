@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,14 +15,22 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-{
-    \App\Models\User::firstOrCreate(
-        ['email' => 'santoshkaankar@gmail.com'], // Yahan apna email likhein
-        [
-            'name' => 'Santosh Sharma', // Yahan apna naam likhein
-            'username' => 'santosh',            // Aapka alag se username (agar column hai toh)
-            'password' => bcrypt('password'), // Yahan apna password likhein
-        ]
-    );
-}
+    {
+        User::firstOrCreate(
+            ['email' => 'santoshkaankar@gmail.com'],
+            [
+                'name' => 'SANTOSH KUMAR SHARMA',
+                'username' => 'santosh',
+                'password' => Hash::make('San@#$321'), // Apna secure password
+                'role' => 'admin',
+                'status' => 'active'
+            ]
+        );
+
+        // Baaki ke seeders jo aapke project me zaroori hain
+        $this->call([
+            CountrySeeder::class,
+            PincodeSeeder::class,
+        ]);
+    }
 }
