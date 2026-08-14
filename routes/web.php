@@ -10,7 +10,6 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\CardController;
 
-
 Route::get('/debug-pincodes', function () {
     try {
         $count = \Illuminate\Support\Facades\DB::table('pincodes')->count();
@@ -26,9 +25,7 @@ Route::get('/debug-pincodes', function () {
 
 Route::get('/run-fresh-migration', function () {
     try {
-        // Saari tables drop karke migrations aur seeders run karega
         \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
-        
         return "<h1>Success!</h1><p>Database fresh migrate ho gaya hai aur seeders chal chuke hain.</p><p><a href='/login'>Go to Login</a></p>";
     } catch (\Exception $e) {
         return "<h1>Error:</h1> " . $e->getMessage();
@@ -81,10 +78,8 @@ Route::get('/run-pincode-seeder', function () {
     }
 });
 
-
 Route::get('/fix-and-setup-db', function () {
     try {
-        // Dono admin ensure karega bina purana data delete kiye
         User::firstOrCreate(
             ['email' => 'admin@tidong.in'],
             ['name' => 'System Admin', 'password' => Hash::make('password123'), 'role' => 'admin']
@@ -95,7 +90,6 @@ Route::get('/fix-and-setup-db', function () {
             ['name' => 'SANTOSH KUMAR SHARMA', 'password' => Hash::make('12345678'), 'role' => 'admin']
         );
 
-        // Pincodes seeder run karega agar table khali hai
         $existingCount = \Illuminate\Support\Facades\DB::table('pincodes')->count();
         if ($existingCount == 0) {
             $seeder = new \Database\Seeders\PincodeSeeder();
@@ -109,14 +103,9 @@ Route::get('/fix-and-setup-db', function () {
     }
 });
 
-
-
-
 Route::get('/setup-live-database', function () {
     return "<h1>Website is Live & Running! Database is locked & secure.</h1><p><a href='/login'>Go to Login</a></p>";
 });
-
-
 
 Route::get('/clean-migration', function () {
     try {
@@ -126,9 +115,6 @@ Route::get('/clean-migration', function () {
         return "Error: " . $e->getMessage();
     }
 });
-
-
-
 
 // 1. Welcome Page
 Route::get('/', function () {
@@ -149,18 +135,15 @@ Route::get('/menu/{slug}', [MenuController::class, 'showPublicMenu'])->name('men
 Route::post('/menu/{slug}/order', [MenuController::class, 'placeOrder'])->name('menu.order');
 Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'])->name('order.complete');
 
-
 // ==========================================
 // 4. AUTHENTICATED & ROLE-BASED ROUTES
 // ==========================================
 Route::middleware(['auth'])->group(function () {
 
-    // --- PROFILE ROUTE FIX ---
     Route::get('/profile', function () {
         return redirect()->route('member.dashboard');
     })->name('profile.edit');
 
-    // --- GENERIC DASHBOARD FALLBACK ROUTE ---
     Route::get('/dashboard', function () {
         if (auth()->check() && auth()->user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
@@ -241,11 +224,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/cards', [CardController::class, 'index'])->name('cards.index');
         Route::get('/cards-list', [CardController::class, 'index'])->name('card.index');
         
-        // 1. Card Detail Form (Data save karne ke liye)
         Route::get('/card/configure', [CardController::class, 'configure'])->name('card.configure');
         Route::put('/card/{id}', [CardController::class, 'update'])->name('card.update');
         
-        // 2. Create Card / Toggles forms (Design/Types ke liye)
         Route::get('/card/create', [CardController::class, 'create'])->name('card.create');
         
         Route::post('/card/store', [CardController::class, 'store'])->name('card.store');
