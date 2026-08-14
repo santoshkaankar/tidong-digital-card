@@ -54,4 +54,4 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 EXPOSE 80
 
 # Use an entrypoint or CMD script to clear config cache and run migrations safely when container starts
-CMD php artisan config:clear && php artisan migrate --force && apache2-foreground
+CMD mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite && php artisan config:clear && php artisan migrate --force && apache2-foreground
