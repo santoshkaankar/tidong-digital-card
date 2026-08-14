@@ -230,7 +230,7 @@ class CardController extends Controller
         foreach ($locations as $loc) {
             $formattedData[] = [
                 'id' => $loc->pincode,
-                'text' => $loc->office_name . ' - ' . ($loc->pincode ?? '') . ' (' . $loc->district . ', ' . $loc->state_name . ')',
+                'hitext' => $loc->office_name . ' - ' . ($loc->pincode ?? '') . ' (' . $loc->district . ', ' . $loc->state_name . ')',
                 'area' => $loc->office_name,
                 'pincode' => $loc->pincode,
                 'city' => $loc->district,
