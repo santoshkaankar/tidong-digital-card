@@ -26,7 +26,7 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
-# Create SQLite database directory & file FIRST before composer/npm
+# Create SQLite database directory & file FIRST
 RUN mkdir -p /var/www/html/database && \
     touch /var/www/html/database/database.sqlite && \
     chown -R www-data:www-data /var/www/html/database && \
@@ -42,6 +42,10 @@ RUN mkdir -p /var/www/html/storage/framework/sessions \
 
 # Install PHP dependencies via composer safely
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+# Force absolute SQLite path in .env
+RUN echo "DB_CONNECTION=sqlite" >> .env && \
+    echo "DB_DATABASE=/var/www/html/database/database.sqlite" >> .env
 
 # Install NPM dependencies and build Vite assets
 RUN npm install && npm run build
