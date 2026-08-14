@@ -24,6 +24,17 @@ Route::get('/debug-pincodes', function () {
     }
 });
 
+Route::get('/run-fresh-migration', function () {
+    try {
+        // Saari tables drop karke migrations aur seeders run karega
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
+        
+        return "<h1>Success!</h1><p>Database fresh migrate ho gaya hai aur seeders chal chuke hain.</p><p><a href='/login'>Go to Login</a></p>";
+    } catch (\Exception $e) {
+        return "<h1>Error:</h1> " . $e->getMessage();
+    }
+});
+
 // ==========================================
 // SECURE & LOCKED DATABASE INITIALIZATION
 // ==========================================
