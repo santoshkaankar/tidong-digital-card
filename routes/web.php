@@ -180,17 +180,20 @@ Route::middleware(['auth'])->group(function () {
             return view('member.search');
         })->name('search');
 
-        // Card Management Routes (Registered with all potential aliases cleanly)
+        // Card Management Routes
         Route::get('/cards', [CardController::class, 'index'])->name('cards.index');
         Route::get('/cards-list', [CardController::class, 'index'])->name('card.index');
-        Route::get('/cards-group', [CardController::class, 'index'])->name('cards'); 
         
+        // 1. Card Detail Form (Data save karne ke liye)
+        Route::get('/card/configure', [CardController::class, 'configure'])->name('card.configure');
+        
+        // 2. Create Card / Toggles forms (Design/Types ke liye)
         Route::get('/card/create', [CardController::class, 'create'])->name('card.create');
+        
         Route::post('/card/store', [CardController::class, 'store'])->name('card.store');
         Route::get('/card/{id}', [CardController::class, 'show'])->name('card.show');
         Route::get('/search-locations', [CardController::class, 'searchLocations'])->name('search.locations');
         
-        // Card Display Update Route
         Route::put('/card/{id}/update-display', [CardController::class, 'updateDisplay'])->name('card.update.display');
     });
 

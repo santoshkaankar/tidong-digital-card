@@ -16,12 +16,16 @@
         <li>
             <a href="#"><i class="fas fa-users"></i> Friend Circle</a>
         </li>
-        <li class="{{ request()->routeIs('member.card.create') && !request()->has('type') ? 'active' : '' }}">
-            <a href="{{ route('member.card.create') }}"><i class="fas fa-id-badge"></i> Card Detail</a>
-        </li>
         
-        <!-- Create Card Dropdown / Links with All Card Types -->
-        <li class="{{ request()->routeIs('member.card.create') && request()->has('type') ? 'active' : '' }}">
+        <!-- 1. Card Detail Menu (Before Create Card) -->
+        <li class="{{ request()->routeIs('member.card.configure') ? 'active' : '' }}">
+            <a href="{{ route('member.card.configure') }}">
+                <i class="fas fa-id-badge text-warning"></i> Card Detail
+            </a>
+        </li>
+
+        <!-- 2. Create Card Menu with Old Card Types -->
+        <li class="{{ request()->routeIs('member.card.create') ? 'active' : '' }}">
             <a href="#cardSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                 <i class="fas fa-plus-circle text-success"></i> Create Card
             </a>

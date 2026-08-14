@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\VisitingCard;
+use App\Models\Country;
+use App\Models\State;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,17 +18,29 @@ class CardController extends Controller
         return view('member.card.cards-index', compact('cards'));
     }
 
+    // 1. Card Detail Form (Data save/feeding ke liye)
+    public function configure(Request $request)
+{
+    $countries = Country::all();
+    $states = State::all();
+    
+    // Yahan direct apna form return karwayein, modern-create nahi!
+    return view('member.card.configure', compact('countries', 'states'));
+}
+
+    // 2. Create Card & Toggles Display ke liye
     public function create(Request $request)
     {
-        // Defaulting to visiting-card so 'Card Detail' opens the correct input form
-        $type = $request->get('type', 'visiting-card');
-        $viewName = "member.card.{$type}-create";
+        $type = $request->get('type', 'modern');
+        $countries = Country::all();
+        $states = State::all();
         
+        $viewName = "member.card.{$type}-create";
         if (view()->exists($viewName)) {
-            return view($viewName);
+            return view($viewName, compact('countries', 'states'));
         }
         
-        return view('member.card.visiting-card-create');
+        return view('member.card.modern-create', compact('countries', 'states'));
     }
 
     public function store(Request $request)
@@ -40,31 +53,48 @@ class CardController extends Controller
             'whatsapp' => 'nullable|string|max:20',
             'gmail' => 'nullable|email|max:255',
             'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
+            'country_id' => 'nullable|exists:countries,id',
+            'state_id' => 'nullable|exists:states,id',
             'design_type' => 'nullable|string|max:50',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'qr_code' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Photo Upload
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('photos', 'public');
         }
 
-        // QR Code Upload
         $qrPath = null;
         if ($request->hasFile('qr_code')) {
             $qrPath = $request->file('qr_code')->store('qrcodes', 'public');
         }
 
-        $designType = $request->input('design_type', 'visiting-card');
+        // --- Unique Card Number Generation Formula via Database ---
+        $tidongId = '12';
+
+        $countryObj = Country::find($request->input('country_id'));
+        $countryCode = $countryObj ? $countryObj->code : '091';
+
+        $stateObj = State::find($request->input('state_id'));
+        $stateCode = $stateObj ? $stateObj->code : '08';
+        $stateName = $stateObj ? $stateObj->name : 'Rajasthan';
+
+        $stateCardCount = VisitingCard::where('state', 'LIKE', "%{$stateName}%")->count() + 1;
+        $serialNo = str_pad($stateCardCount, 7, '0', STR_PAD_LEFT);
+
+        $generatedCardNo = "{$tidongId}{$countryCode}-{$stateCode}{$serialNo}";
+        // ----------------------------------------------------------
+
+        $designType = $request->input('design_type', 'modern');
 
         $data = $request->all();
         $data['user_id'] = Auth::id();
         $data['plan_type'] = 'free';
         $data['card_type'] = $designType;
-        $data['card_no'] = 'TDC-' . strtoupper(Str::random(6));
+        $data['design_type'] = $designType;
+        $data['card_no'] = $generatedCardNo;
+        $data['state'] = $stateName;
         $data['photo'] = $photoPath;
         $data['qr_code'] = $qrPath;
 
@@ -81,33 +111,38 @@ class CardController extends Controller
         VisitingCard::create($data);
 
         return redirect()->route('member.cards.index')
-                         ->with('success', 'Digital Visiting Card successfully create ho gaya!');
+                         ->with('success', 'Digital Visiting Card successfully save ho gaya!');
     }
 
     public function show($id)
     {
         $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        $type = $card->card_type ?? $card->design_type ?? 'visiting-card';
+        $type = strtolower(trim($card->card_type ?? $card->design_type ?? 'modern'));
+        $type = str_replace(['_', ' '], '-', $type);
 
         $viewName = "member.card.{$type}-view";
         if (view()->exists($viewName)) {
             return view($viewName, compact('card'));
         }
 
-        return view('member.card.visiting-card-view', compact('card'));
+        return view('member.card.modern-view', compact('card'));
     }
 
     public function edit($id)
     {
         $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        $type = $card->card_type ?? $card->design_type ?? 'visiting-card';
+        $countries = Country::all();
+        $states = State::all();
+
+        $type = strtolower(trim($card->card_type ?? $card->design_type ?? 'modern'));
+        $type = str_replace(['_', ' '], '-', $type);
         
         $viewName = "member.card.{$type}-create";
         if (view()->exists($viewName)) {
-            return view($viewName, compact('card'));
+            return view($viewName, compact('card', 'countries', 'states'));
         }
 
-        return view('member.card.visiting-card-create', compact('card'));
+        return view('member.card.modern-create', compact('card', 'countries', 'states'));
     }
 
     public function update(Request $request, $id)
@@ -156,25 +191,6 @@ class CardController extends Controller
 
         return redirect()->route('member.cards.index')
                          ->with('success', 'Visiting card successfully update ho gaya!');
-    }
-
-    public function updateDisplay(Request $request, $id)
-    {
-        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        
-        $card->update([
-            'show_business' => $request->has('show_business') ? 1 : 0,
-            'show_phone' => $request->has('show_phone') ? 1 : 0,
-            'show_whatsapp' => $request->has('show_whatsapp') ? 1 : 0,
-            'show_gmail' => $request->has('show_gmail') ? 1 : 0,
-            'show_facebook' => $request->has('show_facebook') ? 1 : 0,
-            'show_instagram' => $request->has('show_instagram') ? 1 : 0,
-            'show_website' => $request->has('show_website') ? 1 : 0,
-            'show_address' => $request->has('show_address') ? 1 : 0,
-        ]);
-
-        return redirect()->route('member.cards.index')
-                         ->with('success', 'Card preferences updated successfully!');
     }
 
     public function destroy($id)
