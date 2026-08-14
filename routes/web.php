@@ -243,6 +243,7 @@ Route::middleware(['auth'])->group(function () {
         
         // 1. Card Detail Form (Data save karne ke liye)
         Route::get('/card/configure', [CardController::class, 'configure'])->name('card.configure');
+        Route::put('/card/{id}', [CardController::class, 'update'])->name('card.update');
         
         // 2. Create Card / Toggles forms (Design/Types ke liye)
         Route::get('/card/create', [CardController::class, 'create'])->name('card.create');

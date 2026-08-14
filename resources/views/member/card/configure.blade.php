@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Digital Visiting Card - Tidong® Portal</title>
+    <title>{{ isset($card) ? 'Edit' : 'Create' }} Digital Visiting Card - Tidong® Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -47,8 +47,8 @@
                     <div class="form-card p-4 p-md-5">
                         <div class="text-center mb-5">
                             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-2">✨ User Portal Studio</span>
-                            <h2 class="fw-bold text-dark">Create Your Digital Visiting Card</h2>
-                            <p class="text-muted">Stand out digitally with your own standardd interactive business card & catalog.</p>
+                            <h2 class="fw-bold text-dark">{{ isset($card) ? 'Update Your Digital Visiting Card' : 'Create Your Digital Visiting Card' }}</h2>
+                            <p class="text-muted">Stand out digitally with your own standard interactive business card & catalog.</p>
                         </div>
 
                         @if(session('success'))
@@ -68,26 +68,30 @@
                             </div>
                         @endif
 
-                        <form action="{{ route('member.card.store') }}" method="POST" enctype="multipart/form-data">
+                        <!-- Yahan Form action aur PUT method check lagaya hai -->
+                        <form action="{{ isset($card) ? route('member.card.update', $card->id) : route('member.card.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
+                            @if(isset($card))
+                                @method('PUT')
+                            @endif
 
                             <div class="form-section-title">1. Basic & Personal Details</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-secondary small">Person / Card Holder Name *</label>
-                                    <input type="text" name="name" class="form-control bg-light" required placeholder="e.g. Santosh Kumar Sharma" value="{{ old('name') }}">
+                                    <input type="text" name="name" class="form-control bg-light" required placeholder="e.g. Santosh Kumar Sharma" value="{{ old('name', $card->name ?? '') }}">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold text-secondary small">Business / Store Name *</label>
-                                    <input type="text" name="business_name" class="form-control bg-light" required placeholder="e.g. Tidong Marketing Pvt Ltd" value="{{ old('business_name') }}">
+                                    <label class="form-label fw-bold text-secondary small">Business / Profession *</label>
+                                    <input type="text" name="business_name" class="form-control bg-light" required placeholder="e.g. Tidong Marketing Pvt Ltd" value="{{ old('business_name', $card->business_name ?? '') }}">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label text-secondary small">Tagline / Slogan</label>
-                                    <input type="text" name="tagline" class="form-control bg-light" placeholder="e.g. Quality You Can Trust" value="{{ old('tagline') }}">
+                                    <input type="text" name="tagline" class="form-control bg-light" placeholder="e.g. Quality You Can Trust" value="{{ old('tagline', $card->tagline ?? '') }}">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label text-secondary small">Nick Name (Optional)</label>
-                                    <input type="text" name="owner_name" class="form-control bg-light" placeholder="e.g. Kaankar" value="{{ old('owner_name') }}">
+                                    <input type="text" name="owner_name" class="form-control bg-light" placeholder="e.g. Kaankar" value="{{ old('owner_name', $card->owner_name ?? '') }}">
                                 </div>
                             </div>
 
@@ -95,15 +99,15 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold text-secondary small">Primary Phone *</label>
-                                    <input type="text" name="phone" class="form-control bg-light" required placeholder="9876543210" value="{{ old('phone') }}">
+                                    <input type="text" name="phone" class="form-control bg-light" required placeholder="98765xxxxx" value="{{ old('phone', $card->phone ?? '') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">Alternate Phone</label>
-                                    <input type="text" name="alt_phone" class="form-control bg-light" placeholder="9123456780" value="{{ old('alt_phone') }}">
+                                    <input type="text" name="alt_phone" class="form-control bg-light" placeholder="91234xxxxx" value="{{ old('alt_phone', $card->alt_phone ?? '') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">WhatsApp Number</label>
-                                    <input type="text" name="whatsapp" class="form-control bg-light" placeholder="9876543210" value="{{ old('whatsapp') }}">
+                                    <input type="text" name="whatsapp" class="form-control bg-light" placeholder="98765xxxxx" value="{{ old('whatsapp', $card->whatsapp ?? '') }}">
                                 </div>
                             </div>
 
@@ -111,42 +115,42 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">Gmail</label>
-                                    <input type="email" name="gmail" class="form-control bg-light" placeholder="example@gmail.com" value="{{ old('gmail') }}">
+                                    <input type="email" name="gmail" class="form-control bg-light" placeholder="example@gmail.com" value="{{ old('gmail', $card->gmail ?? '') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">Yahoo Email</label>
-                                    <input type="email" name="yahoo_email" class="form-control bg-light" placeholder="example@yahoo.com" value="{{ old('yahoo_email') }}">
+                                    <input type="email" name="yahoo_email" class="form-control bg-light" placeholder="example@yahoo.com" value="{{ old('yahoo_email', $card->yahoo_email ?? '') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">Other Email</label>
-                                    <input type="email" name="other_email" class="form-control bg-light" placeholder="business@domain.com" value="{{ old('other_email') }}">
+                                    <input type="email" name="other_email" class="form-control bg-light" placeholder="business@domain.com" value="{{ old('other_email', $card->other_email ?? '') }}">
                                 </div>
                             </div>
 
                             <div class="form-section-title">4. Social Media & Web Links</div>
                             <div class="row g-3 mb-4">
-                                <div class="col-md-4"><input type="text" name="facebook" class="form-control bg-light" placeholder="Facebook URL" value="{{ old('facebook') }}"></div>
-                                <div class="col-md-4"><input type="text" name="instagram" class="form-control bg-light" placeholder="Instagram URL" value="{{ old('instagram') }}"></div>
-                                <div class="col-md-4"><input type="text" name="twitter_x" class="form-control bg-light" placeholder="Twitter / X URL" value="{{ old('twitter_x') }}"></div>
-                                <div class="col-md-4"><input type="text" name="linkedin" class="form-control bg-light" placeholder="LinkedIn URL" value="{{ old('linkedin') }}"></div>
-                                <div class="col-md-4"><input type="text" name="youtube" class="form-control bg-light" placeholder="YouTube Channel URL" value="{{ old('youtube') }}"></div>
-                                <div class="col-md-4"><input type="text" name="telegram" class="form-control bg-light" placeholder="Telegram Link" value="{{ old('telegram') }}"></div>
-                                <div class="col-md-6"><input type="text" name="website_link" class="form-control bg-light" placeholder="Official Website Link" value="{{ old('website_link') }}"></div>
-                                <div class="col-md-6"><input type="text" name="map_location_link" class="form-control bg-light" placeholder="Google Map Location Link" value="{{ old('map_location_link') }}"></div>
+                                <div class="col-md-4"><input type="text" name="facebook" class="form-control bg-light" placeholder="Facebook URL" value="{{ old('facebook', $card->facebook ?? '') }}"></div>
+                                <div class="col-md-4"><input type="text" name="instagram" class="form-control bg-light" placeholder="Instagram URL" value="{{ old('instagram', $card->instagram ?? '') }}"></div>
+                                <div class="col-md-4"><input type="text" name="twitter_x" class="form-control bg-light" placeholder="Twitter / X URL" value="{{ old('twitter_x', $card->twitter_x ?? '') }}"></div>
+                                <div class="col-md-4"><input type="text" name="linkedin" class="form-control bg-light" placeholder="LinkedIn URL" value="{{ old('linkedin', $card->linkedin ?? '') }}"></div>
+                                <div class="col-md-4"><input type="text" name="youtube" class="form-control bg-light" placeholder="YouTube Channel URL" value="{{ old('youtube', $card->youtube ?? '') }}"></div>
+                                <div class="col-md-4"><input type="text" name="telegram" class="form-control bg-light" placeholder="Telegram Link" value="{{ old('telegram', $card->telegram ?? '') }}"></div>
+                                <div class="col-md-6"><input type="text" name="website_link" class="form-control bg-light" placeholder="Official Website Link" value="{{ old('website_link', $card->website_link ?? '') }}"></div>
+                                <div class="col-md-6"><input type="text" name="map_location_link" class="form-control bg-light" placeholder="Google Map Location Link" value="{{ old('map_location_link', $card->map_location_link ?? '') }}"></div>
                             </div>
 
                             <div class="form-section-title">5. Payment Apps Numbers</div>
                             <div class="row g-3 mb-4">
-                                <div class="col-md-3"><input type="text" name="phonepe" class="form-control bg-light" placeholder="PhonePe Number" value="{{ old('phonepe') }}"></div>
-                                <div class="col-md-3"><input type="text" name="gpay" class="form-control bg-light" placeholder="Google Pay Number" value="{{ old('gpay') }}"></div>
-                                <div class="col-md-3"><input type="text" name="paytm" class="form-control bg-light" placeholder="Paytm Number" value="{{ old('paytm') }}"></div>
-                                <div class="col-md-3"><input type="text" name="upi_id" class="form-control bg-light" placeholder="UPI ID (e.g. @ybl)" value="{{ old('upi_id') }}"></div>
+                                <div class="col-md-3"><input type="text" name="phonepe" class="form-control bg-light" placeholder="PhonePe Number" value="{{ old('phonepe', $card->phonepe ?? '') }}"></div>
+                                <div class="col-md-3"><input type="text" name="gpay" class="form-control bg-light" placeholder="Google Pay Number" value="{{ old('gpay', $card->gpay ?? '') }}"></div>
+                                <div class="col-md-3"><input type="text" name="paytm" class="form-control bg-light" placeholder="Paytm Number" value="{{ old('paytm', $card->paytm ?? '') }}"></div>
+                                <div class="col-md-3"><input type="text" name="upi_id" class="form-control bg-light" placeholder="UPI ID (e.g. @ybl)" value="{{ old('upi_id', $card->upi_id ?? '') }}"></div>
                             </div>
 
                             <div class="form-section-title">6. About Us / Description</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-12">
-                                    <textarea name="about_us" class="form-control bg-light" rows="3" placeholder="Write something about your business...">{{ old('about_us') }}</textarea>
+                                    <textarea name="about_us" class="form-control bg-light" rows="3" placeholder="Write something about your business...">{{ old('about_us', $card->about_us ?? '') }}</textarea>
                                 </div>
                             </div>
 
@@ -154,10 +158,16 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-secondary small">Profile Photo / Logo</label>
+                                    @if(isset($card) && $card->photo)
+                                        <div class="mb-2"><small class="text-success">Current: {{ basename($card->photo) }}</small></div>
+                                    @endif
                                     <input type="file" name="photo" class="form-control bg-light">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-secondary small">Payment QR Code Image</label>
+                                    @if(isset($card) && $card->qr_code)
+                                        <div class="mb-2"><small class="text-success">Current: {{ basename($card->qr_code) }}</small></div>
+                                    @endif
                                     <input type="file" name="qr_code" class="form-control bg-light">
                                 </div>
                             </div>
@@ -165,36 +175,48 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold text-secondary small">House No. / Street / Landmark</label>
-                                    <input type="text" name="address" class="form-control bg-light" placeholder="e.g. Plot No 12, Main Street" value="{{ old('address') }}">
+                                    <input type="text" name="address" class="form-control bg-light" placeholder="e.g. Plot No 12, Main Street" value="{{ old('address', $card->address ?? '') }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label fw-bold text-secondary small">Area *</label>
-                                    <select id="area_search" name="area" class="form-control bg-light" required></select>
+                                    <select id="area_search" name="area" class="form-control bg-light" required>
+                                        @if(isset($card) && $card->area)
+                                            <option value="{{ $card->area }}" selected>{{ $card->area }}</option>
+                                        @endif
+                                    </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label fw-bold text-secondary small">Pincode *</label>
-                                    <select id="pincode_search" name="pincode" class="form-control bg-light" required></select>
+                                    <select id="pincode_search" name="pincode" class="form-control bg-light" required>
+                                        @if(isset($card) && $card->pincode)
+                                            <option value="{{ $card->pincode }}" selected>{{ $card->pincode }}</option>
+                                        @endif
+                                    </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label fw-bold text-secondary small">City *</label>
-                                    <select id="city_search" name="city" class="form-control bg-light" required></select>
+                                    <select id="city_search" name="city" class="form-control bg-light" required>
+                                        @if(isset($card) && $card->city)
+                                            <option value="{{ $card->city }}" selected>{{ $card->city }}</option>
+                                        @endif
+                                    </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label fw-bold text-secondary small">State *</label>
-                                    <input type="text" id="state" name="state" class="form-control bg-light" required readonly placeholder="Auto-filled" value="{{ old('state') }}">
+                                    <input type="text" id="state" name="state" class="form-control bg-light" required readonly placeholder="Auto-filled" value="{{ old('state', $card->state ?? '') }}">
                                 </div>
                             </div>
 
                             <div class="form-section-title">8. Other Details</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-12">
-                                    <textarea name="services_or_products" class="form-control bg-light" rows="3" placeholder="Add other details here...">{{ old('services_or_products') }}</textarea>
+                                    <textarea name="services_or_products" class="form-control bg-light" rows="3" placeholder="Add other details here...">{{ old('services_or_products', $card->services_or_products ?? '') }}</textarea>
                                 </div>
                             </div>
 
                             <div class="d-grid mt-4">
                                 <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold shadow-sm">
-                                    Save & Continue 🚀
+                                    {{ isset($card) ? 'Update Details 🚀' : 'Save & Continue 🚀' }}
                                 </button>
                             </div>
 

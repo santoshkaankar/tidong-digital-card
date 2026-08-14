@@ -20,14 +20,18 @@ class CardController extends Controller
 
     // 1. Card Detail Form (Data save/feeding ke liye)
     public function configure(Request $request)
-{
-    $countries = Country::all();
-    $states = State::all();
-    
-    // Yahan direct apna form return karwayein, modern-create nahi!
-    return view('member.card.configure', compact('countries', 'states'));
-}
+    {
+        $countries = Country::all();
+        $states = State::all();
+        
+        // Check karein ki is user ka pehle se card hai ya nahi
+        $card = VisitingCard::where('user_id', Auth::id())->first();
+        
+        // Seedha configure view ko pass kar rahe hain data ke sath
+        return view('member.card.configure', compact('countries', 'states', 'card'));
+    }
 
+    
     // 2. Create Card & Toggles Display ke liye
     public function create(Request $request)
     {
