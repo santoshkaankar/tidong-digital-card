@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
+    sqlite3 \
+    libsqlite3-dev \
     nodejs \
     npm
 
@@ -30,12 +32,11 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-pl
 # Install NPM dependencies and build Vite assets
 RUN npm install && npm run build
 
-# Create SQLite database directory & file with absolute path, and run migrations
+# Create SQLite database directory & file with absolute path, and set permissions
 RUN mkdir -p /var/www/html/database && \
     touch /var/www/html/database/database.sqlite && \
     chown -R www-data:www-data /var/www/html/database && \
-    chmod -R 775 /var/www/html/database && \
-    php artisan migrate --force
+    chmod -R 775 /var/www/html/database
 
 # Set permissions for storage and bootstrap cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
@@ -52,4 +53,5 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+# Use an entrypoint or CMD script to clear config cache and run migrations safely when container starts
+CMD php artisan config:clear && php artisan migrate --force && apache2-foreground
