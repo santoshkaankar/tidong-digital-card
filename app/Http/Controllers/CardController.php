@@ -4,214 +4,265 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\VisitingCard;
+use App\Models\UserCardView;
 use App\Models\Country;
 use App\Models\State;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CardController extends Controller
 {
     public function index()
     {
-        $cards = VisitingCard::where('user_id', Auth::id())->get();
-        return view('member.card.cards-index', compact('cards'));
+        $masterCard = VisitingCard::where('user_id', Auth::id())->first();
+        
+        if (!$masterCard) {
+            return redirect()->route('member.card.configure')
+                ->with('info', 'Pahle apni Master Profile details complete karein.');
+        }
+
+        $cardViews = UserCardView::where('user_id', Auth::id())->latest()->get();
+
+        return view('member.card.cards-index', compact('masterCard', 'cardViews'));
     }
 
-    // 1. Card Detail Form (Data save/feeding ke liye)
     public function configure(Request $request)
     {
         $countries = Country::all();
         $states = State::all();
-        
-        // Check karein ki is user ka pehle se card hai ya nahi
         $card = VisitingCard::where('user_id', Auth::id())->first();
-        
-        // Seedha configure view ko pass kar rahe hain data ke sath
+
         return view('member.card.configure', compact('countries', 'states', 'card'));
     }
 
-    
-    // 2. Create Card & Toggles Display ke liye
-    public function create(Request $request)
+    // Handles GET /member/card/create directly
+    public function create()
     {
-        $type = $request->get('type', 'modern');
-        $countries = Country::all();
-        $states = State::all();
-        
-        $viewName = "member.card.{$type}-create";
-        if (view()->exists($viewName)) {
-            return view($viewName, compact('countries', 'states'));
+        $masterCard = VisitingCard::where('user_id', Auth::id())->first();
+
+        if (!$masterCard) {
+            return redirect()->route('member.card.configure')
+                ->with('info', 'Pahle apni Master Profile details complete karein.');
         }
-        
-        return view('member.card.modern-create', compact('countries', 'states'));
+
+        return view('member.card.create_design', compact('masterCard'));
     }
 
-    public function store(Request $request)
+    public function storeMaster(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'business_name' => 'nullable|string|max:255',
-            'phone' => 'required|string|max:20',
-            'alt_phone' => 'nullable|string|max:20',
-            'whatsapp' => 'nullable|string|max:20',
-            'gmail' => 'nullable|email|max:255',
-            'city' => 'nullable|string|max:100',
-            'country_id' => 'nullable|exists:countries,id',
-            'state_id' => 'nullable|exists:states,id',
-            'design_type' => 'nullable|string|max:50',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'qr_code' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'name'                  => 'required|string|max:255',
+            'designation'           => 'nullable|string|max:255',
+            'business_name'         => 'nullable|string|max:255',
+            'tagline'               => 'nullable|string|max:255',
+            'owner_name'            => 'nullable|string|max:255',
+            'nickname'              => 'nullable|string|max:255',
+            'phone'                 => 'required|string|max:20',
+            'alt_phone'             => 'nullable|string|max:20',
+            'whatsapp'              => 'nullable|string|max:20',
+            'gmail'                 => 'nullable|email|max:255',
+            'yahoo_email'           => 'nullable|email|max:255',
+            'other_email'           => 'nullable|email|max:255',
+            'facebook'              => 'nullable|string|max:255',
+            'instagram'             => 'nullable|string|max:255',
+            'linkedin'              => 'nullable|string|max:255',
+            'youtube'               => 'nullable|string|max:255',
+            'telegram'              => 'nullable|string|max:255',
+            'website'               => 'nullable|string|max:255',
+            'location_url'          => 'nullable|string|max:500',
+            'gpay'                  => 'nullable|string|max:50',
+            'paytm'                 => 'nullable|string|max:50',
+            'upi_id'                => 'nullable|string|max:255',
+            'address'               => 'nullable|string|max:500',
+            'area'                  => 'nullable|string|max:255',
+            'pincode'               => 'nullable|string|max:20',
+            'city'                  => 'nullable|string|max:100',
+            'state'                 => 'nullable|string|max:100',
+            'about_us'              => 'nullable|string',
+            'services_or_products'  => 'nullable|string',
+            'other_details'         => 'nullable|string',
+            'country_id'            => 'nullable|exists:countries,id',
+            'state_id'              => 'nullable|exists:states,id',
+            'photo'                 => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'qr_code'               => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        $photoPath = null;
+        $card = VisitingCard::firstOrNew(['user_id' => Auth::id()]);
+
+        if (!$card->exists) {
+            $tidongId = '12';
+            $countryObj = Country::find($request->input('country_id'));
+            $countryCode = $countryObj ? $countryObj->code : '091';
+
+            $stateObj = State::find($request->input('state_id'));
+            $stateCode = $stateObj ? $stateObj->code : '08';
+            $stateName = $stateObj ? $stateObj->name : 'Rajasthan';
+
+            $stateCardCount = VisitingCard::where('state', 'LIKE', "%{$stateName}%")->count() + 1;
+            $serialNo = str_pad($stateCardCount, 7, '0', STR_PAD_LEFT);
+
+            $card->card_no = "{$tidongId}{$countryCode}-{$stateCode}{$serialNo}";
+            $card->state   = $stateName;
+            $card->plan_type = 'free';
+        }
+
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('photos', 'public');
+            if ($card->photo && Storage::disk('public')->exists($card->photo)) {
+                Storage::disk('public')->delete($card->photo);
+            }
+            $card->photo = $request->file('photo')->store('photos', 'public');
         }
 
-        $qrPath = null;
         if ($request->hasFile('qr_code')) {
-            $qrPath = $request->file('qr_code')->store('qrcodes', 'public');
+            if ($card->qr_code && Storage::disk('public')->exists($card->qr_code)) {
+                Storage::disk('public')->delete($card->qr_code);
+            }
+            $card->qr_code = $request->file('qr_code')->store('qrcodes', 'public');
         }
 
-        // --- Unique Card Number Generation Formula via Database ---
-        $tidongId = '12';
+        $card->fill($request->except(['_token', 'photo', 'qr_code']));
+        $card->save();
 
-        $countryObj = Country::find($request->input('country_id'));
-        $countryCode = $countryObj ? $countryObj->code : '091';
-
-        $stateObj = State::find($request->input('state_id'));
-        $stateCode = $stateObj ? $stateObj->code : '08';
-        $stateName = $stateObj ? $stateObj->name : 'Rajasthan';
-
-        $stateCardCount = VisitingCard::where('state', 'LIKE', "%{$stateName}%")->count() + 1;
-        $serialNo = str_pad($stateCardCount, 7, '0', STR_PAD_LEFT);
-
-        $generatedCardNo = "{$tidongId}{$countryCode}-{$stateCode}{$serialNo}";
-        // ----------------------------------------------------------
-
-        $designType = $request->input('design_type', 'modern');
-
-        $data = $request->all();
-        $data['user_id'] = Auth::id();
-        $data['plan_type'] = 'free';
-        $data['card_type'] = $designType;
-        $data['design_type'] = $designType;
-        $data['card_no'] = $generatedCardNo;
-        $data['state'] = $stateName;
-        $data['photo'] = $photoPath;
-        $data['qr_code'] = $qrPath;
-
-        // Visibility Toggles
-        $data['show_business'] = $request->has('show_business') ? 1 : 0;
-        $data['show_phone'] = $request->has('show_phone') ? 1 : 0;
-        $data['show_whatsapp'] = $request->has('show_whatsapp') ? 1 : 0;
-        $data['show_gmail'] = $request->has('show_gmail') ? 1 : 0;
-        $data['show_facebook'] = $request->has('show_facebook') ? 1 : 0;
-        $data['show_instagram'] = $request->has('show_instagram') ? 1 : 0;
-        $data['show_website'] = $request->has('show_website') ? 1 : 0;
-        $data['show_address'] = $request->has('show_address') ? 1 : 0;
-
-        VisitingCard::create($data);
-
-        return redirect()->route('member.cards.index')
-                         ->with('success', 'Digital Visiting Card successfully save ho gaya!');
+        return redirect()->route('member.card.view.create')
+            ->with('success', 'Master profile successfully save ho gayi!');
     }
 
-    public function show($id)
+    public function update(Request $request, $id = null)
     {
-        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        $type = strtolower(trim($card->card_type ?? $card->design_type ?? 'modern'));
-        $type = str_replace(['_', ' '], '-', $type);
-
-        $viewName = "member.card.{$type}-view";
-        if (view()->exists($viewName)) {
-            return view($viewName, compact('card'));
-        }
-
-        return view('member.card.modern-view', compact('card'));
+        return $this->storeMaster($request);
     }
 
-    public function edit($id)
+    public function createDesign()
     {
-        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        $countries = Country::all();
-        $states = State::all();
-
-        $type = strtolower(trim($card->card_type ?? $card->design_type ?? 'modern'));
-        $type = str_replace(['_', ' '], '-', $type);
-        
-        $viewName = "member.card.{$type}-create";
-        if (view()->exists($viewName)) {
-            return view($viewName, compact('card', 'countries', 'states'));
-        }
-
-        return view('member.card.modern-create', compact('card', 'countries', 'states'));
+        return $this->create();
     }
 
-    public function update(Request $request, $id)
+    public function storeDesign(Request $request)
     {
-        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        
         $request->validate([
-            'name' => 'required|string|max:255',
-            'business_name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'qr_code' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'theme_style' => 'required|string',
+            'toggles'     => 'nullable|array'
         ]);
 
-        $photoPath = $card->photo;
-        if ($request->has('remove_photo')) {
-            if ($card->photo && Storage::disk('public')->exists($card->photo)) {
-                Storage::disk('public')->delete($card->photo);
-            }
-            $photoPath = null;
-        } elseif ($request->hasFile('photo')) {
-            if ($card->photo && Storage::disk('public')->exists($card->photo)) {
-                Storage::disk('public')->delete($card->photo);
-            }
-            $photoPath = $request->file('photo')->store('photos', 'public');
-        }
+        $masterCard = VisitingCard::where('user_id', Auth::id())->firstOrFail();
 
-        $qrPath = $card->qr_code;
-        if ($request->has('remove_qr')) {
-            if ($card->qr_code && Storage::disk('public')->exists($card->qr_code)) {
-                Storage::disk('public')->delete($card->qr_code);
-            }
-            $qrPath = null;
-        } elseif ($request->hasFile('qr_code')) {
-            if ($card->qr_code && Storage::disk('public')->exists($card->qr_code)) {
-                Storage::disk('public')->delete($card->qr_code);
-            }
-            $qrPath = $request->file('qr_code')->store('qrcodes', 'public');
-        }
+        $themeCategoryMap = [
+            'default'          => 'A',
+            'classic-modern'   => 'A',
+            'classic-dark'     => 'A',
+            'classic-white'    => 'A',
 
-        $data = $request->all();
-        $data['photo'] = $photoPath;
-        $data['qr_code'] = $qrPath;
+            'fabric-cotton'    => 'B',
+            'fabric-denim'     => 'B',
+            'fabric-silk'      => 'B',
+            'fabric-canvas'    => 'B',
+            'fabric-velvet'    => 'B',
 
-        $card->update($data);
+            'stone-marble'     => 'C',
+            'stone-granite'    => 'C',
+            'stone-slate'      => 'C',
+
+            'wood-oak'         => 'D',
+            'wood-walnut'      => 'D',
+            'wood-teak'        => 'D',
+
+            'metal-gold'       => 'E',
+            'metal-silver'     => 'E',
+            'metal-bronze'     => 'E',
+
+            'leather-black'    => 'F',
+            'vintage-paper'    => 'F',
+            'paper-parchment'  => 'F',
+
+            'crystal-glass'    => 'G',
+            'dark-obsidian'    => 'G',
+        ];
+
+        $selectedTheme = $request->input('theme_style', 'default');
+        $categoryCode  = $themeCategoryMap[$selectedTheme] ?? 'Z';
+
+        $existingCount = UserCardView::where('user_id', Auth::id())
+            ->where('theme_category_code', $categoryCode)
+            ->count();
+
+        $variantNo = $existingCount + 1;
+        $designVariantCode = $categoryCode . $variantNo;
+
+        $fullCardNo = $masterCard->card_no . '-' . $designVariantCode;
+
+        $toggles = [
+            'show_name'          => true,
+
+            'show_photo'         => $request->has('toggles.show_photo'),
+            'show_business_name' => $request->has('toggles.show_business_name'),
+            'show_designation'   => $request->has('toggles.show_designation'),
+            'show_tagline'       => $request->has('toggles.show_tagline'),
+            'show_nickname'      => $request->has('toggles.show_nickname'),
+            
+            'show_phone'         => $request->has('toggles.show_phone'),
+            'show_alt_phone'     => $request->has('toggles.show_alt_phone'),
+            'show_whatsapp'      => $request->has('toggles.show_whatsapp'),
+            
+            'show_gmail'         => $request->has('toggles.show_gmail'),
+            'show_yahoo_email'   => $request->has('toggles.show_yahoo_email'),
+            'show_other_email'   => $request->has('toggles.show_other_email'),
+            
+            'show_website'       => $request->has('toggles.show_website'),
+            'show_facebook'      => $request->has('toggles.show_facebook'),
+            'show_instagram'     => $request->has('toggles.show_instagram'),
+            'show_linkedin'      => $request->has('toggles.show_linkedin'),
+            'show_youtube'       => $request->has('toggles.show_youtube'),
+            'show_telegram'      => $request->has('toggles.show_telegram'),
+            
+            'show_upi_id'        => $request->has('toggles.show_upi_id'),
+            'show_gpay'          => $request->has('toggles.show_gpay'),
+            'show_paytm'         => $request->has('toggles.show_paytm'),
+            'show_qr_code'       => $request->has('toggles.show_qr_code'),
+            
+            'show_about'         => $request->has('toggles.show_about'),
+            'show_other_details' => $request->has('toggles.show_other_details'),
+            
+            'show_address'       => $request->has('toggles.show_address'),
+            'show_area'          => $request->has('toggles.show_area'),
+            'show_pincode'       => $request->has('toggles.show_pincode'),
+            'show_city'          => $request->has('toggles.show_city'),
+            'show_state'         => $request->has('toggles.show_state'),
+            'show_location_url'  => $request->has('toggles.show_location_url'),
+        ];
+
+        UserCardView::create([
+            'user_id'             => Auth::id(),
+            'visiting_card_id'    => $masterCard->id,
+            'card_slug'           => Str::random(8),
+            'theme_style'         => $selectedTheme,
+            'theme_category_code' => $categoryCode,
+            'variant_number'      => $variantNo,
+            'full_card_no'        => $fullCardNo,
+            'field_toggles'       => json_encode($toggles),
+            'is_active'           => true,
+        ]);
 
         return redirect()->route('member.cards.index')
-                         ->with('success', 'Visiting card successfully update ho gaya!');
+            ->with('success', "Naya card variant ($fullCardNo) safaltapurvak create ho gaya hai!");
     }
 
-    public function destroy($id)
+    public function showPublic($slug)
     {
-        $card = VisitingCard::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        
-        if ($card->photo && Storage::disk('public')->exists($card->photo)) {
-            Storage::disk('public')->delete($card->photo);
-        }
-        if ($card->qr_code && Storage::disk('public')->exists($card->qr_code)) {
-            Storage::disk('public')->delete($card->qr_code);
-        }
+        $cardView = UserCardView::where('card_slug', $slug)->firstOrFail();
+        $masterCard = VisitingCard::findOrFail($cardView->visiting_card_id);
 
-        $card->delete();
+        return view('member.card.show', compact('cardView', 'masterCard'));
+    }
+
+    public function destroyView($id)
+    {
+        $view = UserCardView::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $view->delete();
 
         return redirect()->route('member.cards.index')
-                         ->with('success', 'Visiting card successfully delete ho gaya!');
+            ->with('success', 'Card variant successfully delete ho gaya!');
     }
 
     public function searchLocations(Request $request)
@@ -229,12 +280,12 @@ class CardController extends Controller
         $formattedData = [];
         foreach ($locations as $loc) {
             $formattedData[] = [
-                'id' => $loc->pincode,
-                'text' => $loc->office_name . ' - ' . ($loc->pincode ?? '') . ' (' . $loc->district . ', ' . $loc->state_name . ')',
-                'area' => $loc->office_name,
+                'id'      => $loc->pincode,
+                'text'    => $loc->office_name . ' - ' . ($loc->pincode ?? '') . ' (' . $loc->district . ', ' . $loc->state_name . ')',
+                'area'    => $loc->office_name,
                 'pincode' => $loc->pincode,
-                'city' => $loc->district,
-                'state' => $loc->state_name
+                'city'    => $loc->district,
+                'state'   => $loc->state_name
             ];
         }
 

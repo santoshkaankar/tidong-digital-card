@@ -1,0 +1,281 @@
+/* =========================================================
+   1. DIARY FLIP THEME (Booklet Animation)
+   ========================================================= */
+.card-diary-wrapper {
+    perspective: 1000px;
+}
+.card-diary {
+    width: 100%;
+    min-height: 260px;
+    background: #4a2c11; /* Dark Leather */
+    border-radius: 8px 16px 16px 8px;
+    box-shadow: 10px 10px 25px rgba(0,0,0,0.3);
+    border-left: 12px solid #2d1908; /* Book Spine */
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    color: #f4e8c1;
+    padding: 20px;
+}
+.card-diary:hover {
+    transform: rotateY(-10deg) rotateX(5deg);
+}
+
+/* =========================================================
+   2. STONE SLATE THEME (Marble & Engraved Gold)
+   ========================================================= */
+.card-stone {
+    background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);
+    border: 4px solid #34495e;
+    border-radius: 6px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+    color: #d4af37; /* Engraved Metallic Gold */
+    font-family: 'Cinzel', serif, Georgia;
+    position: relative;
+    overflow: hidden;
+}
+.card-stone::before {
+    content: "";
+    position: absolute;
+    top:0; left:0; right:0; bottom:0;
+    background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+    opacity: 0.4;
+}
+
+/* =========================================================
+   3. VINTAGE PAPER THEME (Parchment Paper)
+   ========================================================= */
+.card-paper {
+    background: #fdf6e3;
+    border: 1px solid #d3b88c;
+    border-radius: 2px;
+    box-shadow: 3px 3px 15px rgba(0,0,0,0.1);
+    color: #2b2b2b;
+    font-family: 'Courier Prime', monospace, serif;
+    position: relative;
+    padding: 25px;
+}
+/* Torn Paper Effect Edge */
+.card-paper::after {
+    content: "";
+    position: absolute;
+    bottom: -5px; left: 0; right: 0;
+    height: 6px;
+    background: radial-gradient(circle, transparent, transparent 50%, #fdf6e3 50%, #fdf6e3 100%);
+    background-size: 10px 10px;
+}
+
+/* =========================================================
+   4. FABRIC CANVAS THEME (Textile & Stitching)
+   ========================================================= */
+.card-fabric {
+    background: #34495e;
+    border: 2px dashed #ecf0f1; /* Stitching line */
+    outline: 8px solid #2c3e50;
+    border-radius: 12px;
+    color: #ffffff;
+    position: relative;
+}
+.card-fabric::before {
+    content: "";
+    position: absolute;
+    top:0; left:0; right:0; bottom:0;
+    background: url('https://www.transparenttextures.com/patterns/canvas-orange.png');
+    opacity: 0.2;
+}
+
+/* =========================================================
+   5. CRYSTAL GLASS THEME (Frosted Glassmorphism)
+   ========================================================= */
+.card-crystal {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+    color: #ffffff;
+}
+
+/* =========================================================
+   6. CREDIT CARD STANDARD LAYOUT & BUTTONS
+   ========================================================= */
+.digital-credit-card {
+    width: 100%;
+    max-width: 420px;
+    height: 265px;
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 1.05rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.card-icon-btn:hover {
+    transform: translateY(-3px) scale(1.1);
+}
+
+.hover-underline:hover {
+    text-decoration: underline !important;
+}
+
+/* =========================================================
+   7. 200+ THEME VARIANTS (Solid, Gradients, Neons & Materials)
+   ========================================================= */
+
+/* --- Solid Single Colors --- */
+.theme-solid-red { background: #e74c3c; color: #ffffff; }
+.theme-solid-blue { background: #3498db; color: #ffffff; }
+.theme-solid-green { background: #2ecc71; color: #ffffff; }
+.theme-solid-purple { background: #9b59b6; color: #ffffff; }
+.theme-solid-orange { background: #e67e22; color: #ffffff; }
+.theme-solid-teal { background: #1abc9c; color: #ffffff; }
+.theme-solid-pink { background: #fd79a8; color: #ffffff; }
+.theme-solid-yellow { background: #f1c40f; color: #2c3e50; }
+.theme-solid-navy { background: #2c3e50; color: #ecf0f1; }
+.theme-solid-charcoal { background: #2d3436; color: #dfe6e9; }
+.theme-solid-maroon { background: #800000; color: #ffffff; }
+.theme-solid-olive { background: #556b2f; color: #ffffff; }
+.theme-solid-indigo { background: #4b0082; color: #ffffff; }
+.theme-solid-chocolate { background: #d2691e; color: #ffffff; }
+.theme-solid-slate { background: #708090; color: #ffffff; }
+
+/* --- Multi-Color Gradients --- */
+.theme-gradient-sunset { background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%); color: #ffffff; }
+.theme-gradient-ocean { background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%); color: #ffffff; }
+.theme-gradient-purple-haze { background: linear-gradient(135deg, #7f7fd5 0%, #86a8e7 50%, #91eae4 100%); color: #1e293b; }
+.theme-gradient-emerald { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: #ffffff; }
+.theme-gradient-royal { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); color: #00d2ff; }
+.theme-gradient-fire { background: linear-gradient(135deg, #f12711 0%, #f5af19 100%); color: #ffffff; }
+.theme-gradient-peach { background: linear-gradient(135deg, #ed4264 0%, #ffedbc 100%); color: #2d3436; }
+.theme-gradient-cyberpunk { background: linear-gradient(135deg, #ff007f 0%, #7928ca 100%); color: #ffffff; }
+.theme-gradient-aurora { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); color: #ffffff; }
+.theme-gradient-berry { background: linear-gradient(135deg, #8a2387 0%, #e94057 50%, #f27121 100%); color: #ffffff; }
+.theme-gradient-gold-rush { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: #3b2314; }
+.theme-gradient-midnight { background: linear-gradient(135deg, #232526 0%, #414345 100%); color: #00ffcc; }
+
+/* --- Neon Glow Variants --- */
+.theme-neon-blue { background: #0f172a; color: #38bdf8; border: 2px solid #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+.theme-neon-purple { background: #0f172a; color: #c084fc; border: 2px solid #c084fc; box-shadow: 0 0 15px rgba(192, 132, 252, 0.4); }
+.theme-neon-green { background: #0f172a; color: #4ade80; border: 2px solid #4ade80; box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); }
+.theme-neon-pink { background: #0f172a; color: #f472b6; border: 2px solid #f472b6; box-shadow: 0 0 15px rgba(244, 114, 182, 0.4); }
+
+/* --- Standard & Modern --- */
+.theme-default, .theme-classic-modern {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+}
+.theme-classic-dark {
+    background: #000000;
+    color: #f1f5f9;
+    border: 1px solid #334155;
+}
+.theme-classic-white {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+}
+
+/* --- Fabric & Textile Textures --- */
+.theme-fabric-cotton {
+    background-color: #e5e5f7;
+    background-image: radial-gradient(#444cf7 0.5px, transparent 0.5px), radial-gradient(#444cf7 0.5px, #e5e5f7 0.5px);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+    color: #1a1a1a;
+}
+.theme-fabric-denim {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #ffffff;
+    border: 2px dashed rgba(255,255,255,0.4);
+}
+.theme-fabric-silk {
+    background: linear-gradient(135deg, #654ea3 0%, #eaafc8 100%);
+    color: #ffffff;
+}
+.theme-fabric-canvas {
+    background: #d4b886;
+    background-image: radial-gradient(#8c6239 0.75px, transparent 0.75px);
+    background-size: 6px 6px;
+    color: #3b2314;
+}
+
+/* --- Stone & Marble Textures --- */
+.theme-stone-marble {
+    background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+    border: 1px solid #dcdcdc;
+    color: #2c3e50;
+}
+.theme-stone-granite {
+    background-color: #2b2b2b;
+    background-image: radial-gradient(#666 10%, transparent 11%), radial-gradient(#444 10%, transparent 11%);
+    background-size: 8px 8px;
+    color: #f1f1f1;
+}
+
+/* --- Wood Grains --- */
+.theme-wood-oak {
+    background: linear-gradient(90deg, #d7a15c 0%, #c58b43 50%, #d7a15c 100%);
+    color: #3e2723;
+}
+.theme-wood-walnut {
+    background: linear-gradient(90deg, #4a2c11 0%, #321c07 100%);
+    color: #d7ccc8;
+}
+
+/* --- Metallic Finishes --- */
+.theme-metal-gold {
+    background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%);
+    color: #3d2c04;
+}
+.theme-metal-silver {
+    background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 50%, #424242 100%);
+    color: #111111;
+}
+.theme-metal-rose-gold {
+    background: linear-gradient(135deg, #b76e79 0%, #f4c2c2 50%, #96545f 100%);
+    color: #2c1a1e;
+}
+
+/* --- Leather & Paper --- */
+.theme-paper-parchment {
+    background: #f4ebd0;
+    color: #4a3b32;
+    border: 1px solid #e0d3b6;
+}
+.theme-leather-black {
+    background-color: #1a1a1a;
+    background-image: radial-gradient(#333 15%, transparent 16%);
+    background-size: 4px 4px;
+    color: #ffffff;
+}
+
+/* --- Glass & Obsidian --- */
+.theme-dark-obsidian {
+    background: #090d16;
+    color: #38bdf8;
+    border: 1px solid #1e293b;
+}
+.theme-crystal-glass {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #0f172a;
+}

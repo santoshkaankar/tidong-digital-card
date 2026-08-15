@@ -17,50 +17,18 @@
             <a href="#"><i class="fas fa-users"></i> Friend Circle</a>
         </li>
         
-        <!-- 1. Card Detail Menu (Before Create Card) -->
+        <!-- Card Detail / Master Config -->
         <li class="{{ request()->routeIs('member.card.configure') ? 'active' : '' }}">
             <a href="{{ route('member.card.configure') }}">
                 <i class="fas fa-id-badge text-warning"></i> Card Detail
             </a>
         </li>
 
-        <!-- 2. Create Card Menu with Old Card Types -->
+        <!-- Direct Create Card Link (Submenu removed) -->
         <li class="{{ request()->routeIs('member.card.create') ? 'active' : '' }}">
-            <a href="#cardSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+            <a href="{{ route('member.card.create') }}">
                 <i class="fas fa-plus-circle text-success"></i> Create Card
             </a>
-            <ul class="collapse list-unstyled ps-3" id="cardSubmenu">
-                <li>
-                    <a href="{{ route('member.card.create', ['type' => 'classic']) }}" class="py-1 text-small">
-                        <i class="fas fa-circle-notch text-muted"></i> Classic Card
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('member.card.create', ['type' => 'golden']) }}" class="py-1 text-small">
-                        <i class="fas fa-circle-notch text-warning"></i> Golden Card
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('member.card.create', ['type' => 'diamond']) }}" class="py-1 text-small">
-                        <i class="fas fa-circle-notch text-info"></i> Diamond Card
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('member.card.create', ['type' => 'modern']) }}" class="py-1 text-small">
-                        <i class="fas fa-circle-notch text-primary"></i> Modern Card
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('member.card.create', ['type' => 'standard']) }}" class="py-1 text-small">
-                        <i class="fas fa-circle-notch text-success"></i> Standard Card
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('member.card.create', ['type' => 'regular']) }}" class="py-1 text-small">
-                        <i class="fas fa-circle-notch text-danger"></i> Regular Card
-                    </a>
-                </li>
-            </ul>
         </li>
 
         <li class="{{ request()->routeIs('member.cards.index') ? 'active' : '' }}">

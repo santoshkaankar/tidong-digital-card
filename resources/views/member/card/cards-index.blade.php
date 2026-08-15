@@ -2,76 +2,100 @@
 
 @section('content')
 <div class="container py-4">
-    <!-- Top Bar with Back to Dashboard & Create New Card Button -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <a href="{{ route('member.dashboard') }}" class="btn btn-outline-dark btn-sm">
-            <i class="fas fa-home me-1"></i> Back to Dashboard
-        </a>
-        <h4 class="mb-0 fw-bold">My Digital Visiting Cards</h4>
-        <a href="{{ route('member.card.create') }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-plus me-1"></i> Create New Card
-        </a>
+        <div>
+            <h3 class="fw-bold m-0">My Digital Visiting Cards</h3>
+            <p class="text-muted small m-0">Aapke sabhi custom card variants aur sharing links</p>
+        </div>
+        
+        <!-- Action Buttons Group -->
+        <div class="d-flex align-items-center gap-2">
+            <!-- Back to Dashboard Button Added Here -->
+            <a href="{{ route('member.dashboard') }}" class="btn btn-outline-secondary rounded-3">
+                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+
+            <a href="{{ route('member.card.view.create') }}" class="btn btn-primary rounded-3">
+                <i class="fas fa-plus me-1"></i> Create New Variant
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
             {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    <!-- Cards Listing Grid -->
-    <div class="row">
-        @forelse($cards as $card)
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card shadow-sm border-0 rounded-4 h-100">
-                <div class="card-body d-flex flex-column justify-content-between">
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <!-- Card Type Badge -->
-                            @php
-                                $cardType = $card->card_type ?? $card->design_type ?? 'modern';
-                            @endphp
-                            <span class="badge bg-primary text-uppercase">{{ ucfirst($cardType) }} Style</span>
-                            <span class="text-muted small"><i class="far fa-calendar-alt me-1"></i>{{ $card->created_at ? $card->created_at->format('d M Y') : '' }}</span>
-                        </div>
-                        <span class="badge bg-secondary mb-2">Card No: {{ $card->card_no ?? $card->id }}</span>
-                        <h5 class="fw-bold text-dark mb-2">{{ $card->business_name ?? 'My Business Name' }}</h5>
-                        <p class="mb-1 text-secondary small"><b>Owner:</b> {{ $card->name ?? 'N/A' }}</p>
-                        <p class="mb-3 text-secondary small"><b>Phone:</b> {{ $card->phone ?? 'N/A' }}</p>
+    <div class="row g-4">
+        @forelse($cardViews as $view)
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden">
+                    <div class="card-header bg-transparent border-0 pt-3 px-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-primary-subtle text-primary text-uppercase px-3 py-2 rounded-pill small fw-bold">
+                            {{ ucfirst($view->theme_style) }} Theme
+                        </span>
+                        <small class="text-muted">{{ $view->created_at ? $view->created_at->format('d M, Y') : '' }}</small>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="d-grid gap-2 mt-3">
-                        <a href="{{ route('member.card.show', $card->id) }}" class="btn btn-success btn-sm">
-                            <i class="fas fa-eye me-1"></i> View Card
-                        </a>
+                    <div class="card-body px-3 py-2 text-center bg-light my-2 mx-3 rounded-3" style="transform: scale(0.9); transform-origin: top center; min-height: 180px;">
+                        @include('member.card.render_engine', [
+                            'masterCard'   => $masterCard,
+                            'themeStyle'   => $view->theme_style,
+                            'fullCardNo'   => $view->full_card_no ?? $masterCard->card_no,
+                            'fieldToggles' => $view->field_toggles
+                        ])
+                    </div>
+
+                    <div class="card-footer bg-white border-top-0 p-3">
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control form-control-sm bg-light" readonly value="{{ route('member.card.public', $view->card_slug) }}" id="card-url-{{ $view->id }}">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="copyUrl('card-url-{{ $view->id }}')">
+                                <i class="fa-regular fa-copy"></i> Copy
+                            </button>
+                        </div>
+
                         <div class="d-flex gap-2">
-                            <a href="https://wa.me/?text={{ urlencode('Check out my digital visiting card: ' . route('member.card.show', $card->id)) }}" target="_blank" class="btn btn-outline-success btn-sm w-50">
-                                <i class="fab fa-whatsapp me-1"></i> Share
+                            <a href="{{ route('member.card.public', $view->card_slug) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100 rounded-2">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Preview
                             </a>
-                            <a href="{{ route('member.card.show', $card->id) }}" onclick="window.print(); return false;" class="btn btn-outline-dark btn-sm w-50">
-                                <i class="fas fa-download me-1"></i> Print / PDF
-                            </a>
+                            <form action="{{ route('member.card.view.destroy', $view->id) }}" method="POST" onsubmit="return confirm('Kya aap is card variant ko delete karna chahte hain?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-2">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
         @empty
-        <div class="col-12 text-center py-5">
-            <div class="card border-0 shadow-sm p-4 bg-light">
-                <div class="card-body">
-                    <i class="fas fa-id-card fa-3x text-muted mb-3"></i>
-                    <h5 class="fw-bold text-muted">No Visiting Cards Found</h5>
-                    <p class="text-muted small mb-3">Aapne abhi tak koi digital visiting card nahi banaya hai. Niche diye gaye button par click karke apna pehla card banayein.</p>
-                    <a href="{{ route('member.card.create') }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus me-1"></i> Create Your First Card
-                    </a>
+            <div class="col-12 text-center py-5">
+                <div class="card border-0 shadow-sm p-5 bg-white rounded-4">
+                    <div class="card-body">
+                        <i class="fa-solid fa-id-card text-muted display-4 mb-3"></i>
+                        <p class="text-muted small mb-4">Aapne abhi tak koi digital visiting card nahi banaya hai.</p>
+                        <a href="{{ route('member.card.view.create') }}" class="btn btn-primary px-4 py-2 rounded-pill">
+                            <i class="fas fa-plus me-1"></i> Create Your First Card
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
         @endforelse
     </div>
 </div>
+
+@push('scripts')
+<script>
+function copyUrl(elementId) {
+    var copyText = document.getElementById(elementId);
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert("Card URL Copied: " + copyText.value);
+}
+</script>
+@endpush
 @endsection
