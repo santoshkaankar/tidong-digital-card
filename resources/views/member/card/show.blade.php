@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $masterCard->name ?? 'Digital Business Card' }} - Tidong</title>
     
+    <!-- Meta tags for WhatsApp Link Preview -->
+    <meta property="og:title" content="Check out my digital visiting card: {{ $masterCard->name }}">
+    <meta property="og:description" content="{{ $masterCard->business_name ?? 'Digital Business Card' }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:type" content="website">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome Icons -->
@@ -48,7 +54,7 @@
     </div>
 
     <div class="text-white-50 small mt-4">
-        Created with <strong class="text-white">Tidong Card Studio</strong>
+        Created with <a href="{{ url('/') }}" target="_blank" class="text-white text-decoration-none fw-bold">Tidong Card Studio</a>
     </div>
 
 </div>
@@ -58,14 +64,18 @@
 
 <script>
 function shareCard() {
+    var cardName = "{{ $masterCard->name ?? 'Digital Card' }}";
+    var shareText = "Check out my digital visiting card: " + cardName + " - " + window.location.href;
+
     if (navigator.share) {
         navigator.share({
-            title: "{{ $masterCard->name }} - Digital Card",
+            title: cardName + " - Digital Card",
+            text: shareText,
             url: window.location.href
         }).catch(console.error);
     } else {
-        navigator.clipboard.writeText(window.location.href);
-        alert('Card URL copied to clipboard!');
+        navigator.clipboard.writeText(shareText);
+        alert('Card share text and URL copied to clipboard!');
     }
 }
 </script>
