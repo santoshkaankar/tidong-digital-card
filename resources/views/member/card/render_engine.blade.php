@@ -2,17 +2,29 @@
     $themeStyle = $themeStyle ?? 'default';
     $fullCardNo = $fullCardNo ?? ($masterCard->card_no ?? '12091-080000001-A1');
     
-    // Convert fieldToggles to an array if it's a JSON string
+    // Convert fieldToggles to an array if it's a JSON string or object
     $toggles = [];
     if (isset($fieldToggles)) {
-        $toggles = is_string($fieldToggles) ? json_decode($fieldToggles, true) : $fieldToggles;
+        if (is_string($fieldToggles)) {
+            $toggles = json_decode($fieldToggles, true) ?? [];
+        } elseif (is_array($fieldToggles)) {
+            $toggles = $fieldToggles;
+        } elseif (is_object($fieldToggles)) {
+            $toggles = (array) $fieldToggles;
+        }
+    } elseif (isset($cardView->field_toggles)) {
+        if (is_string($cardView->field_toggles)) {
+            $toggles = json_decode($cardView->field_toggles, true) ?? [];
+        } else {
+            $toggles = (array) $cardView->field_toggles;
+        }
     }
     
     // Helper function to check if a field should be shown
     $show = function($key) use ($toggles) {
         if ($key === 'show_name') return true;
         
-        if (is_array($toggles) && array_key_exists($key, $toggles)) {
+        if (array_key_exists($key, $toggles)) {
             return (bool)$toggles[$key];
         }
         
@@ -48,49 +60,49 @@
     <div class="d-flex justify-content-between align-items-start w-100">
         
        <!-- Left Side Details - Exact Left Aligned -->
-<div style="padding-left: 0 !important; margin-left: 0 !important;">
-    
-    <!-- 1. Name & Nickname -->
-    <div style="margin-bottom: 2px; margin-left: 0 !important;">
-        <a href="https://tidong.in" target="_blank" class="text-white text-decoration-none fw-bold text-truncate" style="font-size: 1.1rem; line-height: 1.2; display: inline-block;">
-            {{ $masterCard->name ?? 'Card Holder Name' }}
-        </a>
-        
-        @if(!empty($masterCard->nickname) && ($cardView->field_toggles->show_nickname ?? true))
-            <span class="text-warning fst-italic" style="font-size: 0.8rem; margin-left: 4px;">
-                ({{ $masterCard->nickname }})
-            </span>
-        @endif
-    </div>
-    
-    <!-- 2. Business / Profession Name -->
-    @if(!empty($masterCard->business_name) && ($cardView->field_toggles->show_business_name ?? true))
-        <div style="margin-bottom: 2px; margin-left: 0 !important;">
-            <p class="mb-0 fw-semibold text-info text-start" style="font-size: 0.8rem; line-height: 1.1; margin-left: 0 !important;">
-                {{ $masterCard->business_name }}
-            </p>
-        </div>
-    @endif
-    
-    <!-- 3. Designation / Post -->
-    @if(!empty($masterCard->designation) && ($cardView->field_toggles->show_designation ?? true))
-        <div style="margin-bottom: 2px; margin-left: 0 !important;">
-            <p class="mb-0 text-light opacity-75 text-start" style="font-size: 0.7rem; line-height: 1.1; margin-left: 0 !important;">
-                {{ $masterCard->designation }}
-            </p>
-        </div>
-    @endif
+       <div style="padding-left: 0 !important; margin-left: 0 !important;">
+           
+           <!-- 1. Name & Nickname -->
+           <div style="margin-bottom: 2px; margin-left: 0 !important;">
+               <a href="https://tidong.in" target="_blank" class="text-white text-decoration-none fw-bold text-truncate" style="font-size: 1.1rem; line-height: 1.2; display: inline-block;">
+                   {{ $masterCard->name ?? 'Card Holder Name' }}
+               </a>
+               
+               @if(!empty($masterCard->nickname))
+                   <span class="text-warning fst-italic show_nickname f-item {{ $show('show_nickname') ? 'active-field' : '' }}" style="font-size: 0.8rem; margin-left: 4px;">
+                       ({{ $masterCard->nickname }})
+                   </span>
+               @endif
+           </div>
+           
+           <!-- 2. Business / Profession Name -->
+           @if(!empty($masterCard->business_name))
+               <div class="show_business_name f-item {{ $show('show_business_name') ? 'active-field' : '' }}" style="margin-bottom: 2px; margin-left: 0 !important;">
+                   <p class="mb-0 fw-semibold text-info text-start" style="font-size: 0.8rem; line-height: 1.1; margin-left: 0 !important;">
+                       {{ $masterCard->business_name }}
+                   </p>
+               </div>
+           @endif
+           
+           <!-- 3. Designation / Post -->
+           @if(!empty($masterCard->designation))
+               <div class="show_designation f-item {{ $show('show_designation') ? 'active-field' : '' }}" style="margin-bottom: 2px; margin-left: 0 !important;">
+                   <p class="mb-0 text-light opacity-75 text-start" style="font-size: 0.7rem; line-height: 1.1; margin-left: 0 !important;">
+                       {{ $masterCard->designation }}
+                   </p>
+               </div>
+           @endif
 
-    <!-- 4. Tagline / Slogan -->
-    @if(!empty($masterCard->tagline) && ($cardView->field_toggles->show_tagline ?? true))
-        <div style="margin-left: 0 !important;">
-            <p class="mb-0 text-light opacity-50 text-start" style="font-size: 0.65rem; line-height: 1.1; margin-left: 0 !important;">
-                {{ $masterCard->tagline }}
-            </p>
-        </div>
-    @endif
+           <!-- 4. Tagline / Slogan -->
+           @if(!empty($masterCard->tagline))
+               <div class="show_tagline f-item {{ $show('show_tagline') ? 'active-field' : '' }}" style="margin-left: 0 !important;">
+                   <p class="mb-0 text-light opacity-50 text-start" style="font-size: 0.65rem; line-height: 1.1; margin-left: 0 !important;">
+                       {{ $masterCard->tagline }}
+                   </p>
+               </div>
+           @endif
 
-</div>
+       </div>
 
         <!-- Right Side: QR Code First, then Profile Photo -->
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -118,7 +130,7 @@
         </div>
     </div>
 
-    <!-- Middle Section: Icons (Payment icons linked to payment gateway) -->
+    <!-- Middle Section: Icons -->
     <div class="d-flex flex-wrap gap-2 align-items-center my-1" style="max-height: 82px; overflow: hidden;">
         
         <div class="show_phone f-item {{ $show('show_phone') ? 'active-field' : '' }}" title="Phone">
@@ -169,17 +181,14 @@
             <a href="#" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-youtube" style="font-size: 1.05rem;"></i></a>
         </div>
         
-        <!-- UPI ID (Linked to Payment Gateway) -->
         <div class="show_upi_id f-item {{ $show('show_upi_id') ? 'active-field' : '' }}" title="UPI ID">
             <a href="{{ $masterCard->upi_link ?? 'upi://pay?pa=' . ($masterCard->upi_id ?? '') }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-wallet" style="font-size: 0.95rem;"></i></a>
         </div>
         
-        <!-- Google Pay (Linked to Payment Gateway) -->
         <div class="show_gpay f-item {{ $show('show_gpay') ? 'active-field' : '' }}" title="Google Pay">
             <a href="{{ $masterCard->gpay_link ?? 'tez://upi/pay?pa=' . ($masterCard->gpay_id ?? '') }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-g" style="font-size: 0.95rem;"></i></a>
         </div>
         
-        <!-- Paytm (Linked to Payment Gateway) -->
         <div class="show_paytm f-item {{ $show('show_paytm') ? 'active-field' : '' }}" title="Paytm">
             <a href="{{ $masterCard->paytm_link ?? 'paytmmp://pay?pa=' . ($masterCard->paytm_id ?? '') }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-p" style="font-size: 0.95rem;"></i></a>
         </div>
@@ -203,7 +212,7 @@
             </div>
         </div>
 
-        <!-- Card Line, Card No (Now clickable to tidong.in) & Powered by Tidong -->
+        <!-- Card Line, Card No & Powered by Tidong -->
         <div class="d-flex justify-content-between align-items-end border-top border-secondary pt-1">
             <a href="https://tidong.in" target="_blank" class="font-monospace text-warning text-decoration-none" style="font-size: 0.8rem;">{{ $fullCardNo }}</a>
             <a href="https://tidong.in" target="_blank" class="text-light text-decoration-none fst-italic fw-semibold" style="font-size: 0.8rem; opacity: 0.95;">Powered by Tidong</a>
