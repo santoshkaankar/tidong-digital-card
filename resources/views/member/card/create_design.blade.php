@@ -237,8 +237,10 @@
 <script>
 function changeThemePreview(selectedTheme) {
     let wrapper = document.querySelector('#live-card-container .card-material-wrapper');
-    if(wrapper) {
-        wrapper.className = wrapper.className.replace(/theme-[a-zA-Z0-9-]+/g, '').trim();
+    if (wrapper) {
+        // Remove all classes starting with 'theme-'
+        wrapper.className = wrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
+        // Add the new theme class
         wrapper.classList.add('theme-' + selectedTheme);
     }
 }
@@ -255,11 +257,9 @@ function updateCardToggles() {
         // Find matching elements inside the live card preview container
         document.querySelectorAll('#live-card-container .' + fieldKey).forEach(el => {
             if (checkbox.checked) {
-                el.classList.remove('d-none');
-                el.style.display = ''; 
+                el.classList.add('active-field');
             } else {
-                el.classList.add('d-none');
-                el.style.display = 'none';
+                el.classList.remove('active-field');
             }
         });
     });
@@ -275,6 +275,5 @@ document.addEventListener("DOMContentLoaded", function() {
     updateCardToggles();
 });
 </script>
-
 @endpush
 @endsection

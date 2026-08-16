@@ -185,7 +185,6 @@ class CardController extends Controller
         $selectedTheme = $request->input('theme_style', 'default');
         $categoryCode  = $themeCategoryMap[$selectedTheme] ?? 'Z';
 
-        // Fix: Changed to count all user card views globally for unique incremental variants[cite: 1]
         $existingCount = UserCardView::where('user_id', Auth::id())->count();
         $variantNo = $existingCount + 1;
         
@@ -240,7 +239,7 @@ class CardController extends Controller
             'theme_category_code' => $categoryCode,
             'variant_number'      => $variantNo,
             'full_card_no'        => $fullCardNo,
-            'field_toggles'       => json_decode(json_encode($toggles)),
+            'field_toggles'       => json_encode($toggles), // FIXED HERE
             'is_active'           => true,
         ]);
 
