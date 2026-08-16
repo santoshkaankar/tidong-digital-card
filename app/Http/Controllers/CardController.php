@@ -107,11 +107,9 @@ class CardController extends Controller
             $card->plan_type = 'free';
         }
 
-        // Safe Storage Upload using Laravel Storage Disk (Public)
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
             $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            
             $path = $file->storeAs('uploads/photos', $filename, 'public');
             $card->photo = 'storage/' . $path;
         }
@@ -119,7 +117,6 @@ class CardController extends Controller
         if ($request->hasFile('qr_code')) {
             $file = $request->file('qr_code');
             $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            
             $path = $file->storeAs('uploads/qrcodes', $filename, 'public');
             $card->qr_code = 'storage/' . $path;
         }
@@ -193,36 +190,29 @@ class CardController extends Controller
 
         $toggles = [
             'show_name'          => true,
-
             'show_photo'         => $request->has('toggles.show_photo'),
             'show_business_name' => $request->has('toggles.show_business_name'),
             'show_designation'   => $request->has('toggles.show_designation'),
             'show_tagline'       => $request->has('toggles.show_tagline'),
             'show_nickname'      => $request->has('toggles.show_nickname'),
-            
             'show_phone'         => $request->has('toggles.show_phone'),
             'show_alt_phone'     => $request->has('toggles.show_alt_phone'),
             'show_whatsapp'      => $request->has('toggles.show_whatsapp'),
-            
             'show_gmail'         => $request->has('toggles.show_gmail'),
             'show_yahoo_email'   => $request->has('toggles.show_yahoo_email'),
             'show_other_email'   => $request->has('toggles.show_other_email'),
-            
             'show_website'       => $request->has('toggles.show_website'),
             'show_facebook'      => $request->has('toggles.show_facebook'),
             'show_instagram'     => $request->has('toggles.show_instagram'),
             'show_linkedin'      => $request->has('toggles.show_linkedin'),
             'show_youtube'       => $request->has('toggles.show_youtube'),
             'show_telegram'      => $request->has('toggles.show_telegram'),
-            
             'show_upi_id'        => $request->has('toggles.show_upi_id'),
             'show_gpay'          => $request->has('toggles.show_gpay'),
             'show_paytm'         => $request->has('toggles.show_paytm'),
             'show_qr_code'       => $request->has('toggles.show_qr_code'),
-            
             'show_about'         => $request->has('toggles.show_about'),
             'show_other_details' => $request->has('toggles.show_other_details'),
-            
             'show_address'       => $request->has('toggles.show_address'),
             'show_area'          => $request->has('toggles.show_area'),
             'show_pincode'       => $request->has('toggles.show_pincode'),
@@ -239,7 +229,7 @@ class CardController extends Controller
             'theme_category_code' => $categoryCode,
             'variant_number'      => $variantNo,
             'full_card_no'        => $fullCardNo,
-            'field_toggles'       => json_encode($toggles), // FIXED HERE
+            'field_toggles'       => json_encode($toggles),
             'is_active'           => true,
         ]);
 

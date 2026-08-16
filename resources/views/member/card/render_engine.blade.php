@@ -1,6 +1,7 @@
 @php
-    $themeStyle = $themeStyle ?? 'default';
-    $fullCardNo = $fullCardNo ?? ($masterCard->card_no ?? '12091-080000001-A1');
+    // Database se saved theme uthayi ja rahi hai taaki list page par sahi theme render ho
+    $themeStyle = $themeStyle ?? ($cardView->theme_style ?? 'default');
+    $fullCardNo = $fullCardNo ?? ($cardView->full_card_no ?? ($masterCard->card_no ?? '12091-080000001-A1'));
     
     $toggles = [];
     if (isset($fieldToggles)) {
@@ -153,13 +154,13 @@
             <a href="#" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-youtube" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_upi_id f-item {{ $show('show_upi_id') ? 'active-field' : '' }}" title="UPI ID">
-            <a href="{{ $masterCard->upi_link ?? 'upi://pay?pa=' . ($masterCard->upi_id ?? '') }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-wallet" style="font-size: 0.95rem;"></i></a>
+            <a href="{{ $masterCard->upi_link ?? '#' }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-wallet" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_gpay f-item {{ $show('show_gpay') ? 'active-field' : '' }}" title="Google Pay">
-            <a href="{{ $masterCard->gpay_link ?? 'tez://upi/pay?pa=' . ($masterCard->gpay_id ?? '') }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-g" style="font-size: 0.95rem;"></i></a>
+            <a href="{{ $masterCard->gpay_link ?? '#' }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-g" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_paytm f-item {{ $show('show_paytm') ? 'active-field' : '' }}" title="Paytm">
-            <a href="{{ $masterCard->paytm_link ?? 'paytmmp://pay?pa=' . ($masterCard->paytm_id ?? '') }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-p" style="font-size: 0.95rem;"></i></a>
+            <a href="{{ $masterCard->paytm_link ?? '#' }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-p" style="font-size: 0.95rem;"></i></a>
         </div>
     </div>
 
@@ -188,6 +189,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Real-time sync for checkboxes during creation/editing
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(chk => {
         chk.addEventListener('change', function () {
@@ -201,76 +203,64 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     const cardWrapper = document.querySelector('.card-material-wrapper');
-    
-    if (cardWrapper) {
-        function applyTheme(val) {
-            if (!val) return;
-            cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
-            cardWrapper.classList.add('theme-' + val);
-            
-            let bgStyle = 'linear-gradient(135deg, #1e293b, #0f172a)';
-            let textColor = '#ffffff';
-            let secondaryTextColor = '#cbd5e1';
-            
-            // Yahan check ho raha hai ki theme light hai ya dark
-            const isLight = (val === 'classic-white' || val.includes('paper') || val.includes('light') || val.includes('vintage') || val.includes('metal-gold'));
+    if (!cardWrapper) return;
 
-            if(isLight) {
-                if(val.includes('metal-gold')) {
-                    bgStyle = 'linear-gradient(135deg, #d4af37, #aa771c, #f3e5ab)';
-                    textColor = '#111111';
-                    secondaryTextColor = '#333333';
-                } else {
-                    bgStyle = '#fdfbf7';
-                    textColor = '#111111';
-                    secondaryTextColor = '#333333';
-                }
-            } else if(val.includes('wood')) {
-                bgStyle = 'linear-gradient(135deg, #5c4033, #3b2219)';
-                textColor = '#ffffff';
-                secondaryTextColor = '#e2e8f0';
-            } else if(val.includes('metal-silver')) {
-                bgStyle = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
-                textColor = '#ffffff';
-                secondaryTextColor = '#e2e8f0';
-            } else if(val.includes('fabric') || val.includes('velvet') || val.includes('texture')) {
-                bgStyle = 'linear-gradient(135deg, #1e3a8a, #0f172a)';
-                textColor = '#ffffff';
-                secondaryTextColor = '#e2e8f0';
+    function applySavedTheme() {
+        let classList = cardWrapper.className.split(' ');
+        let themeClass = classList.find(cls => cls.startsWith('theme-'));
+        let val = themeClass ? themeClass.replace('theme-', '') : 'default';
+        
+        let bgStyle = 'linear-gradient(135deg, #1e293b, #0f172a)';
+        let textColor = '#ffffff';
+        let secondaryTextColor = '#cbd5e1';
+        
+        const isLight = (val === 'classic-white' || val.includes('paper') || val.includes('light') || val.includes('vintage') || val.includes('metal-gold'));
+
+        if(isLight) {
+            if(val.includes('metal-gold')) {
+                bgStyle = 'linear-gradient(135deg, #d4af37, #aa771c, #f3e5ab)';
+                textColor = '#111111';
+                secondaryTextColor = '#333333';
+            } else {
+                bgStyle = '#ffffff';
+                textColor = '#111111';
+                secondaryTextColor = '#555555';
             }
-
-            cardWrapper.style.setProperty('background', bgStyle, 'important');
-            cardWrapper.style.setProperty('color', textColor, 'important');
-
-            // Ab dark theme par text pakka white aur light theme par black ho jayega
-            cardWrapper.querySelectorAll('.card-main-text').forEach(el => {
-                el.style.setProperty('color', textColor, 'important');
-            });
-            cardWrapper.querySelectorAll('.card-sub-text').forEach(el => {
-                el.style.setProperty('color', secondaryTextColor, 'important');
-            });
+        } else if(val.includes('wood')) {
+            bgStyle = 'linear-gradient(135deg, #5c4033, #3b2219)';
+            textColor = '#ffffff';
+            secondaryTextColor = '#e2e8f0';
+        } else if(val.includes('metal-silver')) {
+            bgStyle = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
+            textColor = '#ffffff';
+            secondaryTextColor = '#e2e8f0';
         }
 
-        function checkAndSyncTheme() {
-            try {
-                const themeSelect = parent.document.getElementById('theme_style');
-                if (themeSelect && themeSelect.value) {
-                    applyTheme(themeSelect.value);
-                }
-            } catch (e) {}
-        }
+        cardWrapper.style.setProperty('background', bgStyle, 'important');
+        cardWrapper.style.setProperty('color', textColor, 'important');
 
-        try {
+        cardWrapper.querySelectorAll('.card-main-text').forEach(el => {
+            el.style.setProperty('color', textColor, 'important');
+        });
+        cardWrapper.querySelectorAll('.card-sub-text').forEach(el => {
+            el.style.setProperty('color', secondaryTextColor, 'important');
+        });
+    }
+
+    applySavedTheme();
+
+    // Live preview sync with parent dropdown if inside creator page
+    try {
+        if (parent && parent.document) {
             const themeSelect = parent.document.getElementById('theme_style');
             if (themeSelect) {
                 themeSelect.addEventListener('change', function() {
-                    applyTheme(this.value);
+                    cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
+                    cardWrapper.classList.add('theme-' + this.value);
+                    applySavedTheme();
                 });
-                applyTheme(themeSelect.value);
             }
-        } catch (e) {}
-
-        setInterval(checkAndSyncTheme, 300);
-    }
+        }
+    } catch(e) {}
 });
 </script>
