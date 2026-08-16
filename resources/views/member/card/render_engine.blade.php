@@ -189,7 +189,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Real-time sync for checkboxes during creation/editing
+    // 1. Real-time sync for checkboxes during creation/editing
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(chk => {
         chk.addEventListener('change', function () {
@@ -202,14 +202,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Yahan fix kiya hai: Sabhi cards ko ek sath select karke unki apni theme apply ki ja rahi hai
-    const cardWrappers = document.querySelectorAll('.card-material-wrapper');
-    
-    cardWrappers.forEach(cardWrapper => {
-        let classList = cardWrapper.className.split(' ');
-        let themeClass = classList.find(cls => cls.startsWith('theme-'));
-        let val = themeClass ? themeClass.replace('theme-', '') : 'default';
-        
+    // Theme apply karne ka common function
+    function applyThemeToCard(cardWrapper, val) {
         let bgStyle = 'linear-gradient(135deg, #1e293b, #0f172a)';
         let textColor = '#ffffff';
         let secondaryTextColor = '#cbd5e1';
@@ -245,9 +239,18 @@ document.addEventListener('DOMContentLoaded', function () {
         cardWrapper.querySelectorAll('.card-sub-text').forEach(el => {
             el.style.setProperty('color', secondaryTextColor, 'important');
         });
+    }
+
+    // 2. List page ke sabhi cards par unki saved theme apply karna
+    const cardWrappers = document.querySelectorAll('.card-material-wrapper');
+    cardWrappers.forEach(cardWrapper => {
+        let classList = cardWrapper.className.split(' ');
+        let themeClass = classList.find(cls => cls.startsWith('theme-'));
+        let val = themeClass ? themeClass.replace('theme-', '') : 'default';
+        applyThemeToCard(cardWrapper, val);
     });
 
-    // Live preview sync with parent dropdown if inside creator page
+    // 3. Create/Edit page ke live preview dropdown ko fix karna
     try {
         if (parent && parent.document) {
             const themeSelect = parent.document.getElementById('theme_style');
@@ -256,10 +259,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     cardWrappers.forEach(cardWrapper => {
                         cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
                         cardWrapper.classList.add('theme-' + this.value);
+                        applyThemeToCard(cardWrapper, this.value);
                     });
                 });
             }
         }
     } catch(e) {}
+
+    // Agar preview iframe ke andar hi select ho toh uske liye bhi
+    const localThemeSelect = document.getElementById('theme_style');
+    if (localThemeSelect) {
+        localThemeSelect.addEventListener('change', function() {
+            cardWrappers.forEach(cardWrapper => {
+                cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
+                cardWrapper.classList.add('theme-' + this.value);
+                applyThemeToCard(cardWrapper, this.value);
+            });
+        });
+    }
 });
 </script>
