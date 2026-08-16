@@ -202,10 +202,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    const cardWrapper = document.querySelector('.card-material-wrapper');
-    if (!cardWrapper) return;
-
-    function applySavedTheme() {
+    // Yahan fix kiya hai: Sabhi cards ko ek sath select karke unki apni theme apply ki ja rahi hai
+    const cardWrappers = document.querySelectorAll('.card-material-wrapper');
+    
+    cardWrappers.forEach(cardWrapper => {
         let classList = cardWrapper.className.split(' ');
         let themeClass = classList.find(cls => cls.startsWith('theme-'));
         let val = themeClass ? themeClass.replace('theme-', '') : 'default';
@@ -245,9 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
         cardWrapper.querySelectorAll('.card-sub-text').forEach(el => {
             el.style.setProperty('color', secondaryTextColor, 'important');
         });
-    }
-
-    applySavedTheme();
+    });
 
     // Live preview sync with parent dropdown if inside creator page
     try {
@@ -255,9 +253,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const themeSelect = parent.document.getElementById('theme_style');
             if (themeSelect) {
                 themeSelect.addEventListener('change', function() {
-                    cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
-                    cardWrapper.classList.add('theme-' + this.value);
-                    applySavedTheme();
+                    cardWrappers.forEach(cardWrapper => {
+                        cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
+                        cardWrapper.classList.add('theme-' + this.value);
+                    });
                 });
             }
         }
