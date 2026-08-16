@@ -9,6 +9,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\CardController;
+use Illuminate\Support\Facades\File;
 
 // ==========================================
 // UTILITY & SYSTEM INITIALIZATION ROUTES
@@ -284,4 +285,21 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/card/{id}', [CardController::class, 'destroy'])->name('card.destroy');
     });
 
+});
+
+use Illuminate\Support\Facades\File;
+
+Route::get('/create-folders', function () {
+    $photosPath = public_path('uploads/photos');
+    $qrcodesPath = public_path('uploads/qrcodes');
+
+    if (!File::exists($photosPath)) {
+        File::makeDirectory($photosPath, 0755, true);
+    }
+
+    if (!File::exists($qrcodesPath)) {
+        File::makeDirectory($qrcodesPath, 0755, true);
+    }
+
+    return "Folders successfully created!";
 });
