@@ -33,6 +33,12 @@
 @endphp
 
 <style>
+    .card-material-wrapper {
+        color: var(--theme-text-color, #ffffff) !important;
+    }
+    .card-material-wrapper a {
+        color: var(--theme-text-color, #ffffff);
+    }
     .card-material-wrapper .f-item {
         display: none !important;
     }
@@ -220,6 +226,9 @@
     </div>
 </div>
 
+
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // 1. Checkboxes toggle handler
@@ -235,52 +244,92 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // 2. Dynamic Theme Background Generator for ALL Themes
-    const themeSelect = parent.document.getElementById('theme_style');
+    // 2. Force Theme & Text Color Fixer with !important
     const cardWrapper = document.querySelector('.card-material-wrapper');
     
-    if (themeSelect && cardWrapper) {
-        themeSelect.addEventListener('change', function() {
-            let val = this.value;
+    if (cardWrapper) {
+        function applyTheme(val) {
+            if (!val) return;
+            
+            // Remove previous theme classes
             cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
             cardWrapper.classList.add('theme-' + val);
             
-            // Har theme ke liye automatic background styling
-            if(val === 'classic-white') {
-                cardWrapper.style.background = '#f8fafc';
-                cardWrapper.style.color = '#1e293b';
+            let bgStyle = 'linear-gradient(135deg, #1e293b, #0f172a)';
+            let textColor = '#ffffff';
+            let secondaryTextColor = 'rgba(255, 255, 255, 0.9)';
+            
+            // Determine colors based on selected theme type
+            if(val === 'classic-white' || val.includes('paper') || val.includes('light') || val.includes('vintage')) {
+                bgStyle = '#fdfbf7';
+                textColor = '#111111';
+                secondaryTextColor = '#333333';
             } else if(val.includes('wood')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, #5c4033, #3b2219)';
-                cardWrapper.style.color = '#ffffff';
+                bgStyle = 'linear-gradient(135deg, #5c4033, #3b2219)';
+                textColor = '#ffffff';
+                secondaryTextColor = 'rgba(255, 255, 255, 0.9)';
             } else if(val.includes('metal-gold')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, #d4af37, #aa771c, #f3e5ab)';
-                cardWrapper.style.color = '#111111';
+                bgStyle = 'linear-gradient(135deg, #d4af37, #aa771c, #f3e5ab)';
+                textColor = '#111111';
+                secondaryTextColor = '#222222';
             } else if(val.includes('metal-silver')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
-                cardWrapper.style.color = '#ffffff';
-            } else if(val.includes('metal-bronze')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, #cd7f32, #8c4a16)';
-                cardWrapper.style.color = '#ffffff';
+                bgStyle = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
+                textColor = '#ffffff';
+                secondaryTextColor = 'rgba(255, 255, 255, 0.9)';
             } else if(val.includes('fabric')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, #3b5998, #192f6a)';
-                cardWrapper.style.color = '#ffffff';
-            } else if(val.includes('stone') || val.includes('granite') || val.includes('slate')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, #3e4a59, #1c232a)';
-                cardWrapper.style.color = '#ffffff';
-            } else if(val.includes('leather') || val.includes('obsidian')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, #111111, #222222)';
-                cardWrapper.style.color = '#ffffff';
-            } else if(val.includes('paper') || val.includes('parchment')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, #fdfbf7, #e2d9c5)';
-                cardWrapper.style.color = '#333333';
-            } else if(val.includes('crystal') || val.includes('glass')) {
-                cardWrapper.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))';
-                cardWrapper.style.color = '#ffffff';
+                bgStyle = 'linear-gradient(135deg, #3b5998, #192f6a)';
+                textColor = '#ffffff';
+                secondaryTextColor = 'rgba(255, 255, 255, 0.9)';
             } else {
-                cardWrapper.style.background = 'linear-gradient(135deg, #1e293b, #0f172a)';
-                cardWrapper.style.color = '#ffffff';
+                bgStyle = 'linear-gradient(135deg, #1e293b, #0f172a)';
+                textColor = '#ffffff';
+                secondaryTextColor = 'rgba(255, 255, 255, 0.9)';
             }
-        });
+
+            // Apply background and wrapper color usingsetProperty with 'important'
+            cardWrapper.style.setProperty('background', bgStyle, 'important');
+            cardWrapper.style.setProperty('color', textColor, 'important');
+
+            // Forcefully apply text color to all text tags inside the wrapper
+            const allElements = cardWrapper.querySelectorAll('*');
+            allElements.forEach(el => {
+                if (!el.classList.contains('text-warning') && 
+                    !el.classList.contains('text-info') && 
+                    !el.classList.contains('text-success') && 
+                    !el.classList.contains('text-danger')) {
+                    
+                    if(['H1','H2','H3','H4','H5','H6','STRONG','B','A'].includes(el.tagName)) {
+                        el.style.setProperty('color', textColor, 'important');
+                    } else if (el.children.length === 0 || ['P', 'SPAN', 'LABEL', 'LI'].includes(el.tagName)) {
+                        // Leaf elements or direct text holders get secondary color
+                        el.style.setProperty('color', secondaryTextColor, 'important');
+                    }
+                }
+            });
+        }
+
+        // Sync with parent window's theme dropdown
+        function checkAndSyncTheme() {
+            try {
+                const themeSelect = parent.document.getElementById('theme_style');
+                if (themeSelect && themeSelect.value) {
+                    applyTheme(themeSelect.value);
+                }
+            } catch (e) {}
+        }
+
+        try {
+            const themeSelect = parent.document.getElementById('theme_style');
+            if (themeSelect) {
+                themeSelect.addEventListener('change', function() {
+                    applyTheme(this.value);
+                });
+                applyTheme(themeSelect.value);
+            }
+        } catch (e) {}
+
+        // Polling to ensure real-time change synchronization inside iframe
+        setInterval(checkAndSyncTheme, 300);
     }
 });
 </script>
