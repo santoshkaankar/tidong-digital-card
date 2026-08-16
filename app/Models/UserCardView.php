@@ -14,9 +14,9 @@ class UserCardView extends Model
         'visiting_card_id',
         'card_slug',
         'theme_style',
-        'theme_category_code', // Added to match controller
-        'variant_number',      // Added to match controller
-        'full_card_no',        // Added to match controller
+        'theme_category_code',
+        'variant_number',
+        'full_card_no',
         'field_toggles',
         'is_active',
     ];

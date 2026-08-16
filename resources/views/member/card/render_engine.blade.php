@@ -54,8 +54,8 @@
 </style>
 
 <!-- Card Container -->
-<div class="card-material-wrapper auto-fit-card theme-{{ $themeStyle }} position-relative rounded-4 p-3 text-white d-flex flex-column justify-content-between shadow-lg" style="background: linear-gradient(135deg, #1e293b, #0f172a); overflow: hidden;">
-    
+<div class="card-material-wrapper auto-fit-card theme-{{ $themeStyle }} position-relative rounded-4 p-3 text-white d-flex flex-column justify-content-between shadow-lg" style="background: var(--card-bg, linear-gradient(135deg, #1e293b, #0f172a)); overflow: hidden;">
+
     <!-- Top Section: Details on Left, QR Code & Profile Photo on Right -->
     <div class="d-flex justify-content-between align-items-start w-100">
         
@@ -222,24 +222,65 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // 1. Checkboxes toggle handler
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    
     checkboxes.forEach(chk => {
         chk.addEventListener('change', function () {
             let rawName = this.name;
             if (!rawName) return;
-            
             let fieldClass = rawName.replace('toggles[', '').replace(']', '').replace(/['"]+/g, '');
-            const targetElements = document.querySelectorAll('.' + fieldClass);
-            
-            targetElements.forEach(el => {
-                if (this.checked) {
-                    el.classList.add('active-field');
-                } else {
-                    el.classList.remove('active-field');
-                }
+            document.querySelectorAll('.' + fieldClass).forEach(el => {
+                el.classList.toggle('active-field', this.checked);
             });
         });
     });
+
+    // 2. Dynamic Theme Background Generator for ALL Themes
+    const themeSelect = parent.document.getElementById('theme_style');
+    const cardWrapper = document.querySelector('.card-material-wrapper');
+    
+    if (themeSelect && cardWrapper) {
+        themeSelect.addEventListener('change', function() {
+            let val = this.value;
+            cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
+            cardWrapper.classList.add('theme-' + val);
+            
+            // Har theme ke liye automatic background styling
+            if(val === 'classic-white') {
+                cardWrapper.style.background = '#f8fafc';
+                cardWrapper.style.color = '#1e293b';
+            } else if(val.includes('wood')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, #5c4033, #3b2219)';
+                cardWrapper.style.color = '#ffffff';
+            } else if(val.includes('metal-gold')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, #d4af37, #aa771c, #f3e5ab)';
+                cardWrapper.style.color = '#111111';
+            } else if(val.includes('metal-silver')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
+                cardWrapper.style.color = '#ffffff';
+            } else if(val.includes('metal-bronze')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, #cd7f32, #8c4a16)';
+                cardWrapper.style.color = '#ffffff';
+            } else if(val.includes('fabric')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, #3b5998, #192f6a)';
+                cardWrapper.style.color = '#ffffff';
+            } else if(val.includes('stone') || val.includes('granite') || val.includes('slate')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, #3e4a59, #1c232a)';
+                cardWrapper.style.color = '#ffffff';
+            } else if(val.includes('leather') || val.includes('obsidian')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, #111111, #222222)';
+                cardWrapper.style.color = '#ffffff';
+            } else if(val.includes('paper') || val.includes('parchment')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, #fdfbf7, #e2d9c5)';
+                cardWrapper.style.color = '#333333';
+            } else if(val.includes('crystal') || val.includes('glass')) {
+                cardWrapper.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))';
+                cardWrapper.style.color = '#ffffff';
+            } else {
+                cardWrapper.style.background = 'linear-gradient(135deg, #1e293b, #0f172a)';
+                cardWrapper.style.color = '#ffffff';
+            }
+        });
+    }
 });
 </script>

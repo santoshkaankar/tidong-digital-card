@@ -2,6 +2,7 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/card-materials.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/card-themes.css') }}">
     <style>
         .toggle-card-box {
             background: #ffffff;
@@ -238,10 +239,24 @@
 function changeThemePreview(selectedTheme) {
     let wrapper = document.querySelector('#live-card-container .card-material-wrapper');
     if (wrapper) {
-        // Remove all classes starting with 'theme-'
+        // Purani saari theme classes hata dein
         wrapper.className = wrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
-        // Add the new theme class
+        
+        // Nayi theme class add karein
         wrapper.classList.add('theme-' + selectedTheme);
+        
+        // Agar CSS file mein class na chale, toh yahan direct background color/gradient bhi set kar sakte hain
+        if (selectedTheme === 'classic-white') {
+            wrapper.style.background = '#ffffff';
+            wrapper.style.color = '#000000';
+        } else if (selectedTheme.includes('gold')) {
+            wrapper.style.background = 'linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7)';
+        } else if (selectedTheme.includes('wood')) {
+            wrapper.style.background = 'linear-gradient(135deg, #8b5a2b, #5c4033)';
+        } else {
+            // Default ya baki themes ke liye CSS class par chhod dein aur inline background hata dein
+            wrapper.style.background = '';
+        }
     }
 }
 
@@ -257,9 +272,9 @@ function updateCardToggles() {
         // Find matching elements inside the live card preview container
         document.querySelectorAll('#live-card-container .' + fieldKey).forEach(el => {
             if (checkbox.checked) {
-                el.classList.add('active-field');
+                el.style.display = '';
             } else {
-                el.classList.remove('active-field');
+                el.style.display = 'none';
             }
         });
     });
@@ -270,9 +285,13 @@ document.querySelectorAll('input[type="checkbox"][name^="toggles"]').forEach(che
     checkbox.addEventListener('change', updateCardToggles);
 });
 
-// Run on initial page load to sync initial checked states
+// Run on initial page load to sync initial checked states and default theme
 document.addEventListener("DOMContentLoaded", function() {
     updateCardToggles();
+    let themeSelect = document.getElementById('theme_style');
+    if(themeSelect) {
+        changeThemePreview(themeSelect.value);
+    }
 });
 </script>
 @endpush
