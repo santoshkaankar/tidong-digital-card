@@ -108,37 +108,42 @@ class CardController extends Controller
             $card->plan_type = 'free';
         }
 
-        // Updated Upload Logic to public/uploads with auto folder creation
+        // Safe Upload Logic using storage path check or storage disk
         if ($request->hasFile('photo')) {
-            if ($card->photo && File::exists(public_path($card->photo))) {
-                File::delete(public_path($card->photo));
-            }
-            
-            $destinationPath = public_path('uploads/photos');
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true, true);
-            }
-
             $file = $request->file('photo');
             $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            $file->move($destinationPath, $filename);
-            $card->photo = 'uploads/photos/' . $filename;
+            
+            $destinationPath = public_path('uploads/photos');
+            if (!file_exists($destinationPath)) {
+                @mkdir($destinationPath, 0755, true);
+            }
+
+            if (is_dir($destinationPath) && is_writable($destinationPath)) {
+                $file->move($destinationPath, $filename);
+                $card->photo = 'uploads/photos/' . $filename;
+            } else {
+                // Fallback to storage app public path if public/uploads is restricted
+                $file->storeAs('public/uploads/photos', $filename);
+                $card->photo = 'storage/uploads/photos/' . $filename;
+            }
         }
 
         if ($request->hasFile('qr_code')) {
-            if ($card->qr_code && File::exists(public_path($card->qr_code))) {
-                File::delete(public_path($card->qr_code));
-            }
-
-            $destinationPathQr = public_path('uploads/qrcodes');
-            if (!File::exists($destinationPathQr)) {
-                File::makeDirectory($destinationPathQr, 0755, true, true);
-            }
-
             $file = $request->file('qr_code');
             $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            $file->move($destinationPathQr, $filename);
-            $card->qr_code = 'uploads/qrcodes/' . $filename;
+            
+            $destinationPathQr = public_path('uploads/qrcodes');
+            if (!file_exists($destinationPathQr)) {
+                @mkdir($destinationPathQr, 0755, true);
+            }
+
+            if (is_dir($destinationPathQr) && is_writable($destinationPathQr)) {
+                $file->move($destinationPathQr, $filename);
+                $card->qr_code = 'uploads/qrcodes/' . $filename;
+            } else {
+                $file->storeAs('public/uploads/qrcodes', $filename);
+                $card->qr_code = 'storage/uploads/qrcodes/' . $filename;
+            }
         }
 
         $card->fill($request->except(['_token', 'photo', 'qr_code']));
