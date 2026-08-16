@@ -37,6 +37,7 @@ class CardController extends Controller
         return view('member.card.configure', compact('countries', 'states', 'card'));
     }
 
+    // Handles GET /member/card/create directly
     public function create()
     {
         $masterCard = VisitingCard::where('user_id', Auth::id())->first();
@@ -107,21 +108,37 @@ class CardController extends Controller
             $card->plan_type = 'free';
         }
 
-        // Safe Storage Upload using Laravel Storage Disk (Public)
+        // Updated Upload Logic to public/uploads with auto folder creation
         if ($request->hasFile('photo')) {
+            if ($card->photo && File::exists(public_path($card->photo))) {
+                File::delete(public_path($card->photo));
+            }
+            
+            $destinationPath = public_path('uploads/photos');
+            if (!File::exists($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true, true);
+            }
+
             $file = $request->file('photo');
             $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            
-            $path = $file->storeAs('uploads/photos', $filename, 'public');
-            $card->photo = 'storage/' . $path;
+            $file->move($destinationPath, $filename);
+            $card->photo = 'uploads/photos/' . $filename;
         }
 
         if ($request->hasFile('qr_code')) {
+            if ($card->qr_code && File::exists(public_path($card->qr_code))) {
+                File::delete(public_path($card->qr_code));
+            }
+
+            $destinationPathQr = public_path('uploads/qrcodes');
+            if (!File::exists($destinationPathQr)) {
+                File::makeDirectory($destinationPathQr, 0755, true, true);
+            }
+
             $file = $request->file('qr_code');
             $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            
-            $path = $file->storeAs('uploads/qrcodes', $filename, 'public');
-            $card->qr_code = 'storage/' . $path;
+            $file->move($destinationPathQr, $filename);
+            $card->qr_code = 'uploads/qrcodes/' . $filename;
         }
 
         $card->fill($request->except(['_token', 'photo', 'qr_code']));
