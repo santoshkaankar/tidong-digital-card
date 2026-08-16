@@ -105,25 +105,38 @@
                             </div>
 
                             <!-- 2. Personal & Business Details -->
-                            <div class="form-section-title">2. Basic & Personal Details</div>
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-secondary small">Person / Card Holder Name *</label>
-                                    <input type="text" name="name" class="form-control bg-light" required placeholder="e.g. Santosh Kumar Sharma" value="{{ old('name', $card->name ?? '') }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-secondary small">Business / Organization Name *</label>
-                                    <input type="text" name="business_name" class="form-control bg-light" required placeholder="e.g. Tidong Marketing Pvt Ltd" value="{{ old('business_name', $card->business_name ?? '') }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary small">Tagline / Business Slogan</label>
-                                    <input type="text" name="tagline" class="form-control bg-light" placeholder="e.g. Quality You Can Trust" value="{{ old('tagline', $card->tagline ?? '') }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary small">Nick Name / Known As (Optional)</label>
-                                    <input type="text" name="owner_name" class="form-control bg-light" placeholder="e.g. Santosh" value="{{ old('owner_name', $card->owner_name ?? '') }}">
-                                </div>
-                            </div>
+<div class="form-section-title">2. Basic & Personal Details</div>
+<div class="row g-3 mb-4">
+    <!-- 1. Person Name -->
+    <div class="col-md-6">
+        <label class="form-label fw-bold text-secondary small">Person / Card Holder Name *</label>
+        <input type="text" name="name" class="form-control bg-light" required placeholder="e.g. Saharsh Sharma" value="{{ old('name', $card->name ?? '') }}">
+    </div>
+
+    <!-- 2. Business / Profession -->
+    <div class="col-md-6">
+        <label class="form-label fw-bold text-secondary small">Business / Profession *</label>
+        <input type="text" name="business_name" class="form-control bg-light" required placeholder="e.g. Tidong Marketing Pvt Ltd" value="{{ old('business_name', $card->business_name ?? '') }}">
+    </div>
+
+    <!-- 3. Designation / Post -->
+    <div class="col-md-6">
+        <label class="form-label text-secondary small">Designation / Post</label>
+        <input type="text" name="designation" class="form-control bg-light" placeholder="e.g. Director / Manager" value="{{ old('designation', $card->designation ?? '') }}">
+    </div>
+
+    <!-- 4. Nick Name / Known As -->
+    <div class="col-md-6">
+        <label class="form-label text-secondary small">Nick Name / Known As (Optional)</label>
+        <input type="text" name="nickname" class="form-control bg-light" placeholder="e.g. Lalo" value="{{ old('nickname', $card->nickname ?? '') }}">
+    </div>
+
+    <!-- 5. Tagline / Slogan -->
+    <div class="col-md-12">
+        <label class="form-label text-secondary small">Tagline / Business Slogan</label>
+        <input type="text" name="tagline" class="form-control bg-light" placeholder="e.g. Quality You Can Trust" value="{{ old('tagline', $card->tagline ?? '') }}">
+    </div>
+</div>
 
                             <!-- 3. Contact Numbers -->
                             <div class="form-section-title">3. Contact Details</div>

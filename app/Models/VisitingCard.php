@@ -11,7 +11,7 @@ class VisitingCard extends Model
 
     protected $fillable = [
         'card_no', 'user_id', 'card_type', 'design_type', 'plan_type',
-        'name', 'business_name', 'tagline', 'owner_name',
+        'name', 'nickname', 'business_name', 'designation', 'tagline', 'owner_name',
         'phone', 'alt_phone', 'whatsapp',
         'gmail', 'yahoo_email', 'other_email',
         'facebook', 'instagram', 'twitter_x', 'linkedin', 'youtube', 'telegram', 'website_link', 'map_location_link',

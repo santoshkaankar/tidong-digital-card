@@ -47,34 +47,50 @@
     <!-- Top Section: Details on Left, QR Code & Profile Photo on Right -->
     <div class="d-flex justify-content-between align-items-start w-100">
         
-        <!-- Left Side: Name, Company Name, Designation -->
-        <div class="pe-2 flex-grow-1" style="max-width: 70%;">
-            <!-- Name & Nickname in same line (Name is now clickable to tidong.in) -->
-            <div class="d-flex align-baseline flex-wrap">
-                <a href="https://tidong.in" target="_blank" class="text-white text-decoration-none fw-bold mb-0 text-truncate show_name me-1" style="font-size: 1.2rem;">
-                    {{ $masterCard->name ?? 'Card Holder Name' }}
-                </a>
-                <div class="show_nickname f-item {{ $show('show_nickname') ? 'active-field' : '' }}">
-                    @if(!empty($masterCard->nickname))
-                        <span class="text-warning fst-italic fw-normal" style="font-size: 0.8rem;">({{ $masterCard->nickname }})</span>
-                    @endif
-                </div>
-            </div>
-            
-            <!-- Company Name -->
-            <div class="show_business_name f-item {{ $show('show_business_name') ? 'active-field' : '' }}" style="margin: 0 !important; padding: 0 !important;">
-                <p class="mb-0 fw-semibold text-info text-start" style="font-size: 0.8rem; line-height: 1.2; margin: 0 !important; padding: 0 !important;">
-                    {{ $masterCard->business_name ?? '' }}
-                </p>
-            </div>
-            
-            <!-- Designation -->
-            <div class="show_designation f-item {{ $show('show_designation') ? 'active-field' : '' }}" style="margin: 0 !important; padding: 0 !important;">
-                <p class="mb-0 text-light opacity-75 text-start" style="font-size: 0.7rem; margin: 0 !important; padding: 0 !important;">
-                    {{ $masterCard->designation ?? '' }}
-                </p>
-            </div>
+       <!-- Left Side Details - Exact Left Aligned -->
+<div style="padding-left: 0 !important; margin-left: 0 !important;">
+    
+    <!-- 1. Name & Nickname -->
+    <div style="margin-bottom: 2px; margin-left: 0 !important;">
+        <a href="https://tidong.in" target="_blank" class="text-white text-decoration-none fw-bold text-truncate" style="font-size: 1.1rem; line-height: 1.2; display: inline-block;">
+            {{ $masterCard->name ?? 'Card Holder Name' }}
+        </a>
+        
+        @if(!empty($masterCard->nickname) && ($cardView->field_toggles->show_nickname ?? true))
+            <span class="text-warning fst-italic" style="font-size: 0.8rem; margin-left: 4px;">
+                ({{ $masterCard->nickname }})
+            </span>
+        @endif
+    </div>
+    
+    <!-- 2. Business / Profession Name -->
+    @if(!empty($masterCard->business_name) && ($cardView->field_toggles->show_business_name ?? true))
+        <div style="margin-bottom: 2px; margin-left: 0 !important;">
+            <p class="mb-0 fw-semibold text-info text-start" style="font-size: 0.8rem; line-height: 1.1; margin-left: 0 !important;">
+                {{ $masterCard->business_name }}
+            </p>
         </div>
+    @endif
+    
+    <!-- 3. Designation / Post -->
+    @if(!empty($masterCard->designation) && ($cardView->field_toggles->show_designation ?? true))
+        <div style="margin-bottom: 2px; margin-left: 0 !important;">
+            <p class="mb-0 text-light opacity-75 text-start" style="font-size: 0.7rem; line-height: 1.1; margin-left: 0 !important;">
+                {{ $masterCard->designation }}
+            </p>
+        </div>
+    @endif
+
+    <!-- 4. Tagline / Slogan -->
+    @if(!empty($masterCard->tagline) && ($cardView->field_toggles->show_tagline ?? true))
+        <div style="margin-left: 0 !important;">
+            <p class="mb-0 text-light opacity-50 text-start" style="font-size: 0.65rem; line-height: 1.1; margin-left: 0 !important;">
+                {{ $masterCard->tagline }}
+            </p>
+        </div>
+    @endif
+
+</div>
 
         <!-- Right Side: QR Code First, then Profile Photo -->
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -189,8 +205,8 @@
 
         <!-- Card Line, Card No (Now clickable to tidong.in) & Powered by Tidong -->
         <div class="d-flex justify-content-between align-items-end border-top border-secondary pt-1">
-            <a href="https://tidong.in" target="_blank" class="font-monospace text-warning text-decoration-none" style="font-size: 0.65rem;">{{ $fullCardNo }}</a>
-            <a href="https://tidong.in" target="_blank" class="text-light text-decoration-none fst-italic fw-semibold" style="font-size: 0.6rem; opacity: 0.85;">Powered by Tidong</a>
+            <a href="https://tidong.in" target="_blank" class="font-monospace text-warning text-decoration-none" style="font-size: 0.8rem;">{{ $fullCardNo }}</a>
+            <a href="https://tidong.in" target="_blank" class="text-light text-decoration-none fst-italic fw-semibold" style="font-size: 0.8rem; opacity: 0.95;">Powered by Tidong</a>
         </div>
     </div>
 </div>
