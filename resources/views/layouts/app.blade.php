@@ -19,6 +19,14 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- WhatsApp & Social Media Preview Tags -->
+<meta property="og:title" content="My Digital Visiting Card">
+<meta property="og:description" content="Click here to view my digital visiting card and connect with me.">
+<meta property="og:image" content="https://tidong.in/images/card-banner.png">
+<meta property="og:url" content="{{ url()->current() }}">
+<meta property="og:type" content="website">
+
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-light">

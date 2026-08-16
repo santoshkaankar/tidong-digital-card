@@ -1,3 +1,18 @@
+
+
+:root {
+    --card-bg: #ffffff;
+    --card-text: #000000;
+}
+.card-material-wrapper {
+    background: var(--card-bg) !important;
+    color: var(--card-text) !important;
+}
+
+
+
+
+
 /* =========================================================
    1. DIARY FLIP THEME (Booklet Animation)
    ========================================================= */
