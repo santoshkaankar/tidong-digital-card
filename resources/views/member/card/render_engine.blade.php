@@ -81,7 +81,7 @@
             <!-- QR Code First -->
             <div class="show_qr_code f-item {{ $show('show_qr_code') ? 'active-field' : '' }}">
                 @if(!empty($masterCard->qr_code))
-                    <img src="{{ asset('storage/' . $masterCard->qr_code) }}" alt="QR" style="width: 42px; height: 42px; object-fit: cover;" class="rounded bg-white p-0.5 shadow-sm">
+                    <img src="{{ asset($masterCard->qr_code) }}" alt="QR" style="width: 42px; height: 42px; object-fit: cover;" class="rounded bg-white p-0.5 shadow-sm">
                 @else
                     <div class="bg-white rounded p-1 text-dark d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
                         <i class="fa-solid fa-qrcode" style="font-size: 28px;"></i>
@@ -92,7 +92,7 @@
             <!-- Profile Photo Second -->
             <div class="show_photo f-item {{ $show('show_photo') ? 'active-field' : '' }}">
                 @if(!empty($masterCard->photo))
-                    <img src="{{ asset('storage/' . $masterCard->photo) }}" alt="Photo" class="rounded-circle border border-2 border-light shadow-sm" style="width: 42px; height: 42px; object-fit: cover;">
+                    <img src="{{ asset($masterCard->photo) }}" alt="Photo" class="rounded-circle border border-2 border-light shadow-sm" style="width: 42px; height: 42px; object-fit: cover;">
                 @else
                     <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold border border-2 border-light" style="width: 42px; height: 42px; font-size: 0.95rem;">
                         {{ strtoupper(substr($masterCard->name ?? 'T', 0, 1)) }}

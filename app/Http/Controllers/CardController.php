@@ -9,7 +9,7 @@ use App\Models\Country;
 use App\Models\State;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class CardController extends Controller
@@ -108,18 +108,25 @@ class CardController extends Controller
             $card->plan_type = 'free';
         }
 
+        // Updated Upload Logic to public/uploads
         if ($request->hasFile('photo')) {
-            if ($card->photo && Storage::disk('public')->exists($card->photo)) {
-                Storage::disk('public')->delete($card->photo);
+            if ($card->photo && File::exists(public_path($card->photo))) {
+                File::delete(public_path($card->photo));
             }
-            $card->photo = $request->file('photo')->store('photos', 'public');
+            $file = $request->file('photo');
+            $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/photos'), $filename);
+            $card->photo = 'uploads/photos/' . $filename;
         }
 
         if ($request->hasFile('qr_code')) {
-            if ($card->qr_code && Storage::disk('public')->exists($card->qr_code)) {
-                Storage::disk('public')->delete($card->qr_code);
+            if ($card->qr_code && File::exists(public_path($card->qr_code))) {
+                File::delete(public_path($card->qr_code));
             }
-            $card->qr_code = $request->file('qr_code')->store('qrcodes', 'public');
+            $file = $request->file('qr_code');
+            $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/qrcodes'), $filename);
+            $card->qr_code = 'uploads/qrcodes/' . $filename;
         }
 
         $card->fill($request->except(['_token', 'photo', 'qr_code']));
