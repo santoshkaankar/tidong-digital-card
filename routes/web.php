@@ -287,8 +287,6 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
-use Illuminate\Support\Facades\File;
-
 Route::get('/create-folders', function () {
     $photosPath = public_path('uploads/photos');
     $qrcodesPath = public_path('uploads/qrcodes');
