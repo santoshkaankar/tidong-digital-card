@@ -6,8 +6,9 @@
     <title>{{ $masterCard->name ?? 'Digital Business Card' }} - Tidong</title>
     
     <!-- Meta tags for WhatsApp Link Preview -->
-    <meta property="og:title" content="Check out my digital visiting card: {{ $masterCard->name }}">
-    <meta property="og:description" content="{{ $masterCard->business_name ?? 'Digital Business Card' }}">
+    <meta property="og:title" content="Digital Visiting Card: {{ $masterCard->name ?? 'Tidong Member' }}">
+    <meta property="og:description" content="{{ $masterCard->designation ?? 'Professional Business Card' }} | {{ $masterCard->business_name ?? 'Tidong Digital' }}">
+    <meta property="og:image" content="{{ !empty($masterCard->photo) ? asset($masterCard->photo) : asset('images/default-card.png') }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:type" content="website">
 
@@ -65,17 +66,17 @@
 <script>
 function shareCard() {
     var cardName = "{{ $masterCard->name ?? 'Digital Card' }}";
-    var shareText = "Check out my digital visiting card: " + cardName + " - " + window.location.href;
+    var shareText = "Hello, check out my Digital Visiting Card: " + cardName + "\n" + window.location.href;
 
     if (navigator.share) {
         navigator.share({
-            title: cardName + " - Digital Card",
+            title: cardName + " - Digital Visiting Card",
             text: shareText,
             url: window.location.href
         }).catch(console.error);
     } else {
         navigator.clipboard.writeText(shareText);
-        alert('Card share text and URL copied to clipboard!');
+        alert('Card link copied to clipboard!');
     }
 }
 </script>

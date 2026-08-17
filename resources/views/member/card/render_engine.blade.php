@@ -189,7 +189,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. Real-time sync for checkboxes during creation/editing
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(chk => {
         chk.addEventListener('change', function () {
@@ -202,7 +201,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Theme apply karne ka common function
     function applyThemeToCard(cardWrapper, val) {
         let bgStyle = 'linear-gradient(135deg, #1e293b, #0f172a)';
         let textColor = '#ffffff';
@@ -241,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 2. List page ke sabhi cards par unki saved theme apply karna
     const cardWrappers = document.querySelectorAll('.card-material-wrapper');
     cardWrappers.forEach(cardWrapper => {
         let classList = cardWrapper.className.split(' ');
@@ -250,7 +247,6 @@ document.addEventListener('DOMContentLoaded', function () {
         applyThemeToCard(cardWrapper, val);
     });
 
-    // 3. Create/Edit page ke live preview dropdown ko fix karna
     try {
         if (parent && parent.document) {
             const themeSelect = parent.document.getElementById('theme_style');
@@ -266,7 +262,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     } catch(e) {}
 
-    // Agar preview iframe ke andar hi select ho toh uske liye bhi
     const localThemeSelect = document.getElementById('theme_style');
     if (localThemeSelect) {
         localThemeSelect.addEventListener('change', function() {
