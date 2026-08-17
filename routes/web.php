@@ -183,16 +183,29 @@ Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/profile', function () {
-        return redirect()->route('member.dashboard');
-    })->name('profile.edit');
+    Route::get('/', function () {
+    if (auth()->check()) {
+        $role = auth()->user()->role;
 
-    Route::get('/dashboard', function () {
-        if (auth()->check() && auth()->user()->role === 'admin') {
+        if ($role === 'admin') {
             return redirect()->route('admin.dashboard');
+        } 
+        
+        // Agar employee ya vendor ke routes defined nahi hain, toh member dashboard par bhej denge ya check laga lenge
+        if ($role === 'employee' && \Route::has('employee.dashboard')) {
+            return redirect()->route('employee.dashboard');
+        } 
+        
+        if ($role === 'vendor' && \Route::has('vendor.dashboard')) {
+            return redirect()->route('vendor.dashboard');
         }
+
+        // Default member dashboard
         return redirect()->route('member.dashboard');
-    })->name('dashboard');
+    }
+    
+    return view('welcome');
+});
 
     // --- ADMIN ROUTES ---
     Route::prefix('admin')->name('admin.')->group(function () {
