@@ -8,7 +8,19 @@
     <!-- Meta tags for WhatsApp Link Preview -->
     <meta property="og:title" content="Digital Visiting Card: {{ $masterCard->name ?? 'Tidong Member' }}">
     <meta property="og:description" content="{{ $masterCard->designation ?? 'Professional Business Card' }} | {{ $masterCard->business_name ?? 'Tidong Digital' }}">
-    <meta property="og:image" content="{{ !empty($masterCard->photo) ? asset($masterCard->photo) : asset('images/default-card.png') }}">
+    
+    @if(!empty($masterCard->photo))
+        @php
+            $photoUrl = Str::startsWith($masterCard->photo, 'http') ? $masterCard->photo : url($masterCard->photo);
+        @endphp
+        <meta property="og:image" content="{{ $photoUrl }}">
+        <meta property="og:image:secure_url" content="{{ $photoUrl }}">
+        <meta property="og:image:width" content="400">
+        <meta property="og:image:height" content="400">
+    @else
+        <meta property="og:image" content="{{ asset('images/default-card.png') }}">
+    @endif
+
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:type" content="website">
 

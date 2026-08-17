@@ -4,26 +4,6 @@
     <link rel="stylesheet" href="{{ asset('css/card-materials.css') }}">
     <link rel="stylesheet" href="{{ asset('css/card-themes.css') }}">
     <style>
-        .toggle-card-box {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-            transition: all 0.2s;
-        }
-        .toggle-card-box:hover {
-            border-color: #cbd5e1;
-            background: #f8fafc;
-        }
-        .form-check-input {
-            cursor: pointer;
-            width: 2.6em;
-            height: 1.3em;
-        }
         .section-title-badge {
             background: #e0f2fe;
             color: #0369a1;
@@ -130,73 +110,96 @@
                     </div>
                     <div class="card-body px-4">
                         
+                        <!-- Helper macro template function for table row boxes -->
+                        @php
+                            function renderToggleBox($label, $name, $checked = false, $disabled = false, $title = '') {
+                                $checkedAttr = $checked ? 'checked' : '';
+                                $disabledAttr = $disabled ? 'disabled' : '';
+                                $titleAttr = $title ? 'title="'.$title.'"' : '';
+                                $nameAttr = $name ? 'name="'.$name.'" value="1"' : '';
+                                
+                                return '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; margin-bottom: 8px;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <tr>
+                                            <td style="text-align: left; vertical-align: middle;">
+                                                <span class="small fw-bold text-dark">'.$label.'</span>
+                                            </td>
+                                            <td style="text-align: right; vertical-align: middle; width: 50px;">
+                                                <input type="checkbox" style="width: 2.2em; height: 1.2em; cursor: pointer; margin: 0;" class="form-check-input" '.$nameAttr.' '.$checkedAttr.' '.$disabledAttr.' '.$titleAttr.'>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>';
+                            }
+                        @endphp
+
                         <!-- 1. Profile Info -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Profile Details</span>
-                            <div class="row g-2">
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Full Name (Locked)</label><input type="checkbox" class="form-check-input" checked disabled title="Name is mandatory"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Profile Photo</label><input type="checkbox" class="form-check-input" name="toggles[show_photo]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Business Name</label><input type="checkbox" class="form-check-input" name="toggles[show_business_name]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Designation</label><input type="checkbox" class="form-check-input" name="toggles[show_designation]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Tagline / Motto</label><input type="checkbox" class="form-check-input" name="toggles[show_tagline]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Nickname</label><input type="checkbox" class="form-check-input" name="toggles[show_nickname]" value="1"></div></div>
+                            <div class="row g-0">
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Full Name (Locked)', '', true, true, 'Name is mandatory') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Profile Photo', 'toggles[show_photo]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Business Name', 'toggles[show_business_name]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Designation', 'toggles[show_designation]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Tagline / Motto', 'toggles[show_tagline]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Nickname', 'toggles[show_nickname]') !!}</div>
                             </div>
                         </div>
 
                         <!-- 2. Phone & Messaging -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Phone & Messaging</span>
-                            <div class="row g-2">
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Primary Phone</label><input type="checkbox" class="form-check-input" name="toggles[show_phone]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Alternate Phone</label><input type="checkbox" class="form-check-input" name="toggles[show_alt_phone]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">WhatsApp Number</label><input type="checkbox" class="form-check-input" name="toggles[show_whatsapp]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Telegram</label><input type="checkbox" class="form-check-input" name="toggles[show_telegram]" value="1"></div></div>
+                            <div class="row g-0">
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Primary Phone', 'toggles[show_phone]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Alternate Phone', 'toggles[show_alt_phone]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('WhatsApp Number', 'toggles[show_whatsapp]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Telegram', 'toggles[show_telegram]') !!}</div>
                             </div>
                         </div>
 
                         <!-- 3. Emails & Web Links -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Emails & Websites</span>
-                            <div class="row g-2">
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Gmail / Primary Email</label><input type="checkbox" class="form-check-input" name="toggles[show_gmail]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Yahoo Email</label><input type="checkbox" class="form-check-input" name="toggles[show_yahoo_email]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Other Email</label><input type="checkbox" class="form-check-input" name="toggles[show_other_email]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Website URL</label><input type="checkbox" class="form-check-input" name="toggles[show_website]" value="1"></div></div>
+                            <div class="row g-0">
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Gmail / Primary Email', 'toggles[show_gmail]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Yahoo Email', 'toggles[show_yahoo_email]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Other Email', 'toggles[show_other_email]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Website URL', 'toggles[show_website]') !!}</div>
                             </div>
                         </div>
 
                         <!-- 4. Social Media Links -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Social Media Links</span>
-                            <div class="row g-2">
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Facebook</label><input type="checkbox" class="form-check-input" name="toggles[show_facebook]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Instagram</label><input type="checkbox" class="form-check-input" name="toggles[show_instagram]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">LinkedIn</label><input type="checkbox" class="form-check-input" name="toggles[show_linkedin]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">YouTube Channel</label><input type="checkbox" class="form-check-input" name="toggles[show_youtube]" value="1"></div></div>
+                            <div class="row g-0">
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Facebook', 'toggles[show_facebook]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Instagram', 'toggles[show_instagram]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('LinkedIn', 'toggles[show_linkedin]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('YouTube Channel', 'toggles[show_youtube]') !!}</div>
                             </div>
                         </div>
 
                         <!-- 5. Payments & QR -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Payments & QR Code</span>
-                            <div class="row g-2">
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">UPI ID</label><input type="checkbox" class="form-check-input" name="toggles[show_upi_id]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Google Pay</label><input type="checkbox" class="form-check-input" name="toggles[show_gpay]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Paytm</label><input type="checkbox" class="form-check-input" name="toggles[show_paytm]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">QR Code Image</label><input type="checkbox" class="form-check-input" name="toggles[show_qr_code]" value="1"></div></div>
+                            <div class="row g-0">
+                                <div class="col-md-6 px-1">{!! renderToggleBox('UPI ID', 'toggles[show_upi_id]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Google Pay', 'toggles[show_gpay]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Paytm', 'toggles[show_paytm]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('QR Code Image', 'toggles[show_qr_code]') !!}</div>
                             </div>
                         </div>
 
                         <!-- 6. Address & Location -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Address & Location</span>
-                            <div class="row g-2">
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Street Address</label><input type="checkbox" class="form-check-input" name="toggles[show_address]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Area / Colony</label><input type="checkbox" class="form-check-input" name="toggles[show_area]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">City / District</label><input type="checkbox" class="form-check-input" name="toggles[show_city]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">State</label><input type="checkbox" class="form-check-input" name="toggles[show_state]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Pincode</label><input type="checkbox" class="form-check-input" name="toggles[show_pincode]" value="1"></div></div>
-                                <div class="col-md-6"><div class="toggle-card-box"><label class="form-check-label small fw-bold text-dark">Google Maps Link</label><input type="checkbox" class="form-check-input" name="toggles[show_location_url]" value="1"></div></div>
+                            <div class="row g-0">
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Street Address', 'toggles[show_address]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Area / Colony', 'toggles[show_area]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('City / District', 'toggles[show_city]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('State', 'toggles[show_state]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Pincode', 'toggles[show_pincode]') !!}</div>
+                                <div class="col-md-6 px-1">{!! renderToggleBox('Google Maps Link', 'toggles[show_location_url]') !!}</div>
                             </div>
                         </div>
 
@@ -239,13 +242,9 @@
 function changeThemePreview(selectedTheme) {
     let wrapper = document.querySelector('#live-card-container .card-material-wrapper');
     if (wrapper) {
-        // Purani saari theme classes hata dein
         wrapper.className = wrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
-        
-        // Nayi theme class add karein
         wrapper.classList.add('theme-' + selectedTheme);
         
-        // Agar CSS file mein class na chale, toh yahan direct background color/gradient bhi set kar sakte hain
         if (selectedTheme === 'classic-white') {
             wrapper.style.background = '#ffffff';
             wrapper.style.color = '#000000';
@@ -254,22 +253,20 @@ function changeThemePreview(selectedTheme) {
         } else if (selectedTheme.includes('wood')) {
             wrapper.style.background = 'linear-gradient(135deg, #8b5a2b, #5c4033)';
         } else {
-            // Default ya baki themes ke liye CSS class par chhod dein aur inline background hata dein
             wrapper.style.background = '';
         }
     }
 }
 
-// Function to update preview elements based on toggles
 function updateCardToggles() {
     document.querySelectorAll('input[type="checkbox"][name^="toggles"]').forEach(checkbox => {
         let nameAttr = checkbox.getAttribute('name');
+        if(!nameAttr) return;
         let match = nameAttr.match(/\[(.*?)\]/);
         if (!match) return;
         
         let fieldKey = match[1];
         
-        // Find matching elements inside the live card preview container
         document.querySelectorAll('#live-card-container .' + fieldKey).forEach(el => {
             if (checkbox.checked) {
                 el.style.display = '';
@@ -280,12 +277,10 @@ function updateCardToggles() {
     });
 }
 
-// Attach change listener to all toggles
 document.querySelectorAll('input[type="checkbox"][name^="toggles"]').forEach(checkbox => {
     checkbox.addEventListener('change', updateCardToggles);
 });
 
-// Run on initial page load to sync initial checked states and default theme
 document.addEventListener("DOMContentLoaded", function() {
     updateCardToggles();
     let themeSelect = document.getElementById('theme_style');

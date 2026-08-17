@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class CardController extends Controller
 {
@@ -52,40 +53,40 @@ class CardController extends Controller
     public function storeMaster(Request $request)
     {
         $request->validate([
-            'name'                  => 'required|string|max:255',
-            'designation'           => 'nullable|string|max:255',
-            'business_name'         => 'nullable|string|max:255',
-            'tagline'               => 'nullable|string|max:255',
-            'owner_name'            => 'nullable|string|max:255',
-            'nickname'              => 'nullable|string|max:255',
-            'phone'                 => 'required|string|max:20',
-            'alt_phone'             => 'nullable|string|max:20',
-            'whatsapp'              => 'nullable|string|max:20',
-            'gmail'                 => 'nullable|email|max:255',
-            'yahoo_email'           => 'nullable|email|max:255',
-            'other_email'           => 'nullable|email|max:255',
-            'facebook'              => 'nullable|string|max:255',
-            'instagram'             => 'nullable|string|max:255',
-            'linkedin'              => 'nullable|string|max:255',
-            'youtube'               => 'nullable|string|max:255',
-            'telegram'              => 'nullable|string|max:255',
-            'website'               => 'nullable|string|max:255',
-            'location_url'          => 'nullable|string|max:500',
-            'gpay'                  => 'nullable|string|max:50',
-            'paytm'                 => 'nullable|string|max:50',
-            'upi_id'                => 'nullable|string|max:255',
-            'address'               => 'nullable|string|max:500',
-            'area'                  => 'nullable|string|max:255',
-            'pincode'               => 'nullable|string|max:20',
-            'city'                  => 'nullable|string|max:100',
-            'state'                 => 'nullable|string|max:100',
-            'about_us'              => 'nullable|string',
-            'services_or_products'  => 'nullable|string',
-            'other_details'         => 'nullable|string',
-            'country_id'            => 'nullable|exists:countries,id',
-            'state_id'              => 'nullable|exists:states,id',
-            'photo'                 => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'qr_code'               => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'name'                 => 'required|string|max:255',
+            'designation'          => 'nullable|string|max:255',
+            'business_name'        => 'nullable|string|max:255',
+            'tagline'              => 'nullable|string|max:255',
+            'owner_name'           => 'nullable|string|max:255',
+            'nickname'             => 'nullable|string|max:255',
+            'phone'                => 'required|string|max:20',
+            'alt_phone'            => 'nullable|string|max:20',
+            'whatsapp'             => 'nullable|string|max:20',
+            'gmail'                => 'nullable|email|max:255',
+            'yahoo_email'          => 'nullable|email|max:255',
+            'other_email'          => 'nullable|email|max:255',
+            'facebook'             => 'nullable|string|max:255',
+            'instagram'            => 'nullable|string|max:255',
+            'linkedin'             => 'nullable|string|max:255',
+            'youtube'              => 'nullable|string|max:255',
+            'telegram'             => 'nullable|string|max:255',
+            'website'              => 'nullable|string|max:255',
+            'location_url'         => 'nullable|string|max:500',
+            'gpay'                 => 'nullable|string|max:50',
+            'paytm'                => 'nullable|string|max:50',
+            'upi_id'               => 'nullable|string|max:255',
+            'address'              => 'nullable|string|max:500',
+            'area'                 => 'nullable|string|max:255',
+            'pincode'              => 'nullable|string|max:20',
+            'city'                 => 'nullable|string|max:100',
+            'state'                => 'nullable|string|max:100',
+            'about_us'             => 'nullable|string',
+            'services_or_products' => 'nullable|string',
+            'other_details'        => 'nullable|string',
+            'country_id'           => 'nullable|exists:countries,id',
+            'state_id'             => 'nullable|exists:states,id',
+            'photo'                => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'qr_code'              => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $card = VisitingCard::firstOrNew(['user_id' => Auth::id()]);
@@ -107,14 +108,26 @@ class CardController extends Controller
             $card->plan_type = 'free';
         }
 
+        // Corrected Image Upload logic for Photo
         if ($request->hasFile('photo')) {
+            // Purani image delete karein agar exist karti ho
+            if (!empty($card->photo) && Storage::disk('public')->exists(str_replace('storage/', '', $card->photo))) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $card->photo));
+            }
+
             $file = $request->file('photo');
             $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+            // File ko directly 'public' disk ke 'uploads/photos' me store karein
             $path = $file->storeAs('uploads/photos', $filename, 'public');
             $card->photo = 'storage/' . $path;
         }
 
+        // Corrected Image Upload logic for QR Code
         if ($request->hasFile('qr_code')) {
+            if (!empty($card->qr_code) && Storage::disk('public')->exists(str_replace('storage/', '', $card->qr_code))) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $card->qr_code));
+            }
+
             $file = $request->file('qr_code');
             $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('uploads/qrcodes', $filename, 'public');

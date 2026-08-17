@@ -75,7 +75,6 @@
                                 @method('PUT')
                             @endif
 
-                            <!-- Hidden inputs for Card Serial Number generation -->
                             <input type="hidden" name="country_id" id="country_id" value="{{ old('country_id', $card->country_id ?? '1') }}">
                             <input type="hidden" name="state_id" id="state_id" value="{{ old('state_id', $card->state_id ?? '') }}">
 
@@ -89,7 +88,7 @@
                                     <label class="form-label fw-bold text-secondary small">Choose Card Layout Style *</label>
                                     <select name="design_type" id="design_type_select" class="form-select bg-light">
                                         @php
-                                            $selectedType = old('design_type', $card->design_type ?? $card->card_type ?? $type ?? 'modern');
+                                            $selectedType = old('design_type', $card->design_type ?? ($card->card_type ?? ($type ?? 'modern')));
                                         @endphp
                                         <option value="modern" {{ $selectedType == 'modern' ? 'selected' : '' }}>Modern Theme (Default)</option>
                                         <option value="classic" {{ $selectedType == 'classic' ? 'selected' : '' }}>Classic Professional</option>
@@ -105,38 +104,29 @@
                             </div>
 
                             <!-- 2. Personal & Business Details -->
-<div class="form-section-title">2. Basic & Personal Details</div>
-<div class="row g-3 mb-4">
-    <!-- 1. Person Name -->
-    <div class="col-md-6">
-        <label class="form-label fw-bold text-secondary small">Person / Card Holder Name *</label>
-        <input type="text" name="name" class="form-control bg-light" required placeholder="e.g. Saharsh Sharma" value="{{ old('name', $card->name ?? '') }}">
-    </div>
-
-    <!-- 2. Business / Profession -->
-    <div class="col-md-6">
-        <label class="form-label fw-bold text-secondary small">Business / Profession *</label>
-        <input type="text" name="business_name" class="form-control bg-light" required placeholder="e.g. Tidong Marketing Pvt Ltd" value="{{ old('business_name', $card->business_name ?? '') }}">
-    </div>
-
-    <!-- 3. Designation / Post -->
-    <div class="col-md-6">
-        <label class="form-label text-secondary small">Designation / Post</label>
-        <input type="text" name="designation" class="form-control bg-light" placeholder="e.g. Director / Manager" value="{{ old('designation', $card->designation ?? '') }}">
-    </div>
-
-    <!-- 4. Nick Name / Known As -->
-    <div class="col-md-6">
-        <label class="form-label text-secondary small">Nick Name / Known As (Optional)</label>
-        <input type="text" name="nickname" class="form-control bg-light" placeholder="e.g. Lalo" value="{{ old('nickname', $card->nickname ?? '') }}">
-    </div>
-
-    <!-- 5. Tagline / Slogan -->
-    <div class="col-md-12">
-        <label class="form-label text-secondary small">Tagline / Business Slogan</label>
-        <input type="text" name="tagline" class="form-control bg-light" placeholder="e.g. Quality You Can Trust" value="{{ old('tagline', $card->tagline ?? '') }}">
-    </div>
-</div>
+                            <div class="form-section-title">2. Basic & Personal Details</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-secondary small">Person / Card Holder Name *</label>
+                                    <input type="text" name="name" class="form-control bg-light" required placeholder="e.g. Saharsh Sharma" value="{{ old('name', $card->name ?? '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-secondary small">Business / Profession *</label>
+                                    <input type="text" name="business_name" class="form-control bg-light" required placeholder="e.g. Tidong Marketing Pvt Ltd" value="{{ old('business_name', $card->business_name ?? '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small">Designation / Post</label>
+                                    <input type="text" name="designation" class="form-control bg-light" placeholder="e.g. Director / Manager" value="{{ old('designation', $card->designation ?? '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small">Nick Name / Known As (Optional)</label>
+                                    <input type="text" name="nickname" class="form-control bg-light" placeholder="e.g. Lalo" value="{{ old('nickname', $card->nickname ?? '') }}">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label text-secondary small">Tagline / Business Slogan</label>
+                                    <input type="text" name="tagline" class="form-control bg-light" placeholder="e.g. Quality You Can Trust" value="{{ old('tagline', $card->tagline ?? '') }}">
+                                </div>
+                            </div>
 
                             <!-- 3. Contact Numbers -->
                             <div class="form-section-title">3. Contact Details</div>
@@ -353,13 +343,19 @@
                     theme: 'bootstrap-5',
                     placeholder: placeholderText,
                     allowClear: true,
-                    tags: true, // User can manually type if API misses it
+                    tags: true,
                     ajax: {
                         url: "{{ route('search.locations') }}",
                         dataType: 'json',
                         delay: 250,
-                        data: params => ({ q: params.term }),
-                        processResults: data => ({ results: data })
+                        data: function (params) {
+                            return { q: params.term };
+                        },
+                        processResults: function (data) {
+                            return { 
+                                results: Array.isArray(data) ? data : (data.results || []) 
+                            };
+                        }
                     }
                 });
             }
@@ -371,11 +367,19 @@
             // Synchronize Location Select2 dropdowns on selection
             $('#area_search, #pincode_search, #city_search').on('select2:select', function(e) {
                 let data = e.params.data;
-                if(data.area && data.pincode && data.city) {
-                    $('#area_search').html(`<option value="${data.area}" selected>${data.area}</option>`).trigger('change.select2');
-                    $('#pincode_search').html(`<option value="${data.pincode}" selected>${data.pincode}</option>`).trigger('change.select2');
-                    $('#city_search').html(`<option value="${data.city}" selected>${data.city}</option>`).trigger('change.select2');
-                    $('#state').val(data.state || '');
+                if(data) {
+                    if(data.area) {
+                        $('#area_search').html(`<option value="${data.area}" selected>${data.area}</option>`).trigger('change.select2');
+                    }
+                    if(data.pincode) {
+                        $('#pincode_search').html(`<option value="${data.pincode}" selected>${data.pincode}</option>`).trigger('change.select2');
+                    }
+                    if(data.city) {
+                        $('#city_search').html(`<option value="${data.city}" selected>${data.city}</option>`).trigger('change.select2');
+                    }
+                    if(data.state) {
+                        $('#state').val(data.state);
+                    }
                 }
             });
         });
