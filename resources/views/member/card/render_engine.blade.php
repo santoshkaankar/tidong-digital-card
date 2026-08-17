@@ -202,44 +202,64 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function applyThemeToCard(cardWrapper, val) {
-        let bgStyle = 'linear-gradient(135deg, #1e293b, #0f172a)';
+        let bgStyle = '';
         let textColor = '#ffffff';
         let secondaryTextColor = '#cbd5e1';
-        
-        const isLight = (val === 'classic-white' || val.includes('paper') || val.includes('light') || val.includes('vintage') || val.includes('metal-gold'));
 
-        if(isLight) {
-            if(val.includes('metal-gold')) {
-                bgStyle = 'linear-gradient(135deg, #d4af37, #aa771c, #f3e5ab)';
-                textColor = '#111111';
-                secondaryTextColor = '#333333';
-            } else {
-                bgStyle = '#ffffff';
-                textColor = '#111111';
-                secondaryTextColor = '#555555';
-            }
-        } else if(val.includes('wood')) {
-            bgStyle = 'linear-gradient(135deg, #5c4033, #3b2219)';
+        // Check if theme is dynamic vibrant or royal
+        if (val.startsWith('dyn-vibrant-')) {
+            let id = parseInt(val.replace('dyn-vibrant-', ''));
+            let hash1 = (id * 37) % 360;
+            let hash2 = (id * 83) % 360;
+            bgStyle = `linear-gradient(135deg, hsl(${hash1}, 85%, 50%), hsl(${hash2}, 90%, 35%))`;
             textColor = '#ffffff';
-            secondaryTextColor = '#e2e8f0';
-        } else if(val.includes('metal-silver')) {
-            bgStyle = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
+            secondaryTextColor = '#f1f5f9';
+        } else if (val.startsWith('dyn-royal-')) {
+            let id = parseInt(val.replace('dyn-royal-', ''));
+            let hash1 = (id * 37) % 360;
+            let hash2 = (id * 83) % 360;
+            bgStyle = `linear-gradient(135deg, hsl(${hash1}, 65%, 88%), hsl(${hash2}, 75%, 70%))`;
+            textColor = '#0f172a';
+            secondaryTextColor = '#334155';
+        } else if (val === 'classic-white') {
+            bgStyle = '#ffffff';
+            textColor = '#111111';
+            secondaryTextColor = '#555555';
+        } else if (val === 'classic-dark' || val === 'default') {
+            bgStyle = '#111827';
+            textColor = '#ffffff';
+            secondaryTextColor = '#9ca3af';
+        } else if (val === 'classic-modern') {
+            bgStyle = 'linear-gradient(135deg, #1e3a8a, #3b82f6)';
+            textColor = '#ffffff';
+            secondaryTextColor = '#93c5fd';
+        } else if (val === 'metal-gold') {
+            bgStyle = 'linear-gradient(135deg, #bf953f, #fcf6ba, #aa771c)';
+            textColor = '#3d2c04';
+            secondaryTextColor = '#5c4405';
+        } else if (val === 'fabric-denim') {
+            bgStyle = 'linear-gradient(135deg, #1e3c72, #2a5298)';
             textColor = '#ffffff';
             secondaryTextColor = '#e2e8f0';
         }
 
-        cardWrapper.style.setProperty('background', bgStyle, 'important');
-        cardWrapper.style.setProperty('color', textColor, 'important');
-
-        cardWrapper.querySelectorAll('.card-main-text').forEach(el => {
-            el.style.setProperty('color', textColor, 'important');
-        });
-        cardWrapper.querySelectorAll('.card-sub-text').forEach(el => {
-            el.style.setProperty('color', secondaryTextColor, 'important');
-        });
+        if (bgStyle !== '') {
+            cardWrapper.style.setProperty('background', bgStyle, 'important');
+        }
+        
+        if (textColor !== '') {
+            cardWrapper.style.setProperty('color', textColor, 'important');
+            
+            // Sirf text elements par color lagayein, icons/buttons par nahi taaki unka design kharab na ho
+            const textElements = cardWrapper.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, strong, small, .card-text, .name-title, .company-title');
+            textElements.forEach(el => {
+                el.style.setProperty('color', textColor, 'important');
+            });
+        }
     }
 
     const cardWrappers = document.querySelectorAll('.card-material-wrapper');
+    
     cardWrappers.forEach(cardWrapper => {
         let classList = cardWrapper.className.split(' ');
         let themeClass = classList.find(cls => cls.startsWith('theme-'));

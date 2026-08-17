@@ -26,6 +26,7 @@
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
         }
     </style>
 @endpush
@@ -49,7 +50,7 @@
             <!-- Left Column: Dropdown & Toggles -->
             <div class="col-lg-7 col-xl-7">
                 
-                <!-- Theme Selector Dropdown -->
+                <!-- Theme Selector Dropdown (Expanded to 1000+ Dynamic Options) -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white border-0 pt-4 px-4">
                         <h5 class="fw-bold mb-0"><i class="fa-solid fa-layer-group text-primary me-2"></i>Select Theme & Material Category</h5>
@@ -57,44 +58,23 @@
                     <div class="card-body px-4 pb-4">
                         <div class="row g-3">
                             <div class="col-md-12">
-                                <label for="theme_style" class="form-label fw-bold text-dark small">Choose Material Finish</label>
+                                <label for="theme_style" class="form-label fw-bold text-dark small">Choose From 1000+ Dynamic Color Finishes</label>
                                 <select name="theme_style" id="theme_style" class="form-select form-select-lg rounded-3 fs-6 border-secondary-subtle" onchange="changeThemePreview(this.value)">
-                                    <optgroup label="Category A: Standard / Modern Minimalist">
+                                    <optgroup label="Standard / Minimalist">
                                         <option value="default" selected>Modern Dark Minimal</option>
                                         <option value="classic-white">Classic Pure White</option>
                                         <option value="classic-dark">Deep Midnight Charcoal</option>
                                         <option value="classic-modern">Modern Gradient Blue</option>
                                     </optgroup>
-                                    <optgroup label="Category B: Fabric & Cloth Textures">
-                                        <option value="fabric-cotton">Cotton Weave Fabric</option>
-                                        <option value="fabric-denim">Rough Blue Denim</option>
-                                        <option value="fabric-silk">Royal Smooth Silk</option>
-                                        <option value="fabric-canvas">Textured Art Canvas</option>
-                                        <option value="fabric-velvet">Rich Velvet Texture</option>
+                                    <optgroup label="Dynamic Vibrant Gradients (1 - 500)">
+                                        @for ($i = 1; $i <= 500; $i++)
+                                            <option value="dyn-vibrant-{{ $i }}">Vibrant Color Theme #{{ $i }}</option>
+                                        @endfor
                                     </optgroup>
-                                    <optgroup label="Category C: Stone & Marble Textures">
-                                        <option value="stone-marble">Italian White Marble</option>
-                                        <option value="stone-granite">Dark Granite Stone</option>
-                                        <option value="stone-slate">Black Slate Texture</option>
-                                    </optgroup>
-                                    <optgroup label="Category D: Natural Wood Grain">
-                                        <option value="wood-oak">Classic Oak Wood</option>
-                                        <option value="wood-walnut">Deep Walnut Timber</option>
-                                        <option value="wood-teak">Natural Teak Finish</option>
-                                    </optgroup>
-                                    <optgroup label="Category E: Premium Metallic Finishes">
-                                        <option value="metal-gold">Luxury Gold Foil</option>
-                                        <option value="metal-silver">Brushed Metal Silver</option>
-                                        <option value="metal-bronze">Antique Bronze</option>
-                                    </optgroup>
-                                    <optgroup label="Category F: Leather & Vintage Paper">
-                                        <option value="leather-black">Black Grain Leather</option>
-                                        <option value="vintage-paper">Classic Vintage Paper</option>
-                                        <option value="paper-parchment">Aged Parchment</option>
-                                    </optgroup>
-                                    <optgroup label="Category G: Glass & Special Finishes">
-                                        <option value="crystal-glass">Frosted Crystal Glass</option>
-                                        <option value="dark-obsidian">Obsidian Reflective</option>
+                                    <optgroup label="Dynamic Pastel & Royal Shades (501 - 1000)">
+                                        @for ($i = 501; $i <= 1000; $i++)
+                                            <option value="dyn-royal-{{ $i }}">Royal Shade Theme #{{ $i }}</option>
+                                        @endfor
                                     </optgroup>
                                 </select>
                             </div>
@@ -110,7 +90,6 @@
                     </div>
                     <div class="card-body px-4">
                         
-                        <!-- Helper macro template function for table row boxes -->
                         @php
                             function renderToggleBox($label, $name, $checked = false, $disabled = false, $title = '') {
                                 $checkedAttr = $checked ? 'checked' : '';
@@ -193,7 +172,7 @@
                         <!-- 6. Address & Location -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Address & Location</span>
-                            <div class="row g-0">
+                        <div class="row g-0">
                                 <div class="col-md-6 px-1">{!! renderToggleBox('Street Address', 'toggles[show_address]') !!}</div>
                                 <div class="col-md-6 px-1">{!! renderToggleBox('Area / Colony', 'toggles[show_area]') !!}</div>
                                 <div class="col-md-6 px-1">{!! renderToggleBox('City / District', 'toggles[show_city]') !!}</div>
@@ -239,23 +218,52 @@
 
 @push('scripts')
 <script>
+// Unique color generator for 1000+ themes
+function getThemeColors(id, type) {
+    let hash1 = (id * 37) % 360;
+    let hash2 = (id * 83) % 360;
+    
+    if(type === 'vibrant') {
+        return `linear-gradient(135deg, hsl(${hash1}, 85%, 50%), hsl(${hash2}, 90%, 35%))`;
+    } else {
+        return `linear-gradient(135deg, hsl(${hash1}, 65% , 88%), hsl(${hash2}, 75%, 70%))`;
+    }
+}
+
 function changeThemePreview(selectedTheme) {
     let wrapper = document.querySelector('#live-card-container .card-material-wrapper');
-    if (wrapper) {
-        wrapper.className = wrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
-        wrapper.classList.add('theme-' + selectedTheme);
-        
-        if (selectedTheme === 'classic-white') {
-            wrapper.style.background = '#ffffff';
-            wrapper.style.color = '#000000';
-        } else if (selectedTheme.includes('gold')) {
-            wrapper.style.background = 'linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7)';
-        } else if (selectedTheme.includes('wood')) {
-            wrapper.style.background = 'linear-gradient(135deg, #8b5a2b, #5c4033)';
-        } else {
-            wrapper.style.background = '';
-        }
+    if (!wrapper) return;
+
+    let bgStyle = '';
+    let textColor = '#ffffff'; // Default white text
+
+    if (selectedTheme === 'default' || selectedTheme === 'classic-dark') {
+        bgStyle = '#111827';
+        textColor = '#ffffff';
+    } else if (selectedTheme === 'classic-white') {
+        bgStyle = '#ffffff';
+        textColor = '#111827'; // Dark text for white background
+    } else if (selectedTheme === 'classic-modern') {
+        bgStyle = 'linear-gradient(135deg, #1e3a8a, #3b82f6)';
+        textColor = '#ffffff';
+    } else if (selectedTheme.startsWith('dyn-vibrant-')) {
+        let id = parseInt(selectedTheme.replace('dyn-vibrant-', ''));
+        bgStyle = getThemeColors(id, 'vibrant');
+        textColor = '#ffffff';
+    } else if (selectedTheme.startsWith('dyn-royal-')) {
+        let id = parseInt(selectedTheme.replace('dyn-royal-', ''));
+        bgStyle = getThemeColors(id, 'royal');
+        textColor = '#0f172a'; // Dark text for pastel/royal light shades
     }
+
+    // Apply with !important to override any conflicting external CSS
+    wrapper.style.setProperty('background', bgStyle, 'important');
+    wrapper.style.setProperty('color', textColor, 'important');
+    
+    // Force all child elements inside the card to follow the theme color
+    wrapper.querySelectorAll('*').forEach(el => {
+        el.style.setProperty('color', textColor, 'important');
+    });
 }
 
 function updateCardToggles() {
