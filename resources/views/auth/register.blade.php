@@ -15,6 +15,14 @@
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
+        <div class="mb-3">
+    <label class="form-label">Mobile Number</label>
+    <input type="text" name="mobile" class="form-control" placeholder="Enter mobile number" required>
+</div>
+<div class="mb-3">
+    <label class="form-label">Username</label>
+    <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+</div>
 
         <!-- Role Selection -->
         <div class="mt-4">

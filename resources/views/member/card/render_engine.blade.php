@@ -1,5 +1,4 @@
 @php
-    // Database se saved theme uthayi ja rahi hai taaki list page par sahi theme render ho
     $themeStyle = $themeStyle ?? ($cardView->theme_style ?? 'default');
     $fullCardNo = $fullCardNo ?? ($cardView->full_card_no ?? ($masterCard->card_no ?? '12091-080000001-A1'));
     
@@ -20,13 +19,46 @@
         }
     }
     
-    $show = function($key) use ($toggles) {
+    $isSavedCardContext = empty($toggles) && isset($cardView);
+
+    $show = function($key) use ($toggles, $isSavedCardContext) {
         if ($key === 'show_name') return true;
+        if ($isSavedCardContext) return true;
         if (array_key_exists($key, $toggles)) {
             return (bool)$toggles[$key];
         }
         return false; 
     };
+
+    $themeVal = strtolower($themeStyle);
+    $cardBg = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
+    $cardColor = '#ffffff';
+
+    if (str_contains($themeVal, 'gold') || str_contains($themeVal, 'metal-gold') || str_contains($themeVal, 'rose-gold')) {
+        $cardBg = 'linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%)';
+        $cardColor = '#3d2c04';
+    } elseif (str_contains($themeVal, 'paper') || str_contains($themeVal, 'parchment') || str_contains($themeVal, 'torn')) {
+        $cardBg = '#f4ebd0';
+        $cardColor = '#4a3b32';
+    } elseif (str_contains($themeVal, 'jeans') || str_contains($themeVal, 'denim')) {
+        $cardBg = 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)';
+        $cardColor = '#ffffff';
+    } elseif (str_contains($themeVal, 'white') || str_contains($themeVal, 'classic-white')) {
+        $cardBg = '#ffffff';
+        $cardColor = '#0f172a';
+    } elseif (str_contains($themeVal, 'dark') || str_contains($themeVal, 'obsidian') || str_contains($themeVal, 'classic-dark')) {
+        $cardBg = '#000000';
+        $cardColor = '#f1f5f9';
+    } elseif (str_contains($themeVal, 'sunset')) {
+        $cardBg = 'linear-gradient(135deg, #f857a6 0%, #ff5858 100%)';
+        $cardColor = '#ffffff';
+    } elseif (str_contains($themeVal, 'ocean')) {
+        $cardBg = 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)';
+        $cardColor = '#ffffff';
+    } elseif (str_contains($themeVal, 'glass') || str_contains($themeVal, 'crystal')) {
+        $cardBg = 'rgba(255, 255, 255, 0.25)';
+        $cardColor = '#0f172a';
+    }
 @endphp
 
 <style>
@@ -50,18 +82,18 @@
     }
 </style>
 
-<div class="card-material-wrapper auto-fit-card theme-{{ $themeStyle }} position-relative rounded-4 p-3 d-flex flex-column justify-content-between shadow-lg" style="overflow: hidden;">
+<div class="card-material-wrapper auto-fit-card theme-{{ $themeStyle }} position-relative rounded-4 p-3 d-flex flex-column justify-content-between shadow-lg" style="overflow: hidden; background: {{ $cardBg }}; color: {{ $cardColor }};">
 
     <div class="d-flex justify-content-between align-items-start w-100">
        <div style="padding-left: 0 !important; margin-left: 0 !important;">
            
            <div style="margin-bottom: 2px; margin-left: 0 !important;">
-               <a href="https://tidong.in" target="_blank" class="text-decoration-none fw-bold text-truncate card-main-text" style="font-size: 1.1rem; line-height: 1.2; display: inline-block;">
+               <a href="https://tidong.in" target="_blank" class="text-decoration-none fw-bold text-truncate card-main-text" style="font-size: 1.1rem; line-height: 1.2; display: inline-block; color: inherit;">
                    {{ $masterCard->name ?? 'Card Holder Name' }}
                </a>
                
                @if(!empty($masterCard->nickname))
-                   <span class="text-warning fst-italic show_nickname f-item {{ $show('show_nickname') ? 'active-field' : '' }}" style="font-size: 0.8rem; margin-left: 4px;">
+                   <span class="fst-italic show_nickname f-item {{ $show('show_nickname') ? 'active-field' : '' }}" style="font-size: 0.8rem; margin-left: 4px; opacity: 0.85;">
                        ({{ $masterCard->nickname }})
                    </span>
                @endif
@@ -69,7 +101,7 @@
            
            @if(!empty($masterCard->business_name))
                <div class="show_business_name f-item {{ $show('show_business_name') ? 'active-field' : '' }}" style="margin-bottom: 2px; margin-left: 0 !important;">
-                   <p class="mb-0 fw-semibold text-info text-start" style="font-size: 0.8rem; line-height: 1.1; margin-left: 0 !important;">
+                   <p class="mb-0 fw-semibold text-start" style="font-size: 0.8rem; line-height: 1.1; margin-left: 0 !important; opacity: 0.9;">
                        {{ $masterCard->business_name }}
                    </p>
                </div>
@@ -180,9 +212,9 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-between align-items-end border-top border-secondary pt-1">
-            <a href="https://tidong.in" target="_blank" class="font-monospace text-warning text-decoration-none" style="font-size: 0.8rem;">{{ $fullCardNo }}</a>
-            <a href="https://tidong.in" target="_blank" class="text-decoration-none fst-italic fw-semibold card-sub-text" style="font-size: 0.8rem; opacity: 0.95;">Powered by Tidong</a>
+        <div class="d-flex justify-content-between align-items-end border-top pt-1" style="border-color: rgba(255,255,255,0.2) !important;">
+            <a href="https://tidong.in" target="_blank" class="font-monospace text-decoration-none" style="font-size: 0.8rem; color: inherit; opacity: 0.9;">{{ $fullCardNo }}</a>
+            <a href="https://tidong.in" target="_blank" class="text-decoration-none fst-italic fw-semibold card-sub-text" style="font-size: 0.8rem; opacity: 0.95; color: inherit;">Powered by Tidong</a>
         </div>
     </div>
 </div>
@@ -241,16 +273,96 @@ document.addEventListener('DOMContentLoaded', function () {
             bgStyle = 'linear-gradient(135deg, #1e3c72, #2a5298)';
             textColor = '#ffffff';
             secondaryTextColor = '#e2e8f0';
+        } 
+        // --- Advanced CSS Patterns & Creative Textures ---
+        else if (val === 'texture-old-wood') {
+            bgStyle = 'linear-gradient(90deg, #3e2723 0%, #4e342e 50%, #3e2723 100%), repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.3) 4px, rgba(0,0,0,0.3) 8px)';
+            textColor = '#d7ccc8';
+            secondaryTextColor = '#bcaaa4';
+        } else if (val === 'texture-ripped-jeans') {
+            bgStyle = 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%), repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 2px, transparent 2px, transparent 6px)';
+            textColor = '#ffffff';
+            secondaryTextColor = '#c5cae9';
+        } else if (val === 'texture-fish-stones') {
+            bgStyle = 'radial-gradient(circle at 30% 30%, #ff7043 0%, transparent 40%), radial-gradient(circle at 70% 70%, #26a69a 0%, transparent 50%), linear-gradient(135deg, #37474f, #263238)';
+            textColor = '#ffffff';
+            secondaryTextColor = '#e0f2f1';
+        } else if (val === 'texture-torn-paper') {
+            bgStyle = 'linear-gradient(135deg, #f9f9f9 0%, #eceff1 100%), repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 4px)';
+            textColor = '#212121';
+            secondaryTextColor = '#555555';
+        } else if (val === 'texture-spider-web') {
+            bgStyle = 'radial-gradient(circle at center, #263238 0%, #0b1013 100%), repeating-radial-gradient(circle at center, transparent 0px, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 12px)';
+            textColor = '#e0f7fa';
+            secondaryTextColor = '#b2ebf2';
+        } else if (val === 'texture-dusty-sand') {
+            bgStyle = 'linear-gradient(135deg, #d7ccc8 0%, #a1887f 100%), radial-gradient(rgba(0,0,0,0.15) 15%, transparent 16%)';
+            textColor = '#3e2723';
+            secondaryTextColor = '#5d4037';
+        } else if (val === 'texture-rusty-metal') {
+            bgStyle = 'linear-gradient(135deg, #bf360c 0%, #4e342e 100%), repeating-linear-gradient(-45deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 3px, transparent 3px, transparent 6px)';
+            textColor = '#ffccbc';
+            secondaryTextColor = '#ffab91';
+        } else if (val === 'texture-neon-glow') {
+            bgStyle = 'linear-gradient(135deg, #000428, #004e92)';
+            textColor = '#00ffcc';
+        } else if (val === 'texture-carbon-fiber') {
+            bgStyle = 'radial-gradient(circle, #222 20%, #111 80%), repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px)';
+            textColor = '#ffffff';
+        } else if (val === 'texture-marble-white') {
+            bgStyle = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%), radial-gradient(at 50% 50%, rgba(255,255,255,0.8) 0%, rgba(0,0,0,0.05) 100%)';
+            textColor = '#2c3e50';
+        } else if (val === 'texture-stained-glass') {
+            bgStyle = 'linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #a18cd1, #fbc2eb)';
+            textColor = '#222222';
+        } else if (val === 'texture-holographic') {
+            bgStyle = 'linear-gradient(to right, #ff00ff, #00ffff, #ffff00, #ff00ff)';
+            textColor = '#ffffff';
+        } else if (val === 'texture-rose-gold') {
+            bgStyle = 'linear-gradient(135deg, #b76e79, #e8b4b8, #d4af37)';
+            textColor = '#ffffff';
+        } else if (val === 'texture-midnight-velvet') {
+            bgStyle = 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)';
+            textColor = '#e2e8f0';
+        } else if (val === 'texture-emerald-silk') {
+            bgStyle = 'linear-gradient(135deg, #0575e6, #00f2fe)';
+            textColor = '#ffffff';
+        } else if (val === 'texture-cyberpunk-grid') {
+            bgStyle = 'linear-gradient(135deg, #f72585, #7209b7, #3a0ca3)';
+            textColor = '#4cc9f0';
+        } else if (val === 'texture-vintage-leather') {
+            bgStyle = 'linear-gradient(135deg, #3e2723, #4e342e, #211512)';
+            textColor = '#d7ccc8';
+        } else if (val === 'texture-sunset-orange') {
+            bgStyle = 'linear-gradient(135deg, #ff4e50, #f9d423)';
+            textColor = '#222222';
+        } else if (val === 'texture-deep-ocean') {
+            bgStyle = 'linear-gradient(135deg, #2b5876, #4e4376)';
+            textColor = '#ffffff';
+        } else if (val === 'texture-royal-amethyst') {
+            bgStyle = 'linear-gradient(135deg, #9d50bb, #6e48aa)';
+            textColor = '#ffffff';
+        } else if (val === 'texture-frost-glass') {
+            bgStyle = 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1))';
+            textColor = '#111827';
+        } else if (val === 'texture-matte-obsidian') {
+            bgStyle = '#1a1a1a';
+            textColor = '#a3a3a3';
+        } else if (val === 'texture-liquid-chrome') {
+            bgStyle = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
+            textColor = '#ffffff';
+        } else if (val === 'texture-plasma-energy') {
+            bgStyle = 'linear-gradient(135deg, #ff0844, #ffb199)';
+            textColor = '#ffffff';
         }
 
         if (bgStyle !== '') {
-            cardWrapper.style.setProperty('background', bgStyle, 'important');
+            cardWrapper.style.cssText += `; background: ${bgStyle} !important;`;
         }
         
         if (textColor !== '') {
             cardWrapper.style.setProperty('color', textColor, 'important');
             
-            // Sirf text elements par color lagayein, icons/buttons par nahi taaki unka design kharab na ho
             const textElements = cardWrapper.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, strong, small, .card-text, .name-title, .company-title');
             textElements.forEach(el => {
                 el.style.setProperty('color', textColor, 'important');

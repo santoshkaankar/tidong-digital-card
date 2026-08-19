@@ -40,122 +40,8 @@
 </head>
 <body>
 
-    <!-- Sidebar with Compact Spacing -->
-    <div id="sidebar" class="d-flex flex-column">
-        <div class="brand">
-            <i class="fas fa-shield-alt text-primary me-2"></i> Admin Panel
-        </div>
-        
-        <ul class="nav nav-pills flex-column mb-auto px-1 py-2">
-            <!-- Main Dashboard -->
-            <li class="nav-item">
-                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home me-2"></i> Dashboard
-                </a>
-            </li>
-
-            <!-- Core Management -->
-            <li class="nav-item">
-                <a href="{{ route('admin.global.item.create') }}" class="nav-link {{ request()->routeIs('admin.global.item.create') ? 'active' : '' }}">
-                    <i class="fas fa-plus-circle me-2"></i> Create Global Item
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('admin.cards.index') }}" class="nav-link {{ request()->routeIs('admin.cards*') ? 'active' : '' }}">
-                    <i class="fas fa-id-card me-2"></i> Manage Cards
-                </a>
-            </li>
-
-            <!-- Master Sections -->
-            <div class="sidebar-heading">Masters</div>
-            <li class="nav-item">
-                <a href="{{ route('admin.vendor.categories') }}" class="nav-link {{ request()->routeIs('admin.vendor.categories*') ? 'active' : '' }}">
-                    <i class="fas fa-list-alt me-2"></i> Vendor Categories
-                </a>
-            </li>
-
-            <!-- User & Vendor Management Sections -->
-            <div class="sidebar-heading">Users & Vendors</div>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-users text-primary me-2"></i> Total Users List
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-user-tie text-secondary me-2"></i> Total Employees List
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-store text-info me-2"></i> Registered Businesses
-                </a>
-            </li>
-
-            <!-- Approvals & Moderation -->
-            <div class="sidebar-heading">Approvals</div>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-user-check text-success me-2"></i> Approved Vendors
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-user-clock text-warning me-2"></i> Unapproved Vendors
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('admin.pending.items') }}" class="nav-link {{ request()->routeIs('admin.pending.items') ? 'active' : '' }}">
-                    <i class="fas fa-clock text-warning me-2"></i> Item Approvals
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-user-slash text-danger me-2"></i> User / Vendor Ban
-                </a>
-            </li>
-
-            <!-- Financial & Wallet -->
-            <div class="sidebar-heading">Finance</div>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-wallet text-info me-2"></i> Wallet Management
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-receipt text-light me-2"></i> Transactions
-                </a>
-            </li>
-
-            <!-- System & Settings -->
-            <div class="sidebar-heading">System</div>
-            <li class="nav-item">
-                <a href="{{ route('menu.create') }}" class="nav-link {{ request()->routeIs('menu.*') ? 'active' : '' }}">
-                    <i class="fas fa-utensils me-2"></i> Menu & QR Setup
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-cog me-2"></i> Settings
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('admin.update') }}" class="nav-link {{ request()->routeIs('admin.update') ? 'active' : '' }}">
-                    <i class="fas fa-sync-alt me-2"></i> System Update
-                </a>
-            </li>
-        </ul>
-
-        <div class="p-3 border-top border-secondary">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
-                    <i class="fas fa-sign-out-alt me-2"></i> Logout
-                </button>
-            </form>
-        </div>
-    </div>
+    <!-- Sidebar Included Here -->
+    @include('admin.layouts.sidebar')
 
     <!-- Main Content Area -->
     <div id="main-content">
@@ -218,7 +104,7 @@
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <span class="small text-warning"><i class="fas fa-clock me-1"></i> Pending Approval</span>
                         @if(($unapprovedVendors ?? 0) > 0)
-                            <a href="#" class="btn btn-sm btn-warning fw-bold px-2 py-0" style="font-size: 0.75rem;">View & Action</a>
+                            <a href="{{ route('admin.pending.items') }}" class="btn btn-sm btn-warning fw-bold px-2 py-0" style="font-size: 0.75rem;">View & Action</a>
                         @endif
                     </div>
                 </div>
@@ -228,7 +114,6 @@
         <!-- SECONDARY STATS ROW -->
         <div class="row g-4">
             <div class="col-md-6">
-                <!-- Visiting Cards Ratio Card connected to Admin Index Route -->
                 <div class="card stat-card p-4 bg-white h-100">
                     <h5 class="fw-bold text-dark mb-3"><i class="fas fa-id-badge text-primary me-2"></i> Visiting Cards Ratio</h5>
                     <a href="{{ route('admin.cards.index') }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 text-decoration-none text-dark">

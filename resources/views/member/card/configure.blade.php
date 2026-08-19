@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ isset($card) ? 'Edit' : 'Create' }} Digital Visiting Card - Tidong® Portal</title>
+    <title>Digital Visiting Card Configuration - Tidong® Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -19,12 +19,12 @@
         .top-navbar { background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.04); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         .form-card { background: #fff; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: none; }
         .form-section-title { font-size: 1.05rem; font-weight: 700; color: #0f172a; border-left: 4px solid #38bdf8; padding-left: 10px; margin-bottom: 20px; margin-top: 10px; }
-        .bg-purple { background-color: #6f42c1 !important; }
         @media (max-width: 992px) { #sidebar { margin-left: -260px; } #sidebar.active { margin-left: 0; } #content { margin-left: 0; width: 100%; } }
     </style>
 </head>
 <body>
 
+    {{-- Member Sidebar --}}
     @include('member.sidebar')
 
     <div id="content">
@@ -33,11 +33,14 @@
                 <i class="fas fa-bars"></i>
             </button>
             <div class="navbar-brand fw-bold text-dark mb-0 h6 d-flex align-items-center gap-2">
-                <i class="fas fa-id-badge text-primary"></i> Digital Visiting Card Studio
+                <i class="fas fa-id-card text-primary"></i> Digital Visiting Card Configuration
+                @if(isset($card) && $card->card_no)
+                    <span class="badge bg-success ms-2">Card No: {{ $card->card_no }}</span>
+                @endif
             </div>
-            <div class="ms-auto">
-                <a href="{{ route('member.cards.index') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-arrow-left me-1"></i> Back to Cards
+            <div class="ms-auto d-flex gap-2">
+                <a href="{{ route('member.dashboard') }}" class="btn btn-outline-dark btn-sm">
+                    <i class="fas fa-home me-1"></i> Dashboard
                 </a>
             </div>
         </nav>
@@ -47,9 +50,9 @@
                 <div class="col-lg-11">
                     <div class="form-card p-4 p-md-5">
                         <div class="text-center mb-5">
-                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-2">✨ User Portal Studio</span>
-                            <h2 class="fw-bold text-dark">{{ isset($card) ? 'Update Your Digital Visiting Card' : 'Create Your Digital Visiting Card' }}</h2>
-                            <p class="text-muted">Stand out digitally with your own standard interactive business card & catalog.</p>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-2">🎴 Digital Card Settings</span>
+                            <h2 class="fw-bold text-dark">Manage Your Profile Details</h2>
+                            <p class="text-muted">Yahan update ki gayi details aapke digital visiting card aur public profile par reflect hongi.</p>
                         </div>
 
                         @if(session('success'))
@@ -69,46 +72,19 @@
                             </div>
                         @endif
 
-                        <form action="{{ isset($card) ? route('member.card.update', $card->id) : route('member.card.store') }}" method="POST" enctype="multipart/form-data">
+                        {{-- Corrected Store Master Route --}}
+                        <form action="{{ route('member.card.configure.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
-                            @if(isset($card))
-                                @method('PUT')
-                            @endif
 
                             <input type="hidden" name="country_id" id="country_id" value="{{ old('country_id', $card->country_id ?? '1') }}">
                             <input type="hidden" name="state_id" id="state_id" value="{{ old('state_id', $card->state_id ?? '') }}">
 
-                            <!-- 1. Card Style Configuration -->
-                            <div class="form-section-title d-flex align-items-center justify-content-between">
-                                <span>1. Card Design Theme</span>
-                                <span id="theme_preview_badge" class="badge bg-primary text-white rounded-pill px-3 py-1 small">Modern Theme</span>
-                            </div>
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-12">
-                                    <label class="form-label fw-bold text-secondary small">Choose Card Layout Style *</label>
-                                    <select name="design_type" id="design_type_select" class="form-select bg-light">
-                                        @php
-                                            $selectedType = old('design_type', $card->design_type ?? ($card->card_type ?? ($type ?? 'modern')));
-                                        @endphp
-                                        <option value="modern" {{ $selectedType == 'modern' ? 'selected' : '' }}>Modern Theme (Default)</option>
-                                        <option value="classic" {{ $selectedType == 'classic' ? 'selected' : '' }}>Classic Professional</option>
-                                        <option value="golden" {{ $selectedType == 'golden' ? 'selected' : '' }}>Golden Premium Edition</option>
-                                        <option value="diamond" {{ $selectedType == 'diamond' ? 'selected' : '' }}>Diamond Luxury</option>
-                                        <option value="royal" {{ $selectedType == 'royal' ? 'selected' : '' }}>Royal Crimson</option>
-                                        <option value="premium" {{ $selectedType == 'premium' ? 'selected' : '' }}>Premium Purple</option>
-                                        <option value="corporate" {{ $selectedType == 'corporate' ? 'selected' : '' }}>Corporate Executive</option>
-                                        <option value="standard" {{ $selectedType == 'standard' ? 'selected' : '' }}>Standard Clean Green</option>
-                                        <option value="regular" {{ $selectedType == 'regular' ? 'selected' : '' }}>Regular Slate</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- 2. Personal & Business Details -->
-                            <div class="form-section-title">2. Basic & Personal Details</div>
+                            <!-- 1. Personal & Business Details -->
+                            <div class="form-section-title">1. Basic & Personal Details</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold text-secondary small">Person / Card Holder Name *</label>
-                                    <input type="text" name="name" class="form-control bg-light" required placeholder="e.g. Saharsh Sharma" value="{{ old('name', $card->name ?? '') }}">
+                                    <label class="form-label fw-bold text-secondary small">Card Holder / Display Name *</label>
+                                    <input type="text" name="name" class="form-control bg-light" required value="{{ old('name', $card->name ?? auth()->user()->name) }}">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-secondary small">Business / Profession *</label>
@@ -128,12 +104,12 @@
                                 </div>
                             </div>
 
-                            <!-- 3. Contact Numbers -->
-                            <div class="form-section-title">3. Contact Details</div>
+                            <!-- 2. Contact Numbers -->
+                            <div class="form-section-title">2. Contact Details</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold text-secondary small">Primary Phone *</label>
-                                    <input type="text" name="phone" class="form-control bg-light" required placeholder="98765xxxxx" value="{{ old('phone', $card->phone ?? '') }}">
+                                    <input type="text" name="phone" class="form-control bg-light" required placeholder="98765xxxxx" value="{{ old('phone', $card->phone ?? auth()->user()->mobile ?? '') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">Alternate Phone</label>
@@ -145,12 +121,12 @@
                                 </div>
                             </div>
 
-                            <!-- 4. Emails -->
-                            <div class="form-section-title">4. Email Addresses</div>
+                            <!-- 3. Emails -->
+                            <div class="form-section-title">3. Email Addresses</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">Gmail</label>
-                                    <input type="email" name="gmail" class="form-control bg-light" placeholder="example@gmail.com" value="{{ old('gmail', $card->gmail ?? '') }}">
+                                    <input type="email" name="gmail" class="form-control bg-light" placeholder="example@gmail.com" value="{{ old('gmail', $card->gmail ?? auth()->user()->email ?? '') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">Yahoo Email</label>
@@ -162,8 +138,8 @@
                                 </div>
                             </div>
 
-                            <!-- 5. Social & Links -->
-                            <div class="form-section-title">5. Social Media & Web Links</div>
+                            <!-- 4. Social & Links -->
+                            <div class="form-section-title">4. Social Media & Web Links</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary small">Facebook Profile / Page</label>
@@ -199,8 +175,8 @@
                                 </div>
                             </div>
 
-                            <!-- 6. Payment Options -->
-                            <div class="form-section-title">6. Payment & UPI Configuration</div>
+                            <!-- 5. Payment Options -->
+                            <div class="form-section-title">5. Payment & UPI Configuration</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-3">
                                     <label class="form-label text-secondary small">PhonePe Number</label>
@@ -220,8 +196,8 @@
                                 </div>
                             </div>
 
-                            <!-- 7. Media & Files -->
-                            <div class="form-section-title">7. Branding Assets (Uploads)</div>
+                            <!-- 6. Media & Files -->
+                            <div class="form-section-title">6. Branding Assets (Uploads)</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-secondary small">Profile Picture / Company Logo</label>
@@ -239,8 +215,8 @@
                                 </div>
                             </div>
 
-                            <!-- 8. Address & Location (Select2 Live Search) -->
-                            <div class="form-section-title">8. Address & Location</div>
+                            <!-- 7. Address & Location -->
+                            <div class="form-section-title">7. Address & Location</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold text-secondary small">Premises / House No / Landmark / Street</label>
@@ -276,8 +252,8 @@
                                 </div>
                             </div>
 
-                            <!-- 9. About & Products Details -->
-                            <div class="form-section-title">9. About & Offerings</div>
+                            <!-- 8. About & Products Details -->
+                            <div class="form-section-title">8. About & Offerings</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label text-secondary small">About Us / Summary</label>
@@ -292,7 +268,7 @@
                             <!-- Submit Button -->
                             <div class="d-grid mt-4">
                                 <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold shadow-sm">
-                                    {{ isset($card) ? 'Update Details 🚀' : 'Save & Continue 🚀' }}
+                                    <i class="fas fa-save me-2"></i> Save & Update Card Details 🚀
                                 </button>
                             </div>
 
@@ -300,10 +276,10 @@
                     </div>
                 </div>
             </div>
-            <footer class="text-center py-4 text-muted small border-top mt-5">
-                &copy; {{ date('Y') }} Tidong® Portal. All rights reserved.
-            </footer>
         </div>
+        <footer class="text-center py-4 text-muted small border-top mt-5">
+            &copy; {{ date('Y') }} Tidong® Portal. All rights reserved.
+        </footer>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -311,33 +287,6 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Theme Badge Color Live Change
-            const badgeColors = {
-                'classic': 'bg-dark text-white',
-                'golden': 'bg-warning text-dark',
-                'diamond': 'bg-info text-dark',
-                'royal': 'bg-danger text-white',
-                'modern': 'bg-primary text-white',
-                'premium': 'bg-purple text-white',
-                'corporate': 'bg-secondary text-white',
-                'standard': 'bg-success text-white',
-                'regular': 'bg-dark text-white'
-            };
-
-            function updateThemeBadge(val) {
-                let badge = $('#theme_preview_badge');
-                let badgeClass = badgeColors[val] || 'bg-primary text-white';
-                badge.attr('class', 'badge rounded-pill px-3 py-1 small ' + badgeClass);
-                badge.text(val.charAt(0).toUpperCase() + val.slice(1) + ' Theme');
-            }
-
-            $('#design_type_select').on('change', function() {
-                updateThemeBadge($(this).val());
-            });
-
-            updateThemeBadge($('#design_type_select').val());
-
-            // Select2 Location Sync Setup
             function initSelect2(selector, placeholderText) {
                 $(selector).select2({
                     theme: 'bootstrap-5',
@@ -364,7 +313,6 @@
             initSelect2('#pincode_search', 'Search Pincode');
             initSelect2('#city_search', 'Search City');
 
-            // Synchronize Location Select2 dropdowns on selection
             $('#area_search, #pincode_search, #city_search').on('select2:select', function(e) {
                 let data = e.params.data;
                 if(data) {

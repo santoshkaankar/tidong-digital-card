@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -24,15 +23,19 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'mobile' => ['required', 'string', 'max:15', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'string'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username ?? null,
             'slug' => \Illuminate\Support\Str::slug($request->name) . '-' . rand(1000, 9999),
             'email' => $request->email,
+            'mobile' => $request->mobile,
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'business_type' => $request->business_type ?? null,
