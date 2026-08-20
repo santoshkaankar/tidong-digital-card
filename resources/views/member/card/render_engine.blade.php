@@ -30,6 +30,27 @@
         return false; 
     };
 
+    // --- Helper for WhatsApp Number Cleaning ---
+    $rawWa = $masterCard->whatsapp ?? $masterCard->phone ?? '';
+    $cleanWaNumber = preg_replace('/[^0-9]/', '', $rawWa);
+
+    // --- Helper for Valid External URLs (Fixes Redirect Issue) ---
+    $formatUrl = function($url) {
+        if (empty($url) || trim($url) === '#') return '#';
+        $url = trim($url);
+        if (!\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) {
+            return 'https://' . $url;
+        }
+        return $url;
+    };
+
+    $facebookUrl  = $formatUrl($masterCard->facebook_link ?? $masterCard->facebook_url ?? $masterCard->facebook ?? '#');
+    $instagramUrl = $formatUrl($masterCard->instagram_link ?? $masterCard->instagram ?? '#');
+    $linkedinUrl  = $formatUrl($masterCard->linkedin_link ?? $masterCard->linkedin ?? '#');
+    $youtubeUrl   = $formatUrl($masterCard->youtube_link ?? $masterCard->youtube ?? '#');
+    $websiteUrl   = $formatUrl($masterCard->website_link ?? $masterCard->website ?? '#');
+    $locationUrl  = $formatUrl($masterCard->map_location_link ?? $masterCard->location_url ?? '#');
+
     $themeVal = strtolower($themeStyle);
     $cardBg = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
     $cardColor = '#ffffff';
@@ -148,7 +169,7 @@
         </div>
     </div>
 
-    <!-- Interactive Social Links Block for PDF & Web -->
+    <!-- Social Action Buttons -->
     <div class="d-flex flex-wrap gap-2 align-items-center my-1" style="max-height: 82px; overflow: hidden;">
         <div class="show_phone f-item {{ $show('show_phone') ? 'active-field' : '' }}" title="Phone">
             <a href="tel:{{ $masterCard->phone }}" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-phone-alt" style="font-size: 0.95rem;"></i></a>
@@ -157,10 +178,10 @@
             <a href="tel:{{ $masterCard->alt_phone }}" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-phone" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_whatsapp f-item {{ $show('show_whatsapp') ? 'active-field' : '' }}" title="WhatsApp">
-            <a href="https://wa.me/{{ $masterCard->whatsapp }}" target="_blank" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-whatsapp" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ !empty($cleanWaNumber) ? 'https://wa.me/' . $cleanWaNumber : '#' }}" target="_blank" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-whatsapp" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_telegram f-item {{ $show('show_telegram') ? 'active-field' : '' }}" title="Telegram">
-            <a href="{{ $masterCard->telegram_link ?? ($masterCard->telegram ? 'https://t.me/'.ltrim($masterCard->telegram, '@') : '#') }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-telegram" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ !empty($masterCard->telegram) ? 'https://t.me/' . ltrim($masterCard->telegram, '@') : '#' }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-telegram" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_gmail f-item {{ $show('show_gmail') ? 'active-field' : '' }}" title="Email">
             <a href="mailto:{{ $masterCard->gmail }}" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
@@ -172,35 +193,35 @@
             <a href="mailto:{{ $masterCard->other_email ?? $masterCard->gmail }}" class="text-warning bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_website f-item {{ $show('show_website') ? 'active-field' : '' }}" title="Website">
-            <a href="{{ $masterCard->website_link ?? '#' }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-globe" style="font-size: 0.95rem;"></i></a>
+            <a href="{{ $websiteUrl }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-globe" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_facebook f-item {{ $show('show_facebook') ? 'active-field' : '' }}" title="Facebook">
-            <a href="{{ $masterCard->facebook_link ?? $masterCard->facebook_url ?? '#' }}" target="_blank" class="text-primary bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-facebook" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $facebookUrl }}" target="_blank" class="text-primary bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-facebook" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_instagram f-item {{ $show('show_instagram') ? 'active-field' : '' }}" title="Instagram">
-            <a href="{{ $masterCard->instagram_link ?? '#' }}" target="_blank" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-instagram" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $instagramUrl }}" target="_blank" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-instagram" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_linkedin f-item {{ $show('show_linkedin') ? 'active-field' : '' }}" title="LinkedIn">
-            <a href="{{ $masterCard->linkedin_link ?? '#' }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-linkedin" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $linkedinUrl }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-linkedin" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_youtube f-item {{ $show('show_youtube') ? 'active-field' : '' }}" title="YouTube">
-            <a href="{{ $masterCard->youtube_link ?? '#' }}" target="_blank" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-youtube" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $youtubeUrl }}" target="_blank" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-youtube" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_upi_id f-item {{ $show('show_upi_id') ? 'active-field' : '' }}" title="UPI ID">
-            <a href="{{ $masterCard->upi_link ?? '#' }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-wallet" style="font-size: 0.95rem;"></i></a>
+            <a href="{{ $formatUrl($masterCard->upi_link ?? '#') }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-wallet" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_gpay f-item {{ $show('show_gpay') ? 'active-field' : '' }}" title="Google Pay">
-            <a href="{{ $masterCard->gpay_link ?? '#' }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-g" style="font-size: 0.95rem;"></i></a>
+            <a href="{{ $formatUrl($masterCard->gpay_link ?? '#') }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-g" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_paytm f-item {{ $show('show_paytm') ? 'active-field' : '' }}" title="Paytm">
-            <a href="{{ $masterCard->paytm_link ?? '#' }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-p" style="font-size: 0.95rem;"></i></a>
+            <a href="{{ $formatUrl($masterCard->paytm_link ?? '#') }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-p" style="font-size: 0.95rem;"></i></a>
         </div>
     </div>
 
     <div>
         <div class="opacity-75 mb-1 d-flex align-items-start card-sub-text" style="font-size: 0.65rem; line-height: 1.25; max-height: 2.8em; overflow: hidden;">
             <div class="show_location_url f-item me-1 mt-0.5 {{ $show('show_location_url') ? 'active-field' : '' }}">
-                <a href="{{ $masterCard->map_location_link ?? '#' }}" target="_blank" class="text-warning text-decoration-none">
+                <a href="{{ $locationUrl }}" target="_blank" class="text-warning text-decoration-none">
                     <i class="fa-solid fa-map-location-dot" style="font-size: 0.75rem;"></i>
                 </a>
             </div>
