@@ -148,6 +148,7 @@
         </div>
     </div>
 
+    <!-- Interactive Social Links Block for PDF & Web -->
     <div class="d-flex flex-wrap gap-2 align-items-center my-1" style="max-height: 82px; overflow: hidden;">
         <div class="show_phone f-item {{ $show('show_phone') ? 'active-field' : '' }}" title="Phone">
             <a href="tel:{{ $masterCard->phone }}" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-phone-alt" style="font-size: 0.95rem;"></i></a>
@@ -159,31 +160,31 @@
             <a href="https://wa.me/{{ $masterCard->whatsapp }}" target="_blank" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-whatsapp" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_telegram f-item {{ $show('show_telegram') ? 'active-field' : '' }}" title="Telegram">
-            <a href="#" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-telegram" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $masterCard->telegram_link ?? ($masterCard->telegram ? 'https://t.me/'.ltrim($masterCard->telegram, '@') : '#') }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-telegram" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_gmail f-item {{ $show('show_gmail') ? 'active-field' : '' }}" title="Email">
             <a href="mailto:{{ $masterCard->gmail }}" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_yahoo_email f-item {{ $show('show_yahoo_email') ? 'active-field' : '' }}" title="Yahoo Email">
-            <a href="#" class="text-primary bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
+            <a href="mailto:{{ $masterCard->yahoo_email ?? $masterCard->gmail }}" class="text-primary bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_other_email f-item {{ $show('show_other_email') ? 'active-field' : '' }}" title="Other Email">
-            <a href="#" class="text-warning bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
+            <a href="mailto:{{ $masterCard->other_email ?? $masterCard->gmail }}" class="text-warning bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_website f-item {{ $show('show_website') ? 'active-field' : '' }}" title="Website">
             <a href="{{ $masterCard->website_link ?? '#' }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-globe" style="font-size: 0.95rem;"></i></a>
         </div>
         <div class="show_facebook f-item {{ $show('show_facebook') ? 'active-field' : '' }}" title="Facebook">
-            <a href="#" class="text-primary bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-facebook" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $masterCard->facebook_link ?? $masterCard->facebook_url ?? '#' }}" target="_blank" class="text-primary bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-facebook" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_instagram f-item {{ $show('show_instagram') ? 'active-field' : '' }}" title="Instagram">
-            <a href="#" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-instagram" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $masterCard->instagram_link ?? '#' }}" target="_blank" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-instagram" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_linkedin f-item {{ $show('show_linkedin') ? 'active-field' : '' }}" title="LinkedIn">
-            <a href="#" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-linkedin" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $masterCard->linkedin_link ?? '#' }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-linkedin" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_youtube f-item {{ $show('show_youtube') ? 'active-field' : '' }}" title="YouTube">
-            <a href="#" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-youtube" style="font-size: 1.05rem;"></i></a>
+            <a href="{{ $masterCard->youtube_link ?? '#' }}" target="_blank" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-youtube" style="font-size: 1.05rem;"></i></a>
         </div>
         <div class="show_upi_id f-item {{ $show('show_upi_id') ? 'active-field' : '' }}" title="UPI ID">
             <a href="{{ $masterCard->upi_link ?? '#' }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-wallet" style="font-size: 0.95rem;"></i></a>
@@ -238,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function () {
         let textColor = '#ffffff';
         let secondaryTextColor = '#cbd5e1';
 
-        // Check if theme is dynamic vibrant or royal
         if (val.startsWith('dyn-vibrant-')) {
             let id = parseInt(val.replace('dyn-vibrant-', ''));
             let hash1 = (id * 37) % 360;
@@ -274,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function () {
             textColor = '#ffffff';
             secondaryTextColor = '#e2e8f0';
         } 
-        // --- Advanced CSS Patterns & Creative Textures ---
         else if (val === 'texture-old-wood') {
             bgStyle = 'linear-gradient(90deg, #3e2723 0%, #4e342e 50%, #3e2723 100%), repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.3) 4px, rgba(0,0,0,0.3) 8px)';
             textColor = '#d7ccc8';

@@ -14,7 +14,6 @@
             if (\Illuminate\Support\Str::startsWith($rawImage, ['http://', 'https://'])) {
                 $imageUrl = $rawImage;
             } else {
-                // Storage, public, uploads jaise duplicate prefixes ko clean karke Supabase URL banana
                 $cleanPath = ltrim($rawImage, '/');
                 $cleanPath = preg_replace('#^(storage/|public/|uploads/)+#i', '', $cleanPath);
                 $imageUrl = $supabaseBucketUrl . $cleanPath;
@@ -23,8 +22,9 @@
             $imageUrl = asset('images/default-card.png');
         }
 
-        // Always force HTTPS
+        // Force HTTPS and add cache buster for WhatsApp
         $imageUrl = str_replace('http://', 'https://', $imageUrl);
+        $shareImageUrl = $imageUrl . '?v=' . time();
     @endphp
 
     <!-- WhatsApp & Social Media Open Graph (OG) Meta Tags -->
@@ -32,8 +32,11 @@
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="{{ $masterCard->name ?? 'Digital Card' }} - {{ $masterCard->business_name ?? 'Tidong' }}">
     <meta property="og:description" content="🎴 Click here to view my complete Digital Business Card.">
-    <meta property="og:image" content="{{ $imageUrl }}">
-    <meta property="og:image:secure_url" content="{{ $imageUrl }}">
+    <meta property="og:image" content="{{ $shareImageUrl }}">
+    <meta property="og:image:secure_url" content="{{ $shareImageUrl }}">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="600">
+    <meta property="og:image:height" content="315">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -42,6 +45,16 @@
     <style>
         body { background: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 10px; margin: 0; }
         .public-card-container { width: 100%; max-width: 480px; margin: 0 auto; }
+        
+        /* Card Container Styling to remove Extra White Space */
+        #card-capture-area {
+            display: block;
+            width: 100%;
+            background: transparent !important;
+            border-radius: 20px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -61,7 +74,11 @@
     <!-- Action Buttons -->
     <div class="d-flex justify-content-center gap-2 mt-4 flex-wrap">
         <button onclick="downloadCardAsImage()" class="btn btn-warning rounded-pill px-4 shadow text-dark fw-bold">
-            <i class="fa-solid fa-download me-2"></i> Download Card Image
+            <i class="fa-solid fa-file-image me-2"></i> Download Image
+        </button>
+
+        <button onclick="downloadCardAsPDF()" class="btn btn-danger rounded-pill px-4 shadow text-white fw-bold">
+            <i class="fa-solid fa-file-pdf me-2"></i> Download Clickable PDF
         </button>
 
         <a href="https://api.whatsapp.com/send?text={{ urlencode('Check out my Digital Visiting Card: ' . url()->current()) }}" 
@@ -80,6 +97,8 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- html2pdf Library for Clickable PDF Support -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
 function downloadCardAsImage() {
@@ -88,7 +107,8 @@ function downloadCardAsImage() {
     html2canvas(cardElement, {
         useCORS: true,
         allowTaint: false,
-        scale: 2,
+        backgroundColor: null,
+        scale: 3,
         logging: false
     }).then(canvas => {
         let link = document.createElement('a');
@@ -96,8 +116,27 @@ function downloadCardAsImage() {
         link.href = canvas.toDataURL('image/png');
         link.click();
     }).catch(err => {
-        console.error('Download error:', err);
+        console.error('Download image error:', err);
     });
+}
+
+function downloadCardAsPDF() {
+    const cardElement = document.getElementById('card-capture-area');
+    
+    const opt = {
+        margin:       0,
+        filename:     '{{ Str::slug($masterCard->name ?? "visiting-card") }}-card.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 3, useCORS: true, logging: false },
+        jsPDF:        { 
+            unit: 'px', 
+            format: [cardElement.offsetWidth, cardElement.offsetHeight], 
+            orientation: 'landscape',
+            compress: true
+        }
+    };
+
+    html2pdf().set(opt).from(cardElement).save();
 }
 
 function shareCard() {
