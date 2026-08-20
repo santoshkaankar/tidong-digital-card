@@ -104,6 +104,26 @@ class AuthController extends Controller
         return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : view('member.dashboard');
     }
 
+    // ==========================================
+    // FORGOT PASSWORD METHODS
+    // ==========================================
+
+    public function showForgotPassword()
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function sendResetLink(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ], [
+            'email.exists' => 'This email address is not registered with us.'
+        ]);
+
+        return back()->with('status', 'We have emailed your password reset link!');
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
