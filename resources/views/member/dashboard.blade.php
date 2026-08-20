@@ -18,6 +18,8 @@
         .ad-box { border-radius: 16px; color: #fff; padding: 20px; transition: all 0.3s ease; cursor: pointer; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.08); position: relative; overflow: hidden; }
         .ad-box:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
         .info-card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: none; height: 100%; display: flex; flex-direction: column; }
+        .mobile-card-action-btn { transition: all 0.2s ease; border-radius: 12px; }
+        .mobile-card-action-btn:hover { transform: translateY(-2px); }
         @media (max-width: 992px) { #sidebar { margin-left: -260px; } #sidebar.active { margin-left: 0; } #content { margin-left: 0; width: 100%; } }
     </style>
 </head>
@@ -48,11 +50,36 @@
                         <li><a class="dropdown-item small text-wrap rounded-2 mt-1" href="#">💼 Your digital card was viewed 14 times today.</a></li>
                     </ul>
                 </div>
-                <span class="fw-bold text-dark d-none d-md-inline"><i class="fas fa-user-circle text-primary me-1"></i> {{ Auth::user()->name }}</span>
+                <!-- Profile Settings Link -->
+                <a href="{{ url('/member/configure') }}" class="fw-bold text-dark text-decoration-none d-none d-md-inline">
+                    <i class="fas fa-user-circle text-primary me-1"></i> {{ Auth::user()->name }}
+                </a>
             </div>
         </nav>
 
         <div class="container-fluid py-4 px-4">
+
+            <!-- Top Action Buttons Row (Includes Configure / User Details Button) -->
+            <div class="row g-2 mb-4">
+                <div class="col-md-4 col-12">
+                    <a href="{{ route('member.profile.edit') }}" class="btn btn-primary w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm mobile-card-action-btn">
+                        <i class="fas fa-user-gear fs-5"></i>
+                        <span>Configure / User Details Form</span>
+                    </a>
+                </div>
+                <div class="col-md-4 col-6">
+                    <a href="{{ url('/member/card/create') }}" class="btn btn-info text-white w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm mobile-card-action-btn">
+                        <i class="fas fa-plus-circle fs-5"></i>
+                        <span>Create / Edit Card</span>
+                    </a>
+                </div>
+                <div class="col-md-4 col-6">
+                    <a href="{{ url('/member/cards') }}" class="btn btn-dark w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm mobile-card-action-btn">
+                        <i class="fas fa-id-card fs-5 text-warning"></i>
+                        <span>View Cards List</span>
+                    </a>
+                </div>
+            </div>
             
             <!-- Include Advertising Component -->
             @include('member.advertising')
@@ -101,13 +128,13 @@
                 <div class="col-md-3">
                     <div class="info-card">
                         <div class="d-flex align-items-center gap-3 mb-3">
-                            <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 fs-4"><i class="fas fa-search"></i></div>
+                            <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 fs-4"><i class="fas fa-user-gear"></i></div>
                             <div>
-                                <h6 class="fw-bold mb-1">Search</h6>
-                                <p class="text-muted small mb-0">Find Vendors</p>
+                                <h6 class="fw-bold mb-1">Configure Details</h6>
+                                <p class="text-muted small mb-0">Edit Profile & Info</p>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-primary mt-auto w-100 btn-sm" data-bs-toggle="modal" data-bs-target="#searchModal">Open Search</button>
+                        <a href="{{ url('/member/configure') }}" class="btn btn-primary mt-auto w-100 btn-sm">Configure Form</a>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -125,13 +152,13 @@
                 <div class="col-md-3">
                     <div class="info-card">
                         <div class="d-flex align-items-center gap-3 mb-3">
-                            <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-3 fs-4"><i class="fas fa-id-badge"></i></div>
+                            <div class="bg-secondary bg-opacity-10 text-dark p-3 rounded-3 fs-4"><i class="fas fa-id-badge"></i></div>
                             <div>
                                 <h6 class="fw-bold mb-1">My Card</h6>
                                 <p class="text-muted small mb-0">Visiting Card</p>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-dark mt-auto w-100 btn-sm text-white" data-bs-toggle="modal" data-bs-target="#visitingCardModal">Manage Card</button>
+                        <a href="{{ url('/member/cards') }}" class="btn btn-dark mt-auto w-100 btn-sm text-white">Manage Card</a>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -143,7 +170,7 @@
                                 <p class="text-muted small mb-0">Order History</p>
                             </div>
                         </div>
-                        <a href="#" class="btn btn-outline-dark mt-auto w-100 btn-sm">View Orders</a>
+                        <a href="{{ url('/member/orders') }}" class="btn btn-outline-dark mt-auto w-100 btn-sm">View Orders</a>
                     </div>
                 </div>
             </div>
@@ -153,9 +180,6 @@
             </footer>
         </div>
     </div>
-
-    <!-- Modals Section (Search, Wallet, Friend Circle, Visiting Card) -->
-    <!-- (Modals code remains fully intact here for proper functionality) -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
