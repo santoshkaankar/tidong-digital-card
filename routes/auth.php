@@ -10,12 +10,11 @@ Route::get('/', function () {
         if ($role === 'employee' && \Route::has('employee.dashboard')) return redirect()->route('employee.dashboard');
         if ($role === 'vendor' && \Route::has('vendor.dashboard')) return redirect()->route('vendor.dashboard');
         
-        // Safe check for member dashboard
         if (\Route::has('member.dashboard')) {
             return redirect()->route('member.dashboard');
         }
         
-        return view('member.dashboard'); // Fallback agar route register na ho
+        return view('member.dashboard');
     }
     return view('welcome');
 });
@@ -27,6 +26,8 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Password Reset Routes (RouteNotFoundException fix karne ke liye)
+// Password Reset Complete Routes
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
 Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
