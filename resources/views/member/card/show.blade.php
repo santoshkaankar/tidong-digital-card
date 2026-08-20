@@ -5,17 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $masterCard->name ?? 'Digital Business Card' }} - Tidong</title>
     
+    @php
+        // Supabase Storage Bucket Public URL
+        $supabaseBucketUrl = "https://wjuodttwrxzpmaifoqhz.supabase.co/storage/v1/object/public/uploads/";
+        
+        $rawImage = $cardView->card_preview ?? $masterCard->card_image ?? $masterCard->photo ?? null;
+        
+        if ($rawImage) {
+            if (\Illuminate\Support\Str::startsWith($rawImage, ['http://', 'https://'])) {
+                $imageUrl = $rawImage;
+            } else {
+                $cleanPath = ltrim($rawImage, '/');
+                if (\Illuminate\Support\Str::startsWith($cleanPath, 'uploads/')) {
+                    $cleanPath = \Illuminate\Support\Str::replaceFirst('uploads/', '', $cleanPath);
+                }
+                $imageUrl = $supabaseBucketUrl . $cleanPath;
+            }
+        } else {
+            $imageUrl = asset('images/default-card.png');
+        }
+
+        // Secure HTTPS link ensure karein
+        $imageUrl = str_replace('http://', 'https://', $imageUrl);
+    @endphp
+
     <!-- WhatsApp & Social Media Open Graph (OG) Meta Tags -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="{{ $masterCard->name ?? 'Digital Card' }} - {{ $masterCard->business_name ?? 'Tidong' }}">
     <meta property="og:description" content="🎴 Click here to view my complete Digital Business Card.">
-    
-    @php
-        // Card ki rendered image dynamic URL / Path (fallback to photo or default)
-        $cardImage = $cardView->card_preview ?? $masterCard->card_image ?? $masterCard->photo ?? 'images/default-card.png';
-        $imageUrl = Str::startsWith($cardImage, 'http') ? $cardImage : url($cardImage);
-    @endphp
 
     <meta property="og:image" content="{{ $imageUrl }}">
     <meta property="og:image:secure_url" content="{{ $imageUrl }}">

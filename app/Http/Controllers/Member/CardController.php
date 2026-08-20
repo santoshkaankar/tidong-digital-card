@@ -21,7 +21,7 @@ class CardController extends Controller
         $masterCard = VisitingCard::where('user_id', Auth::id())->first();
         
         if (!$masterCard) {
-            return redirect()->route('member.card.configure')
+            return redirect()->route('card.configure')
                 ->with('info', 'Pahle apni Master Profile details complete karein.');
         }
 
@@ -44,7 +44,7 @@ class CardController extends Controller
         $masterCard = VisitingCard::where('user_id', Auth::id())->first();
 
         if (!$masterCard) {
-            return redirect()->route('member.card.configure')
+            return redirect()->route('card.configure')
                 ->with('info', 'Pahle apni Master Profile details complete karein.');
         }
 
@@ -134,7 +134,7 @@ class CardController extends Controller
         $card->fill($request->except(['_token', 'photo', 'qr_code']));
         $card->save();
 
-        return redirect()->route('member.card.configure')
+        return redirect()->route('card.configure')
             ->with('success', 'Master profile successfully save ho gayi!');
     }
 
@@ -247,7 +247,7 @@ class CardController extends Controller
             'is_active'           => true,
         ]);
 
-        return redirect()->route('member.cards.index')
+        return redirect()->route('cards.index')
             ->with('success', "Naya card variant ($fullCardNo) safaltapurvak create ho gaya hai!");
     }
 
@@ -264,7 +264,7 @@ class CardController extends Controller
         $view = UserCardView::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         $view->delete();
 
-        return redirect()->route('member.cards.index')
+        return redirect()->route('cards.index')
             ->with('success', 'Card variant successfully delete ho gaya!');
     }
 
