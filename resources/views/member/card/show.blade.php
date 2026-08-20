@@ -5,24 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $masterCard->name ?? 'Digital Business Card' }} - Tidong</title>
     
-    <!-- Meta tags for WhatsApp Link Preview -->
-    <meta property="og:title" content="Digital Visiting Card: {{ $masterCard->name ?? 'Tidong Member' }}">
-    <meta property="og:description" content="{{ $masterCard->designation ?? 'Professional Business Card' }} | {{ $masterCard->business_name ?? 'Tidong Digital' }}">
-    
-    @if(!empty($masterCard->photo))
-        @php
-            $photoUrl = Str::startsWith($masterCard->photo, 'http') ? $masterCard->photo : url($masterCard->photo);
-        @endphp
-        <meta property="og:image" content="{{ $photoUrl }}">
-        <meta property="og:image:secure_url" content="{{ $photoUrl }}">
-        <meta property="og:image:width" content="400">
-        <meta property="og:image:height" content="400">
-    @else
-        <meta property="og:image" content="{{ asset('images/default-card.png') }}">
-    @endif
-
-    <meta property="og:url" content="{{ url()->current() }}">
+    <!-- WhatsApp & Social Media Open Graph (OG) Meta Tags -->
     <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="{{ $masterCard->name ?? 'Digital Card' }} - {{ $masterCard->business_name ?? 'Tidong' }}">
+    <meta property="og:description" content="🎴 Click here to view my complete Digital Business Card.">
+    
+    @php
+        // Card ki rendered image dynamic URL / Path (fallback to photo or default)
+        $cardImage = $cardView->card_preview ?? $masterCard->card_image ?? $masterCard->photo ?? 'images/default-card.png';
+        $imageUrl = Str::startsWith($cardImage, 'http') ? $cardImage : url($cardImage);
+    @endphp
+
+    <meta property="og:image" content="{{ $imageUrl }}">
+    <meta property="og:image:secure_url" content="{{ $imageUrl }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -53,6 +52,7 @@
 
 <div class="public-card-container text-center">
     
+    <!-- Render Engine Component -->
     @include('member.card.render_engine', [
         'masterCard'   => $masterCard,
         'themeStyle'   => $cardView->theme_style,
@@ -60,9 +60,18 @@
         'fieldToggles' => $cardView->field_toggles
     ])
 
-    <div class="d-flex justify-content-center gap-2 mt-4">
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-center gap-2 mt-4 flex-wrap">
+        <!-- Direct WhatsApp Share Button -->
+        <a href="https://api.whatsapp.com/send?text={{ urlencode('Check out my Digital Visiting Card: ' . url()->current()) }}" 
+           target="_blank" 
+           class="btn btn-success rounded-pill px-4 shadow">
+            <i class="fa-brands fa-whatsapp me-2"></i> Share on WhatsApp
+        </a>
+
+        <!-- System Native Share Button -->
         <button onclick="shareCard()" class="btn btn-outline-light rounded-pill px-4 shadow">
-            <i class="fa-solid fa-share-nodes me-2"></i> Share Card
+            <i class="fa-solid fa-share-nodes me-2"></i> Other Share
         </button>
     </div>
 
