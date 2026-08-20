@@ -46,6 +46,10 @@
         .icon-box { width: 55px; height: 55px; display: inline-flex; align-items: center; justify-content: center; border-radius: 14px; background: rgba(37, 99, 235, 0.08); color: #2563eb; font-size: 1.5rem; margin-bottom: 20px; transition: all 0.3s ease; }
         .feature-card:hover .icon-box { background: #2563eb; color: #fff; transform: scale(1.05); }
         .user-avatar { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; border: 2px solid #2563eb; }
+        
+        /* Action Icon Hover Effects */
+        .action-icon { transition: transform 0.2s ease; display: inline-block; }
+        .action-icon:hover { transform: scale(1.15); }
     </style>
 </head>
 <body>
@@ -65,7 +69,7 @@
                     <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#ads-section">Sponsored Ads</a></li>
                     
                     @auth
-                        <!-- Dashboard Link Based on Role (Fixed Routes) -->
+                        <!-- Dashboard Link Based on Role -->
                         <li class="nav-item">
                             @php
                                 $role = Auth::user()->role ?? 'user';
@@ -131,9 +135,10 @@
                     <p class="lead text-muted mb-5">Create your stunning personal visiting card or business profile. Share it instantly with anyone—allowing them to chat on WhatsApp, call, or browse your product catalogs with a single tap.</p>
                     <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start">
                         @auth
-                            <a href="{{ $dashboardRoute ?? route('customer.dashboard') }}" class="btn btn-custom-primary btn-lg shadow">Go to Dashboard</a>
+                            <a href="{{ $dashboardRoute ?? route('member.dashboard') }}" class="btn btn-custom-primary btn-lg shadow">Go to Dashboard</a>
                         @else
-                            <a href="{{ route('register') }}" class="btn btn-custom-primary btn-lg shadow">Create Your Card Now</a>
+                            {{-- Redirects directly to Login --}}
+                            <a href="{{ route('login') }}" class="btn btn-custom-primary btn-lg shadow">Create Your Card Now</a>
                         @endauth
                         <a href="#features" class="btn btn-outline-light btn-lg rounded-pill px-4">Explore Features</a>
                     </div>
@@ -141,9 +146,18 @@
                 <div class="col-lg-5 text-center">
                     <div class="p-4 bg-white bg-opacity-10 rounded-4 shadow-lg backdrop-blur border border-secondary border-opacity-25">
                         <div class="d-flex justify-content-center gap-3 mb-3">
-                            <span class="badge bg-success p-2 fs-5 rounded-circle shadow-sm"><i class="fab fa-whatsapp"></i></span>
-                            <span class="badge bg-primary p-2 fs-5 rounded-circle shadow-sm"><i class="fas fa-phone"></i></span>
-                            <span class="badge bg-danger p-2 fs-5 rounded-circle shadow-sm"><i class="fas fa-envelope"></i></span>
+                            <!-- WhatsApp Clickable Link -->
+                            <a href="https://wa.me/919634759912" target="_blank" class="action-icon" title="Chat on WhatsApp">
+                                <span class="badge bg-success p-2 fs-5 rounded-circle shadow-sm"><i class="fab fa-whatsapp text-white"></i></span>
+                            </a>
+                            <!-- Direct Mobile Call Link -->
+                            <a href="tel:9634759912" class="action-icon" title="Call Now">
+                                <span class="badge bg-primary p-2 fs-5 rounded-circle shadow-sm"><i class="fas fa-phone text-white"></i></span>
+                            </a>
+                            <!-- Email Direct Link -->
+                            <a href="mailto:santoshkaankar@gmail.com" class="action-icon" title="Send Email">
+                                <span class="badge bg-danger p-2 fs-5 rounded-circle shadow-sm"><i class="fas fa-envelope text-white"></i></span>
+                            </a>
                         </div>
                         <h4 class="fw-bold text-white mb-2">One-Tap Direct Connection</h4>
                         <p class="text-light small mb-0">No apps required for viewers. They click WhatsApp icon and land straight into your WhatsApp chat instantly!</p>
@@ -153,7 +167,7 @@
         </div>
     </section>
 
-    <!-- Main Ad Platform Section: Top Continuous Sliding Ad Carousel (Sequence Maintained) -->
+    <!-- Main Ad Platform Section -->
     <div class="container my-5">
         <div class="row">
             <div class="col-12">
@@ -225,7 +239,7 @@
         </div>
     </section>
 
-    <!-- Fixed Advertising Boards Section (Changes Order dynamically on every reload for ad rotation) -->
+    <!-- Sponsored Ads Section -->
     <section id="ads-section" class="py-5 bg-light border-top">
         <div class="container py-4">
             <div class="text-center mb-4">
@@ -271,16 +285,15 @@
                 <a href="#" class="text-decoration-none text-muted">Contact Us</a>
             </div>
             <hr class="border-secondary my-3">
-            <p class="mb-1 small text-muted">&copy; 2023 - 2026 Tidong Marketing Pvt. Ltd. All rights reserved.</p>
+            <p class="mb-1 small text-muted">&copy; 2023 - {{ date('Y') }} Tidong Marketing Pvt. Ltd. All rights reserved.</p>
             <p class="mb-0 text-secondary" style="font-size: 12px;">Tidong® is a registered trademark.</p>
         </div>
     </footer>
 
-    <!-- Bootstrap JS & Carousel Persistence / Ad Randomizer Script -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Persistent Carousel Slide Index Across Page Reloads for Home
             var homeCarouselEl = document.getElementById('homeAdCarousel');
             if(homeCarouselEl) {
                 var homeCarousel = new bootstrap.Carousel(homeCarouselEl, {
@@ -298,7 +311,6 @@
                 });
             }
 
-            // Randomize/Shuffle Fixed Ads on every page load
             let container = document.getElementById('homeRandomAdContainer');
             if(container) {
                 let boxes = Array.from(container.getElementsByClassName('ad-box'));
