@@ -15,12 +15,12 @@
         @csrf
 
         <!-- Password Reset Token -->
-        <input type="hidden" name="token" value="{{ $request->route('token') }}">
+        <input type="hidden" name="token" value="{{ $token ?? request()->route('token') }}">
 
         <!-- Email Address -->
         <div>
             <label for="email" class="block font-semibold text-sm text-gray-800">Email Address</label>
-            <input id="email" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-100 py-2.5 px-3 text-gray-900 text-sm" type="email" name="email" :value="old('email', $request->email)" required readonly />
+            <input id="email" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-100 py-2.5 px-3 text-gray-900 text-sm" type="email" name="email" value="{{ old('email', request()->email) }}" required readonly />
             <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-600" />
         </div>
 
