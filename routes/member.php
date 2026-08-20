@@ -17,14 +17,12 @@ Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
 Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
 Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
-// Card Indexing & Dashboards (With Aliases)
+// Card Indexing & Dashboards (All Name Aliases Included)
 Route::get('/cards', [CardController::class, 'index'])->name('cards.index');
 Route::get('/cards-list', [CardController::class, 'index'])->name('card.index');
-Route::get('/member-cards', [CardController::class, 'index'])->name('member.cards.index');
 
-// Master Profile Form Routes (With Aliases)
+// Master Profile Form Routes
 Route::get('/card/configure', [CardController::class, 'configure'])->name('card.configure');
-Route::get('/member/card/configure', [CardController::class, 'configure'])->name('member.card.configure');
 Route::post('/card/configure', [CardController::class, 'storeMaster'])->name('card.configure.store');
 
 // Location Search Route (Select2)

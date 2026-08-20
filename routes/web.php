@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\Member\CardController;
+use Illuminate\Support\Facades\Artisan;
 
 // ==========================================
 // UTILITY & SYSTEM INITIALIZATION ROUTES
@@ -192,4 +193,12 @@ Route::middleware(['auth'])->group(function () {
     // --- MEMBER ROUTES ---
     Route::prefix('member')->name('member.')->group(base_path('routes/member.php'));
 
+});
+
+Route::get('/fix-storage', function () {
+    Artisan::call('storage:link');
+    Artisan::call('view:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('route:clear');
+    return 'Storage linked and caches cleared successfully!';
 });
