@@ -8,13 +8,10 @@
             <p class="text-muted small m-0">Aapke sabhi custom card variants aur sharing links</p>
         </div>
         
-        <!-- Action Buttons Group -->
         <div class="d-flex align-items-center gap-2">
-            <!-- Back to Dashboard Button Added Here -->
             <a href="{{ route('member.dashboard') }}" class="btn btn-outline-secondary rounded-3">
                 <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
             </a>
-
             <a href="{{ route('member.card.view.create') }}" class="btn btn-primary rounded-3">
                 <i class="fas fa-plus me-1"></i> Create New Variant
             </a>
@@ -34,19 +31,24 @@
                 <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden">
                     <div class="card-header bg-transparent border-0 pt-3 px-3 d-flex justify-content-between align-items-center">
                         <span class="badge bg-primary-subtle text-primary text-uppercase px-3 py-2 rounded-pill small fw-bold">
-                            {{ ucfirst($view->theme_style) }} Theme
+                            {{ ucfirst(str_replace('-', ' ', $view->theme_style ?? $view->theme ?? 'CUSTOM')) }}
                         </span>
                         <small class="text-muted">{{ $view->created_at ? $view->created_at->format('d M, Y') : '' }}</small>
                     </div>
 
-                    <div class="card-body px-3 py-2 text-center bg-light my-2 mx-3 rounded-3" style="transform: scale(0.9); transform-origin: top center; min-height: 180px;">
-                        @include('member.card.render_engine', [
-                            'masterCard'   => $masterCard,
-                            'themeStyle'   => $view->theme_style,
-                            'fullCardNo'   => $view->full_card_no ?? $masterCard->card_no,
-                            'fieldToggles' => $view->field_toggles
-                        ])
-                    </div>
+                    <div class="card-body p-3 d-flex align-items-center justify-content-center bg-light rounded-3 m-2">
+    @include('member.card.render_engine', [
+        'cardView'         => $view,
+        'masterCard'       => $masterCard,
+        'instanceId'       => $view->id,
+        'themeStyle'       => $view->theme_style ?? $view->theme ?? 'default',
+        'customTextColor'  => $view->custom_text_color ?? $view->text_color ?? null,
+        'customIconColor'  => $view->custom_icon_color ?? $view->icon_color ?? null,
+        'customIconStyle'  => $view->icon_style ?? $view->custom_icon_style ?? 'solid',
+        'iconDisplayMode'  => $view->icon_display_mode ?? $view->display_mode ?? 'icon_text',
+        'customFont'       => $view->font_family ?? $view->font ?? "'Poppins', sans-serif"
+    ])
+</div>
 
                     <div class="card-footer bg-white border-top-0 p-3">
                         <div class="input-group mb-2">

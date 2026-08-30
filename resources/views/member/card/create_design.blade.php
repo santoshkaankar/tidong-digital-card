@@ -3,6 +3,7 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/card-materials.css') }}">
     <link rel="stylesheet" href="{{ asset('css/card-themes.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;600&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;1,400&family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         .section-title-badge {
             background: #e0f2fe;
@@ -36,21 +37,25 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold mb-0 text-dark">Create Custom Card Variant</h3>
-            <p class="text-muted small mb-0">Select material categories, dropdown styles, and custom field toggles.</p>
+            <p class="text-muted small mb-0">Select material categories, typography styles, icon colors, and custom field toggles.</p>
         </div>
-        <a href="{{ route('member.cards.index') }}" class="btn btn-outline-secondary rounded-3">
+        <a href="{{ route('member.card.index') }}" class="btn btn-outline-secondary rounded-3">
             <i class="fa-solid fa-arrow-left me-1"></i> Back to Cards
         </a>
     </div>
 
-    <form action="{{ route('member.card.view.store') }}" method="POST">
+    <form action="{{ route('member.card.view.store') }}" method="POST" id="customCardDesignForm">
         @csrf
+        
+        <!-- Hidden BG Field mapping for DB -->
+        <input type="hidden" name="custom_bg_color" id="custom_bg_color" value="#111827">
+
         <div class="row g-4">
             
-            <!-- Left Column: Dropdown & Toggles -->
+            <!-- Left Column: Dropdowns, Styling & Toggles -->
             <div class="col-lg-7 col-xl-7">
                 
-                <!-- Theme Selector Dropdown (Expanded to 1000+ Dynamic Options) -->
+                <!-- 1. Theme Selector Dropdown -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white border-0 pt-4 px-4">
                         <h5 class="fw-bold mb-0"><i class="fa-solid fa-layer-group text-primary me-2"></i>Select Theme & Material Category</h5>
@@ -58,65 +63,124 @@
                     <div class="card-body px-4 pb-4">
                         <div class="row g-3">
                             <div class="col-md-12">
-                                <label for="theme_style" class="form-label fw-bold text-dark small">Choose From 1000+ Dynamic Color Finishes</label>
+                                <label for="theme_style" class="form-label fw-bold text-dark small">Choose From 5000+ Dynamic Color Finishes</label>
                                 
-    <select name="theme_style" id="theme_style" class="form-select form-select-lg rounded-3 fs-6 border-secondary-subtle" onchange="changeThemePreview(this.value)">
-    <optgroup label="Standard / Minimalist">
-        <option value="default" selected>Modern Dark Minimal</option>
-        <option value="classic-white">Classic Pure White</option>
-        <option value="classic-dark">Deep Midnight Charcoal</option>
-        <option value="classic-modern">Modern Gradient Blue</option>
-        <option value="metal-gold">Metal Gold Theme</option>
-        <option value="fabric-denim">Fabric Denim Theme</option>
-    </optgroup>
-    
-    <optgroup label="Creative & Artistic Textures (New)">
-        <option value="texture-fish-stones">Fish Stones Theme</option>
-        <option value="texture-torn-paper">Torn Paper Theme</option>
-        <option value="texture-old-wood">Old Wood Theme</option>
-        <option value="texture-ripped-jeans">Ripped Jeans Theme</option>
-        <option value="texture-spider-web">Spider Web Theme</option>
-        <option value="texture-dusty-sand">Dusty Sand Theme</option>
-        <option value="texture-rusty-metal">Rusty Metal Theme</option>
-        
-        <!-- नए जोड़े गए शानदार डिज़ाइन थीम्स -->
-        <option value="texture-neon-glow">Neon Glow Theme</option>
-        <option value="texture-carbon-fiber">Carbon Fiber Theme</option>
-        <option value="texture-marble-white">Luxury Marble White</option>
-        <option value="texture-stained-glass">Stained Glass Theme</option>
-        <option value="texture-holographic">Holographic Effect</option>
-        <option value="texture-rose-gold">Rose Gold Luxury</option>
-        <option value="texture-midnight-velvet">Midnight Velvet</option>
-        <option value="texture-emerald-silk">Emerald Silk Theme</option>
-        <option value="texture-cyberpunk-grid">Cyberpunk Grid</option>
-        <option value="texture-vintage-leather">Vintage Leather</option>
-        <option value="texture-sunset-orange">Sunset Orange Glow</option>
-        <option value="texture-deep-ocean">Deep Ocean Wave</option>
-        <option value="texture-royal-amethyst">Royal Amethyst Purple</option>
-        <option value="texture-frost-glass">Frosted Glass Effect</option>
-        <option value="texture-matte-obsidian">Matte Obsidian Black</option>
-        <option value="texture-liquid-chrome">Liquid Chrome Silver</option>
-        <option value="texture-plasma-energy">Plasma Energy Glow</option>
-    </optgroup>
+                                <select name="theme_style" id="theme_style" class="form-select form-select-lg rounded-3 fs-6 border-secondary-subtle">
+                                    <optgroup label="Standard / Minimalist">
+                                        <option value="default" selected>Modern Dark Minimal</option>
+                                        <option value="classic-white">Classic Pure White</option>
+                                        <option value="classic-dark">Deep Midnight Charcoal</option>
+                                        <option value="classic-modern">Modern Gradient Blue</option>
+                                        <option value="metal-gold">Metal Gold Theme</option>
+                                        <option value="fabric-denim">Fabric Denim Theme</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="Creative & Artistic Textures">
+                                        <option value="texture-fish-stones">Fish Stones Theme</option>
+                                        <option value="texture-torn-paper">Torn Paper Theme</option>
+                                        <option value="texture-old-wood">Old Wood Theme</option>
+                                        <option value="texture-ripped-jeans">Ripped Jeans Theme</option>
+                                        <option value="texture-spider-web">Spider Web Theme</option>
+                                        <option value="texture-dusty-sand">Dusty Sand Theme</option>
+                                        <option value="texture-rusty-metal">Rusty Metal Theme</option>
+                                        <option value="texture-neon-glow">Neon Glow Theme</option>
+                                        <option value="texture-carbon-fiber">Carbon Fiber Theme</option>
+                                        <option value="texture-marble-white">Luxury Marble White</option>
+                                        <option value="texture-stained-glass">Stained Glass Theme</option>
+                                        <option value="texture-holographic">Holographic Effect</option>
+                                        <option value="texture-rose-gold">Rose Gold Luxury</option>
+                                        <option value="texture-midnight-velvet">Midnight Velvet</option>
+                                        <option value="texture-emerald-silk">Emerald Silk Theme</option>
+                                        <option value="texture-cyberpunk-grid">Cyberpunk Grid</option>
+                                        <option value="texture-vintage-leather">Vintage Leather</option>
+                                        <option value="texture-sunset-orange">Sunset Orange Glow</option>
+                                        <option value="texture-deep-ocean">Deep Ocean Wave</option>
+                                        <option value="texture-royal-amethyst">Royal Amethyst Purple</option>
+                                        <option value="texture-frost-glass">Frosted Glass Effect</option>
+                                        <option value="texture-matte-obsidian">Matte Obsidian Black</option>
+                                        <option value="texture-liquid-chrome">Liquid Chrome Silver</option>
+                                        <option value="texture-plasma-energy">Plasma Energy Glow</option>
+                                    </optgroup>
 
-    <optgroup label="Dynamic Vibrant Gradients (1 - 2500)">
-        @for ($i = 1; $i <= 2500; $i++)
-            <option value="dyn-vibrant-{{ $i }}">Vibrant Color Theme #{{ $i }}</option>
-        @endfor
-    </optgroup>
-    
-    <optgroup label="Dynamic Pastel & Royal Shades (2501 - 5000)">
-        @for ($i = 2501; $i <= 5000; $i++)
-            <option value="dyn-royal-{{ $i }}">Royal Shade Theme #{{ $i }}</option>
-        @endfor
-    </optgroup>
-</select>
+                                    <optgroup label="Dynamic Vibrant Gradients (1 - 2500)">
+                                        @for ($i = 1; $i <= 2500; $i++)
+                                            <option value="dyn-vibrant-{{ $i }}">Vibrant Color Theme #{{ $i }}</option>
+                                        @endfor
+                                    </optgroup>
+                                    
+                                    <optgroup label="Dynamic Pastel & Royal Shades (2501 - 5000)">
+                                        @for ($i = 2501; $i <= 5000; $i++)
+                                            <option value="dyn-royal-{{ $i }}">Royal Shade Theme #{{ $i }}</option>
+                                        @endfor
+                                    </optgroup>
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Field Toggles -->
+                <!-- 2. Typography & Icon Customization Section -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-pen-nib text-primary me-2"></i>Text & Icon Customization</h5>
+                    </div>
+                    <div class="card-body px-4 pb-4">
+                        <div class="row g-3">
+                            <!-- Icon Display Mode -->
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-bold text-dark small">Icon Display Mode</label>
+                                <select name="icon_display_mode" id="icon_display_mode" class="form-select rounded-3 border-secondary-subtle">
+                                    <option value="icon_only" selected>Only Icons (Clean)</option>
+                                    <option value="icon_text">Icon + Text / Number</option>
+                                </select>
+                            </div>
+
+                            <!-- Font Family -->
+                            <div class="col-md-6 mb-2">
+                                <label for="font_family" class="form-label fw-bold text-dark small">Font Family</label>
+                                <select name="font_family" id="font_family" class="form-select rounded-3 border-secondary-subtle">
+                                    <option value="'Poppins', sans-serif" selected>Poppins (Modern Clean)</option>
+                                    <option value="'Montserrat', sans-serif">Montserrat (Geometric Pro)</option>
+                                    <option value="'Roboto', sans-serif">Roboto (Classic Tech)</option>
+                                    <option value="'Playfair Display', serif">Playfair Display (Luxury Serif)</option>
+                                    <option value="'Cinzel', serif">Cinzel (Royal Elegant)</option>
+                                    <option value="'Inter', sans-serif">Inter (Minimalist)</option>
+                                </select>
+                            </div>
+
+                            <!-- Icon Style -->
+                            <div class="col-md-6">
+                                <label for="icon_style" class="form-label fw-bold text-dark small">Icon Style</label>
+                                <select name="icon_style" id="icon_style" class="form-select rounded-3 border-secondary-subtle">
+                                    <option value="solid" selected>Solid (Filled)</option>
+                                    <option value="regular">Outline (Regular)</option>
+                                    <option value="badge">Circle Badge</option>
+                                    <option value="square">Square Badge</option>
+                                </select>
+                            </div>
+
+                            <!-- Custom Text Color (Mapped name to custom_text_color) -->
+                            <div class="col-md-6">
+                                <label for="custom_text_color" class="form-label fw-bold text-dark small">Custom Text Color</label>
+                                <div class="input-group">
+                                    <input type="color" class="form-control form-control-color border-secondary-subtle rounded-start" id="text_color_picker" value="#ffffff">
+                                    <input type="text" name="custom_text_color" id="text_color" class="form-control border-secondary-subtle rounded-end" value="#ffffff" placeholder="#ffffff">
+                                </div>
+                            </div>
+
+                            <!-- Custom Icon Color (Mapped name to custom_icon_color) -->
+                            <div class="col-md-6">
+                                <label for="custom_icon_color" class="form-label fw-bold text-dark small">Custom Icon Color</label>
+                                <div class="input-group">
+                                    <input type="color" class="form-control form-control-color border-secondary-subtle rounded-start" id="icon_color_picker" value="#3b82f6">
+                                    <input type="text" name="custom_icon_color" id="icon_color" class="form-control border-secondary-subtle rounded-end" value="#3b82f6" placeholder="#3b82f6">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Field Toggles -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
                         <h5 class="fw-bold mb-0"><i class="fa-solid fa-sliders text-primary me-2"></i>Visible Field Toggles</h5>
@@ -146,7 +210,7 @@
                             }
                         @endphp
 
-                        <!-- 1. Profile Info -->
+                        <!-- Profile Details -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Profile Details</span>
                             <div class="row g-0">
@@ -159,7 +223,7 @@
                             </div>
                         </div>
 
-                        <!-- 2. Phone & Messaging -->
+                        <!-- Phone & Messaging -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Phone & Messaging</span>
                             <div class="row g-0">
@@ -170,7 +234,7 @@
                             </div>
                         </div>
 
-                        <!-- 3. Emails & Web Links -->
+                        <!-- Emails & Web Links -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Emails & Websites</span>
                             <div class="row g-0">
@@ -181,7 +245,7 @@
                             </div>
                         </div>
 
-                        <!-- 4. Social Media Links -->
+                        <!-- Social Media Links -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Social Media Links</span>
                             <div class="row g-0">
@@ -192,7 +256,7 @@
                             </div>
                         </div>
 
-                        <!-- 5. Payments & QR -->
+                        <!-- Payments & QR -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Payments & QR Code</span>
                             <div class="row g-0">
@@ -203,10 +267,10 @@
                             </div>
                         </div>
 
-                        <!-- 6. Address & Location -->
+                        <!-- Address & Location -->
                         <div class="mb-3">
                             <span class="section-title-badge mb-2 d-inline-block">Address & Location</span>
-                        <div class="row g-0">
+                            <div class="row g-0">
                                 <div class="col-md-6 px-1">{!! renderToggleBox('Street Address', 'toggles[show_address]') !!}</div>
                                 <div class="col-md-6 px-1">{!! renderToggleBox('Area / Colony', 'toggles[show_area]') !!}</div>
                                 <div class="col-md-6 px-1">{!! renderToggleBox('City / District', 'toggles[show_city]') !!}</div>
@@ -250,147 +314,130 @@
     </form>
 </div>
 
-
-
-
-
-
 @push('scripts')
 <script>
-// Unique color generator for 5000+ themes
 function getThemeColors(id, type) {
     let hash1 = (id * 37) % 360;
     let hash2 = (id * 83) % 360;
-    
-    if(type === 'vibrant') {
-        return `linear-gradient(135deg, hsl(${hash1}, 85%, 50%), hsl(${hash2}, 90%, 35%))`;
-    } else {
-        return `linear-gradient(135deg, hsl(${hash1}, 65% , 88%), hsl(${hash2}, 75%, 70%))`;
-    }
+    return type === 'vibrant'
+        ? `linear-gradient(135deg, hsl(${hash1}, 85%, 50%), hsl(${hash2}, 90%, 35%))`
+        : `linear-gradient(135deg, hsl(${hash1}, 65% , 88%), hsl(${hash2}, 75%, 70%))`;
 }
 
-function changeThemePreview(selectedTheme) {
+function sanitizeHex(color, fallback) {
+    if (!color) return fallback;
+    color = color.trim();
+    if (color.length === 4 && color.startsWith('#')) {
+        color = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+    }
+    return /^#[0-9A-F]{6}$/i.test(color) ? color : fallback;
+}
+
+// Live CSS Injection for Font, Colors & Icons
+function applyDynamicStyles() {
+    let fontFamily = document.getElementById('font_family')?.value || "'Poppins', sans-serif";
+    let iconStyle  = document.getElementById('icon_style')?.value || "solid";
+    
+    let textColor  = sanitizeHex(document.getElementById('text_color_picker')?.value, "#ffffff");
+    let iconColor  = sanitizeHex(document.getElementById('icon_color_picker')?.value, "#3b82f6");
+
+    let styleTag = document.getElementById('card-live-preview-override-style');
+    if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'card-live-preview-override-style';
+        document.head.appendChild(styleTag);
+    }
+
+    let iconStyleCSS = '';
+    if (iconStyle === 'badge') {
+        iconStyleCSS = `
+            #live-card-container .card-material-wrapper i,
+            #live-card-container .card-material-wrapper svg,
+            #live-card-container .card-material-wrapper [class*="fa-"] {
+                background-color: #ffffff !important;
+                border-radius: 50% !important;
+                padding: 6px !important;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+            }
+        `;
+    } else if (iconStyle === 'square') {
+        iconStyleCSS = `
+            #live-card-container .card-material-wrapper i,
+            #live-card-container .card-material-wrapper svg,
+            #live-card-container .card-material-wrapper [class*="fa-"] {
+                background-color: #ffffff !important;
+                border-radius: 6px !important;
+                padding: 6px !important;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+            }
+        `;
+    } else if (iconStyle === 'regular') {
+        iconStyleCSS = `
+            #live-card-container .card-material-wrapper i,
+            #live-card-container .card-material-wrapper svg,
+            #live-card-container .card-material-wrapper [class*="fa-"] {
+                background-color: transparent !important;
+                border: 1px solid ${iconColor} !important;
+                border-radius: 50% !important;
+                padding: 4px !important;
+            }
+        `;
+    }
+
+    styleTag.innerHTML = `
+        #live-card-container .card-material-wrapper,
+        #live-card-container .card-material-wrapper * {
+            font-family: ${fontFamily} !important;
+        }
+
+        #live-card-container .card-material-wrapper,
+        #live-card-container .card-material-wrapper p,
+        #live-card-container .card-material-wrapper span,
+        #live-card-container .card-material-wrapper div,
+        #live-card-container .card-material-wrapper h1,
+        #live-card-container .card-material-wrapper h2,
+        #live-card-container .card-material-wrapper h3,
+        #live-card-container .card-material-wrapper h4,
+        #live-card-container .card-material-wrapper h5,
+        #live-card-container .card-material-wrapper h6 {
+            color: ${textColor} !important;
+        }
+
+        #live-card-container .card-material-wrapper i,
+        #live-card-container .card-material-wrapper svg,
+        #live-card-container .card-material-wrapper [class*="fa-"] {
+            color: ${iconColor} !important;
+        }
+
+        ${iconStyleCSS}
+    `;
+}
+
+function changeThemePreview(selectedTheme, isUserAction = false) {
     let wrapper = document.querySelector('#live-card-container .card-material-wrapper');
     if (!wrapper) return;
 
-    let bgStyle = '';
+    let bgStyle = '#111827';
     let bgSize = 'cover';
-    let textColor = '#ffffff'; // Default white text
 
-    if (selectedTheme === 'default' || selectedTheme === 'classic-dark') {
-        bgStyle = '#111827';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'classic-white') {
+    if (selectedTheme === 'classic-white') {
         bgStyle = '#ffffff';
-        textColor = '#111827';
     } else if (selectedTheme === 'classic-modern') {
         bgStyle = 'linear-gradient(135deg, #1e3a8a, #3b82f6)';
-        textColor = '#ffffff';
     } else if (selectedTheme === 'metal-gold') {
         bgStyle = 'linear-gradient(135deg, #bf953f, #fcf6ba, #aa771c)';
-        textColor = '#3d2c04';
-    } else if (selectedTheme === 'fabric-denim') {
-        bgStyle = 'linear-gradient(135deg, #1e3c72, #2a5298)';
-        textColor = '#ffffff';
-    } 
-    // --- Real & Artistic Multi-layered Textures & New Themes ---
-    else if (selectedTheme === 'texture-fish-stones') {
-        bgStyle = 'radial-gradient(circle at 20% 30%, #ff5722 0%, transparent 25%), radial-gradient(circle at 80% 70%, #00bcd4 0%, transparent 30%), linear-gradient(135deg, #37474f, #263238)';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-torn-paper') {
-        bgStyle = 'linear-gradient(135deg, #f9f9f9 0%, #eceff1 100%), repeating-linear-gradient(45deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 2px, transparent 2px, transparent 4px)';
-        textColor = '#111827';
-    } else if (selectedTheme === 'texture-old-wood') {
-        bgStyle = 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 20h40M20 0v40\' stroke=\'%23000000\' stroke-opacity=\'0.2\' stroke-width=\'1\' fill=\'none\'/%3E%3C/svg%3E"), linear-gradient(90deg, #3e2723 0%, #4e342e 50%, #3e2723 100%)';
-        bgSize = 'auto, cover';
-        textColor = '#d7ccc8';
-    } else if (selectedTheme === 'texture-ripped-jeans') {
-        bgStyle = 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.15\' fill-rule=\'evenodd\'%3E%3Cpath d=\'M0 3h20v1H0V3zm0 4h20v1H0V7zm0 4h20v1H0v-1zm0 4h20v1H0v-1z\'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(135deg, #1a237e 0%, #3949ab 100%)';
-        bgSize = 'auto, cover';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-spider-web') {
-        bgStyle = 'radial-gradient(circle at center, #263238 0%, #0b1013 100%), repeating-radial-gradient(circle at center, transparent 0px, transparent 15px, rgba(255,255,255,0.08) 15px, rgba(255,255,255,0.08) 17px)';
-        textColor = '#e0f7fa';
-    } else if (selectedTheme === 'texture-dusty-sand') {
-        bgStyle = 'url("data:image/svg+xml,%3Csvg width=\'12\' height=\'12\' viewBox=\'0 0 12 12\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'1.5\' fill=\'%23000000\' fill-opacity=\'0.15\'/%3E%3C/svg%3E"), linear-gradient(135deg, #d7ccc8 0%, #a1887f 100%)';
-        bgSize = 'auto, cover';
-        textColor = '#3e2723';
-    } else if (selectedTheme === 'texture-rusty-metal') {
-        bgStyle = 'linear-gradient(135deg, #bf360c 0%, #4e342e 100%), repeating-linear-gradient(-45deg, rgba(0,0,0,0.25) 0px, rgba(0,0,0,0.25) 4px, transparent 4px, transparent 8px)';
-        textColor = '#ffccbc';
-    } else if (selectedTheme === 'texture-neon-glow') {
-        bgStyle = 'linear-gradient(135deg, #000428, #004e92)';
-        textColor = '#00ffcc';
-    } else if (selectedTheme === 'texture-carbon-fiber') {
-        bgStyle = 'url("data:image/svg+xml,%3Csvg width=\'10\' height=\'10\' viewBox=\'0 0 10 10\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h5v5H0zM5 5h5v5H5z\' fill=\'%23ffffff\' fill-opacity=\'0.08\'/%3E%3C/svg%3E"), linear-gradient(135deg, #111111 0%, #222222 100%)';
-        bgSize = 'auto, cover';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-marble-white') {
-        bgStyle = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
-        textColor = '#2c3e50';
-    } else if (selectedTheme === 'texture-stained-glass') {
-        bgStyle = 'linear-gradient(45deg, #ff9a9e, #fad0c4, #a18cd1)';
-        textColor = '#222222';
-    } else if (selectedTheme === 'texture-holographic') {
-        bgStyle = 'linear-gradient(to right, #ff00ff, #00ffff, #ffff00)';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-rose-gold') {
-        bgStyle = 'linear-gradient(135deg, #b76e79, #e8b4b8, #d4af37)';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-midnight-velvet') {
-        bgStyle = 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)';
-        textColor = '#e2e8f0';
-    } else if (selectedTheme === 'texture-emerald-silk') {
-        bgStyle = 'linear-gradient(135deg, #0575e6, #00f2fe)';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-cyberpunk-grid') {
-        bgStyle = 'linear-gradient(135deg, #f72585, #7209b7, #3a0ca3)';
-        textColor = '#4cc9f0';
-    } else if (selectedTheme === 'texture-vintage-leather') {
-        bgStyle = 'linear-gradient(135deg, #3e2723, #4e342e, #211512)';
-        textColor = '#d7ccc8';
-    } else if (selectedTheme === 'texture-sunset-orange') {
-        bgStyle = 'linear-gradient(135deg, #ff4e50, #f9d423)';
-        textColor = '#222222';
-    } else if (selectedTheme === 'texture-deep-ocean') {
-        bgStyle = 'linear-gradient(135deg, #2b5876, #4e4376)';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-royal-amethyst') {
-        bgStyle = 'linear-gradient(135deg, #9d50bb, #6e48aa)';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-frost-glass') {
-        bgStyle = 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1))';
-        textColor = '#111827';
-    } else if (selectedTheme === 'texture-matte-obsidian') {
-        bgStyle = '#1a1a1a';
-        textColor = '#a3a3a3';
-    } else if (selectedTheme === 'texture-liquid-chrome') {
-        bgStyle = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
-        textColor = '#ffffff';
-    } else if (selectedTheme === 'texture-plasma-energy') {
-        bgStyle = 'linear-gradient(135deg, #ff0844, #ffb199)';
-        textColor = '#ffffff';
-    }
-    // --- Dynamic Support for up to 5000 Themes ---
-    else if (selectedTheme.startsWith('dyn-vibrant-')) {
+    } else if (selectedTheme.startsWith('dyn-vibrant-')) {
         let id = parseInt(selectedTheme.replace('dyn-vibrant-', ''));
         bgStyle = getThemeColors(id, 'vibrant');
-        textColor = '#ffffff';
     } else if (selectedTheme.startsWith('dyn-royal-')) {
         let id = parseInt(selectedTheme.replace('dyn-royal-', ''));
         bgStyle = getThemeColors(id, 'royal');
-        textColor = '#0f172a';
     }
 
-    // Apply background, size, and text color correctly
-    wrapper.style.setProperty('background-image', bgStyle, 'important');
+    wrapper.style.setProperty('background', bgStyle, 'important');
     wrapper.style.setProperty('background-size', bgSize, 'important');
-    wrapper.style.setProperty('color', textColor, 'important');
-    
-    const textElements = wrapper.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, strong, small, .card-text, .name-title, .company-title');
-    textElements.forEach(el => {
-        el.style.setProperty('color', textColor, 'important');
-    });
+
+    applyDynamicStyles();
 }
 
 function updateCardToggles() {
@@ -401,31 +448,67 @@ function updateCardToggles() {
         if (!match) return;
         
         let fieldKey = match[1];
-        
         document.querySelectorAll('#live-card-container .' + fieldKey).forEach(el => {
-            if (checkbox.checked) {
-                el.style.display = '';
-            } else {
-                el.style.display = 'none';
-            }
+            el.style.display = checkbox.checked ? '' : 'none';
         });
     });
 }
 
-document.querySelectorAll('input[type="checkbox"][name^="toggles"]').forEach(checkbox => {
-    checkbox.addEventListener('change', updateCardToggles);
-});
-
 document.addEventListener("DOMContentLoaded", function() {
-    updateCardToggles();
-    let themeSelect = document.getElementById('theme_style');
-    if(themeSelect) {
-        changeThemePreview(themeSelect.value);
-        // Add event listener programmatically to ensure it catches all changes smoothly
-        themeSelect.addEventListener('change', function() {
-            changeThemePreview(this.value);
+    let fontSelect   = document.getElementById('font_family');
+    let iconSelect   = document.getElementById('icon_style');
+    let themeSelect  = document.getElementById('theme_style');
+    let textColorTxt = document.getElementById('text_color');
+    let textColorClr = document.getElementById('text_color_picker');
+    let iconColorTxt = document.getElementById('icon_color');
+    let iconColorClr = document.getElementById('icon_color_picker');
+    let formElement  = document.getElementById('customCardDesignForm');
+
+    function bindColorPair(picker, text) {
+        if (!picker || !text) return;
+        text.value = picker.value;
+
+        ['input', 'change'].forEach(evt => {
+            picker.addEventListener(evt, function() {
+                text.value = this.value;
+                applyDynamicStyles();
+            });
+            text.addEventListener(evt, function() {
+                let sanitized = sanitizeHex(this.value, null);
+                if (sanitized) {
+                    picker.value = sanitized;
+                }
+                applyDynamicStyles();
+            });
         });
     }
+
+    bindColorPair(textColorClr, textColorTxt);
+    bindColorPair(iconColorClr, iconColorTxt);
+
+    if (fontSelect) fontSelect.addEventListener('change', applyDynamicStyles);
+    if (iconSelect) iconSelect.addEventListener('change', applyDynamicStyles);
+    if (themeSelect) {
+        themeSelect.addEventListener('change', function() {
+            changeThemePreview(this.value, true);
+        });
+    }
+
+    document.querySelectorAll('input[type="checkbox"][name^="toggles"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateCardToggles);
+    });
+
+    if (formElement) {
+        formElement.addEventListener('submit', function() {
+            let wrapper = document.querySelector('#live-card-container .card-material-wrapper');
+            let activeBg = wrapper ? wrapper.style.background : '#111827';
+            document.getElementById('custom_bg_color').value = activeBg || '#111827';
+        });
+    }
+
+    updateCardToggles();
+    if (themeSelect) changeThemePreview(themeSelect.value, false);
+    applyDynamicStyles();
 });
 </script>
 @endpush

@@ -17,6 +17,11 @@ class UserCardView extends Model
         'theme_category_code',
         'variant_number',
         'full_card_no',
+        'font_family',
+        'icon_style',
+        'icon_display_mode',
+        'custom_text_color',
+        'custom_icon_color',
         'field_toggles',
         'is_active',
     ];
@@ -28,11 +33,11 @@ class UserCardView extends Model
 
     public function visitingCard()
     {
-        return $this->belongsTo(VisitingCard::class);
+        return $this->belongsTo(VisitingCard::class, 'visiting_card_id');
     }
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(\App\Models\User::class);
     }
 }

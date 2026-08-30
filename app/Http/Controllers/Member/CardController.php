@@ -10,7 +10,6 @@ use App\Models\Member\Country;
 use App\Models\Member\State;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -88,6 +87,10 @@ class CardController extends Controller
             'state_id'             => 'nullable|exists:states,id',
             'photo'                => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'qr_code'              => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'font_family'          => 'nullable|string|max:255',
+            'icon_style'           => 'nullable|string|max:255',
+            'icon_color'           => 'nullable|string|max:50',
+            'text_color'           => 'nullable|string|max:50',
         ]);
 
         $card = VisitingCard::firstOrNew(['user_id' => Auth::id()]);
@@ -161,8 +164,17 @@ class CardController extends Controller
     public function storeDesign(Request $request)
     {
         $request->validate([
-            'theme_style' => 'required|string',
-            'toggles'     => 'nullable|array'
+            'theme_style'        => 'required|string',
+            'font_family'        => 'nullable|string',
+            'icon_style'         => 'nullable|string',
+            'icon_display_mode'  => 'nullable|string',
+            'custom_text_color'  => 'nullable|string',
+            'custom_icon_color'  => 'nullable|string',
+            'custom_bg_color'    => 'nullable|string',
+            'text_color'         => 'nullable|string',
+            'icon_color'         => 'nullable|string',
+            'bg_color'           => 'nullable|string',
+            'toggles'            => 'nullable|array'
         ]);
 
         $masterCard = VisitingCard::where('user_id', Auth::id())->firstOrFail();
@@ -196,44 +208,57 @@ class CardController extends Controller
         $selectedTheme = $request->input('theme_style', 'default');
         $categoryCode  = $themeCategoryMap[$selectedTheme] ?? 'Z';
 
-        $existingCount = UserCardView::where('user_id', Auth::id())->count();
-        $variantNo = $existingCount + 1;
-        
-        $designVariantCode = $categoryCode . $variantNo;
-        $fullCardNo = $masterCard->card_no . '-' . $designVariantCode;
+        $maxVariant = UserCardView::where('user_id', Auth::id())->max('variant_number') ?? 0;
+        $variantNo  = $maxVariant + 1;
 
+        do {
+            $designVariantCode = $categoryCode . $variantNo;
+            $fullCardNo        = $masterCard->card_no . '-' . $designVariantCode;
+            
+            $exists = UserCardView::where('full_card_no', $fullCardNo)->exists();
+            if ($exists) {
+                $variantNo++;
+            }
+        } while ($exists);
+
+        $rawToggles = $request->input('toggles', []);
         $toggles = [
-            'show_name'          => true,
-            'show_photo'         => $request->has('toggles.show_photo'),
-            'show_business_name' => $request->has('toggles.show_business_name'),
-            'show_designation'   => $request->has('toggles.show_designation'),
-            'show_tagline'       => $request->has('toggles.show_tagline'),
-            'show_nickname'      => $request->has('toggles.show_nickname'),
-            'show_phone'         => $request->has('toggles.show_phone'),
-            'show_alt_phone'     => $request->has('toggles.show_alt_phone'),
-            'show_whatsapp'      => $request->has('toggles.show_whatsapp'),
-            'show_gmail'         => $request->has('toggles.show_gmail'),
-            'show_yahoo_email'   => $request->has('toggles.show_yahoo_email'),
-            'show_other_email'   => $request->has('toggles.show_other_email'),
-            'show_website'       => $request->has('toggles.show_website'),
-            'show_facebook'      => $request->has('toggles.show_facebook'),
-            'show_instagram'     => $request->has('toggles.show_instagram'),
-            'show_linkedin'      => $request->has('toggles.show_linkedin'),
-            'show_youtube'       => $request->has('toggles.show_youtube'),
-            'show_telegram'      => $request->has('toggles.show_telegram'),
-            'show_upi_id'        => $request->has('toggles.show_upi_id'),
-            'show_gpay'          => $request->has('toggles.show_gpay'),
-            'show_paytm'         => $request->has('toggles.show_paytm'),
-            'show_qr_code'       => $request->has('toggles.show_qr_code'),
-            'show_about'         => $request->has('toggles.show_about'),
-            'show_other_details' => $request->has('toggles.show_other_details'),
-            'show_address'       => $request->has('toggles.show_address'),
-            'show_area'          => $request->has('toggles.show_area'),
-            'show_pincode'       => $request->has('toggles.show_pincode'),
-            'show_city'          => $request->has('toggles.show_city'),
-            'show_state'         => $request->has('toggles.show_state'),
-            'show_location_url'  => $request->has('toggles.show_location_url'),
+            'show_name'          => isset($rawToggles['show_name']) ? (bool)$rawToggles['show_name'] : true,
+            'show_photo'         => isset($rawToggles['show_photo']) ? (bool)$rawToggles['show_photo'] : false,
+            'show_business_name' => isset($rawToggles['show_business_name']) ? (bool)$rawToggles['show_business_name'] : true,
+            'show_designation'   => isset($rawToggles['show_designation']) ? (bool)$rawToggles['show_designation'] : true,
+            'show_tagline'       => isset($rawToggles['show_tagline']) ? (bool)$rawToggles['show_tagline'] : false,
+            'show_nickname'      => isset($rawToggles['show_nickname']) ? (bool)$rawToggles['show_nickname'] : false,
+            'show_phone'         => isset($rawToggles['show_phone']) ? (bool)$rawToggles['show_phone'] : true,
+            'show_alt_phone'     => isset($rawToggles['show_alt_phone']) ? (bool)$rawToggles['show_alt_phone'] : false,
+            'show_whatsapp'      => isset($rawToggles['show_whatsapp']) ? (bool)$rawToggles['show_whatsapp'] : true,
+            'show_gmail'         => isset($rawToggles['show_gmail']) ? (bool)$rawToggles['show_gmail'] : false,
+            'show_yahoo_email'   => isset($rawToggles['show_yahoo_email']) ? (bool)$rawToggles['show_yahoo_email'] : false,
+            'show_other_email'   => isset($rawToggles['show_other_email']) ? (bool)$rawToggles['show_other_email'] : false,
+            'show_website'       => isset($rawToggles['show_website']) ? (bool)$rawToggles['show_website'] : false,
+            'show_facebook'      => isset($rawToggles['show_facebook']) ? (bool)$rawToggles['show_facebook'] : false,
+            'show_instagram'     => isset($rawToggles['show_instagram']) ? (bool)$rawToggles['show_instagram'] : false,
+            'show_linkedin'      => isset($rawToggles['show_linkedin']) ? (bool)$rawToggles['show_linkedin'] : false,
+            'show_youtube'       => isset($rawToggles['show_youtube']) ? (bool)$rawToggles['show_youtube'] : false,
+            'show_telegram'      => isset($rawToggles['show_telegram']) ? (bool)$rawToggles['show_telegram'] : false,
+            'show_upi_id'        => isset($rawToggles['show_upi_id']) ? (bool)$rawToggles['show_upi_id'] : false,
+            'show_gpay'          => isset($rawToggles['show_gpay']) ? (bool)$rawToggles['show_gpay'] : false,
+            'show_paytm'         => isset($rawToggles['show_paytm']) ? (bool)$rawToggles['show_paytm'] : false,
+            'show_qr_code'       => isset($rawToggles['show_qr_code']) ? (bool)$rawToggles['show_qr_code'] : false,
+            'show_about'         => isset($rawToggles['show_about']) ? (bool)$rawToggles['show_about'] : false,
+            'show_other_details' => isset($rawToggles['show_other_details']) ? (bool)$rawToggles['show_other_details'] : false,
+            'show_address'       => isset($rawToggles['show_address']) ? (bool)$rawToggles['show_address'] : false,
+            'show_area'          => isset($rawToggles['show_area']) ? (bool)$rawToggles['show_area'] : false,
+            'show_pincode'       => isset($rawToggles['show_pincode']) ? (bool)$rawToggles['show_pincode'] : false,
+            'show_city'          => isset($rawToggles['show_city']) ? (bool)$rawToggles['show_city'] : false,
+            'show_state'         => isset($rawToggles['show_state']) ? (bool)$rawToggles['show_state'] : false,
+            'show_location_url'  => isset($rawToggles['show_location_url']) ? (bool)$rawToggles['show_location_url'] : false,
         ];
+
+        // Strict fallback for NULL values from front-end form
+        $textColor = $request->input('custom_text_color') ?: ($request->input('text_color') ?: '#ffffff');
+        $iconColor = $request->input('custom_icon_color') ?: ($request->input('icon_color') ?: '#ffffff');
+        $bgColor   = $request->input('custom_bg_color')   ?: ($request->input('bg_color')   ?: '#1e293b');
 
         UserCardView::create([
             'user_id'             => Auth::id(),
@@ -243,7 +268,13 @@ class CardController extends Controller
             'theme_category_code' => $categoryCode,
             'variant_number'      => $variantNo,
             'full_card_no'        => $fullCardNo,
-            'field_toggles'       => json_encode($toggles),
+            'font_family'         => $request->input('font_family'),
+            'icon_style'          => $request->input('icon_style', 'regular'),
+            'icon_display_mode'   => $request->input('icon_display_mode', 'icon_only'),
+            'custom_text_color'   => $textColor,
+            'custom_icon_color'   => $iconColor,
+            'custom_bg_color'     => $bgColor,
+            'field_toggles'       => $toggles,
             'is_active'           => true,
         ]);
 

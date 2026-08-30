@@ -2,7 +2,7 @@
 
 namespace App\Models\Member;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // ✅ Sahi path
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class VisitingCard extends Model
@@ -23,11 +23,22 @@ class VisitingCard extends Model
         'show_gmail', 'show_yahoo_email', 'show_other_email', 'show_facebook', 'show_instagram',
         'show_twitter_x', 'show_linkedin', 'show_youtube', 'show_telegram', 'show_website',
         'show_phonepe', 'show_gpay', 'show_paytm', 'show_upi', 'show_about_us',
-        'show_services', 'show_photo', 'show_qr_code', 'show_address', 'show_map'
+        'show_services', 'show_photo', 'show_qr_code', 'show_address', 'show_map',
+        
+        // Font & Icon Design Settings
+        'font_family',
+        'icon_style',
+        'icon_color',
+        'text_color',
     ];
 
     public function user()
     {
         return $this->belongsTo(\App\Models\User::class);
+    }
+
+    public function cardViews()
+    {
+        return $this->hasMany(UserCardView::class, 'visiting_card_id');
     }
 }

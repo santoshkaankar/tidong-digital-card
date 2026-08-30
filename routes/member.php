@@ -30,6 +30,7 @@ Route::get('/search-locations', [CardController::class, 'searchLocations'])->nam
 
 // Direct CRUD Operations for Visiting Cards
 Route::get('/card/create', [CardController::class, 'create'])->name('card.create');
+Route::get('/card/create-design', [CardController::class, 'create'])->name('card.create_design'); // Added for Blade compatibility
 Route::get('/card/create-view', [CardController::class, 'create'])->name('card.view.create');
 Route::post('/card/store', [CardController::class, 'store'])->name('card.store');
 Route::post('/card/store-view', [CardController::class, 'storeDesign'])->name('card.view.store');

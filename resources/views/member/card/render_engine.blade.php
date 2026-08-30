@@ -1,46 +1,77 @@
 @php
-    $themeStyle = $themeStyle ?? ($cardView->theme_style ?? 'default');
-    $fullCardNo = $fullCardNo ?? ($cardView->full_card_no ?? ($masterCard->card_no ?? '12091-080000001-A1'));
-    
-    $toggles = [];
-    if (isset($fieldToggles)) {
-        if (is_string($fieldToggles)) {
-            $toggles = json_decode($fieldToggles, true) ?? [];
-        } elseif (is_array($fieldToggles)) {
-            $toggles = $fieldToggles;
-        } elseif (is_object($fieldToggles)) {
-            $toggles = (array) $fieldToggles;
-        }
-    } elseif (isset($cardView->field_toggles)) {
-        if (is_string($cardView->field_toggles)) {
-            $toggles = json_decode($cardView->field_toggles, true) ?? [];
-        } else {
-            $toggles = (array) $cardView->field_toggles;
-        }
-    }
-    
-    $isSavedCardContext = empty($toggles) && isset($cardView);
+    $cardObj = $cardView ?? $card ?? $item ?? null;
 
-    $show = function($key) use ($toggles, $isSavedCardContext) {
-        if ($key === 'show_name') return true;
-        if ($isSavedCardContext) return true;
-        if (array_key_exists($key, $toggles)) {
-            return (bool)$toggles[$key];
+    // Instance Unique ID for independent rendering on list page
+    $instanceId       = $instanceId ?? ($cardObj->id ?? rand(1000, 9999));
+    $wrapperId        = "liveCardRenderWrapper_" . $instanceId;
+
+    $themeStyle       = $cardObj->theme_style ?? $cardObj->theme ?? $themeStyle ?? 'default';
+    $fullCardNo       = $fullCardNo ?? ($cardObj->full_card_no ?? ($masterCard->card_no ?? '12091-080000001-A1'));
+    
+    $customTextColor   = $cardObj->custom_text_color ?? $cardObj->text_color ?? $customTextColor ?? null;
+    $customIconColor   = $cardObj->custom_icon_color ?? $cardObj->icon_color ?? $customIconColor ?? null;
+    $customIconStyle   = $cardObj->icon_style ?? $cardObj->custom_icon_style ?? $cardObj->icon_badge_style ?? $customIconStyle ?? 'solid';
+    $customFont        = $cardObj->font_family ?? $cardObj->font ?? $customFont ?? "'Poppins', sans-serif";
+    $iconDisplayMode   = $cardObj->icon_display_mode ?? $cardObj->display_mode ?? $cardObj->icon_mode ?? $iconDisplayMode ?? 'icon_text';
+
+    // Parse field toggles for saved variants from DB
+    $fieldToggles = $cardObj->field_toggles ?? $cardObj->field_visibility ?? [];
+    if (is_string($fieldToggles)) {
+        $fieldToggles = json_decode($fieldToggles, true) ?? [];
+    }
+
+    // Fixed toggle active checker supporting both boolean DB saved keys and field aliases
+    $isFieldActive = function($key) use ($fieldToggles) {
+        if (empty($fieldToggles)) return true;
+
+        $aliases = [
+            'nickname'       => ['show_nickname', 'show_nick_name', 'show_nick', 'nickname'],
+            'business_name'  => ['show_business_name', 'show_business', 'business_name'],
+            'designation'    => ['show_designation', 'designation'],
+            'tagline'        => ['show_tagline', 'show_motto', 'tagline'],
+            'qr_code'        => ['show_qr_code', 'show_qr', 'show_qr_code_image', 'qr_code'],
+            'photo'          => ['show_photo', 'show_profile_photo', 'show_profile', 'photo'],
+            'phone'          => ['show_phone', 'show_primary_phone', 'phone'],
+            'alt_phone'      => ['show_alt_phone', 'show_alternate_phone', 'alt_phone'],
+            'whatsapp'       => ['show_whatsapp', 'show_whatsapp_number', 'whatsapp'],
+            'telegram'       => ['show_telegram', 'telegram'],
+            'email'          => ['show_gmail', 'show_gmail_primary_email', 'show_email', 'gmail', 'email'],
+            'yahoo_email'    => ['show_yahoo_email', 'yahoo_email'],
+            'other_email'    => ['show_other_email', 'other_email'],
+            'website'        => ['show_website', 'show_website_url', 'website'],
+            'facebook'       => ['show_facebook', 'facebook'],
+            'instagram'      => ['show_instagram', 'instagram'],
+            'linkedin'       => ['show_linkedin', 'linkedin'],
+            'youtube'        => ['show_youtube', 'show_youtube_channel', 'youtube'],
+            'upi'            => ['show_upi_id', 'upi'],
+            'gpay'           => ['show_gpay', 'show_google_pay', 'gpay'],
+            'paytm'          => ['show_paytm', 'paytm'],
+            'street_address' => ['show_address', 'show_street_address', 'address', 'street_address'],
+            'area'           => ['show_area', 'show_area_colony', 'area'],
+            'city'           => ['show_city', 'show_city_district', 'city'],
+            'state'          => ['show_state', 'state'],
+            'pincode'        => ['show_pincode', 'pincode'],
+            'google_maps'    => ['show_location_url', 'show_google_maps_link', 'show_maps', 'google_maps']
+        ];
+
+        $keysToTest = $aliases[$key] ?? [$key, 'show_' . $key];
+
+        foreach ($keysToTest as $k) {
+            if (array_key_exists($k, $fieldToggles)) {
+                return filter_var($fieldToggles[$k], FILTER_VALIDATE_BOOLEAN);
+            }
         }
-        return false; 
+
+        return false;
     };
 
-    // --- Helper for WhatsApp Number Cleaning ---
-    $rawWa = $masterCard->whatsapp ?? $masterCard->phone ?? '';
+    $rawWa = $masterCard->whatsapp ?? $masterCard->phone ?? '9876543210';
     $cleanWaNumber = preg_replace('/[^0-9]/', '', $rawWa);
 
-    // --- Helper for Valid External URLs (Fixes Redirect Issue) ---
     $formatUrl = function($url) {
         if (empty($url) || trim($url) === '#') return '#';
         $url = trim($url);
-        if (!\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) {
-            return 'https://' . $url;
-        }
+        if (!\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) return 'https://' . $url;
         return $url;
     };
 
@@ -50,118 +81,114 @@
     $youtubeUrl   = $formatUrl($masterCard->youtube_link ?? $masterCard->youtube ?? '#');
     $websiteUrl   = $formatUrl($masterCard->website_link ?? $masterCard->website ?? '#');
     $locationUrl  = $formatUrl($masterCard->map_location_link ?? $masterCard->location_url ?? '#');
-
-    $themeVal = strtolower($themeStyle);
-    $cardBg = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
-    $cardColor = '#ffffff';
-
-    if (str_contains($themeVal, 'gold') || str_contains($themeVal, 'metal-gold') || str_contains($themeVal, 'rose-gold')) {
-        $cardBg = 'linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%)';
-        $cardColor = '#3d2c04';
-    } elseif (str_contains($themeVal, 'paper') || str_contains($themeVal, 'parchment') || str_contains($themeVal, 'torn')) {
-        $cardBg = '#f4ebd0';
-        $cardColor = '#4a3b32';
-    } elseif (str_contains($themeVal, 'jeans') || str_contains($themeVal, 'denim')) {
-        $cardBg = 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)';
-        $cardColor = '#ffffff';
-    } elseif (str_contains($themeVal, 'white') || str_contains($themeVal, 'classic-white')) {
-        $cardBg = '#ffffff';
-        $cardColor = '#0f172a';
-    } elseif (str_contains($themeVal, 'dark') || str_contains($themeVal, 'obsidian') || str_contains($themeVal, 'classic-dark')) {
-        $cardBg = '#000000';
-        $cardColor = '#f1f5f9';
-    } elseif (str_contains($themeVal, 'sunset')) {
-        $cardBg = 'linear-gradient(135deg, #f857a6 0%, #ff5858 100%)';
-        $cardColor = '#ffffff';
-    } elseif (str_contains($themeVal, 'ocean')) {
-        $cardBg = 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)';
-        $cardColor = '#ffffff';
-    } elseif (str_contains($themeVal, 'glass') || str_contains($themeVal, 'crystal')) {
-        $cardBg = 'rgba(255, 255, 255, 0.25)';
-        $cardColor = '#0f172a';
-    }
 @endphp
 
+<!-- FontAwesome Icons & Google Fonts -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700&family=Poppins:wght@300;400;600;700&family=Roboto:wght@400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
 <style>
-    .card-material-wrapper .f-item {
-        display: none !important;
+    /* Strict Toggle Engine Rules */
+    .card-material-wrapper .f-item { display: none !important; }
+    .card-material-wrapper .f-item.active-field { display: inline-flex !important; }
+    .card-material-wrapper div.f-item.active-field,
+    .card-material-wrapper span.f-item.active-field { display: inline-block !important; }
+    .card-material-wrapper div.f-item.active-field.block-elem { display: block !important; }
+
+    .auto-fit-card { width: 100%; max-width: 410px; min-height: 240px; aspect-ratio: 1.6 / 1; }
+    
+    .info-chip-item {
+        font-size: 0.72rem; line-height: 1.2; text-decoration: none !important; color: inherit !important;
+        background: rgba(255, 255, 255, 0.18); padding: 3px 8px 3px 5px; border-radius: 20px;
+        backdrop-filter: blur(4px); max-width: 100%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
     }
-    .card-material-wrapper .f-item.active-field {
-        display: block !important;
+
+    .action-icon {
+        width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+        flex-shrink: 0; border-radius: 6px; background: rgba(255, 255, 255, 0.2); transition: all 0.2s ease;
     }
-    .card-material-wrapper span.f-item.active-field {
-        display: inline !important;
+
+    .action-icon i { font-size: 0.8rem; color: inherit; }
+
+    /* Display Mode Handling (Icon Only vs Icon + Text) */
+    .card-material-wrapper.mode-only-icons .info-chip-item,
+    .card-material-wrapper.mode-only_icons .info-chip-item,
+    .card-material-wrapper.mode-clean .info-chip-item,
+    .card-material-wrapper.mode-icon_only .info-chip-item {
+        background: transparent !important; backdrop-filter: none !important; padding: 0 !important;
     }
-    .card-material-wrapper div.f-item.active-field {
-        display: block !important;
-    }
-    .auto-fit-card {
-        width: 100%;
-        max-width: 410px;
-        min-height: 240px;
-        aspect-ratio: 1.6 / 1;
-    }
+    
+    .card-material-wrapper.mode-only-icons .chip-text,
+    .card-material-wrapper.mode-only_icons .chip-text,
+    .card-material-wrapper.mode-clean .chip-text,
+    .card-material-wrapper.mode-icon_only .chip-text { display: none !important; }
+    
+    .card-material-wrapper.mode-only-text .action-icon,
+    .card-material-wrapper.mode-only_text .action-icon { display: none !important; }
+    .card-material-wrapper.mode-only-text .chip-text,
+    .card-material-wrapper.mode-only_text .chip-text { display: inline !important; }
+
+    /* Icon Style Badges */
+    .card-material-wrapper.style-square .action-icon { background: #ffffff !important; border-radius: 6px !important; color: #1e293b !important; }
+    .card-material-wrapper.style-badge .action-icon, 
+    .card-material-wrapper.style-circle .action-icon { background: #ffffff !important; border-radius: 50% !important; color: #1e293b !important; }
+    .card-material-wrapper.style-regular .action-icon { background: transparent !important; border: 1.5px solid currentColor !important; border-radius: 50% !important; }
+    .card-material-wrapper.style-solid .action-icon { background: transparent !important; border: none !important; }
 </style>
 
-<div class="card-material-wrapper auto-fit-card theme-{{ $themeStyle }} position-relative rounded-4 p-3 d-flex flex-column justify-content-between shadow-lg" style="overflow: hidden; background: {{ $cardBg }}; color: {{ $cardColor }};">
+<div id="{{ $wrapperId }}" class="card-material-wrapper auto-fit-card mode-{{ str_replace(' ', '_', strtolower($iconDisplayMode)) }} style-{{ $customIconStyle }} position-relative rounded-4 p-3 d-flex flex-column justify-content-between shadow-lg" 
+     data-theme="{{ $themeStyle }}"
+     style="overflow: hidden; font-family: {{ $customFont }}; @if($customTextColor) color: {{ $customTextColor }} !important; @endif">
 
+    <!-- Top Header Section -->
     <div class="d-flex justify-content-between align-items-start w-100">
-       <div style="padding-left: 0 !important; margin-left: 0 !important;">
-           
-           <div style="margin-bottom: 2px; margin-left: 0 !important;">
-               <a href="https://tidong.in" target="_blank" class="text-decoration-none fw-bold text-truncate card-main-text" style="font-size: 1.1rem; line-height: 1.2; display: inline-block; color: inherit;">
-                   {{ $masterCard->name ?? 'Card Holder Name' }}
-               </a>
-               
-               @if(!empty($masterCard->nickname))
-                   <span class="fst-italic show_nickname f-item {{ $show('show_nickname') ? 'active-field' : '' }}" style="font-size: 0.8rem; margin-left: 4px; opacity: 0.85;">
-                       ({{ $masterCard->nickname }})
-                   </span>
-               @endif
+       <div>
+           <div style="margin-bottom: 2px;">
+               <span class="fw-bold text-truncate card-main-text" style="font-size: 1.05rem; line-height: 1.2; display: inline-block; color: inherit;">
+                   {{ $masterCard->name ?? 'Meenu Sharma' }}
+               </span>
+               <span class="fst-italic show_nickname show_nick_name show_nick f-item {{ $isFieldActive('nickname') ? 'active-field' : '' }}" style="font-size: 0.75rem; opacity: 0.85;">
+                   ({{ $masterCard->nickname ?? 'Minni' }})
+               </span>
            </div>
            
-           @if(!empty($masterCard->business_name))
-               <div class="show_business_name f-item {{ $show('show_business_name') ? 'active-field' : '' }}" style="margin-bottom: 2px; margin-left: 0 !important;">
-                   <p class="mb-0 fw-semibold text-start" style="font-size: 0.8rem; line-height: 1.1; margin-left: 0 !important; opacity: 0.9;">
-                       {{ $masterCard->business_name }}
-                   </p>
-               </div>
-           @endif
+           <div class="show_business_name show_business f-item block-elem {{ $isFieldActive('business_name') ? 'active-field' : '' }}">
+               <p class="mb-0 fw-semibold text-start card-sub-text" style="font-size: 0.78rem; line-height: 1.1; opacity: 0.9; color: inherit;">
+                   {{ $masterCard->business_name ?? 'Tidong Marketing Pvt. Ltd.' }}
+               </p>
+           </div>
            
-           @if(!empty($masterCard->designation))
-               <div class="show_designation f-item {{ $show('show_designation') ? 'active-field' : '' }}" style="margin-bottom: 2px; margin-left: 0 !important;">
-                   <p class="mb-0 opacity-75 text-start card-sub-text" style="font-size: 0.7rem; line-height: 1.1; margin-left: 0 !important;">
-                       {{ $masterCard->designation }}
-                   </p>
-               </div>
-           @endif
+           <div class="show_designation f-item block-elem {{ $isFieldActive('designation') ? 'active-field' : '' }}">
+               <p class="mb-0 opacity-75 text-start card-sub-text" style="font-size: 0.7rem; line-height: 1.1; color: inherit;">
+                   {{ $masterCard->designation ?? 'Director' }}
+               </p>
+           </div>
 
-           @if(!empty($masterCard->tagline))
-               <div class="show_tagline f-item {{ $show('show_tagline') ? 'active-field' : '' }}" style="margin-left: 0 !important;">
-                   <p class="mb-0 opacity-50 text-start card-sub-text" style="font-size: 0.65rem; line-height: 1.1; margin-left: 0 !important;">
-                       {{ $masterCard->tagline }}
-                   </p>
-               </div>
-           @endif
-
+           <div class="show_tagline show_motto f-item block-elem {{ $isFieldActive('tagline') ? 'active-field' : '' }}">
+               <p class="mb-0 opacity-50 text-start card-sub-text" style="font-size: 0.65rem; line-height: 1.1; color: inherit;">
+                   {{ $masterCard->tagline ?? $masterCard->motto ?? 'Hindustan ka apna shopping App' }}
+               </p>
+           </div>
        </div>
 
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
-            <div class="show_qr_code f-item {{ $show('show_qr_code') ? 'active-field' : '' }}">
+            <div class="show_qr_code show_qr show_qr_code_image f-item {{ $isFieldActive('qr_code') ? 'active-field' : '' }}">
                 @if(!empty($masterCard->qr_code))
-                    <img src="{{ asset($masterCard->qr_code) }}" alt="QR" style="width: 42px; height: 42px; object-fit: cover;" class="rounded bg-white p-0.5 shadow-sm">
+                    <img src="{{ asset($masterCard->qr_code) }}" alt="QR" style="width: 40px; height: 40px; object-fit: cover;" class="rounded bg-white p-0.5 shadow-sm">
                 @else
-                    <div class="bg-white rounded p-1 text-dark d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
-                        <i class="fa-solid fa-qrcode" style="font-size: 28px;"></i>
+                    <div class="bg-white rounded p-1 text-dark d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
+                        <i class="fa-solid fa-qrcode" style="font-size: 24px;"></i>
                     </div>
                 @endif
             </div>
 
-            <div class="show_photo f-item {{ $show('show_photo') ? 'active-field' : '' }}">
+            <div class="show_photo show_profile_photo show_profile f-item {{ $isFieldActive('photo') ? 'active-field' : '' }}">
                 @if(!empty($masterCard->photo))
-                    <img src="{{ asset($masterCard->photo) }}" alt="Photo" class="rounded-circle border border-2 border-light shadow-sm" style="width: 42px; height: 42px; object-fit: cover;">
+                    <img src="{{ asset($masterCard->photo) }}" alt="Photo" class="rounded-circle border border-2 border-light shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">
                 @else
-                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold border border-2 border-light" style="width: 42px; height: 42px; font-size: 0.95rem;">
+                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold border border-2 border-light" style="width: 40px; height: 40px; font-size: 0.9rem;">
                         {{ strtoupper(substr($masterCard->name ?? 'T', 0, 1)) }}
                     </div>
                 @endif
@@ -169,260 +196,346 @@
         </div>
     </div>
 
-    <!-- Social Action Buttons -->
-    <div class="d-flex flex-wrap gap-2 align-items-center my-1" style="max-height: 82px; overflow: hidden;">
-        <div class="show_phone f-item {{ $show('show_phone') ? 'active-field' : '' }}" title="Phone">
-            <a href="tel:{{ $masterCard->phone }}" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-phone-alt" style="font-size: 0.95rem;"></i></a>
+    <!-- Contact, Social, Messaging & Payments Chips Container -->
+    <div class="d-flex flex-wrap gap-2 align-items-center my-1" style="max-height: 95px; overflow: hidden;">
+        <!-- Primary Phone -->
+        <div class="show_primary_phone show_phone f-item {{ $isFieldActive('phone') ? 'active-field' : '' }}">
+            <a href="tel:{{ $masterCard->phone ?? '6395392537' }}" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-solid fa-phone-alt"></i></span>
+                <span class="chip-text">{{ $masterCard->phone ?? '6395392537' }}</span>
+            </a>
         </div>
-        <div class="show_alt_phone f-item {{ $show('show_alt_phone') ? 'active-field' : '' }}" title="Alternate Phone">
-            <a href="tel:{{ $masterCard->alt_phone }}" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-phone" style="font-size: 0.95rem;"></i></a>
+
+        <!-- Alternate Phone -->
+        <div class="show_alternate_phone show_alt_phone f-item {{ $isFieldActive('alt_phone') ? 'active-field' : '' }}">
+            <a href="tel:{{ $masterCard->alt_phone ?? '9634759912' }}" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-solid fa-mobile-screen-button"></i></span>
+                <span class="chip-text">{{ $masterCard->alt_phone ?? '9634759912' }}</span>
+            </a>
         </div>
-        <div class="show_whatsapp f-item {{ $show('show_whatsapp') ? 'active-field' : '' }}" title="WhatsApp">
-            <a href="{{ !empty($cleanWaNumber) ? 'https://wa.me/' . $cleanWaNumber : '#' }}" target="_blank" class="text-success bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-whatsapp" style="font-size: 1.05rem;"></i></a>
+
+        <!-- WhatsApp -->
+        <div class="show_whatsapp_number show_whatsapp f-item {{ $isFieldActive('whatsapp') ? 'active-field' : '' }}">
+            <a href="https://wa.me/{{ $cleanWaNumber }}" target="_blank" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-brands fa-whatsapp"></i></span>
+                <span class="chip-text">{{ $masterCard->whatsapp ?? '6395392537' }}</span>
+            </a>
         </div>
-        <div class="show_telegram f-item {{ $show('show_telegram') ? 'active-field' : '' }}" title="Telegram">
-            <a href="{{ !empty($masterCard->telegram) ? 'https://t.me/' . ltrim($masterCard->telegram, '@') : '#' }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-telegram" style="font-size: 1.05rem;"></i></a>
+
+        <!-- Telegram -->
+        <div class="show_telegram f-item {{ $isFieldActive('telegram') ? 'active-field' : '' }}">
+            <a href="https://t.me/{{ $masterCard->telegram ?? '#' }}" target="_blank" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-brands fa-telegram"></i></span>
+                <span class="chip-text">Telegram</span>
+            </a>
         </div>
-        <div class="show_gmail f-item {{ $show('show_gmail') ? 'active-field' : '' }}" title="Email">
-            <a href="mailto:{{ $masterCard->gmail }}" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
+
+        <!-- Emails & Websites -->
+        <div class="show_gmail_primary_email show_gmail show_email f-item {{ $isFieldActive('email') ? 'active-field' : '' }}">
+            <a href="mailto:{{ $masterCard->gmail ?? 'info@tidong.in' }}" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-solid fa-envelope"></i></span>
+                <span class="chip-text">{{ $masterCard->gmail ?? 'info@tidong.in' }}</span>
+            </a>
         </div>
-        <div class="show_yahoo_email f-item {{ $show('show_yahoo_email') ? 'active-field' : '' }}" title="Yahoo Email">
-            <a href="mailto:{{ $masterCard->yahoo_email ?? $masterCard->gmail }}" class="text-primary bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
+
+        <div class="show_yahoo_email f-item {{ $isFieldActive('yahoo_email') ? 'active-field' : '' }}">
+            <a href="mailto:{{ $masterCard->yahoo_email ?? '#' }}" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-brands fa-yahoo"></i></span>
+                <span class="chip-text">Yahoo</span>
+            </a>
         </div>
-        <div class="show_other_email f-item {{ $show('show_other_email') ? 'active-field' : '' }}" title="Other Email">
-            <a href="mailto:{{ $masterCard->other_email ?? $masterCard->gmail }}" class="text-warning bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-envelope" style="font-size: 0.95rem;"></i></a>
+
+        <div class="show_other_email f-item {{ $isFieldActive('other_email') ? 'active-field' : '' }}">
+            <a href="mailto:{{ $masterCard->other_email ?? '#' }}" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-solid fa-at"></i></span>
+                <span class="chip-text">Other Email</span>
+            </a>
         </div>
-        <div class="show_website f-item {{ $show('show_website') ? 'active-field' : '' }}" title="Website">
-            <a href="{{ $websiteUrl }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-solid fa-globe" style="font-size: 0.95rem;"></i></a>
+
+        <div class="show_website_url show_website f-item {{ $isFieldActive('website') ? 'active-field' : '' }}">
+            <a href="{{ $websiteUrl }}" target="_blank" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-solid fa-globe"></i></span>
+                <span class="chip-text">Website</span>
+            </a>
         </div>
-        <div class="show_facebook f-item {{ $show('show_facebook') ? 'active-field' : '' }}" title="Facebook">
-            <a href="{{ $facebookUrl }}" target="_blank" class="text-primary bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-facebook" style="font-size: 1.05rem;"></i></a>
+
+        <!-- Social Media Links -->
+        <div class="show_facebook f-item {{ $isFieldActive('facebook') ? 'active-field' : '' }}">
+            <a href="{{ $facebookUrl }}" target="_blank" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-brands fa-facebook"></i></span>
+                <span class="chip-text">Facebook</span>
+            </a>
         </div>
-        <div class="show_instagram f-item {{ $show('show_instagram') ? 'active-field' : '' }}" title="Instagram">
-            <a href="{{ $instagramUrl }}" target="_blank" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-instagram" style="font-size: 1.05rem;"></i></a>
+
+        <div class="show_instagram f-item {{ $isFieldActive('instagram') ? 'active-field' : '' }}">
+            <a href="{{ $instagramUrl }}" target="_blank" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-brands fa-instagram"></i></span>
+                <span class="chip-text">Instagram</span>
+            </a>
         </div>
-        <div class="show_linkedin f-item {{ $show('show_linkedin') ? 'active-field' : '' }}" title="LinkedIn">
-            <a href="{{ $linkedinUrl }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-linkedin" style="font-size: 1.05rem;"></i></a>
+
+        <div class="show_linkedin f-item {{ $isFieldActive('linkedin') ? 'active-field' : '' }}">
+            <a href="{{ $linkedinUrl }}" target="_blank" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-brands fa-linkedin"></i></span>
+                <span class="chip-text">LinkedIn</span>
+            </a>
         </div>
-        <div class="show_youtube f-item {{ $show('show_youtube') ? 'active-field' : '' }}" title="YouTube">
-            <a href="{{ $youtubeUrl }}" target="_blank" class="text-danger bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 34px; height: 34px;"><i class="fa-brands fa-youtube" style="font-size: 1.05rem;"></i></a>
+
+        <div class="show_youtube_channel show_youtube f-item {{ $isFieldActive('youtube') ? 'active-field' : '' }}">
+            <a href="{{ $youtubeUrl }}" target="_blank" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-brands fa-youtube"></i></span>
+                <span class="chip-text">YouTube</span>
+            </a>
         </div>
-        <div class="show_upi_id f-item {{ $show('show_upi_id') ? 'active-field' : '' }}" title="UPI ID">
-            <a href="{{ $formatUrl($masterCard->upi_link ?? '#') }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-wallet" style="font-size: 0.95rem;"></i></a>
+
+        <!-- Payments & UPI -->
+        <div class="show_upi_id f-item {{ $isFieldActive('upi') ? 'active-field' : '' }}">
+            <a href="#" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-solid fa-wallet"></i></span>
+                <span class="chip-text">UPI</span>
+            </a>
         </div>
-        <div class="show_gpay f-item {{ $show('show_gpay') ? 'active-field' : '' }}" title="Google Pay">
-            <a href="{{ $formatUrl($masterCard->gpay_link ?? '#') }}" target="_blank" class="text-dark bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-g" style="font-size: 0.95rem;"></i></a>
+
+        <div class="show_google_pay f-item {{ $isFieldActive('gpay') ? 'active-field' : '' }}">
+            <a href="#" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-brands fa-google-pay"></i></span>
+                <span class="chip-text">GPay</span>
+            </a>
         </div>
-        <div class="show_paytm f-item {{ $show('show_paytm') ? 'active-field' : '' }}" title="Paytm">
-            <a href="{{ $formatUrl($masterCard->paytm_link ?? '#') }}" target="_blank" class="text-info bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none" style="width: 34px; height: 34px;"><i class="fa-solid fa-p" style="font-size: 0.95rem;"></i></a>
+
+        <div class="show_paytm f-item {{ $isFieldActive('paytm') ? 'active-field' : '' }}">
+            <a href="#" class="info-chip-item d-inline-flex align-items-center gap-1">
+                <span class="action-icon" style="@if($customIconColor) color: {{ $customIconColor }} !important; @endif"><i class="fa-solid fa-money-check"></i></span>
+                <span class="chip-text">Paytm</span>
+            </a>
         </div>
     </div>
 
+    <!-- Bottom Footer Section (Address & Card No) -->
     <div>
-        <div class="opacity-75 mb-1 d-flex align-items-start card-sub-text" style="font-size: 0.65rem; line-height: 1.25; max-height: 2.8em; overflow: hidden;">
-            <div class="show_location_url f-item me-1 mt-0.5 {{ $show('show_location_url') ? 'active-field' : '' }}">
+        <div class="opacity-75 mb-1 d-flex align-items-start card-sub-text" style="font-size: 0.65rem; line-height: 1.25; max-height: 2.8em; overflow: hidden; color: inherit;">
+            <div class="show_google_maps_link show_location_url show_maps f-item {{ $isFieldActive('google_maps') ? 'active-field' : '' }} me-1 mt-0.5">
                 <a href="{{ $locationUrl }}" target="_blank" class="text-warning text-decoration-none">
                     <i class="fa-solid fa-map-location-dot" style="font-size: 0.75rem;"></i>
                 </a>
             </div>
             <div>
-                <span class="show_address f-item {{ $show('show_address') ? 'active-field' : '' }}">{{ $masterCard->address ?? '' }}</span>
-                <span class="show_area f-item {{ $show('show_area') ? 'active-field' : '' }}">{{ $masterCard->area ? ', ' . $masterCard->area : '' }}</span>
-                <span class="show_city f-item {{ $show('show_city') ? 'active-field' : '' }}">{{ $masterCard->city ? ', ' . $masterCard->city : '' }}</span>
-                <span class="show_state f-item {{ $show('show_state') ? 'active-field' : '' }}">{{ $masterCard->state ? ', ' . $masterCard->state : '' }}</span>
-                <span class="show_pincode f-item {{ $show('show_pincode') ? 'active-field' : '' }}">{{ $masterCard->pincode ? ' - ' . $masterCard->pincode : '' }}</span>
+                <span class="show_street_address show_address f-item {{ $isFieldActive('street_address') ? 'active-field' : '' }}">{{ $masterCard->address ?? '9A, Shakti Vihar' }}</span>
+                <span class="show_area_colony show_area f-item {{ $isFieldActive('area') ? 'active-field' : '' }}">{{ !empty($masterCard->area) ? ', ' . $masterCard->area : '' }}</span>
+                <span class="show_city_district show_city f-item {{ $isFieldActive('city') ? 'active-field' : '' }}">{{ !empty($masterCard->city) ? ', ' . $masterCard->city : '' }}</span>
+                <span class="show_state f-item {{ $isFieldActive('state') ? 'active-field' : '' }}">{{ !empty($masterCard->state) ? ', ' . $masterCard->state : '' }}</span>
+                <span class="show_pincode f-item {{ $isFieldActive('pincode') ? 'active-field' : '' }}">{{ !empty($masterCard->pincode) ? ' - ' . $masterCard->pincode : '' }}</span>
             </div>
         </div>
 
         <div class="d-flex justify-content-between align-items-end border-top pt-1" style="border-color: rgba(255,255,255,0.2) !important;">
-            <a href="https://tidong.in" target="_blank" class="font-monospace text-decoration-none" style="font-size: 0.8rem; color: inherit; opacity: 0.9;">{{ $fullCardNo }}</a>
-            <a href="https://tidong.in" target="_blank" class="text-decoration-none fst-italic fw-semibold card-sub-text" style="font-size: 0.8rem; opacity: 0.95; color: inherit;">Powered by Tidong</a>
+            <span class="font-monospace" style="font-size: 0.8rem; opacity: 0.9;">{{ $fullCardNo }}</span>
+            <span class="fst-italic fw-semibold card-sub-text" style="font-size: 0.8rem; opacity: 0.95; color: inherit;">Powered by Tidong</span>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(chk => {
-        chk.addEventListener('change', function () {
-            let rawName = this.name;
-            if (!rawName) return;
-            let fieldClass = rawName.replace('toggles[', '').replace(']', '').replace(/['"]+/g, '');
-            document.querySelectorAll('.' + fieldClass).forEach(el => {
-                el.classList.toggle('active-field', this.checked);
-            });
-        });
-    });
+(function() {
+    const wrapperId = "{{ $wrapperId }}";
+    
+    // Named Themes Mapping
+    const staticThemes = {
+        'white': '#ffffff', 'classic pure white': '#ffffff', 'pure white': '#ffffff',
+        'light': '#f8fafc', 'black': '#0f172a',
+        'dark': 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        'blue': 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+        'purple': 'linear-gradient(135deg, #884386 0%, #632d62 100%)',
+        'gold': 'linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #b38728 100%)',
+        'emerald': 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+        'sunset': 'linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)',
+        'red': 'linear-gradient(135deg, #cb2d3e 0%, #ef473a 100%)'
+    };
 
-    function applyThemeToCard(cardWrapper, val) {
-        let bgStyle = '';
-        let textColor = '#ffffff';
-        let secondaryTextColor = '#cbd5e1';
-
-        if (val.startsWith('dyn-vibrant-')) {
-            let id = parseInt(val.replace('dyn-vibrant-', ''));
-            let hash1 = (id * 37) % 360;
-            let hash2 = (id * 83) % 360;
-            bgStyle = `linear-gradient(135deg, hsl(${hash1}, 85%, 50%), hsl(${hash2}, 90%, 35%))`;
-            textColor = '#ffffff';
-            secondaryTextColor = '#f1f5f9';
-        } else if (val.startsWith('dyn-royal-')) {
-            let id = parseInt(val.replace('dyn-royal-', ''));
-            let hash1 = (id * 37) % 360;
-            let hash2 = (id * 83) % 360;
-            bgStyle = `linear-gradient(135deg, hsl(${hash1}, 65%, 88%), hsl(${hash2}, 75%, 70%))`;
-            textColor = '#0f172a';
-            secondaryTextColor = '#334155';
-        } else if (val === 'classic-white') {
-            bgStyle = '#ffffff';
-            textColor = '#111111';
-            secondaryTextColor = '#555555';
-        } else if (val === 'classic-dark' || val === 'default') {
-            bgStyle = '#111827';
-            textColor = '#ffffff';
-            secondaryTextColor = '#9ca3af';
-        } else if (val === 'classic-modern') {
-            bgStyle = 'linear-gradient(135deg, #1e3a8a, #3b82f6)';
-            textColor = '#ffffff';
-            secondaryTextColor = '#93c5fd';
-        } else if (val === 'metal-gold') {
-            bgStyle = 'linear-gradient(135deg, #bf953f, #fcf6ba, #aa771c)';
-            textColor = '#3d2c04';
-            secondaryTextColor = '#5c4405';
-        } else if (val === 'fabric-denim') {
-            bgStyle = 'linear-gradient(135deg, #1e3c72, #2a5298)';
-            textColor = '#ffffff';
-            secondaryTextColor = '#e2e8f0';
-        } 
-        else if (val === 'texture-old-wood') {
-            bgStyle = 'linear-gradient(90deg, #3e2723 0%, #4e342e 50%, #3e2723 100%), repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.3) 4px, rgba(0,0,0,0.3) 8px)';
-            textColor = '#d7ccc8';
-            secondaryTextColor = '#bcaaa4';
-        } else if (val === 'texture-ripped-jeans') {
-            bgStyle = 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%), repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 2px, transparent 2px, transparent 6px)';
-            textColor = '#ffffff';
-            secondaryTextColor = '#c5cae9';
-        } else if (val === 'texture-fish-stones') {
-            bgStyle = 'radial-gradient(circle at 30% 30%, #ff7043 0%, transparent 40%), radial-gradient(circle at 70% 70%, #26a69a 0%, transparent 50%), linear-gradient(135deg, #37474f, #263238)';
-            textColor = '#ffffff';
-            secondaryTextColor = '#e0f2f1';
-        } else if (val === 'texture-torn-paper') {
-            bgStyle = 'linear-gradient(135deg, #f9f9f9 0%, #eceff1 100%), repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 4px)';
-            textColor = '#212121';
-            secondaryTextColor = '#555555';
-        } else if (val === 'texture-spider-web') {
-            bgStyle = 'radial-gradient(circle at center, #263238 0%, #0b1013 100%), repeating-radial-gradient(circle at center, transparent 0px, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 12px)';
-            textColor = '#e0f7fa';
-            secondaryTextColor = '#b2ebf2';
-        } else if (val === 'texture-dusty-sand') {
-            bgStyle = 'linear-gradient(135deg, #d7ccc8 0%, #a1887f 100%), radial-gradient(rgba(0,0,0,0.15) 15%, transparent 16%)';
-            textColor = '#3e2723';
-            secondaryTextColor = '#5d4037';
-        } else if (val === 'texture-rusty-metal') {
-            bgStyle = 'linear-gradient(135deg, #bf360c 0%, #4e342e 100%), repeating-linear-gradient(-45deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 3px, transparent 3px, transparent 6px)';
-            textColor = '#ffccbc';
-            secondaryTextColor = '#ffab91';
-        } else if (val === 'texture-neon-glow') {
-            bgStyle = 'linear-gradient(135deg, #000428, #004e92)';
-            textColor = '#00ffcc';
-        } else if (val === 'texture-carbon-fiber') {
-            bgStyle = 'radial-gradient(circle, #222 20%, #111 80%), repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px)';
-            textColor = '#ffffff';
-        } else if (val === 'texture-marble-white') {
-            bgStyle = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%), radial-gradient(at 50% 50%, rgba(255,255,255,0.8) 0%, rgba(0,0,0,0.05) 100%)';
-            textColor = '#2c3e50';
-        } else if (val === 'texture-stained-glass') {
-            bgStyle = 'linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #a18cd1, #fbc2eb)';
-            textColor = '#222222';
-        } else if (val === 'texture-holographic') {
-            bgStyle = 'linear-gradient(to right, #ff00ff, #00ffff, #ffff00, #ff00ff)';
-            textColor = '#ffffff';
-        } else if (val === 'texture-rose-gold') {
-            bgStyle = 'linear-gradient(135deg, #b76e79, #e8b4b8, #d4af37)';
-            textColor = '#ffffff';
-        } else if (val === 'texture-midnight-velvet') {
-            bgStyle = 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)';
-            textColor = '#e2e8f0';
-        } else if (val === 'texture-emerald-silk') {
-            bgStyle = 'linear-gradient(135deg, #0575e6, #00f2fe)';
-            textColor = '#ffffff';
-        } else if (val === 'texture-cyberpunk-grid') {
-            bgStyle = 'linear-gradient(135deg, #f72585, #7209b7, #3a0ca3)';
-            textColor = '#4cc9f0';
-        } else if (val === 'texture-vintage-leather') {
-            bgStyle = 'linear-gradient(135deg, #3e2723, #4e342e, #211512)';
-            textColor = '#d7ccc8';
-        } else if (val === 'texture-sunset-orange') {
-            bgStyle = 'linear-gradient(135deg, #ff4e50, #f9d423)';
-            textColor = '#222222';
-        } else if (val === 'texture-deep-ocean') {
-            bgStyle = 'linear-gradient(135deg, #2b5876, #4e4376)';
-            textColor = '#ffffff';
-        } else if (val === 'texture-royal-amethyst') {
-            bgStyle = 'linear-gradient(135deg, #9d50bb, #6e48aa)';
-            textColor = '#ffffff';
-        } else if (val === 'texture-frost-glass') {
-            bgStyle = 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1))';
-            textColor = '#111827';
-        } else if (val === 'texture-matte-obsidian') {
-            bgStyle = '#1a1a1a';
-            textColor = '#a3a3a3';
-        } else if (val === 'texture-liquid-chrome') {
-            bgStyle = 'linear-gradient(135deg, #bdc3c7, #2c3e50)';
-            textColor = '#ffffff';
-        } else if (val === 'texture-plasma-energy') {
-            bgStyle = 'linear-gradient(135deg, #ff0844, #ffb199)';
-            textColor = '#ffffff';
-        }
-
-        if (bgStyle !== '') {
-            cardWrapper.style.cssText += `; background: ${bgStyle} !important;`;
-        }
-        
-        if (textColor !== '') {
-            cardWrapper.style.setProperty('color', textColor, 'important');
-            
-            const textElements = cardWrapper.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, strong, small, .card-text, .name-title, .company-title');
-            textElements.forEach(el => {
-                el.style.setProperty('color', textColor, 'important');
-            });
-        }
+    function getDynamicGradient(seedNumber) {
+        let num = parseInt(seedNumber) || 1;
+        let hue1 = (num * 137) % 360; 
+        let hue2 = (hue1 + 45) % 360;
+        return `linear-gradient(135deg, hsl(${hue1}, 65%, 45%) 0%, hsl(${hue2}, 75%, 25%) 100%)`;
     }
 
-    const cardWrappers = document.querySelectorAll('.card-material-wrapper');
-    
-    cardWrappers.forEach(cardWrapper => {
-        let classList = cardWrapper.className.split(' ');
-        let themeClass = classList.find(cls => cls.startsWith('theme-'));
-        let val = themeClass ? themeClass.replace('theme-', '') : 'default';
-        applyThemeToCard(cardWrapper, val);
-    });
+    const fontFamiliesMap = {
+        'roboto': "'Roboto', sans-serif",
+        'playfair': "'Playfair Display', serif",
+        'poppins': "'Poppins', sans-serif",
+        'montserrat': "'Montserrat', sans-serif",
+        'cinzel': "'Cinzel', serif",
+        'inter': "'Inter', sans-serif"
+    };
 
-    try {
-        if (parent && parent.document) {
-            const themeSelect = parent.document.getElementById('theme_style');
-            if (themeSelect) {
-                themeSelect.addEventListener('change', function() {
-                    cardWrappers.forEach(cardWrapper => {
-                        cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
-                        cardWrapper.classList.add('theme-' + this.value);
-                        applyThemeToCard(cardWrapper, this.value);
-                    });
-                });
+    function applyCardRendering() {
+        const cardWrapper = document.getElementById(wrapperId);
+        if (!cardWrapper) return;
+
+        let allSelects = Array.from(document.querySelectorAll('select'));
+
+        // 1. Theme Engine (Reads from Form or Data-Theme Attribute)
+        let themeAttr = (cardWrapper.dataset.theme || '').toLowerCase();
+        let themeSelect = allSelects.find(s => 
+            s.name.includes('theme') || s.id.includes('theme') || s.name.includes('category') ||
+            Array.from(s.options).some(o => o.text.toLowerCase().includes('theme') || o.text.toLowerCase().includes('white') || o.text.toLowerCase().includes('vibrant'))
+        );
+
+        let optText = themeAttr;
+        let valText = themeAttr;
+
+        if (themeSelect) {
+            let selectedOpt = themeSelect.options[themeSelect.selectedIndex];
+            if (selectedOpt) optText = selectedOpt.text.toLowerCase();
+            valText = themeSelect.value.toLowerCase();
+        }
+
+        let matchedBg = null;
+        Object.keys(staticThemes).forEach(key => {
+            if (optText.includes(key) || valText.includes(key)) {
+                matchedBg = staticThemes[key];
+            }
+        });
+
+        if (!matchedBg) {
+            let numMatch = (optText + ' ' + valText).match(/\d+/);
+            let themeSeed = numMatch ? numMatch[0] : (themeSelect ? themeSelect.selectedIndex + 1 : 1);
+            matchedBg = getDynamicGradient(themeSeed);
+        }
+
+        if (matchedBg) {
+            cardWrapper.style.setProperty('background', matchedBg, 'important');
+            cardWrapper.style.setProperty('background-image', matchedBg.includes('gradient') ? matchedBg : 'none', 'important');
+        }
+
+        // Live Create Form Sync (Only runs on create/edit page when inputs exist)
+        let fontSelect = allSelects.find(s => s.name.includes('font') || s.id.includes('font') || Array.from(s.options).some(o => o.text.toLowerCase().includes('roboto') || o.text.toLowerCase().includes('playfair')));
+        if (fontSelect) {
+            let optT = fontSelect.options[fontSelect.selectedIndex] ? fontSelect.options[fontSelect.selectedIndex].text.toLowerCase() : '';
+            let valT = fontSelect.value.toLowerCase();
+            Object.keys(fontFamiliesMap).forEach(key => {
+                if (optT.includes(key) || valT.includes(key)) cardWrapper.style.setProperty('font-family', fontFamiliesMap[key], 'important');
+            });
+        }
+
+        let modeSelect = allSelects.find(s => s.name.includes('display_mode') || s.name.includes('icon_mode') || s.id.includes('display_mode') || Array.from(s.options).some(o => o.text.toLowerCase().includes('clean') || o.text.toLowerCase().includes('only icons')));
+        if (modeSelect && modeSelect.value) {
+            let val = modeSelect.value.toString().toLowerCase();
+            let optT = modeSelect.options[modeSelect.selectedIndex] ? modeSelect.options[modeSelect.selectedIndex].text.toLowerCase() : '';
+            cardWrapper.classList.remove('mode-icon-text', 'mode-icon_text', 'mode-only-icons', 'mode-only_icons', 'mode-only-text');
+            if (val.includes('clean') || val.includes('only_icon') || val.includes('icon_only') || optT.includes('only icons') || optT.includes('clean')) {
+                cardWrapper.classList.add('mode-only_icons');
+            } else {
+                cardWrapper.classList.add('mode-icon_text');
             }
         }
-    } catch(e) {}
 
-    const localThemeSelect = document.getElementById('theme_style');
-    if (localThemeSelect) {
-        localThemeSelect.addEventListener('change', function() {
-            cardWrappers.forEach(cardWrapper => {
-                cardWrapper.className = cardWrapper.className.split(' ').filter(cls => !cls.startsWith('theme-')).join(' ');
-                cardWrapper.classList.add('theme-' + this.value);
-                applyThemeToCard(cardWrapper, this.value);
-            });
+        let textColorPickers = document.querySelectorAll('input[type="color"][name*="text_color"], input[type="color"][id*="text_color"]');
+        let textInputs = document.querySelectorAll('input[type="text"][name*="text_color"], input[type="text"][id*="text_color"]');
+        let activeTextColor = null;
+
+        textColorPickers.forEach(picker => { if (picker.value) { activeTextColor = picker.value; textInputs.forEach(txtInp => txtInp.value = picker.value); } });
+        textInputs.forEach(txtInp => {
+            let val = txtInp.value ? txtInp.value.trim() : '';
+            if (val && /^#([0-9A-F]{3}){1,2}$/i.test(val)) { activeTextColor = val; textColorPickers.forEach(picker => picker.value = val); }
         });
+
+        if (activeTextColor) {
+            cardWrapper.style.setProperty('color', activeTextColor, 'important');
+            cardWrapper.querySelectorAll('.card-main-text, .card-sub-text, span, div, p').forEach(el => { el.style.setProperty('color', activeTextColor, 'important'); });
+        }
+
+        let iconColorPickers = document.querySelectorAll('input[type="color"][name*="icon_color"], input[type="color"][id*="icon_color"]');
+        let iconTextInputs = document.querySelectorAll('input[type="text"][name*="icon_color"], input[type="text"][id*="icon_color"]');
+        let activeIconColor = null;
+
+        iconColorPickers.forEach(picker => { if (picker.value) { activeIconColor = picker.value; iconTextInputs.forEach(txtInp => txtInp.value = picker.value); } });
+        iconTextInputs.forEach(txtInp => {
+            let val = txtInp.value ? txtInp.value.trim() : '';
+            if (val && /^#([0-9A-F]{3}){1,2}$/i.test(val)) { activeIconColor = val; iconColorPickers.forEach(picker => picker.value = val); }
+        });
+
+        if (activeIconColor) {
+            cardWrapper.querySelectorAll('.action-icon, .action-icon i').forEach(el => {
+                el.style.setProperty('color', activeIconColor, 'important');
+                if (cardWrapper.classList.contains('style-regular')) el.style.setProperty('border-color', activeIconColor, 'important');
+            });
+        }
+
+        let styleSelect = allSelects.find(s => s.name.includes('icon_style') || s.id.includes('icon_style') || Array.from(s.options).some(o => o.text.toLowerCase().includes('outline') || o.text.toLowerCase().includes('regular')));
+        if (styleSelect) {
+            let val = styleSelect.value.toLowerCase();
+            let optT = styleSelect.options[styleSelect.selectedIndex] ? styleSelect.options[styleSelect.selectedIndex].text.toLowerCase() : '';
+            cardWrapper.classList.remove('style-solid', 'style-regular', 'style-badge', 'style-square', 'style-circle');
+            if (val.includes('outline') || val.includes('regular') || optT.includes('outline') || optT.includes('regular')) {
+                cardWrapper.classList.add('style-regular');
+            } else if (val.includes('circle') || optT.includes('circle')) {
+                cardWrapper.classList.add('style-circle');
+            } else if (val.includes('square') || optT.includes('square')) {
+                cardWrapper.classList.add('style-square');
+            } else {
+                cardWrapper.classList.add('style-solid');
+            }
+        }
+
+        // Apply Live Checkbox listeners ONLY on create/edit form
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        if (checkboxes.length > 0) {
+            checkboxes.forEach(cb => {
+                let parentBox = cb.closest('.form-check') || cb.closest('div') || cb.closest('label');
+                let labelText = parentBox ? parentBox.textContent.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+                let nameAttr = (cb.name + ' ' + cb.id).toLowerCase().replace(/[^a-z0-9]/g, '');
+                let combinedKey = labelText + nameAttr;
+
+                if (combinedKey.includes('primaryphone') || (combinedKey.includes('phone') && !combinedKey.includes('alternate') && !combinedKey.includes('alt'))) {
+                    cardWrapper.querySelectorAll('.show_primary_phone').forEach(el => { cb.checked ? el.classList.add('active-field') : el.classList.remove('active-field'); });
+                } else if (combinedKey.includes('alternatephone') || combinedKey.includes('altphone')) {
+                    cardWrapper.querySelectorAll('.show_alternate_phone').forEach(el => { cb.checked ? el.classList.add('active-field') : el.classList.remove('active-field'); });
+                } else {
+                    const mapping = [
+                        { keys: ['business'], target: ['.show_business_name', '.show_business'] },
+                        { keys: ['designation'], target: ['.show_designation'] },
+                        { keys: ['tagline', 'motto'], target: ['.show_tagline', '.show_motto'] },
+                        { keys: ['nickname'], target: ['.show_nickname'] },
+                        { keys: ['photo', 'profile'], target: ['.show_photo', '.show_profile_photo'] },
+                        { keys: ['whatsapp'], target: ['.show_whatsapp_number', '.show_whatsapp'] },
+                        { keys: ['telegram'], target: ['.show_telegram'] },
+                        { keys: ['gmail', 'primaryemail'], target: ['.show_gmail_primary_email', '.show_gmail'] },
+                        { keys: ['yahoo'], target: ['.show_yahoo_email'] },
+                        { keys: ['otheremail'], target: ['.show_other_email'] },
+                        { keys: ['website'], target: ['.show_website_url', '.show_website'] },
+                        { keys: ['facebook'], target: ['.show_facebook'] },
+                        { keys: ['instagram'], target: ['.show_instagram'] },
+                        { keys: ['linkedin'], target: ['.show_linkedin'] },
+                        { keys: ['youtube'], target: ['.show_youtube_channel', '.show_youtube'] },
+                        { keys: ['upi'], target: ['.show_upi_id'] },
+                        { keys: ['gpay', 'googlepay'], target: ['.show_google_pay'] },
+                        { keys: ['paytm'], target: ['.show_paytm'] },
+                        { keys: ['qr', 'qrcode'], target: ['.show_qr_code', '.show_qr_code_image'] },
+                        { keys: ['streetaddress', 'address'], target: ['.show_street_address', '.show_address'] },
+                        { keys: ['area', 'colony'], target: ['.show_area_colony', '.show_area'] },
+                        { keys: ['city', 'district'], target: ['.show_city_district', '.show_city'] },
+                        { keys: ['state'], target: ['.show_state'] },
+                        { keys: ['pincode'], target: ['.show_pincode'] },
+                        { keys: ['googlemaps', 'maps', 'location'], target: ['.show_google_maps_link', '.show_location_url'] }
+                    ];
+
+                    mapping.forEach(item => {
+                        if (item.keys.some(k => combinedKey.includes(k))) {
+                            item.target.forEach(selector => {
+                                cardWrapper.querySelectorAll(selector).forEach(el => { cb.checked ? el.classList.add('active-field') : el.classList.remove('active-field'); });
+                            });
+                        }
+                    });
+                }
+            });
+        }
     }
-});
+
+    document.addEventListener('DOMContentLoaded', applyCardRendering);
+    document.body.addEventListener('input', applyCardRendering);
+    document.body.addEventListener('change', applyCardRendering);
+    document.body.addEventListener('click', applyCardRendering);
+    applyCardRendering();
+})();
 </script>
