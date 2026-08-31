@@ -56,6 +56,7 @@
                 <li class="nav-item mt-1"><a href="{{ route('admin.global.item.create') }}" class="nav-link py-1"><i class="fas fa-plus-circle me-2"></i> Create Global Item</a></li>
                 <li class="nav-item mt-1"><a href="{{ route('admin.vendor.categories') }}" class="nav-link py-1"><i class="fas fa-list-alt me-2"></i> Vendor Categories</a></li>
                 <li class="nav-item mt-1"><a href="{{ route('admin.pending.items') }}" class="nav-link py-1"><i class="fas fa-clock text-warning me-2"></i> Item Approvals</a></li>
+                <li class="nav-item mt-1"><a href="{{ route('admin.global.items.index') }}" class="nav-link"><i class="fas fa-list"></i> Manage Global Items</a></li>
                 <li class="nav-item mt-1"><a href="#" class="nav-link py-1"><i class="fas fa-user-slash text-danger me-2"></i> Vendor Ban / Moderation</a></li>
             </ul>
         </li>

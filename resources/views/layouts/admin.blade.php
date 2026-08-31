@@ -73,11 +73,7 @@
                     <i class="fas fa-home me-2"></i> Dashboard
                 </a>
             </li>
-            <li class="nav-item mb-1">
-                <a href="{{ route('card.create') }}" class="nav-link {{ request()->routeIs('card.create') ? 'active' : '' }}">
-                    <i class="fas fa-id-card me-2"></i> Create Card
-                </a>
-            </li>
+            
         </ul>
         <div class="p-3 border-top border-secondary">
             <form action="{{ route('logout') }}" method="POST">

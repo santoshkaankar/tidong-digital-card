@@ -9,5 +9,7 @@ class VendorCategory extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'time_slot', // time_slot support
+        'description'
     ];
 }

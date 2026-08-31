@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Member\VisitingCard;
 use App\Models\Vendor\GlobalItem;
 use App\Models\Vendor\ItemCategory;
-use App\Models\Vendor\VendorCategory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +14,9 @@ use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
+    /**
+     * Display Admin Main Dashboard with stats.
+     */
     public function index()
     {
         $totalUsers = User::count(); 
@@ -44,100 +46,18 @@ class AdminController extends Controller
         ));
     }
 
+    /**
+     * Delete Visiting Card
+     */
     public function destroy($id)
     {
         VisitingCard::findOrFail($id)->delete();
         return back()->with('success', 'Card deleted successfully!');
     }
 
-    public function pendingItems()
-    {
-        $pendingItems = GlobalItem::where('status', 'pending')->get();
-        return view('admin.pending-items', compact('pendingItems'));
-    }
-
-    public function approveItem($id)
-    {
-        $item = GlobalItem::findOrFail($id);
-        $item->update(['status' => 'approved']);
-        return redirect()->back()->with('success', 'Item approved successfully!');
-    }
-
-    public function rejectItem($id)
-    {
-        GlobalItem::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Item request rejected.');
-    }
-
-    public function createGlobalItem()
-    {
-        $itemCategories = ItemCategory::all();
-        return view('admin.create-global-item', compact('itemCategories'));
-    }
-
-    public function storeItemCategory(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:item_categories,name',
-        ]);
-
-        ItemCategory::create(['name' => trim($request->name)]);
-        return redirect()->back()->with('success', 'Item Category added successfully!');
-    }
-
-    public function storeGlobalItem(Request $request)
-    {
-        $request->validate([
-            'category' => 'required|string|max:255',
-            'item_name' => 'required|string|max:255',
-            'item_pic' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'mrp' => 'required|numeric|min:0',
-        ]);
-
-        $imagePath = null;
-        if ($request->hasFile('item_pic')) {
-            $imagePath = $request->file('item_pic')->store('global-items', 'public');
-        }
-
-        GlobalItem::create([
-            'category' => trim($request->category),
-            'item_name' => trim($request->item_name),
-            'item_pic' => $imagePath,
-            'mrp' => $request->mrp,
-            'default_price' => $request->mrp,
-            'description' => $request->description,
-            'status' => 'approved', 
-        ]);
-
-        return redirect()->back()->with('success', 'Global item created successfully!');
-    }
-
-    public function createVendorCategory()
-    {
-        $vendorCategories = VendorCategory::latest()->get();
-        return view('admin.vendor-categories', compact('vendorCategories'));
-    }
-
-    public function storeVendorCategory(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:vendor_categories,name',
-        ]);
-
-        VendorCategory::create([
-            'name' => trim($request->name),
-            'description' => $request->description,
-        ]);
-
-        return redirect()->back()->with('success', 'Vendor Category added successfully!');
-    }
-
-    public function destroyVendorCategory($id)
-    {
-        VendorCategory::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Vendor Category deleted successfully!');
-    }
-
+    /**
+     * Direct User Creation by Admin
+     */
     public function storeUser(Request $request)
     {
         $request->validate([
@@ -160,26 +80,22 @@ class AdminController extends Controller
     }
 
     // ==========================================
-    // MANAGE CARDS & SEARCH / AUTO-REGISTER METHODS
+    // MEMBER / VISITING CARD MANAGEMENT
     // ==========================================
 
     public function manageCardSearch(Request $request)
     {
-        $query = $request->input('query'); // Email ya Mobile Number
+        $query = $request->input('query');
         $card = null;
         $user = null;
 
         if ($query) {
-            // User search karo email ya mobile se
             $user = User::where('email', $query)->orWhere('mobile', $query)->first();
-            
             if ($user) {
-                // Agar user hai toh uska visiting card dhoondo
                 $card = VisitingCard::where('user_id', $user->id)->first();
             }
         }
 
-        // Yeh member configuration/edit form view par data bhej dega
         return view('member.card.configure', compact('card', 'user', 'query'));
     }
 
@@ -195,11 +111,9 @@ class AdminController extends Controller
         $mobile = $request->mobile;
         $name = $request->name;
 
-        // Check karo user pehle se database mein hai ya nahi
         $user = User::where('email', $email)->orWhere('mobile', $mobile)->first();
 
         if (!$user) {
-            // Agar user nahi hai toh auto-register karo temporary password ke sath
             $tempPassword = Str::random(8);
             $user = User::create([
                 'name' => $name,
@@ -211,7 +125,6 @@ class AdminController extends Controller
             ]);
         }
 
-        // Visiting card ko create ya update karo user_id ke base par
         VisitingCard::updateOrCreate(
             ['user_id' => $user->id],
             [
@@ -221,7 +134,6 @@ class AdminController extends Controller
                 'business_name' => $request->business_name,
                 'designation' => $request->designation,
                 'tagline' => $request->tagline,
-                // Aapke form ke baaki fields yahan map honge
             ]
         );
 
