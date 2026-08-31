@@ -54,8 +54,15 @@
 
         <div class="content-body">
             @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-circle me-1"></i> {{ session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
@@ -75,7 +82,7 @@
                         <label class="form-label fw-bold text-muted small">Select Item</label>
                         <select name="global_item_ids[]" class="form-select form-select-lg" required>
                             <option value="">-- Choose an item from master catalog --</option>
-                            @foreach($globalItems as $gItem)
+                            @foreach($globalItems ?? [] as $gItem)
                                 <option value="{{ $gItem->id }}">
                                     {{ $gItem->item_name }} ({{ $gItem->category }}) - ₹{{ $gItem->mrp ?? $gItem->default_price ?? 0 }}
                                 </option>
@@ -88,30 +95,42 @@
                 </form>
             </div>
 
-            <!-- My Shop Inventory List (Yeh sirf wahi items dikhayega jo aapne add kiye hain) -->
+            <!-- My Shop Inventory List -->
             <div class="card-box">
                 <h5 class="fw-bold text-primary mb-3"><i class="fas fa-boxes me-2"></i> My Shop Inventory List</h5>
                 <div class="table-responsive">
-                    <table class="table align-middle table-bordered">
+                    <table class="table align-middle table-bordered text-center">
                         <thead class="table-dark">
                             <tr>
-                                <th>Item Name</th>
+                                <th class="text-start">Item Name</th>
                                 <th>Category</th>
-                                <th>Price (₹)</th>
+                                <th>MRP (₹)</th>
+                                <th>Selling Price (₹)</th>
                                 <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($myInventory ?? [] as $inv)
                             <tr>
-                                <td class="fw-bold">{{ $inv->item_name }}</td>
+                                <td class="fw-bold text-start">{{ $inv->item_name }}</td>
                                 <td><span class="badge bg-secondary">{{ $inv->category }}</span></td>
+                                <td><span class="text-muted text-decoration-line-through">₹{{ $inv->mrp ?? $inv->price ?? 0 }}</span></td>
                                 <td class="text-success fw-bold">₹{{ $inv->price ?? 0 }}</td>
-                                <td><span class="badge bg-success">{{ $inv->status ?? 'Active' }}</span></td>
+                                <td><span class="badge bg-success">{{ ucfirst($inv->status ?? 'active') }}</span></td>
+                                <td>
+                                    <form action="{{ route('vendor.items.destroy', $inv->id) }}" method="POST" onsubmit="return confirm('क्या आप इस आइटम को इन्वेंटरी से हटाना चाहते हैं?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash me-1"></i> Remove
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-3">Your inventory is empty right now. Choose an item from the dropdown above to add.</td>
+                                <td colspan="6" class="text-center text-muted py-3">Your inventory is empty right now. Choose an item from the dropdown above to add.</td>
                             </tr>
                             @endforelse
                         </tbody>

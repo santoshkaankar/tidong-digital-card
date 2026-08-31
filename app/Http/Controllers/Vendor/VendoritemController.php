@@ -9,14 +9,15 @@ use App\Models\VendorItem;
 use App\Models\Vendor\Order;
 use App\Models\Vendor\OrderItem;
 use App\Models\Vendor\VendorCategory;
+use App\Events\OrderSoundAlert;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
-class MenuController extends Controller
+class VendoritemController extends Controller
 {
     public function createMenu()
     {
-        return redirect()->route('catalog');
+        return view('vendor.menu.create');
     }
 
     public function showPublicMenu($slug, Request $request)
@@ -24,10 +25,8 @@ class MenuController extends Controller
         $business = User::where('slug', $slug)->firstOrFail();
         $location = $request->query('loc', 'Table 1');
 
-        // Current Hour ke basis par time_slot detect karna
+        // 1. Time slot detect
         $currentHour = Carbon::now()->hour;
-        $currentSlot = 'all_day';
-
         if ($currentHour >= 5 && $currentHour < 12) {
             $currentSlot = 'morning';
         } elseif ($currentHour >= 12 && $currentHour < 17) {
@@ -36,25 +35,29 @@ class MenuController extends Controller
             $currentSlot = 'evening';
         }
 
-        // Time slot ke anusar categories ka order set karna
-        $categoriesOrder = VendorCategory::where('user_id', $business->id)
-            ->orderByRaw("
+        $selectedSlot = $request->query('slot', $currentSlot);
+
+        // 2. Categories Order dynamically fetch
+        $categoriesQuery = VendorCategory::where('user_id', $business->id);
+
+        if ($selectedSlot !== 'all') {
+            $categoriesQuery->orderByRaw("
                 CASE 
-                    WHEN time_slot = '{$currentSlot}' THEN 1 
+                    WHEN time_slot = '{$selectedSlot}' THEN 1 
                     WHEN time_slot = 'all_day' THEN 2 
                     ELSE 3 
                 END
-            ")
-            ->pluck('name')
-            ->toArray();
+            ");
+        }
 
-        // Items fetch karke category ke hisab se group karna
+        $categoriesOrder = $categoriesQuery->pluck('name')->toArray();
+
+        // 3. Items fetch karke Category wise arrange karna
         $rawMenuItems = VendorItem::where('user_id', $business->id)
             ->where('status', 'active')
             ->get()
             ->groupBy('category');
 
-        // Categories ko sorted order mein arrange karna
         $menuItems = collect();
         foreach ($categoriesOrder as $catName) {
             if ($rawMenuItems->has($catName)) {
@@ -62,21 +65,20 @@ class MenuController extends Controller
             }
         }
 
-        // Agar koi remaining categories bachi ho unhe last me add karna
         foreach ($rawMenuItems as $catName => $items) {
             if (!$menuItems->has($catName)) {
                 $menuItems->put($catName, $items);
             }
         }
 
-        // Running Order Check (Table/Room)
+        // 4. Active Running Order Check
         $runningOrder = Order::where('user_id', $business->id)
             ->where('table_or_room', $location)
             ->where('status', 'running')
             ->with('orderItems')
             ->first();
 
-        return view('member.menu', compact('business', 'menuItems', 'location', 'runningOrder', 'currentSlot'));
+        return view('vendor.menu.public', compact('business', 'menuItems', 'location', 'runningOrder', 'currentSlot', 'selectedSlot'));
     }
 
     public function placeOrder(Request $request, $slug)
@@ -101,7 +103,8 @@ class MenuController extends Controller
             ]
         );
 
-        $whatsappMessage = "New Order from *{$location}*:%0A";
+        $isUpdate = !$order->wasRecentlyCreated;
+        $whatsappMessage = $isUpdate ? "Order UPDATED for *{$location}*:%0A" : "New Order from *{$location}*:%0A";
         $totalAddAmount = 0;
 
         foreach ($request->items as $itemId => $qty) {
@@ -135,14 +138,28 @@ class MenuController extends Controller
         $order->total_amount += $totalAddAmount;
         $order->save();
 
-        $whatsappMessage .= "%0ATotal Bill so far: ₹{$order->total_amount}*%0A";
+        // Realtime Kitchen Sound Alert Event Trigger
+        $alertText = $isUpdate ? "Order updated for {$location}" : "New order received for {$location}";
+        event(new OrderSoundAlert($business->id, $location, $alertText));
+
+        $whatsappMessage .= "%0ATotal Bill so far: *₹{$order->total_amount}*%0A";
         
         $whatsappNumber = $business->whatsapp ?? '919999999999'; 
         $whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . $whatsappMessage;
 
         return redirect($whatsappUrl);
     }
+public function kitchenDashboard()
+{
+    // लॉग्ड इन वेंडर के एक्टिव रनिंग ऑर्डर्स fetch करें
+    $runningOrders = Order::where('user_id', Auth::id())
+        ->where('status', 'running')
+        ->with('orderItems')
+        ->latest('updated_at')
+        ->get();
 
+    return view('vendor.kitchen.dashboard', compact('runningOrders'));
+}
     public function completeOrder(Request $request, $orderId)
     {
         $request->validate([

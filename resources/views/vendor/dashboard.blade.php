@@ -6,6 +6,8 @@
     <title>Business Dashboard - Tidong®</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -121,6 +123,13 @@
                 <a href="{{ route('vendor.dashboard') }}" class="active"><i class="fas fa-home"></i> Dashboard</a>
             </li>
             
+            <!-- Kitchen Dashboard Button -->
+            <li class="my-2">
+                <a href="{{ route('vendor.kitchen.dashboard') }}" class="btn btn-warning text-dark fw-bold w-100 justify-content-center shadow-sm">
+                    <i class="bi bi-shop me-1"></i> 🔔 Kitchen Live Screen
+                </a>
+            </li>
+
             <!-- Catalog Setup Options -->
             <li class="menu-section-title">CATALOG SETUP</li>
             <li>
@@ -129,11 +138,19 @@
             <li>
                 <a href="{{ route('vendor.inventory.index') }}"><i class="fas fa-boxes"></i> Add Item</a>
             </li>
+            
+            <!-- Request New Item Link -->
+            <li>
+                <a href="javascript:void(0)" onclick="openRequestModal()">
+                    <i class="fas fa-plus-circle"></i> Request New Item
+                </a>
+            </li>
+            
             <li>
                 <a href="{{ route('vendor.pricing.index') }}"><i class="fas fa-rupee-sign"></i> Add Price</a>
             </li>
             <li>
-                <a href="{{ route('vendor.menus.index') }}"><i class="fas fa-book-open"></i> Catalog</a>
+                <a href="{{ route('vendor.catalogs.index') }}"><i class="fas fa-book-open"></i> Catalog</a>
             </li>
 
             <!-- Operations & Tracking -->
@@ -181,7 +198,7 @@
                     <span class="fw-semibold">{{ Auth::user()->name ?? 'Business User' }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
-                    <li><h6 class="dropdown-header">Welcome, {{ Auth::user()->name }}</h6></li>
+                    <li><h6 class="dropdown-header">Welcome, {{ Auth::user()->name ?? 'User' }}</h6></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#"><i class="fas fa-user fa-fw me-2"></i> Profile Settings</a></li>
                     <li><a class="dropdown-item" href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode fa-fw me-2"></i> My QR Code</a></li>
@@ -201,9 +218,16 @@
         <!-- Dashboard Content Body -->
         <div class="content-body">
             
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
             <!-- Welcome Header -->
             <div class="mb-4">
-                <h3 class="fw-bold text-dark">Welcome back, {{ Auth::user()->name }}! 👋</h3>
+                <h3 class="fw-bold text-dark">Welcome back, {{ Auth::user()->name ?? 'User' }}! 👋</h3>
                 <p class="text-muted">Here is your live business overview, catalog operations, and daily performance metrics.</p>
             </div>
 
@@ -286,7 +310,83 @@
         </div>
     </div>
 
+    <!-- Request New Item Modal Popup -->
+    <div class="modal fade" id="requestNewItemModal" tabindex="-1" aria-hidden="true" style="z-index: 99999;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-dark">
+                <form action="{{ route('vendor.item.request') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fas fa-plus-circle me-2"></i>Request New Item to Admin
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" onclick="closeRequestModal()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Item Name <span class="text-danger">*</span></label>
+                            <input type="text" name="item_name" class="form-control" placeholder="e.g. Paneer Butter Masala" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+                            @php
+                                $categories = \App\Models\Vendor\ItemCategory::pluck('name');
+                                if($categories->isEmpty()){
+                                    $categories = collect(['General', 'Main Course', 'Starters', 'Beverages', 'Desserts', 'Fast Food']);
+                                }
+                            @endphp
+                            <select name="category" class="form-select" required>
+                                <option value="" disabled selected>Select Category</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">MRP (₹)</label>
+                            <input type="number" step="0.01" name="mrp" class="form-control" placeholder="e.g. 250">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Item Image (Optional)</label>
+                            <input type="file" name="image" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeRequestModal()">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane me-1"></i> Send Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    function openRequestModal() {
+        var modalElement = document.getElementById('requestNewItemModal');
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            var myModal = new bootstrap.Modal(modalElement);
+            myModal.show();
+        } else {
+            modalElement.classList.add('show');
+            modalElement.style.display = 'block';
+            document.body.classList.add('modal-open');
+        }
+    }
+
+    function closeRequestModal() {
+        var modalElement = document.getElementById('requestNewItemModal');
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+    </script>
 </body>
 </html>

@@ -193,11 +193,11 @@
             @endif
 
             <div class="mb-4">
-                <h3 class="fw-bold text-dark">Manage Operating Categories</h3>
-                <p class="text-muted">Select and add your business categories from the dropdown below.</p>
+                <h3 class="fw-bold text-dark">Manage Operating Categories & Menu Availability</h3>
+                <p class="text-muted">Select categories and turn items ON/OFF to display on your customer digital menu.</p>
             </div>
 
-            <!-- SECTION: Add Operating Categories -->
+            <!-- SECTION 1: Add Operating Categories -->
             <div class="card-box">
                 <h5 class="fw-bold text-primary mb-3"><i class="fas fa-tags me-2"></i> Add Operating Categories</h5>
                 <p class="text-muted small">Select a category from the dropdown below to add it to your vendor category list.</p>
@@ -209,7 +209,7 @@
                             <label class="form-label fw-semibold">Select Category</label>
                             <select name="categories[]" class="form-select" required>
                                 <option value="">-- Choose Category --</option>
-                                @foreach($allCategories as $cat)
+                                @foreach($allCategories ?? [] as $cat)
                                     <option value="{{ $cat }}">{{ $cat }}</option>
                                 @endforeach
                             </select>
@@ -231,10 +231,90 @@
                 </div>
             </div>
 
+            <!-- SECTION 2: Manage Live Menu Availability (ON/OFF Toggle) -->
+            <div class="card-box">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fas fa-toggle-on text-success me-2"></i> Live Menu Availability</h5>
+                    <span class="badge bg-info text-dark">Total Items: {{ count($myInventory ?? []) }}</span>
+                </div>
+                <p class="text-muted small">Toggle items ON to display on customer QR menu cards, or OFF to temporarily hide them.</p>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Price (₹)</th>
+                                <th class="text-center">Customer Menu Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($myInventory ?? [] as $item)
+                            <tr>
+                                <td class="fw-bold text-dark">{{ $item->item_name }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ $item->category }}</span></td>
+                                <td class="fw-bold text-success">₹{{ $item->price }}</td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-inline-block">
+                                        <input class="form-check-input item-status-toggle" 
+                                               type="checkbox" 
+                                               role="switch"
+                                               data-id="{{ $item->id }}" 
+                                               style="width: 45px; height: 22px; cursor: pointer;"
+                                               {{ ($item->is_available ?? 1) ? 'checked' : '' }}>
+                                        <span class="ms-2 fw-semibold status-text-{{ $item->id }} {{ ($item->is_available ?? 1) ? 'text-success' : 'text-danger' }}">
+                                            {{ ($item->is_available ?? 1) ? 'Active (ON)' : 'Hidden (OFF)' }}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No items added to your inventory yet. Go to 'Manage Items' to add products.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
+    <!-- Bootstrap JS Bundle & jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- AJAX Script for Instant ON/OFF Toggle -->
+    <script>
+        $(document).ready(function() {
+            $('.item-status-toggle').on('change', function() {
+                let itemId = $(this).data('id');
+                let status = $(this).is(':checked') ? 1 : 0;
+                let statusText = $('.status-text-' + itemId);
+
+                $.ajax({
+                    url: "{{ route('vendor.item.toggle') }}",
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        item_id: itemId,
+                        status: status
+                    },
+                    success: function(response) {
+                        if(status == 1) {
+                            statusText.text('Active (ON)').removeClass('text-danger').addClass('text-success');
+                        } else {
+                            statusText.text('Hidden (OFF)').removeClass('text-success').addClass('text-danger');
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Something went wrong. Please try again.');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Categories - Tidong®</title>
+    <title>Manage Pricing - Tidong®</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -28,12 +28,14 @@
         <div class="brand-header"><i class="fas fa-store me-2 text-primary"></i> Business Panel</div>
         <ul class="sidebar-menu">
             <li><a href="{{ route('vendor.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li class="mt-3 text-uppercase text-muted px-3" style="font-size: 0.7rem;">Catalog & Items</li>
-            <li><a href="{{ route('vendor.categories.index') }}" class="active"><i class="fas fa-tags"></i> Manage Categories</a></li>
-            <li><a href="{{ route('vendor.inventory.index') }}"><i class="fas fa-boxes"></i> Manage Inventory</a></li>
-            <li class="mt-3 text-uppercase text-muted px-3" style="font-size: 0.7rem;">QR & Tables</li>
+            <li class="mt-3 text-uppercase text-muted px-3" style="font-size: 0.7rem;">CATALOG SETUP</li>
+            <li><a href="{{ route('vendor.categories.index') }}"><i class="fas fa-tags"></i> Add Category</a></li>
+            <li><a href="{{ route('vendor.inventory.index') }}"><i class="fas fa-boxes"></i> Add Item</a></li>
+            <li><a href="{{ route('vendor.pricing.index') }}" class="active"><i class="fas fa-rupee-sign"></i> Add Price</a></li>
+            <li><a href="{{ route('vendor.catalog') }}"><i class="fas fa-book-open"></i> Catalog</a></li>
+            <li class="mt-3 text-uppercase text-muted px-3" style="font-size: 0.7rem;">QR & TABLES</li>
             <li><a href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode"></i> Table QR Code</a></li>
-            <li class="mt-3 text-uppercase text-muted px-3" style="font-size: 0.7rem;">Account</li>
+            <li class="mt-3 text-uppercase text-muted px-3" style="font-size: 0.7rem;">ACCOUNT</li>
             <li>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -61,49 +63,54 @@
             @endif
 
             <div class="mb-4">
-                <h3 class="fw-bold text-dark">Manage Operating Categories</h3>
-                <p class="text-muted">Select your business operating categories from the dropdown below.</p>
+                <h3 class="fw-bold text-dark">Manage Product Pricing</h3>
+                <p class="text-muted">Update MRP and Sale Price for all items in your inventory directly.</p>
             </div>
 
             <div class="card-box">
-                <h5 class="fw-bold text-primary mb-3"><i class="fas fa-tags me-2"></i> Add Operating Categories</h5>
-                
-                <form action="{{ route('vendor.categories.save') }}" method="POST">
+                <form action="{{ route('vendor.pricing.update') }}" method="POST">
                     @csrf
-                    <div class="row align-items-end g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Select Category</label>
-                            <select name="categories[]" class="form-select" required>
-                                <option value="">-- Choose Category --</option>
-                                @foreach($allCategories as $cat)
-                                    <option value="{{ $cat }}">{{ $cat }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i> Add Category</button>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th style="width: 200px;">MRP (₹)</th>
+                                    <th style="width: 200px;">Sale Price (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($myInventory ?? [] as $item)
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ $item->item_name }}</td>
+                                    <td><span class="badge bg-secondary">{{ $item->category }}</span></td>
+                                    <td>
+                                        <input type="number" step="0.01" name="prices[{{ $item->id }}][mrp]" value="{{ $item->mrp ?? $item->price }}" class="form-control">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.01" name="prices[{{ $item->id }}][sale_price]" value="{{ $item->price }}" class="form-control fw-bold text-success">
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">No inventory items found. Add items to inventory first!</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
-                </form>
 
-                <h6 class="fw-bold text-dark mt-4 mb-2">Your Selected Categories:</h6>
-                <div class="d-flex flex-wrap gap-2">
-                    @forelse($selectedCategories ?? [] as $sCat)
-                        <div class="badge bg-secondary p-2 fs-6 d-flex align-items-center gap-2">
-                            <span>{{ is_object($sCat) ? $sCat->name : $sCat }}</span>
-                            <form action="{{ route('vendor.categories.destroy', is_object($sCat) ? $sCat->id : $sCat) }}" method="POST" class="d-inline" onsubmit="return confirm('Do you want to remove this category?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-close btn-close-white" style="font-size: 0.65rem;" aria-label="Remove"></button>
-                            </form>
-                        </div>
-                    @empty
-                        <p class="text-muted small mb-0">No categories added yet.</p>
-                    @endforelse
-                </div>
+                    @if(!empty($myInventory) && count($myInventory) > 0)
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-primary px-4 fw-bold"><i class="fas fa-save me-1"></i> Update All Prices</button>
+                    </div>
+                    @endif
+                </form>
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

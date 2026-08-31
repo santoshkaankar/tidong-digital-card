@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Member\VisitingCard;
 use App\Models\Vendor\GlobalItem;
 use App\Models\Vendor\ItemCategory;
+use App\Models\Vendor\Vendoritem;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -35,6 +36,7 @@ class AdminController extends Controller
         }
 
         $totalGlobalItems = GlobalItem::count();
+        $pendingGlobalItems = GlobalItem::where('is_approved', 0)->count();
         $totalItemCategories = ItemCategory::count();
         $totalBusinesses = $totalVendors;
 
@@ -42,7 +44,7 @@ class AdminController extends Controller
             'totalUsers', 'totalCustomers', 'totalEmployees',
             'totalVendors', 'approvedVendors', 'unapprovedVendors', 
             'totalCards', 'pendingCards', 'totalGlobalItems', 
-            'totalItemCategories', 'totalBusinesses'
+            'pendingGlobalItems', 'totalItemCategories', 'totalBusinesses'
         ));
     }
 
@@ -65,6 +67,7 @@ class AdminController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['required', 'string'],
+            'business_type' => ['nullable', 'string', 'max:255'],
         ]);
 
         User::create([
@@ -138,5 +141,61 @@ class AdminController extends Controller
         );
 
         return redirect()->route('admin.cards.manage')->with('success', 'Visiting Card & User Account successfully handled!');
+    }
+
+    // ==========================================
+    // GLOBAL ITEM APPROVAL SYSTEM
+    // ==========================================
+
+    /**
+     * View Pending Global Items Requested by Vendors
+     */
+    public function pendingGlobalItems()
+    {
+        $pendingItems = GlobalItem::where('is_approved', 0)->latest()->get();
+        return view('admin.global_items.pending', compact('pendingItems'));
+    }
+
+    /**
+     * Approve Pending Global Item
+     */
+    public function approveGlobalItem($id)
+    {
+        $gItem = GlobalItem::findOrFail($id);
+        $gItem->update(['is_approved' => 1]);
+
+        // Auto Add to Vendor's Personal Inventory if requested by vendor
+        if ($gItem->requested_by) {
+            $exists = Vendoritem::where('user_id', $gItem->requested_by)
+                ->where('item_name', $gItem->item_name)
+                ->exists();
+
+            if (!$exists) {
+                Vendoritem::create([
+                    'user_id'      => $gItem->requested_by,
+                    'category'     => $gItem->category ?? 'General',
+                    'item_name'    => $gItem->item_name,
+                    'description'  => $gItem->description ?? '',
+                    'mrp'          => $gItem->mrp ?? 0,
+                    'price'        => $gItem->price ?? $gItem->mrp ?? 0,
+                    'image'        => $gItem->image ?? null,
+                    'status'       => 'active',
+                    'is_available' => 1
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Global Item approved successfully!');
+    }
+
+    /**
+     * Reject / Delete Pending Global Item
+     */
+    public function rejectGlobalItem($id)
+    {
+        $gItem = GlobalItem::findOrFail($id);
+        $gItem->delete();
+
+        return redirect()->back()->with('success', 'Global Item request rejected.');
     }
 }
