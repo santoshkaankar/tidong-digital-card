@@ -73,7 +73,7 @@ class CatalogController extends Controller
 public function showPublicCatalog($slug)
 {
     $catalog = Catalog::where('slug', $slug)->firstOrFail();
-    $items = \App\Models\Vendor\Vendoritem::whereIn('id', $catalog->item_ids ?? [])->get();
+    $items = \App\Models\Vendor\VendorItem::whereIn('id', $catalog->item_ids ?? [])->get();
     $vendor = \App\Models\User::find($catalog->user_id);
 
     return view('vendor.catalogs.public', compact('catalog', 'items', 'vendor'));
