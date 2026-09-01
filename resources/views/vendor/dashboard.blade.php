@@ -276,55 +276,55 @@
             </div>
 
             <!-- Quick Metrics Row -->
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
-                    <div class="card-box d-flex align-items-center justify-content-between p-3">
-                        <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Total Orders</p>
-                            <h3 class="fw-bold text-primary mb-0">{{ $totalOrders ?? 0 }}</h3>
-                        </div>
-                        <div class="stat-icon bg-primary-subtle text-primary">
-                            <i class="fas fa-shopping-bag"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-6 col-md-3">
-                    <div class="card-box d-flex align-items-center justify-content-between p-3">
-                        <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Running</p>
-                            <h3 class="fw-bold text-warning mb-0">{{ $runningOrders ?? 0 }}</h3>
-                        </div>
-                        <div class="stat-icon bg-warning-subtle text-warning">
-                            <i class="fas fa-spinner"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-6 col-md-3">
-                    <div class="card-box d-flex align-items-center justify-content-between p-3">
-                        <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Completed</p>
-                            <h3 class="fw-bold text-success mb-0">{{ $completedOrders ?? 0 }}</h3>
-                        </div>
-                        <div class="stat-icon bg-success-subtle text-success">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-6 col-md-3">
-                    <div class="card-box d-flex align-items-center justify-content-between p-3">
-                        <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Today's Sales</p>
-                            <h3 class="fw-bold text-info mb-0">₹{{ $todayCollection ?? '0.00' }}</h3>
-                        </div>
-                        <div class="stat-icon bg-info-subtle text-info">
-                            <i class="fas fa-rupee-sign"></i>
-                        </div>
-                    </div>
-                </div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card-box d-flex align-items-center justify-content-between p-3">
+            <div>
+                <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Total Orders</p>
+                <h3 class="fw-bold text-primary mb-0">{{ $totalOrders ?? 0 }}</h3>
             </div>
+            <div class="stat-icon bg-primary-subtle text-primary">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="card-box d-flex align-items-center justify-content-between p-3">
+            <div>
+                <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Running</p>
+                <h3 class="fw-bold text-warning mb-0">{{ $runningOrders ?? 0 }}</h3>
+            </div>
+            <div class="stat-icon bg-warning-subtle text-warning">
+                <i class="fas fa-spinner"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="card-box d-flex align-items-center justify-content-between p-3">
+            <div>
+                <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Completed</p>
+                <h3 class="fw-bold text-success mb-0">{{ $completedOrders ?? 0 }}</h3>
+            </div>
+            <div class="stat-icon bg-success-subtle text-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="card-box d-flex align-items-center justify-content-between p-3">
+            <div>
+                <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Today's Sales</p>
+                <h3 class="fw-bold text-info mb-0">₹{{ number_format($todayCollection ?? 0, 2) }}</h3>
+            </div>
+            <div class="stat-icon bg-info-subtle text-info">
+                <i class="fas fa-rupee-sign"></i>
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- Quick Action Cards -->
             <div class="row g-4">
