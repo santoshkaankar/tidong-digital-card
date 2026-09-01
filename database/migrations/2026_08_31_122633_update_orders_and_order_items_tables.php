@@ -16,12 +16,30 @@ return new class extends Migration
             if (!Schema::hasColumn('orders', 'location_label')) {
                 $table->string('location_label')->nullable()->after('table_or_room');
             }
+            // menu_id ko nullable banane ke liye constraint check & modify
+            if (Schema::hasColumn('orders', 'menu_id')) {
+                try {
+                    $table->dropForeign(['menu_id']);
+                } catch (\Exception $e) {
+                    // Foreign key na hone par catch karein
+                }
+                $table->unsignedBigInteger('menu_id')->nullable()->change();
+            }
         });
 
         // 2. Order Items Table Updates
         Schema::table('order_items', function (Blueprint $table) {
             if (!Schema::hasColumn('order_items', 'item_id')) {
                 $table->unsignedBigInteger('item_id')->nullable()->after('menu_id');
+            }
+            // order_items me bhi menu_id ko nullable banayein
+            if (Schema::hasColumn('order_items', 'menu_id')) {
+                try {
+                    $table->dropForeign(['menu_id']);
+                } catch (\Exception $e) {
+                    // Foreign key na hone par catch karein
+                }
+                $table->unsignedBigInteger('menu_id')->nullable()->change();
             }
         });
     }

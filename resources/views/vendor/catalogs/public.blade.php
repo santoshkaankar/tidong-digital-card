@@ -192,7 +192,6 @@ window.renderCart = function() {
     let totalQty = 0;
     let totalAmt = 0;
 
-    // Render buttons dynamically for all items
     const allButtons = document.querySelectorAll('[id^="btn-container-"]');
     allButtons.forEach(container => {
         let itemId = container.id.replace('btn-container-', '');
@@ -207,12 +206,10 @@ window.renderCart = function() {
                 </div>
             `;
         } else {
-            // Fetch default price/name from dataset or re-bind
             container.innerHTML = container.getAttribute('data-default-btn') || container.innerHTML;
         }
     });
 
-    // Calculate totals from global state
     Object.values(window.cart).forEach(item => {
         totalQty += item.qty;
         totalAmt += item.qty * item.price;
@@ -229,7 +226,6 @@ window.renderCart = function() {
     }
 };
 
-// Store default HTML button for easy reset
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[id^="btn-container-"]').forEach(container => {
         container.setAttribute('data-default-btn', container.innerHTML);
@@ -238,6 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.submitOrder = function() {
     if (Object.keys(window.cart).length === 0) return;
+
+    let submitBtn = document.querySelector('#cartBar button');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'भेजा जा रहा है...';
 
     fetch("{{ route('vendor.catalogs.order') }}", {
         method: "POST",
@@ -252,11 +252,23 @@ window.submitOrder = function() {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message || "आपका ऑर्डर भेज दिया गया है!");
-        window.cart = {};
-        window.renderCart();
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'ऑर्डर भेजें <i class="fas fa-paper-plane ms-1"></i>';
+        
+        if (data.success) {
+            alert("✅ " + data.message);
+            // कार्ट को खाली करें ताकि ग्राहक खाना खाते समय नया आइटम बाद में जोड़ सके
+            window.cart = {};
+            window.renderCart();
+        } else {
+            alert("❌ " + data.message);
+        }
     })
-    .catch(err => alert("ऑर्डर भेजने में समस्या आई, कृपया पुनः प्रयास करें।"));
+    .catch(err => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'ऑर्डर भेजें <i class="fas fa-paper-plane ms-1"></i>';
+        alert("ऑर्डर भेजने में समस्या आई, पुनः प्रयास करें।");
+    });
 };
 </script>
 

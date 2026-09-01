@@ -8,6 +8,7 @@ use App\Models\Vendor\Catalog;
 use App\Models\Vendor\VendorItem;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CatalogController extends Controller
@@ -18,7 +19,6 @@ class CatalogController extends Controller
         $userId = Auth::id();
         $catalogs = Catalog::where('user_id', $userId)->latest()->get();
         
-        // वेंडर के एक्टिव आइटम्स फ़ेच करें
         $menuItems = VendorItem::where('user_id', $userId)
             ->where(function($q) {
                 $q->where('status', 'active')
@@ -39,7 +39,6 @@ class CatalogController extends Controller
         $catalogId = $request->input('catalog_id');
 
         if ($catalogId) {
-            // Update Existing
             $catalog = Catalog::where('user_id', Auth::id())->findOrFail($catalogId);
             $catalog->update([
                 'address' => $request->address,
@@ -47,7 +46,6 @@ class CatalogController extends Controller
             ]);
             $msg = 'कैटलॉग अपडेट कर दिया गया है!';
         } else {
-            // Create New
             $slug = Str::slug($request->address) . '-' . Str::random(5);
             $catalog = Catalog::create([
                 'user_id' => Auth::id(),
@@ -82,7 +80,7 @@ class CatalogController extends Controller
         return view('vendor.catalogs.public', compact('catalog', 'items', 'vendor'));
     }
 
-    // 5. QR कोड View Page (Vendor Name & Direct Share)
+    // 5. QR कोड View Page
     public function showQr($id)
     {
         $catalog = Catalog::where('user_id', Auth::id())->findOrFail($id);
@@ -91,7 +89,7 @@ class CatalogController extends Controller
         return view('vendor.catalogs.qr_view', compact('catalog', 'vendor'));
     }
 
-    // 6. कस्टमर द्वारा ऑर्डर सबमिट / अपडेट करना (Live Order API)
+    // 6. लाइव ऑर्डर डेटाबेस सेविंग (Database Insert & Kitchen Live Sync)
     public function placeOrder(Request $request)
     {
         $request->validate([
@@ -101,11 +99,54 @@ class CatalogController extends Controller
 
         $catalog = Catalog::findOrFail($request->catalog_id);
 
-        // नोट: यहाँ आप अपने ऑर्डर टेबल में डेटा सेव करवा सकते हैं या किचन डैशबोर्ड पर लाइव अलर्ट भेज सकते हैं।
+        $totalAmount = 0;
+        foreach ($request->cart as $item) {
+            $totalAmount += ($item['qty'] * $item['price']);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'आपका ऑर्डर किचन में भेज दिया गया है!'
-        ]);
+        DB::beginTransaction();
+        try {
+            // orders टेबल में सीधा एंट्री करें (अब menu_id nullable है)
+            $orderId = DB::table('orders')->insertGetId([
+                'user_id'        => $catalog->user_id,
+                'menu_id'        => $catalog->id,
+                'table_or_room'  => $catalog->address,
+                'location_label' => $catalog->address,
+                'status'         => 'pending',
+                'payment_mode'   => 'cash',
+                'payment_status' => 'unpaid',
+                'total_amount'   => $totalAmount,
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+
+            foreach ($request->cart as $item) {
+                DB::table('order_items')->insert([
+                    'order_id'   => $orderId,
+                    'menu_id'    => $catalog->id,
+                    'item_id'    => $item['id'],
+                    'item_name'  => $item['name'],
+                    'quantity'   => $item['qty'],
+                    'price'      => $item['price'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success'  => true,
+                'order_id' => $orderId,
+                'message'  => 'आपका ऑर्डर किचन में भेज दिया गया है!'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'ऑर्डर सेव करने में त्रुटि: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

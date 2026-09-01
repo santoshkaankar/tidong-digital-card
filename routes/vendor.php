@@ -8,8 +8,10 @@ use App\Http\Controllers\Vendor\CatalogController;
 // Dashboard
 Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('dashboard');
 
-// Kitchen Live Sound Alert & Running Orders Dashboard
-Route::get('/kitchen', [VendoritemController::class, 'kitchenDashboard'])->name('kitchen.dashboard');
+// Kitchen Dashboard Route
+Route::get('/kitchen', [VendoritemController::class, 'kitchenDashboard'])->name('kitchen.orders');
+// Order Complete Route
+Route::post('/kitchen/order/complete/{orderId}', [VendoritemController::class, 'completeOrder'])->name('public.order.complete');
 
 // Pricing Routes
 Route::get('/pricing', [VendorController::class, 'pricingPage'])->name('pricing.index');

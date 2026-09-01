@@ -150,16 +150,16 @@ class VendoritemController extends Controller
         return redirect($whatsappUrl);
     }
 public function kitchenDashboard()
-{
-    // लॉग्ड इन वेंडर के एक्टिव रनिंग ऑर्डर्स fetch करें
-    $runningOrders = Order::where('user_id', Auth::id())
-        ->where('status', 'running')
-        ->with('orderItems')
-        ->latest('updated_at')
-        ->get();
+    {
+        // 1. Logged in Vendor ke pending aur running dono orders fetch karein
+        $runningOrders = Order::where('user_id', Auth::id())
+            ->whereIn('status', ['pending', 'running'])
+            ->with('orderItems')
+            ->latest('updated_at')
+            ->get();
 
-    return view('vendor.kitchen.dashboard', compact('runningOrders'));
-}
+        return view('vendor.kitchen.dashboard', compact('runningOrders'));
+    }
     public function completeOrder(Request $request, $orderId)
     {
         $request->validate([
