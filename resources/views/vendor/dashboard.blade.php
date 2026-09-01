@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        /* Sidebar Styling */
+        
+        /* Desktop Sidebar Styling */
         .sidebar {
             width: 260px;
             height: 100vh;
@@ -22,9 +23,10 @@
             background: #1e293b;
             color: #fff;
             overflow-y: auto;
-            z-index: 1000;
+            z-index: 1050;
             display: flex;
             flex-direction: column;
+            transition: all 0.3s ease-in-out;
         }
         .sidebar .brand-header {
             padding: 18px 20px;
@@ -68,13 +70,16 @@
             text-align: center;
             font-size: 0.95rem;
         }
-        /* Main Layout */
+
+        /* Desktop Main Layout */
         .main-content {
             margin-left: 260px;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            transition: all 0.3s ease-in-out;
         }
+
         /* Top Navbar */
         .top-navbar {
             height: 70px;
@@ -83,7 +88,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 30px;
+            padding: 0 20px;
         }
         .user-profile img {
             width: 40px;
@@ -91,7 +96,7 @@
             border-radius: 50%;
             object-fit: cover;
         }
-        .content-body { padding: 30px; flex: 1; }
+        .content-body { padding: 25px; flex: 1; }
         .card-box {
             background: #ffffff;
             border: none;
@@ -109,14 +114,49 @@
             justify-content: center;
             font-size: 1.25rem;
         }
+
+        /* Mobile Overlay Styling */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+
+        /* Mobile View Media Queries (< 992px) */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                left: -270px; /* Hide sidebar off-screen by default */
+            }
+            .sidebar.show {
+                left: 0; /* Slide in when open */
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0 !important; /* Full width on mobile */
+            }
+            .content-body {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
 
+    <!-- Mobile Overlay Background -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <div class="brand-header">
-            <i class="fas fa-store me-2 text-primary"></i> Business Panel
+    <div class="sidebar" id="sidebar">
+        <div class="brand-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-store me-2 text-primary"></i> Business Panel</span>
+            <button class="btn btn-sm text-white d-lg-none" onclick="toggleSidebar()">✕</button>
         </div>
         <ul class="sidebar-menu">
             <li>
@@ -187,15 +227,19 @@
         <!-- Top Navbar -->
         <nav class="top-navbar">
             <div class="d-flex align-items-center">
+                <!-- Toggle Button for Mobile View -->
+                <button class="btn btn-light border me-3 d-lg-none" type="button" onclick="toggleSidebar()">
+                    <i class="fas fa-bars fs-5"></i>
+                </button>
                 <span class="badge bg-primary me-2">{{ ucfirst(Auth::user()->role ?? 'Business') }}</span>
-                <span class="text-muted small">Business Type: <strong class="text-dark">{{ ucfirst(Auth::user()->business_type ?? 'General Store') }}</strong></span>
+                <span class="text-muted small d-none d-sm-inline">Business Type: <strong class="text-dark">{{ ucfirst(Auth::user()->business_type ?? 'General Store') }}</strong></span>
             </div>
 
             <!-- Profile Dropdown -->
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'User') }}&background=2563eb&color=fff" alt="Profile" class="me-2">
-                    <span class="fw-semibold">{{ Auth::user()->name ?? 'Business User' }}</span>
+                    <span class="fw-semibold d-none d-sm-inline">{{ Auth::user()->name ?? 'Business User' }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
                     <li><h6 class="dropdown-header">Welcome, {{ Auth::user()->name ?? 'User' }}</h6></li>
@@ -232,11 +276,11 @@
             </div>
 
             <!-- Quick Metrics Row -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="card-box d-flex align-items-center justify-content-between">
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="card-box d-flex align-items-center justify-content-between p-3">
                         <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold">Total Orders</p>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Total Orders</p>
                             <h3 class="fw-bold text-primary mb-0">{{ $totalOrders ?? 0 }}</h3>
                         </div>
                         <div class="stat-icon bg-primary-subtle text-primary">
@@ -245,10 +289,10 @@
                     </div>
                 </div>
 
-                <div class="col-md-3">
-                    <div class="card-box d-flex align-items-center justify-content-between">
+                <div class="col-6 col-md-3">
+                    <div class="card-box d-flex align-items-center justify-content-between p-3">
                         <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold">Running Orders</p>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Running</p>
                             <h3 class="fw-bold text-warning mb-0">{{ $runningOrders ?? 0 }}</h3>
                         </div>
                         <div class="stat-icon bg-warning-subtle text-warning">
@@ -257,10 +301,10 @@
                     </div>
                 </div>
 
-                <div class="col-md-3">
-                    <div class="card-box d-flex align-items-center justify-content-between">
+                <div class="col-6 col-md-3">
+                    <div class="card-box d-flex align-items-center justify-content-between p-3">
                         <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold">Completed Orders</p>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Completed</p>
                             <h3 class="fw-bold text-success mb-0">{{ $completedOrders ?? 0 }}</h3>
                         </div>
                         <div class="stat-icon bg-success-subtle text-success">
@@ -269,10 +313,10 @@
                     </div>
                 </div>
 
-                <div class="col-md-3">
-                    <div class="card-box d-flex align-items-center justify-content-between">
+                <div class="col-6 col-md-3">
+                    <div class="card-box d-flex align-items-center justify-content-between p-3">
                         <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold">Today's Collection</p>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Today's Sales</p>
                             <h3 class="fw-bold text-info mb-0">₹{{ $todayCollection ?? '0.00' }}</h3>
                         </div>
                         <div class="stat-icon bg-info-subtle text-info">
@@ -369,6 +413,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+    function toggleSidebar() {
+        let sidebar = document.getElementById('sidebar');
+        let overlay = document.getElementById('sidebarOverlay');
+        
+        sidebar.classList.toggle('show');
+        overlay.classList.toggle('show');
+    }
+
     function openRequestModal() {
         var modalElement = document.getElementById('requestNewItemModal');
         if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
