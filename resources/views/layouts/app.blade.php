@@ -1,6 +1,35 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <head>
+    <!-- CSS Code ko Style tag ke andar rakhein -->
+    <style>
+        /* Vendor Dashboard Mobile Layout Fix */
+        @media (max-width: 768px) {
+            .sidebar, #sidebar {
+                position: fixed !important;
+                top: 0;
+                left: -100%;
+                width: 260px !important;
+                height: 100vh !important;
+                z-index: 1090;
+                transition: left 0.3s ease;
+            }
+            .sidebar.active, #sidebar.active {
+                left: 0 !important;
+            }
+            .main-content, #content, body {
+                width: 100% !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+                margin-left: 0 !important;
+                padding: 10px !important;
+            }
+        }
+    </style>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">

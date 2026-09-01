@@ -81,7 +81,7 @@
 <body>
 
 <div class="catalog-container">
-    <!-- Sticky Header -->
+    <!-- Header -->
     <div class="catalog-header text-center">
         <h6 class="fw-bold mb-1 text-white text-truncate" style="max-width: 90%; margin: 0 auto; font-size: 16px;">
             {{ $vendor->name ?? $vendor->business_name ?? 'डिजिटल मेनू' }}
@@ -102,30 +102,24 @@
         @forelse($items as $item)
             @php
                 $rawPath = $item->image ?? $item->item_image ?? $item->photo ?? null;
+                $src = 'https://via.placeholder.com/100?text=Food';
                 if ($rawPath) {
                     if (Str::startsWith($rawPath, ['http://', 'https://'])) {
                         $src = $rawPath;
                     } else {
                         $cleanPath = str_replace(['public/', 'storage/'], '', $rawPath);
                         $cleanPath = ltrim($cleanPath, '/');
-                        if (!Str::contains($cleanPath, '/')) {
-                            $cleanPath = 'global-items/' . $cleanPath;
-                        }
                         $src = asset('storage/' . $cleanPath);
                     }
-                } else {
-                    $src = 'https://via.placeholder.com/100?text=Food';
                 }
                 $price = $item->price ?? $item->sale_price ?? 0;
             @endphp
 
             <div class="item-card shadow-sm">
-                <!-- Image -->
                 <div class="item-img-container">
-                    <img src="{{ $src }}" alt="{{ $item->item_name }}" class="item-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/100?text=Food';">
+                    <img src="{{ $src }}" alt="" class="item-img" onerror="this.src='https://via.placeholder.com/100?text=Food';">
                 </div>
                 
-                <!-- Info -->
                 <div class="flex-grow-1 overflow-hidden">
                     <h6 class="fw-bold text-dark mb-0 text-truncate" style="font-size: 13px;">
                         {{ $item->item_name }}
@@ -147,10 +141,10 @@
                     </div>
                 </div>
 
-                <!-- Toggle / Qty Selector -->
+                <!-- Action Button Container -->
                 <div id="btn-container-{{ $item->id }}">
                     <button class="btn btn-outline-success btn-sm fw-bold px-3" 
-                            onclick="addToCart({{ $item->id }}, '{{ addslashes($item->item_name) }}', {{ $price }})">
+                            onclick="window.addToCart({{ $item->id }}, '{{ addslashes($item->item_name) }}', {{ $price }})">
                         + ADD
                     </button>
                 </div>
@@ -164,73 +158,66 @@
     </div>
 </div>
 
-<!-- Bottom Floating Cart Bar -->
+<!-- Fixed Bottom Cart Bar -->
 <div class="cart-bar justify-content-between align-items-center" id="cartBar">
     <div>
         <div class="small text-white-50"><span id="cartTotalItems">0</span> आइटम्स चुने गए</div>
         <div class="fw-bold fs-5 text-warning">₹<span id="cartTotalAmount">0.00</span></div>
     </div>
-    <button class="btn btn-warning fw-bold px-4 rounded-pill" onclick="submitOrder()">
+    <button class="btn btn-warning fw-bold px-4 rounded-pill" onclick="window.submitOrder()">
         ऑर्डर भेजें <i class="fas fa-paper-plane ms-1"></i>
     </button>
 </div>
 
 <script>
-let cart = {};
-const catalogId = {{ $catalog->id }};
+window.cart = {};
+window.catalogId = {{ $catalog->id }};
 
-function addToCart(id, name, price) {
-    cart[id] = { id: id, name: name, price: price, qty: 1 };
-    renderCart();
-}
+window.addToCart = function(id, name, price) {
+    window.cart[id] = { id: id, name: name, price: price, qty: 1 };
+    window.renderCart();
+};
 
-function updateQty(id, delta) {
-    if (cart[id]) {
-        cart[id].qty += delta;
-        if (cart[id].qty <= 0) {
-            delete cart[id];
+window.updateQty = function(id, delta) {
+    if (window.cart[id]) {
+        window.cart[id].qty += delta;
+        if (window.cart[id].qty <= 0) {
+            delete window.cart[id];
         }
     }
-    renderCart();
-}
+    window.renderCart();
+};
 
-function renderCart() {
+window.renderCart = function() {
     let totalQty = 0;
     let totalAmt = 0;
 
-    // Loop through all items to update button state
-    Object.keys(cart).forEach(id => {
-        totalQty += cart[id].qty;
-        totalAmt += cart[id].qty * cart[id].price;
+    // Render buttons dynamically for all items
+    const allButtons = document.querySelectorAll('[id^="btn-container-"]');
+    allButtons.forEach(container => {
+        let itemId = container.id.replace('btn-container-', '');
+        let itemInCart = window.cart[itemId];
+
+        if (itemInCart && itemInCart.qty > 0) {
+            container.innerHTML = `
+                <div class="d-flex align-items-center gap-2 bg-light border border-success rounded p-1">
+                    <button class="btn btn-danger btn-sm qty-btn" onclick="window.updateQty(${itemId}, -1)">-</button>
+                    <span class="fw-bold fs-6 px-1">${itemInCart.qty}</span>
+                    <button class="btn btn-success btn-sm qty-btn" onclick="window.updateQty(${itemId}, 1)">+</button>
+                </div>
+            `;
+        } else {
+            // Fetch default price/name from dataset or re-bind
+            container.innerHTML = container.getAttribute('data-default-btn') || container.innerHTML;
+        }
     });
 
-    // Update each item container
-    @foreach($items as $item)
-        let itemId = {{ $item->id }};
-        let price = {{ $item->price ?? $item->sale_price ?? 0 }};
-        let name = "{{ addslashes($item->item_name) }}";
-        let container = document.getElementById(`btn-container-${itemId}`);
+    // Calculate totals from global state
+    Object.values(window.cart).forEach(item => {
+        totalQty += item.qty;
+        totalAmt += item.qty * item.price;
+    });
 
-        if (container) {
-            if (cart[itemId] && cart[itemId].qty > 0) {
-                container.innerHTML = `
-                    <div class="d-flex align-items-center gap-2 bg-light border border-success rounded p-1">
-                        <button class="btn btn-danger btn-sm qty-btn" onclick="updateQty(${itemId}, -1)">-</button>
-                        <span class="fw-bold fs-6 px-1">${cart[itemId].qty}</span>
-                        <button class="btn btn-success btn-sm qty-btn" onclick="updateQty(${itemId}, 1)">+</button>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <button class="btn btn-outline-success btn-sm fw-bold px-3" onclick="addToCart(${itemId}, '${name}', ${price})">
-                        + ADD
-                    </button>
-                `;
-            }
-        }
-    @endforeach
-
-    // Update Bottom Cart Bar Details
     document.getElementById('cartTotalItems').innerText = totalQty;
     document.getElementById('cartTotalAmount').innerText = totalAmt.toFixed(2);
 
@@ -240,7 +227,37 @@ function renderCart() {
     } else {
         cartBar.style.display = 'none';
     }
-}
+};
+
+// Store default HTML button for easy reset
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[id^="btn-container-"]').forEach(container => {
+        container.setAttribute('data-default-btn', container.innerHTML);
+    });
+});
+
+window.submitOrder = function() {
+    if (Object.keys(window.cart).length === 0) return;
+
+    fetch("{{ route('vendor.catalogs.order') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            catalog_id: window.catalogId,
+            cart: window.cart
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message || "आपका ऑर्डर भेज दिया गया है!");
+        window.cart = {};
+        window.renderCart();
+    })
+    .catch(err => alert("ऑर्डर भेजने में समस्या आई, कृपया पुनः प्रयास करें।"));
+};
 </script>
 
 </body>
