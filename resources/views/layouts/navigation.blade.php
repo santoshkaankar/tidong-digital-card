@@ -1,8 +1,56 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<style>
+/* Sidebar Mobile Styles */
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: -280px !important;
+        width: 260px !important;
+        height: 100vh !important;
+        z-index: 1050 !important;
+        transition: all 0.3s ease-in-out !important;
+        background-color: #1e293b; /* Dark theme sidebar */
+    }
+    
+    .sidebar.show {
+        left: 0 !important;
+    }
+
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+    }
+    
+    .sidebar-overlay.show {
+        display: block !important;
+    }
+}
+</style>
+
+<!-- Mobile Overlay Background -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<nav x-data="{ open: false }" class="bg-white border-b border-gray-100 sticky-top">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
-            <div class="flex">
+            <div class="flex items-center">
+                
+                <!-- Sidebar Toggle Button (Mobile Only) -->
+                <button class="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none me-3" 
+                        type="button" 
+                        onclick="toggleSidebar()">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
@@ -16,7 +64,6 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    <!-- Show Menu Link only if user role is business -->
                     @if(Auth::check() && Auth::user()->role == 'business')
                         <x-nav-link :href="route('menu.create')" :active="request()->routeIs('menu.*')">
                             {{ __('Menu & QR Setup') }}
@@ -48,7 +95,6 @@
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
@@ -59,7 +105,7 @@
                 </x-dropdown>
             </div>
 
-            <!-- Hamburger -->
+            <!-- Hamburger (For Top Nav Links on Small Screens) -->
             <div class="-me-2 flex items-center sm:hidden">
                 <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -78,7 +124,6 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
-            <!-- Responsive Menu Link for Business User -->
             @if(Auth::check() && Auth::user()->role == 'business')
                 <x-responsive-nav-link :href="route('menu.create')" :active="request()->routeIs('menu.*')">
                     {{ __('Menu & QR Setup') }}
@@ -86,7 +131,6 @@
             @endif
         </div>
 
-        <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
@@ -98,10 +142,8 @@
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
 
-                <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-
                     <x-responsive-nav-link :href="route('logout')"
                             onclick="event.preventDefault();
                                         this.closest('form').submit();">
@@ -112,3 +154,17 @@
         </div>
     </div>
 </nav>
+
+<script>
+function toggleSidebar() {
+    let sidebar = document.querySelector('.sidebar') || document.querySelector('aside');
+    let overlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('show');
+    }
+    if (overlay) {
+        overlay.classList.toggle('show');
+    }
+}
+</script>
