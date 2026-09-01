@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Vendor;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Vendor\VendorCategory;
-use App\Models\Vendor\Vendoritem;
+use App\Models\Vendor\VendorItem;
 use App\Models\Vendor\GlobalItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
