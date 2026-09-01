@@ -146,9 +146,9 @@
                                                 </a>
 
                                                 <!-- QR Code View -->
-                                                <a href="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode($catalogUrl) }}" target="_blank" class="btn btn-outline-dark" title="Download QR Code">
-                                                    <i class="fas fa-qrcode"></i>
-                                                </a>
+                                                <a href="{{ route('vendor.catalogs.qr', $catalog->id) }}" class="btn btn-sm btn-outline-primary" target="_blank">
+    <i class="bi bi-qr-code"></i> View QR
+</a>
 
                                                 <!-- Delete Button -->
                                                 <form action="{{ route('vendor.catalogs.destroy', $catalog->id) }}" method="POST" class="d-inline" onsubmit="return confirm('क्या आप इस कैटलॉग को हटाना चाहते हैं?');">

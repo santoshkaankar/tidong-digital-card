@@ -39,3 +39,7 @@ Route::get('/qr-code', [VendorController::class, 'showQrCode'])->name('qrcode');
 Route::get('/catalogs', [CatalogController::class, 'index'])->name('catalogs.index');
 Route::post('/catalogs/store', [CatalogController::class, 'store'])->name('catalogs.store');
 Route::delete('/catalogs/{id}', [CatalogController::class, 'destroy'])->name('catalogs.destroy');
+Route::get('/catalogs/{id}/qr', [CatalogController::class, 'showQr'])->name('catalogs.qr');
+
+// 👇 Yeh Line Miss thi, isey zaroor add karein:
+Route::post('/catalogs/order', [CatalogController::class, 'placeOrder'])->name('catalogs.order');
