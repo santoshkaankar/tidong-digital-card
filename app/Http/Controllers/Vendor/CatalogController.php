@@ -21,7 +21,7 @@ class CatalogController extends Controller
         $menuItems = Vendoritem::where('user_id', $userId)
             ->where(function($q) {
                 $q->where('status', 'active')
-                  ->orWhere('is_available', 1);
+                  ->orWhere('is_available', true);
             })->get();
 
         return view('vendor.catalogs.index', compact('catalogs', 'menuItems'));
