@@ -32,7 +32,7 @@
             <li><a href="{{ route('vendor.categories.index') }}"><i class="fas fa-tags"></i> Add Category</a></li>
             <li><a href="{{ route('vendor.inventory.index') }}"><i class="fas fa-boxes"></i> Add Item</a></li>
             <li><a href="{{ route('vendor.pricing.index') }}" class="active"><i class="fas fa-rupee-sign"></i> Add Price</a></li>
-            <li><a href="{{ route('vendor.catalog') }}"><i class="fas fa-book-open"></i> Catalog</a></li>
+            <li><a href="{{ route('vendor.catalogs.index') }}"><i class="fas fa-book-open"></i> Catalog</a></li>
             <li class="mt-3 text-uppercase text-muted px-3" style="font-size: 0.7rem;">QR & TABLES</li>
             <li><a href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode"></i> Table QR Code</a></li>
             <li class="mt-3 text-uppercase text-muted px-3" style="font-size: 0.7rem;">ACCOUNT</li>
