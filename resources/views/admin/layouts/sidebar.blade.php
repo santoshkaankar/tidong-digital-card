@@ -46,19 +46,57 @@
                 <i class="fas fa-angle-down small"></i>
             </a>
             <ul class="collapse list-unstyled ps-3 pb-2" id="vendorSubmenu">
-                <li class="nav-item mt-1">
-                    <a href="{{ route('admin.vendors.manage') }}" class="nav-link py-1"><i class="fas fa-search me-2"></i> Search Vendor</a>
-                </li>
-                <li class="nav-item mt-1"><a href="#" class="nav-link py-1"><i class="fas fa-store text-info me-2"></i> Registered Businesses</a></li>
-                <li class="nav-item mt-1"><a href="{{ route('admin.pending.items') }}" class="nav-link py-1"><i class="fas fa-user-check text-success me-2"></i> Approved Vendors</a></li>
-                <li class="nav-item mt-1"><a href="{{ route('admin.pending.items') }}" class="nav-link py-1"><i class="fas fa-user-clock text-warning me-2"></i> Unapproved Vendors</a></li>
-                <li class="nav-item mt-1"><a href="{{ route('admin.menu.create') }}" class="nav-link py-1"><i class="fas fa-utensils me-2"></i> Menu & QR Setup</a></li>
-                <li class="nav-item mt-1"><a href="{{ route('admin.global.item.create') }}" class="nav-link py-1"><i class="fas fa-plus-circle me-2"></i> Create Global Item</a></li>
-                <li class="nav-item mt-1"><a href="{{ route('admin.vendor.categories') }}" class="nav-link py-1"><i class="fas fa-list-alt me-2"></i> Vendor Categories</a></li>
-                <li class="nav-item mt-1"><a href="{{ route('admin.pending.items') }}" class="nav-link py-1"><i class="fas fa-clock text-warning me-2"></i> Item Approvals</a></li>
-                <li class="nav-item mt-1"><a href="{{ route('admin.global.items.index') }}" class="nav-link"><i class="fas fa-list"></i> Manage Global Items</a></li>
-                <li class="nav-item mt-1"><a href="#" class="nav-link py-1"><i class="fas fa-user-slash text-danger me-2"></i> Vendor Ban / Moderation</a></li>
-            </ul>
+    <li class="nav-item mt-1">
+        <a href="{{ Route::has('admin.vendors.manage') ? route('admin.vendors.manage') : '#' }}" class="nav-link py-1">
+            <i class="fas fa-search me-2"></i> Search Vendor
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="#" class="nav-link py-1">
+            <i class="fas fa-store text-info me-2"></i> Registered Businesses
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="#" class="nav-link py-1">
+            <i class="fas fa-user-check text-success me-2"></i> Approved Vendors
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="#" class="nav-link py-1">
+            <i class="fas fa-user-clock text-warning me-2"></i> Unapproved Vendors
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="#" class="nav-link py-1">
+            <i class="fas fa-layer-group me-2"></i> Catalog & QR Setup
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="{{ Route::has('admin.global-items.create') ? route('admin.global-items.create') : '#' }}" class="nav-link py-1">
+            <i class="fas fa-plus-circle me-2"></i> Create Global Item
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="#" class="nav-link py-1">
+            <i class="fas fa-list-alt me-2"></i> Vendor Categories
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="{{ Route::has('admin.global-items.pending') ? route('admin.global-items.pending') : '#' }}" class="nav-link py-1">
+            <i class="fas fa-clock text-warning me-2"></i> Item Approvals
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="{{ Route::has('admin.global-items.index') ? route('admin.global-items.index') : '#' }}" class="nav-link py-1">
+            <i class="fas fa-list me-2"></i> Manage Global Items
+        </a>
+    </li>
+    <li class="nav-item mt-1">
+        <a href="#" class="nav-link py-1">
+            <i class="fas fa-user-slash text-danger me-2"></i> Vendor Ban / Moderation
+        </a>
+    </li>
+</ul>
         </li>
 
         <!-- 3. Employee Management -->

@@ -104,7 +104,7 @@
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <span class="small text-warning"><i class="fas fa-clock me-1"></i> Pending Approval</span>
                         @if(($unapprovedVendors ?? 0) > 0)
-                            <a href="{{ route('admin.pending.items') }}" class="btn btn-sm btn-warning fw-bold px-2 py-0" style="font-size: 0.75rem;">View & Action</a>
+                            <a href="{{ Route::has('admin.pending.items') ? route('admin.pending.items') : '#' }}" class="btn btn-sm btn-warning fw-bold px-2 py-0" style="font-size: 0.75rem;">View & Action</a>
                         @endif
                     </div>
                 </div>
@@ -116,11 +116,11 @@
             <div class="col-md-6">
                 <div class="card stat-card p-4 bg-white h-100">
                     <h5 class="fw-bold text-dark mb-3"><i class="fas fa-id-badge text-primary me-2"></i> Visiting Cards Ratio</h5>
-                    <a href="{{ route('admin.cards.index') }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 text-decoration-none text-dark">
+                    <a href="{{ Route::has('admin.cards.index') ? route('admin.cards.index') : '#' }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 text-decoration-none text-dark">
                         <span class="fw-semibold text-muted">Total Digital Cards</span>
                         <span class="badge bg-primary fs-6">{{ $totalCards ?? 0 }}</span>
                     </a>
-                    <a href="{{ route('admin.cards.index') }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 text-decoration-none text-dark">
+                    <a href="{{ Route::has('admin.cards.index') ? route('admin.cards.index') : '#' }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 text-decoration-none text-dark">
                         <span class="fw-semibold text-muted">Pending Cards Approval</span>
                         <span class="badge bg-warning text-dark fs-6">{{ $pendingCards ?? 0 }}</span>
                     </a>
@@ -131,12 +131,12 @@
                 <div class="card stat-card p-4 bg-white h-100">
                     <h5 class="fw-bold text-dark mb-3"><i class="fas fa-database text-success me-2"></i> System & Master Database</h5>
                     
-                    <a href="{{ route('admin.global.item.create') }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 text-decoration-none text-dark">
+                    <a href="{{ Route::has('admin.global-items.create') ? route('admin.global-items.create') : '#' }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 text-decoration-none text-dark">
                         <span class="fw-semibold text-muted"><i class="fas fa-boxes me-2 text-success"></i> Global Master Items</span>
                         <span class="badge bg-success fs-6">{{ $totalGlobalItems ?? 0 }}</span>
                     </a>
 
-                    <a href="{{ route('admin.global.item.create') }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 text-decoration-none text-dark">
+                    <a href="{{ Route::has('admin.global-items.create') ? route('admin.global-items.create') : '#' }}" class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 mb-2 text-decoration-none text-dark">
                         <span class="fw-semibold text-muted"><i class="fas fa-tags me-2 text-primary"></i> Item Categories</span>
                         <span class="badge bg-primary fs-6">{{ $totalItemCategories ?? 0 }}</span>
                     </a>
