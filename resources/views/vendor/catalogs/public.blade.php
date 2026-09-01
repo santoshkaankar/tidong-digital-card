@@ -12,70 +12,35 @@
             background-color: #f4f6f9; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
-            padding-bottom: 90px;
+            padding-bottom: 120px;
         }
-        .catalog-container { 
-            max-width: 100%; 
-            min-height: 100vh; 
-            background: #ffffff; 
-        }
+        .catalog-container { max-width: 100%; min-height: 100vh; background: #ffffff; }
         .catalog-header { 
             background: linear-gradient(135deg, #0f172a, #1e293b); 
-            color: white; 
-            padding: 16px; 
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            color: white; padding: 16px; position: sticky; top: 0; z-index: 100;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
         }
         .item-card { 
-            border: 1px solid #edf2f7; 
-            border-radius: 10px; 
-            background: #fff; 
-            padding: 10px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            border: 1px solid #edf2f7; border-radius: 10px; background: #fff; 
+            padding: 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
         }
         .item-img-container {
-            width: 60px;
-            height: 60px;
-            min-width: 60px;
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: #f1f5f9;
-            border: 1px solid #e2e8f0;
+            width: 60px; height: 60px; min-width: 60px; border-radius: 8px;
+            overflow: hidden; background-color: #f1f5f9; border: 1px solid #e2e8f0;
         }
-        .item-img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-        }
+        .item-img { width: 100%; height: 100%; object-fit: cover; }
         .cart-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #0f172a;
-            color: #fff;
-            padding: 12px 20px;
-            border-top-left-radius: 16px;
-            border-top-right-radius: 16px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
-            z-index: 1050;
-            display: none;
+            position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a;
+            color: #fff; padding: 12px 20px; border-top-left-radius: 16px;
+            border-top-right-radius: 16px; box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+            z-index: 1050; display: none;
         }
-        .qty-btn {
-            width: 28px;
-            height: 28px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            font-weight: bold;
+        .active-order-floating-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #1e293b; color: #fff; padding: 10px 16px;
+            z-index: 1040; border-top: 2px solid #ffc107;
         }
+        .qty-btn { width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -92,6 +57,14 @@
             </span>
         </div>
     </div>
+
+    <!-- Alert Message -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show m-2 p-2 small" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close p-2" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
     <!-- Items List -->
     <div class="p-2">
@@ -133,15 +106,9 @@
                         <span class="fw-bold text-success" style="font-size: 13px;">
                             ₹{{ number_format($price, 2) }}
                         </span>
-                        @if(isset($item->mrp) && $item->mrp > $price)
-                            <span class="text-muted text-decoration-line-through" style="font-size: 10px;">
-                                ₹{{ number_format($item->mrp, 2) }}
-                            </span>
-                        @endif
                     </div>
                 </div>
 
-                <!-- Action Button Container -->
                 <div id="btn-container-{{ $item->id }}">
                     <button class="btn btn-outline-success btn-sm fw-bold px-3" 
                             onclick="window.addToCart({{ $item->id }}, '{{ addslashes($item->item_name) }}', {{ $price }})">
@@ -158,6 +125,22 @@
     </div>
 </div>
 
+<!-- Active Order Floating Bar -->
+@if($activeOrder || session('active_guest_order_id'))
+    @php
+        $activeId = $activeOrder->id ?? session('active_guest_order_id');
+    @endphp
+    <div class="active-order-floating-bar d-flex justify-content-between align-items-center shadow-lg" id="activeOrderNotice">
+        <div>
+            <span class="badge bg-warning text-dark me-1"><i class="fas fa-spinner fa-spin me-1"></i> Running Order</span>
+            <div class="small text-white-50" style="font-size: 11px;">ऑर्डर ट्रैकिंग व बिल देखें</div>
+        </div>
+        <a href="{{ route('guest.order.status', $activeId) }}" class="btn btn-warning btn-sm fw-bold px-3">
+            <i class="fas fa-receipt me-1"></i> View Order
+        </a>
+    </div>
+@endif
+
 <!-- Fixed Bottom Cart Bar -->
 <div class="cart-bar justify-content-between align-items-center" id="cartBar">
     <div>
@@ -169,6 +152,7 @@
     </button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 window.cart = {};
 window.catalogId = {{ $catalog->id }};
@@ -219,10 +203,14 @@ window.renderCart = function() {
     document.getElementById('cartTotalAmount').innerText = totalAmt.toFixed(2);
 
     let cartBar = document.getElementById('cartBar');
+    let activeNotice = document.getElementById('activeOrderNotice');
+
     if (totalQty > 0) {
         cartBar.style.display = 'flex';
+        if(activeNotice) activeNotice.style.display = 'none';
     } else {
         cartBar.style.display = 'none';
+        if(activeNotice) activeNotice.style.display = 'flex';
     }
 };
 
@@ -256,10 +244,7 @@ window.submitOrder = function() {
         submitBtn.innerHTML = 'ऑर्डर भेजें <i class="fas fa-paper-plane ms-1"></i>';
         
         if (data.success) {
-            alert("✅ " + data.message);
-            // कार्ट को खाली करें ताकि ग्राहक खाना खाते समय नया आइटम बाद में जोड़ सके
-            window.cart = {};
-            window.renderCart();
+            window.location.href = data.redirect_url;
         } else {
             alert("❌ " + data.message);
         }

@@ -47,5 +47,7 @@ Route::prefix('employee')->name('employee.')->group(function () {
     require __DIR__ . '/employee.php';
 });
 
-// Public Digital Menu Catalog Route (वेब राउट फ़ाइल में रखें)
+// Public Guest Order Routes (बिना अकाउंट वाले ग्राहकों के लिए)
 Route::get('/c/{slug}', [CatalogController::class, 'showPublicCatalog'])->name('catalogs.public');
+Route::get('/guest/order/{orderId}', [CatalogController::class, 'guestOrderStatus'])->name('guest.order.status');
+Route::post('/guest/order/vacate/{orderId}', [CatalogController::class, 'vacateGuestTable'])->name('guest.order.vacate');
