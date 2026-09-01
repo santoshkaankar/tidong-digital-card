@@ -10,6 +10,7 @@ Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('dashboar
 
 // Kitchen Dashboard Route
 Route::get('/kitchen', [VendoritemController::class, 'kitchenDashboard'])->name('kitchen.orders');
+Route::get('/kitchen', [VendoritemController::class, 'kitchenDashboard'])->name('kitchen.dashboard');
 // Order Complete Route
 Route::post('/kitchen/order/complete/{orderId}', [VendoritemController::class, 'completeOrder'])->name('public.order.complete');
 
