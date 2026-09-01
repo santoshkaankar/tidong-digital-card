@@ -24,7 +24,6 @@ Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.
 Route::get('/card/{slug}', [CardController::class, 'showPublic'])->name('card.show');
 Route::get('/search-locations', [CardController::class, 'searchLocations'])->name('search.locations');
 Route::get('/menu/{slug}', [MenuController::class, 'showPublicMenu'])->name('menu.public');
-Route::post('/menu/{slug}/order', [MenuController::class, 'placeOrder'])->name('menu.order');
 Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'])->name('order.complete');
 
 // Customer Public Scan Routes
@@ -47,7 +46,8 @@ Route::prefix('employee')->name('employee.')->group(function () {
     require __DIR__ . '/employee.php';
 });
 
-// Public Guest Order Routes (बिना अकाउंट वाले ग्राहकों के लिए)
+// Public Guest Order Routes (CatalogController से लिंक्ड)
 Route::get('/c/{slug}', [CatalogController::class, 'showPublicCatalog'])->name('catalogs.public');
+Route::post('/menu/{slug}/order', [CatalogController::class, 'placeOrder'])->name('menu.order');
 Route::get('/guest/order/{orderId}', [CatalogController::class, 'guestOrderStatus'])->name('guest.order.status');
 Route::post('/guest/order/vacate/{orderId}', [CatalogController::class, 'vacateGuestTable'])->name('guest.order.vacate');

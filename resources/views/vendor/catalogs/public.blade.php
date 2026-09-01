@@ -153,6 +153,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 window.cart = {};
 window.catalogId = {{ $catalog->id }};
@@ -227,7 +228,7 @@ window.submitOrder = function() {
     submitBtn.disabled = true;
     submitBtn.innerHTML = 'भेजा जा रहा है...';
 
-    fetch("{{ route('vendor.catalogs.order') }}", {
+    fetch("{{ route('menu.order', $catalog->slug) }}", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

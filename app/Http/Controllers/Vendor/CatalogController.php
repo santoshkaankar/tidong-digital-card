@@ -13,7 +13,6 @@ use Illuminate\Support\Str;
 
 class CatalogController extends Controller
 {
-    // 1. कैटलॉग की लिस्ट और क्रिएशन फॉर्म
     public function index()
     {
         $userId = Auth::id();
@@ -28,7 +27,6 @@ class CatalogController extends Controller
         return view('vendor.catalogs.index', compact('catalogs', 'menuItems'));
     }
 
-    // 2. नया कैटलॉग सेव / अपडेट करना
     public function store(Request $request)
     {
         $request->validate([
@@ -63,21 +61,18 @@ class CatalogController extends Controller
         return redirect()->back()->with('success', $msg);
     }
 
-    // 3. कैटलॉग डिलीट करना
     public function destroy($id)
     {
         Catalog::where('user_id', Auth::id())->where('id', $id)->delete();
         return redirect()->back()->with('success', 'कैटलॉग हटा दिया गया है!');
     }
 
-    // 4. ग्राहक के लिए सार्वजनिक कैटलॉग मेनू पेज
     public function showPublicCatalog($slug)
     {
         $catalog = Catalog::where('slug', $slug)->firstOrFail();
         $items = VendorItem::whereIn('id', $catalog->item_ids ?? [])->get();
         $vendor = User::find($catalog->user_id);
 
-        // चेक करें कि क्या ग्राहक का पहले से कोई लाइव/रनिंग ऑर्डर सेशन चालू है
         $activeOrderId = session('active_guest_order_id');
         $activeOrder = null;
         if ($activeOrderId) {
@@ -87,7 +82,6 @@ class CatalogController extends Controller
         return view('vendor.catalogs.public', compact('catalog', 'items', 'vendor', 'activeOrder'));
     }
 
-    // 5. QR कोड View Page
     public function showQr($id)
     {
         $catalog = Catalog::where('user_id', Auth::id())->findOrFail($id);
@@ -96,7 +90,6 @@ class CatalogController extends Controller
         return view('vendor.catalogs.qr_view', compact('catalog', 'vendor'));
     }
 
-    // 6. लाइव ऑर्डर सेव करना या मौजूदा बिल में नया सामान जोड़ना
     public function placeOrder(Request $request)
     {
         $request->validate([
@@ -121,13 +114,11 @@ class CatalogController extends Controller
             }
 
             if ($existingOrder) {
-                // अगर पहले से ऑर्डर चालू है तो उसी में कुल रकम बढ़ाएँ
                 DB::table('orders')->where('id', $orderId)->update([
                     'total_amount' => $existingOrder->total_amount + $totalAddAmount,
                     'updated_at'   => now(),
                 ]);
             } else {
-                // नया ऑर्डर बनाएँ
                 $orderId = DB::table('orders')->insertGetId([
                     'user_id'        => $catalog->user_id,
                     'menu_id'        => $catalog->id,
@@ -141,7 +132,6 @@ class CatalogController extends Controller
                     'updated_at'     => now(),
                 ]);
 
-                // ग्राहक के ब्राउज़र में सेशन सेव करें
                 session([
                     'active_guest_order_id' => $orderId,
                     'active_catalog_slug'  => $catalog->slug,
@@ -149,7 +139,6 @@ class CatalogController extends Controller
                 ]);
             }
 
-            // आइटम्स इंसर्ट/अपडेट करें
             foreach ($request->cart as $item) {
                 $existingItem = DB::table('order_items')
                     ->where('order_id', $orderId)
@@ -193,7 +182,6 @@ class CatalogController extends Controller
         }
     }
 
-    // 7. ग्राहक के लिए लाइव ऑर्डर स्टेटस देखना
     public function guestOrderStatus($orderId)
     {
         $order = DB::table('orders')->where('id', $orderId)->first();
@@ -203,23 +191,40 @@ class CatalogController extends Controller
 
         $items = DB::table('order_items')->where('order_id', $orderId)->get();
         $catalog = Catalog::find($order->menu_id);
+        $vendor = User::find($order->user_id);
 
-        return view('vendor.catalogs.guest_status', compact('order', 'items', 'catalog'));
+        return view('vendor.catalogs.guest_status', compact('order', 'items', 'catalog', 'vendor'));
     }
 
-    // 8. टेबल खाली करना और ऑर्डर पूरा करना
     public function vacateGuestTable(Request $request, $orderId)
     {
-        DB::table('orders')->where('id', $orderId)->update([
-            'status' => 'completed',
-            'payment_status' => 'paid',
-            'updated_at' => now()
+        $request->validate([
+            'payment_mode' => 'required|in:cash,upi_online'
         ]);
 
-        // ग्राहक के ब्राउज़र से एक्टिव ऑर्डर सेशन हटाएँ
+        $paymentMode = $request->payment_mode;
+
+        if ($paymentMode === 'cash') {
+            DB::table('orders')->where('id', $orderId)->update([
+                'status' => 'completed',
+                'payment_mode' => 'cash',
+                'payment_status' => 'unpaid',
+                'updated_at' => now()
+            ]);
+            $message = 'कैश पेमेंट का अनुरोध दर्ज कर लिया गया है। कृपया काउंटर/वेटर को ₹' . number_format($request->total_amount, 2) . ' का भुगतान करें। धन्यवाद!';
+        } else {
+            DB::table('orders')->where('id', $orderId)->update([
+                'status' => 'completed',
+                'payment_mode' => 'upi_online',
+                'payment_status' => 'paid',
+                'updated_at' => now()
+            ]);
+            $message = 'ऑनलाइन भुगतान की पुष्टि हो गई है। आपकी टेबल खाली कर दी गई है। धन्यवाद!';
+        }
+
         session()->forget(['active_guest_order_id', 'active_catalog_slug', 'active_table_name']);
 
         return redirect()->route('catalogs.public', $request->catalog_slug ?? '')
-                         ->with('success', 'धन्यवाद! आपकी टेबल खाली हो गई है।');
+                         ->with('success', $message);
     }
 }
