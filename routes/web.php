@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\Member\CardController;
 use App\Http\Controllers\Vendor\CatalogController;
+use App\Http\Controllers\Customer\HubController;
+use App\Http\Middleware\DeviceIdentityMiddleware;
 
 // Utility & System Routes
 Route::get('/fix-storage', function () {
@@ -53,3 +55,8 @@ Route::get('/c/{slug}', [CatalogController::class, 'showPublicCatalog'])->name('
 Route::post('/menu/{slug}/order', [CatalogController::class, 'placeOrder'])->name('menu.order');
 Route::get('/guest/order/{orderId}', [CatalogController::class, 'guestOrderStatus'])->name('guest.order.status');
 Route::post('/guest/order/vacate/{orderId}', [CatalogController::class, 'vacateGuestTable'])->name('guest.order.vacate');
+
+// Super-QR Universal Hub (Device Fingerprint Enabled)
+Route::middleware([DeviceIdentityMiddleware::class])->group(function () {
+    Route::get('/hub', [HubController::class, 'index'])->name('customer.hub');
+});

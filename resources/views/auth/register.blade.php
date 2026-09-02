@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="text-center mb-6">
         <h2 class="text-2xl font-bold text-gray-900 tracking-wide">Create Account</h2>
-        <p class="text-sm text-gray-600 mt-1 font-medium">Get your digital identity card in seconds</p>
+        <p class="text-sm text-gray-600 mt-1 font-medium">Register as User, Merchant or Service Partner</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}">
@@ -9,15 +9,15 @@
 
         <!-- Name -->
         <div>
-            <label for="name" class="block font-semibold text-sm text-gray-800">Name</label>
-            <input id="name" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" placeholder="Enter full name" />
+            <label for="name" class="block font-semibold text-sm text-gray-800">Name / Business Name</label>
+            <input id="name" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="name" :value="old('name')" required autofocus placeholder="Enter full name or firm name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2 text-red-600" />
         </div>
 
         <!-- Email Address -->
         <div class="mt-4">
             <label for="email" class="block font-semibold text-sm text-gray-800">Email</label>
-            <input id="email" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="email" name="email" :value="old('email')" required autocomplete="username" placeholder="example@mail.com" />
+            <input id="email" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="email" name="email" :value="old('email')" required placeholder="example@mail.com" />
             <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-600" />
         </div>
 
@@ -31,42 +31,48 @@
         <!-- Username -->
         <div class="mt-4">
             <label for="username" class="block font-semibold text-sm text-gray-800">Username</label>
-            <input id="username" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="username" :value="old('username')" required placeholder="Enter username" />
+            <input id="username" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="username" :value="old('username')" placeholder="Enter username (optional)" />
             <x-input-error :messages="$errors->get('username')" class="mt-2 text-red-600" />
         </div>
 
         <!-- Role Selection -->
-        <div class="mt-4">
-            <label for="role" class="block font-semibold text-sm text-gray-800">Select Role</label>
-            <select id="role" name="role" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" required onchange="toggleBusinessType(this)">
-                <option value="member" {{ old('role') == 'member' ? 'selected' : '' }}>User / Member</option>
-                <option value="business" {{ old('role') == 'business' ? 'selected' : '' }}>Business</option>
-                <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee</option>
-            </select>
-            <x-input-error :messages="$errors->get('role')" class="mt-2 text-red-600" />
-        </div>
+<div class="mt-4">
+    <label for="role" class="block font-semibold text-sm text-gray-800">Select Account Type</label>
+    <select id="role" name="role" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" required onchange="handleRoleChange(this.value)">
+        <option value="member" {{ old('role') == 'member' ? 'selected' : '' }}>Member / Customer / Tourist</option>
+        <option value="business" {{ old('role') == 'business' ? 'selected' : '' }}>Business / Service Partner</option>
+        
+        <!-- Employee Registration Disabled (Approval process required later) -->
+        <!-- <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee</option> -->
+    </select>
+    <x-input-error :messages="$errors->get('role')" class="mt-2 text-red-600" />
+</div>
 
-        <!-- Business Type Selection -->
-        <div class="mt-4" id="business-type-container" style="display: none;">
-            <label for="business_type" class="block font-semibold text-sm text-gray-800">Business Type</label>
-            <select id="business_type" name="business_type" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20">
-                <option value="">-- Select Business Category --</option>
-                @php
-                    $categories = [];
-                    if (\Illuminate\Support\Facades\Schema::hasTable('vendor_categories')) {
-                        $categories = \DB::table('vendor_categories')->get();
-                    }
-                @endphp
+        <!-- Dynamic Business Service Type Section -->
+        <div id="vendor-fields-container" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl" style="display: none;">
+            <div class="mb-3">
+                <label for="service_type" class="block font-semibold text-sm text-gray-800">Select Service Category</label>
+                <select id="service_type" name="service_type" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600" onchange="handleServiceTypeChange(this.value)">
+                    <option value="food">🍽️ Restaurant / Food & Kitchen</option>
+                    <option value="taxi">🚖 Taxi & Tourist Vehicle</option>
+                    <option value="hotel">🏨 Hotel Room Stay</option>
+                    <option value="money_exchange">💱 Money & Currency Exchange</option>
+                    <option value="emporium">🛍️ Emporium & Souvenir Store</option>
+                    <option value="guide">🚩 Approved Tourist Guide</option>
+                </select>
+            </div>
 
-                @foreach($categories as $cat)
-                    <option value="{{ $cat->name ?? $cat->slug }}" {{ old('business_type') == ($cat->name ?? $cat->slug) ? 'selected' : '' }}>
-                        {{ $cat->name }}
-                    </option>
-                @endforeach
+            <!-- Taxi Vehicle Field -->
+            <div id="vehicle-field" class="mt-3" style="display: none;">
+                <label for="vehicle_no" class="block font-semibold text-sm text-gray-800">Vehicle Number / Permit</label>
+                <input id="vehicle_no" name="vehicle_no" type="text" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm" placeholder="e.g. RJ-14-TA-1234" />
+            </div>
 
-                <option value="other" {{ old('business_type') == 'other' ? 'selected' : '' }}>Other</option>
-            </select>
-            <x-input-error :messages="$errors->get('business_type')" class="mt-2 text-red-600" />
+            <!-- License Field for Guide & Exchange -->
+            <div id="license-field" class="mt-3" style="display: none;">
+                <label for="license_no" class="block font-semibold text-sm text-gray-800">Govt License / Reg. Number</label>
+                <input id="license_no" name="license_no" type="text" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm" placeholder="e.g. LIC-2026-8890" />
+            </div>
         </div>
 
         <!-- Password -->
@@ -80,28 +86,15 @@
         <div class="mt-4">
             <label for="password_confirmation" class="block font-semibold text-sm text-gray-800">Confirm Password</label>
             <input id="password_confirmation" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="password" name="password_confirmation" required autocomplete="new-password" placeholder="••••••••" />
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2 text-red-600" />
         </div>
 
-        <!-- Terms Checkbox -->
-        <div class="mt-4 block">
-            <label for="terms" class="inline-flex items-center cursor-pointer">
-                <input id="terms" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="terms" required>
-                <span class="ms-2 text-xs text-gray-700 font-medium">
-                    I agree to the <a href="#" target="_blank" class="underline text-blue-600 hover:text-blue-800">Terms & Conditions</a> and <a href="#" target="_blank" class="underline text-blue-600 hover:text-blue-800">Privacy Policy</a>
-                </span>
-            </label>
-            <x-input-error :messages="$errors->get('terms')" class="mt-2 text-red-600" />
-        </div>
-
-        <!-- Visible Solid Blue Register Button -->
+        <!-- Register Button -->
         <div class="mt-6">
             <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition duration-200">
-                REGISTER
+                REGISTER NOW
             </button>
         </div>
 
-        <!-- Already Registered Link -->
         <div class="text-center mt-5 text-sm text-gray-600 font-medium">
             Already registered? 
             <a href="{{ route('login') }}" class="font-bold text-blue-600 hover:text-blue-800 underline ms-1">
@@ -111,21 +104,24 @@
     </form>
 
     <script>
-        function toggleBusinessType(select) {
-            const container = document.getElementById('business-type-container');
-            if (select.value === 'business') {
+        function handleRoleChange(role) {
+            const container = document.getElementById('vendor-fields-container');
+            if (role === 'business') {
                 container.style.display = 'block';
+                handleServiceTypeChange(document.getElementById('service_type').value);
             } else {
                 container.style.display = 'none';
-                document.getElementById('business_type').value = '';
             }
         }
-        
+
+        function handleServiceTypeChange(type) {
+            document.getElementById('vehicle-field').style.display = (type === 'taxi') ? 'block' : 'none';
+            document.getElementById('license-field').style.display = (type === 'money_exchange' || type === 'guide') ? 'block' : 'none';
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const roleSelect = document.getElementById('role');
-            if (roleSelect && roleSelect.value === 'business') {
-                document.getElementById('business-type-container').style.display = 'block';
-            }
+            if (roleSelect) handleRoleChange(roleSelect.value);
         });
     </script>
 </x-guest-layout>

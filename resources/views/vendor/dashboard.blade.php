@@ -130,16 +130,16 @@
         /* Mobile View Media Queries (< 992px) */
         @media (max-width: 991.98px) {
             .sidebar {
-                left: -270px; /* Hide sidebar off-screen by default */
+                left: -270px;
             }
             .sidebar.show {
-                left: 0; /* Slide in when open */
+                left: 0;
             }
             .sidebar-overlay.show {
                 display: block;
             }
             .main-content {
-                margin-left: 0 !important; /* Full width on mobile */
+                margin-left: 0 !important;
             }
             .content-body {
                 padding: 15px;
@@ -155,7 +155,7 @@
     <!-- Sidebar Navigation -->
     <div class="sidebar" id="sidebar">
         <div class="brand-header d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-store me-2 text-primary"></i> Business Panel</span>
+            <span><i class="fas fa-store me-2 text-primary"></i> Partner Panel</span>
             <button class="btn btn-sm text-white d-lg-none" onclick="toggleSidebar()">✕</button>
         </div>
         <ul class="sidebar-menu">
@@ -163,49 +163,57 @@
                 <a href="{{ route('vendor.dashboard') }}" class="{{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}"><i class="fas fa-home"></i> Dashboard</a>
             </li>
             
-            <!-- Kitchen Dashboard Button -->
-            <li class="my-2">
-                <a href="{{ route('vendor.kitchen.dashboard') }}" class="btn btn-warning text-dark fw-bold w-100 justify-content-center shadow-sm">
-                    <i class="bi bi-shop me-1"></i> 🔔 Kitchen Live Screen
-                </a>
-            </li>
+            @php $serviceType = Auth::user()->service_type ?? 'food'; @endphp
 
-            <!-- Catalog Setup Options -->
-            <li class="menu-section-title">CATALOG SETUP</li>
-            <li>
-                <a href="{{ route('vendor.categories.index') }}"><i class="fas fa-tags"></i> Add Category</a>
-            </li>
-            <li>
-                <a href="{{ route('vendor.inventory.index') }}"><i class="fas fa-boxes"></i> Add Item</a>
-            </li>
+            <!-- DYNAMIC SIDEBAR OPTIONS BASED ON SERVICE TYPE -->
+            @if($serviceType == 'food')
+                <li class="my-2">
+                    <a href="{{ route('vendor.kitchen.dashboard') }}" class="btn btn-warning text-dark fw-bold w-100 justify-content-center shadow-sm">
+                        <i class="bi bi-shop me-1"></i> 🔔 Kitchen Live Screen
+                    </a>
+                </li>
+                <li class="menu-section-title">CATALOG SETUP</li>
+                <li><a href="{{ route('vendor.categories.index') }}"><i class="fas fa-tags"></i> Add Category</a></li>
+                <li><a href="{{ route('vendor.inventory.index') }}"><i class="fas fa-boxes"></i> Add Item</a></li>
+                <li><a href="javascript:void(0)" onclick="openRequestModal()"><i class="fas fa-plus-circle"></i> Request New Item</a></li>
+                <li><a href="{{ route('vendor.pricing.index') }}"><i class="fas fa-rupee-sign"></i> Add Price</a></li>
+                <li><a href="{{ route('vendor.catalogs.index') }}"><i class="fas fa-book-open"></i> Catalog</a></li>
+                <li class="menu-section-title">QR & TABLES</li>
+                <li><a href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode"></i> Table QR Code</a></li>
             
-            <!-- Request New Item Link -->
-            <li>
-                <a href="javascript:void(0)" onclick="openRequestModal()">
-                    <i class="fas fa-plus-circle"></i> Request New Item
-                </a>
-            </li>
-            
-            <li>
-                <a href="{{ route('vendor.pricing.index') }}"><i class="fas fa-rupee-sign"></i> Add Price</a>
-            </li>
-            <li>
-                <a href="{{ route('vendor.catalogs.index') }}"><i class="fas fa-book-open"></i> Catalog</a>
-            </li>
+            @elseif($serviceType == 'taxi')
+                <li class="menu-section-title">TAXI & DRIVER OPS</li>
+                <li><a href="javascript:void(0)"><i class="fas fa-route text-warning"></i> Active Rides</a></li>
+                <li><a href="javascript:void(0)"><i class="fas fa-history"></i> Ride History</a></li>
+                <li><a href="javascript:void(0)"><i class="fas fa-car-side"></i> Vehicle Documents</a></li>
 
-            <!-- Operations & Tracking -->
+            @elseif($serviceType == 'money_exchange')
+                <li class="menu-section-title">FX CURRENCY OPS</li>
+                <li><a href="javascript:void(0)"><i class="fas fa-coins text-success"></i> Exchange Rates Master</a></li>
+                <li><a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> Today Cash Delivery</a></li>
+                <li><a href="javascript:void(0)"><i class="fas fa-file-invoice-dollar"></i> Forex Receipts</a></li>
+
+            @elseif($serviceType == 'emporium')
+                <li class="menu-section-title">EMPORIUM SHOWCASE</li>
+                <li><a href="{{ route('vendor.categories.index') }}"><i class="fas fa-tags"></i> Craft Categories</a></li>
+                <li><a href="{{ route('vendor.inventory.index') }}"><i class="fas fa-gem text-info"></i> Souvenir Items</a></li>
+                <li><a href="{{ route('vendor.catalogs.index') }}"><i class="fas fa-store"></i> Digital Showcase</a></li>
+                <li><a href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode"></i> Store QR Standee</a></li>
+
+            @elseif($serviceType == 'guide')
+                <li class="menu-section-title">TOURIST GUIDE OPS</li>
+                <li><a href="javascript:void(0)"><i class="fas fa-flag text-danger"></i> Tour Bookings</a></li>
+                <li><a href="javascript:void(0)"><i class="fas fa-id-card"></i> Badge & Credentials</a></li>
+                <li><a href="javascript:void(0)"><i class="fas fa-language"></i> Spoken Languages</a></li>
+            @endif
+
+            <!-- Common Operations & Tracking -->
             <li class="menu-section-title">OPERATIONS</li>
             <li>
-                <a href="{{ Route::has('vendor.orders.index') ? route('vendor.orders.index') : '#' }}"><i class="fas fa-shopping-cart"></i> Order Status</a>
+                <a href="{{ Route::has('vendor.orders.index') ? route('vendor.orders.index') : '#' }}"><i class="fas fa-shopping-cart"></i> Booking / Orders</a>
             </li>
             <li>
                 <a href="{{ Route::has('vendor.payments.index') ? route('vendor.payments.index') : '#' }}"><i class="fas fa-wallet"></i> Payment Status</a>
-            </li>
-
-            <!-- QR Code Section -->
-            <li class="menu-section-title">QR & TABLES</li>
-            <li>
-                <a href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode"></i> Table QR Code</a>
             </li>
 
             <!-- Account Settings / Logout -->
@@ -237,7 +245,8 @@
                     <i class="fas fa-bars fs-5"></i>
                 </button>
                 <span class="badge bg-primary me-2">{{ ucfirst(Auth::user()->role ?? 'Business') }}</span>
-                <span class="text-muted small d-none d-sm-inline">Business Type: <strong class="text-dark">{{ ucfirst(Auth::user()->business_type ?? 'General Store') }}</strong></span>
+                <span class="badge bg-dark text-uppercase me-2">{{ Auth::user()->service_type ?? 'Food' }}</span>
+                <span class="text-muted small d-none d-sm-inline">Mobile: <strong class="text-dark">{{ Auth::user()->mobile ?? 'N/A' }}</strong></span>
             </div>
 
             <!-- Profile Dropdown -->
@@ -275,9 +284,11 @@
             @endif
 
             <!-- Welcome Header -->
-            <div class="mb-4">
-                <h3 class="fw-bold text-dark">Welcome back, {{ Auth::user()->name ?? 'User' }}! 👋</h3>
-                <p class="text-muted">Here is your live business overview, catalog operations, and daily performance metrics.</p>
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold text-dark">Welcome back, {{ Auth::user()->name ?? 'User' }}! 👋</h3>
+                    <p class="text-muted mb-0">Managing Service: <strong class="text-primary text-uppercase">{{ Auth::user()->service_type ?? 'Food & Restaurant' }}</strong></p>
+                </div>
             </div>
 
             <!-- Quick Metrics Row -->
@@ -285,7 +296,7 @@
                 <div class="col-6 col-md-3">
                     <div class="card-box d-flex align-items-center justify-content-between p-3">
                         <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Total Orders</p>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Total Requests</p>
                             <h3 class="fw-bold text-primary mb-0">{{ $totalOrders ?? 0 }}</h3>
                         </div>
                         <div class="stat-icon bg-primary-subtle text-primary">
@@ -297,7 +308,7 @@
                 <div class="col-6 col-md-3">
                     <div class="card-box d-flex align-items-center justify-content-between p-3">
                         <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Running</p>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Active / Running</p>
                             <h3 class="fw-bold text-warning mb-0">{{ $runningOrders ?? 0 }}</h3>
                         </div>
                         <div class="stat-icon bg-warning-subtle text-warning">
@@ -321,7 +332,7 @@
                 <div class="col-6 col-md-3">
                     <div class="card-box d-flex align-items-center justify-content-between p-3">
                         <div>
-                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Today's Sales</p>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Today Collection</p>
                             <h3 class="fw-bold text-info mb-0">₹{{ number_format($todayCollection ?? 0, 2) }}</h3>
                         </div>
                         <div class="stat-icon bg-info-subtle text-info">
@@ -331,7 +342,36 @@
                 </div>
             </div>
 
-            <!-- Quick Action Cards -->
+            <!-- DYNAMIC DASHBOARD CONTENT BASED ON SERVICE TYPE -->
+            @if(Auth::user()->service_type == 'taxi')
+                <div class="card-box border-start border-4 border-warning mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="fw-bold text-dark"><i class="fas fa-taxi me-2 text-warning"></i> Taxi Driver Duty Console</h5>
+                            <p class="text-muted small mb-0">Vehicle Number: <strong>{{ Auth::user()->vehicle_no ?? 'Not Added' }}</strong></p>
+                        </div>
+                        <button class="btn btn-success fw-bold"><i class="fas fa-power-off me-1"></i> Switch ONLINE</button>
+                    </div>
+                </div>
+            @elseif(Auth::user()->service_type == 'money_exchange')
+                <div class="card-box border-start border-4 border-success mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="fw-bold text-dark"><i class="fas fa-coins me-2 text-success"></i> Currency Exchange Rate Console</h5>
+                            <p class="text-muted small mb-0">RBI/Govt License: <strong>{{ Auth::user()->license_no ?? 'Not Added' }}</strong></p>
+                        </div>
+                        <button class="btn btn-primary fw-bold btn-sm"><i class="fas fa-sync me-1"></i> Update FX Rates</button>
+                    </div>
+                    <div class="row g-2 text-center">
+                        <div class="col-3"><div class="p-2 bg-light rounded border"><small class="text-muted font-bold">USD</small><div class="fw-bold">₹83.20</div></div></div>
+                        <div class="col-3"><div class="p-2 bg-light rounded border"><small class="text-muted font-bold">EUR</small><div class="fw-bold">₹90.10</div></div></div>
+                        <div class="col-3"><div class="p-2 bg-light rounded border"><small class="text-muted font-bold">GBP</small><div class="fw-bold">₹105.40</div></div></div>
+                        <div class="col-3"><div class="p-2 bg-light rounded border"><small class="text-muted font-bold">JPY</small><div class="fw-bold">₹0.56</div></div></div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Action Cards Section -->
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="card-box h-100 d-flex flex-column justify-content-between">
@@ -348,22 +388,21 @@
                     <div class="card-box h-100 d-flex flex-column justify-content-between">
                         <div>
                             <div class="text-success fs-3 mb-2"><i class="fas fa-qrcode"></i></div>
-                            <h5 class="fw-bold">Catalog QR Code & Menu Links</h5>
-                            <p class="text-muted small">Generate and download unique digital menu QR codes for each table or godown section.</p>
+                            <h5 class="fw-bold">QR Code & Hub Links</h5>
+                            <p class="text-muted small">Generate and download unique digital QR codes for tables, rooms, or counters.</p>
                         </div>
                         <a href="{{ route('vendor.qrcode') }}" class="btn btn-success mt-3 w-100"><i class="fas fa-qrcode me-1"></i> View / Download QR Codes</a>
                     </div>
                 </div>
 
-                <!-- NEW: Profile & Payment QR Card -->
                 <div class="col-md-4">
                     <div class="card-box h-100 d-flex flex-column justify-content-between border-start border-4 border-info">
                         <div>
                             <div class="text-info fs-3 mb-2"><i class="fas fa-user-cog"></i></div>
-                            <h5 class="fw-bold">Profile & UPI QR Settings</h5>
+                            <h5 class="fw-bold">Profile & Payment Settings</h5>
                             <p class="text-muted small">Upload your PhonePe/GPay QR scanner image for customer online payments.</p>
                         </div>
-                        <a href="{{ route('vendor.profile') }}" class="btn btn-info text-white fw-bold mt-3 w-100"><i class="fas fa-cog me-1"></i> Setup Payment QR</a>
+                        <a href="{{ route('vendor.profile') }}" class="btn btn-info text-white fw-bold mt-3 w-100"><i class="fas fa-cog me-1"></i> Setup Profile & Payment QR</a>
                     </div>
                 </div>
             </div>
@@ -386,7 +425,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Item Name <span class="text-danger">*</span></label>
-                            <input type="text" name="item_name" class="form-control" placeholder="e.g. Paneer Butter Masala" required>
+                            <input type="text" name="item_name" class="form-control" placeholder="e.g. Item / Product Name" required>
                         </div>
 
                         <div class="mb-3">
@@ -394,7 +433,7 @@
                             @php
                                 $categories = \App\Models\Vendor\ItemCategory::pluck('name');
                                 if($categories->isEmpty()){
-                                    $categories = collect(['General', 'Main Course', 'Starters', 'Beverages', 'Desserts', 'Fast Food']);
+                                    $categories = collect(['General', 'Main Course', 'Starters', 'Beverages', 'Desserts', 'Souvenirs', 'Handicrafts']);
                                 }
                             @endphp
                             <select name="category" class="form-select" required>

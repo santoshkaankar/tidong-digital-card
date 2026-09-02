@@ -22,13 +22,16 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'mobile' => ['required', 'string', 'max:15', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string'],
-        ]);
+    'name' => ['required', 'string', 'max:255'],
+    'username' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
+    'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+    'mobile' => ['required', 'string', 'max:15', 'unique:'.User::class],
+    'password' => ['required', 'confirmed', Rules\Password::defaults()],
+    'role' => ['required', 'string', 'in:member,business'], // 'employee' is excluded here
+    'service_type' => ['nullable', 'string', 'max:100'],
+    'vehicle_no' => ['nullable', 'string', 'max:100'],
+    'license_no' => ['nullable', 'string', 'max:100'],
+]);
 
         $user = User::create([
             'name' => $request->name,
@@ -39,12 +42,15 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'business_type' => $request->business_type ?? null,
+            'service_type' => $request->service_type ?? 'food',
+            'vehicle_no' => $request->vehicle_no ?? null,
+            'license_no' => $request->license_no ?? null,
         ]);
 
         event(new Registered($user));
         Auth::login($user);
 
-        // Role-based redirection after registration matching web.php
+        // Role-based redirection after registration
         if ($user->role === 'admin') {
             return redirect(route('admin.dashboard', absolute: false));
         } elseif ($user->role === 'business') {
