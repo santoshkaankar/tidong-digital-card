@@ -16,6 +16,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kitchen', [VendoritemController::class, 'kitchenDashboard'])->name('kitchen.orders');
     Route::get('/kitchen/live', [VendoritemController::class, 'kitchenDashboard'])->name('kitchen.dashboard');
     
+    // Profile Route
+    Route::get('/profile', [VendorDashboardController::class, 'profile'])->name('profile');
+    Route::post('/profile/update', [VendorDashboardController::class, 'updateProfile'])->name('profile.update');
+
     // Order Complete Route
     Route::post('/kitchen/order/complete/{orderId}', [VendoritemController::class, 'completeOrder'])->name('public.order.complete');
 

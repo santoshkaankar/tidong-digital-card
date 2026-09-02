@@ -160,7 +160,7 @@
         </div>
         <ul class="sidebar-menu">
             <li>
-                <a href="{{ route('vendor.dashboard') }}" class="active"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="{{ route('vendor.dashboard') }}" class="{{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}"><i class="fas fa-home"></i> Dashboard</a>
             </li>
             
             <!-- Kitchen Dashboard Button -->
@@ -196,10 +196,10 @@
             <!-- Operations & Tracking -->
             <li class="menu-section-title">OPERATIONS</li>
             <li>
-                <a href="#"><i class="fas fa-shopping-cart"></i> Order Status</a>
+                <a href="{{ Route::has('vendor.orders.index') ? route('vendor.orders.index') : '#' }}"><i class="fas fa-shopping-cart"></i> Order Status</a>
             </li>
             <li>
-                <a href="#"><i class="fas fa-wallet"></i> Payment Status</a>
+                <a href="{{ Route::has('vendor.payments.index') ? route('vendor.payments.index') : '#' }}"><i class="fas fa-wallet"></i> Payment Status</a>
             </li>
 
             <!-- QR Code Section -->
@@ -210,6 +210,11 @@
 
             <!-- Account Settings / Logout -->
             <li class="menu-section-title">ACCOUNT</li>
+            <li>
+                <a href="{{ route('vendor.profile') }}" class="{{ request()->routeIs('vendor.profile') ? 'active' : '' }}">
+                    <i class="fas fa-user-cog text-info"></i> Profile & QR Setup
+                </a>
+            </li>
             <li class="mb-2">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -244,7 +249,7 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
                     <li><h6 class="dropdown-header">Welcome, {{ Auth::user()->name ?? 'User' }}</h6></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-user fa-fw me-2"></i> Profile Settings</a></li>
+                    <li><a class="dropdown-item" href="{{ route('vendor.profile') }}"><i class="fas fa-user-cog fa-fw me-2 text-primary"></i> Profile & QR Settings</a></li>
                     <li><a class="dropdown-item" href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode fa-fw me-2"></i> My QR Code</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
@@ -276,59 +281,59 @@
             </div>
 
             <!-- Quick Metrics Row -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="card-box d-flex align-items-center justify-content-between p-3">
-            <div>
-                <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Total Orders</p>
-                <h3 class="fw-bold text-primary mb-0">{{ $totalOrders ?? 0 }}</h3>
-            </div>
-            <div class="stat-icon bg-primary-subtle text-primary">
-                <i class="fas fa-shopping-bag"></i>
-            </div>
-        </div>
-    </div>
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="card-box d-flex align-items-center justify-content-between p-3">
+                        <div>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Total Orders</p>
+                            <h3 class="fw-bold text-primary mb-0">{{ $totalOrders ?? 0 }}</h3>
+                        </div>
+                        <div class="stat-icon bg-primary-subtle text-primary">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="col-6 col-md-3">
-        <div class="card-box d-flex align-items-center justify-content-between p-3">
-            <div>
-                <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Running</p>
-                <h3 class="fw-bold text-warning mb-0">{{ $runningOrders ?? 0 }}</h3>
-            </div>
-            <div class="stat-icon bg-warning-subtle text-warning">
-                <i class="fas fa-spinner"></i>
-            </div>
-        </div>
-    </div>
+                <div class="col-6 col-md-3">
+                    <div class="card-box d-flex align-items-center justify-content-between p-3">
+                        <div>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Running</p>
+                            <h3 class="fw-bold text-warning mb-0">{{ $runningOrders ?? 0 }}</h3>
+                        </div>
+                        <div class="stat-icon bg-warning-subtle text-warning">
+                            <i class="fas fa-spinner"></i>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="col-6 col-md-3">
-        <div class="card-box d-flex align-items-center justify-content-between p-3">
-            <div>
-                <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Completed</p>
-                <h3 class="fw-bold text-success mb-0">{{ $completedOrders ?? 0 }}</h3>
-            </div>
-            <div class="stat-icon bg-success-subtle text-success">
-                <i class="fas fa-check-circle"></i>
-            </div>
-        </div>
-    </div>
+                <div class="col-6 col-md-3">
+                    <div class="card-box d-flex align-items-center justify-content-between p-3">
+                        <div>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Completed</p>
+                            <h3 class="fw-bold text-success mb-0">{{ $completedOrders ?? 0 }}</h3>
+                        </div>
+                        <div class="stat-icon bg-success-subtle text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="col-6 col-md-3">
-        <div class="card-box d-flex align-items-center justify-content-between p-3">
-            <div>
-                <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Today's Sales</p>
-                <h3 class="fw-bold text-info mb-0">₹{{ number_format($todayCollection ?? 0, 2) }}</h3>
+                <div class="col-6 col-md-3">
+                    <div class="card-box d-flex align-items-center justify-content-between p-3">
+                        <div>
+                            <p class="text-muted small text-uppercase mb-1 fw-bold" style="font-size: 0.75rem;">Today's Sales</p>
+                            <h3 class="fw-bold text-info mb-0">₹{{ number_format($todayCollection ?? 0, 2) }}</h3>
+                        </div>
+                        <div class="stat-icon bg-info-subtle text-info">
+                            <i class="fas fa-rupee-sign"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="stat-icon bg-info-subtle text-info">
-                <i class="fas fa-rupee-sign"></i>
-            </div>
-        </div>
-    </div>
-</div>
 
             <!-- Quick Action Cards -->
             <div class="row g-4">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card-box h-100 d-flex flex-column justify-content-between">
                         <div>
                             <div class="text-primary fs-3 mb-2"><i class="fas fa-boxes"></i></div>
@@ -339,7 +344,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card-box h-100 d-flex flex-column justify-content-between">
                         <div>
                             <div class="text-success fs-3 mb-2"><i class="fas fa-qrcode"></i></div>
@@ -347,6 +352,18 @@
                             <p class="text-muted small">Generate and download unique digital menu QR codes for each table or godown section.</p>
                         </div>
                         <a href="{{ route('vendor.qrcode') }}" class="btn btn-success mt-3 w-100"><i class="fas fa-qrcode me-1"></i> View / Download QR Codes</a>
+                    </div>
+                </div>
+
+                <!-- NEW: Profile & Payment QR Card -->
+                <div class="col-md-4">
+                    <div class="card-box h-100 d-flex flex-column justify-content-between border-start border-4 border-info">
+                        <div>
+                            <div class="text-info fs-3 mb-2"><i class="fas fa-user-cog"></i></div>
+                            <h5 class="fw-bold">Profile & UPI QR Settings</h5>
+                            <p class="text-muted small">Upload your PhonePe/GPay QR scanner image for customer online payments.</p>
+                        </div>
+                        <a href="{{ route('vendor.profile') }}" class="btn btn-info text-white fw-bold mt-3 w-100"><i class="fas fa-cog me-1"></i> Setup Payment QR</a>
                     </div>
                 </div>
             </div>
