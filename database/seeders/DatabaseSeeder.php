@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CountrySeeder::class,
             PincodeSeeder::class,
+            GlobalItemsSeeder::class,
             
         ]);
     }
