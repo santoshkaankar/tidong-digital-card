@@ -13,7 +13,6 @@
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        /* Desktop Sidebar Styling */
         .sidebar {
             width: 260px;
             height: 100vh;
@@ -71,7 +70,6 @@
             font-size: 0.95rem;
         }
 
-        /* Desktop Main Layout */
         .main-content {
             margin-left: 260px;
             display: flex;
@@ -80,7 +78,6 @@
             transition: all 0.3s ease-in-out;
         }
 
-        /* Top Navbar */
         .top-navbar {
             height: 70px;
             background: #ffffff;
@@ -115,7 +112,6 @@
             font-size: 1.25rem;
         }
 
-        /* Mobile Overlay Styling */
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -127,29 +123,17 @@
             z-index: 1040;
         }
 
-        /* Mobile View Media Queries (< 992px) */
         @media (max-width: 991.98px) {
-            .sidebar {
-                left: -270px;
-            }
-            .sidebar.show {
-                left: 0;
-            }
-            .sidebar-overlay.show {
-                display: block;
-            }
-            .main-content {
-                margin-left: 0 !important;
-            }
-            .content-body {
-                padding: 15px;
-            }
+            .sidebar { left: -270px; }
+            .sidebar.show { left: 0; }
+            .sidebar-overlay.show { display: block; }
+            .main-content { margin-left: 0 !important; }
+            .content-body { padding: 15px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Mobile Overlay Background -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar Navigation -->
@@ -163,10 +147,13 @@
                 <a href="{{ route('vendor.dashboard') }}" class="{{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}"><i class="fas fa-home"></i> Dashboard</a>
             </li>
             
-            @php $serviceType = Auth::user()->service_type ?? 'food'; @endphp
+            @php
+                $businessType = strtolower(Auth::user()->business_type ?? 'food');
+                $serviceName  = strtoupper(str_replace('_', ' ', $businessType));
+            @endphp
 
-            <!-- DYNAMIC SIDEBAR OPTIONS BASED ON SERVICE TYPE -->
-            @if($serviceType == 'food')
+            <!-- DYNAMIC SIDEBAR OPTIONS BASED ON BUSINESS TYPE -->
+            @if($businessType == 'food')
                 <li class="my-2">
                     <a href="{{ route('vendor.kitchen.dashboard') }}" class="btn btn-warning text-dark fw-bold w-100 justify-content-center shadow-sm">
                         <i class="bi bi-shop me-1"></i> 🔔 Kitchen Live Screen
@@ -181,33 +168,33 @@
                 <li class="menu-section-title">QR & TABLES</li>
                 <li><a href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode"></i> Table QR Code</a></li>
             
-            @elseif($serviceType == 'taxi')
+            @elseif($businessType == 'taxi')
                 <li class="menu-section-title">TAXI & DRIVER OPS</li>
                 <li><a href="javascript:void(0)"><i class="fas fa-route text-warning"></i> Active Rides</a></li>
                 <li><a href="javascript:void(0)"><i class="fas fa-history"></i> Ride History</a></li>
                 <li><a href="javascript:void(0)"><i class="fas fa-car-side"></i> Vehicle Documents</a></li>
 
-            @elseif($serviceType == 'money_exchange')
+            @elseif($businessType == 'money_exchange')
                 <li class="menu-section-title">FX CURRENCY OPS</li>
                 <li><a href="javascript:void(0)"><i class="fas fa-coins text-success"></i> Exchange Rates Master</a></li>
                 <li><a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> Today Cash Delivery</a></li>
                 <li><a href="javascript:void(0)"><i class="fas fa-file-invoice-dollar"></i> Forex Receipts</a></li>
 
-            @elseif($serviceType == 'emporium')
+            @elseif($businessType == 'emporium')
                 <li class="menu-section-title">EMPORIUM SHOWCASE</li>
                 <li><a href="{{ route('vendor.categories.index') }}"><i class="fas fa-tags"></i> Craft Categories</a></li>
                 <li><a href="{{ route('vendor.inventory.index') }}"><i class="fas fa-gem text-info"></i> Souvenir Items</a></li>
+                <li><a href="javascript:void(0)" onclick="openRequestModal()"><i class="fas fa-plus-circle"></i> Request New Item</a></li>
                 <li><a href="{{ route('vendor.catalogs.index') }}"><i class="fas fa-store"></i> Digital Showcase</a></li>
                 <li><a href="{{ route('vendor.qrcode') }}"><i class="fas fa-qrcode"></i> Store QR Standee</a></li>
 
-            @elseif($serviceType == 'guide')
+            @elseif($businessType == 'guide')
                 <li class="menu-section-title">TOURIST GUIDE OPS</li>
                 <li><a href="javascript:void(0)"><i class="fas fa-flag text-danger"></i> Tour Bookings</a></li>
                 <li><a href="javascript:void(0)"><i class="fas fa-id-card"></i> Badge & Credentials</a></li>
                 <li><a href="javascript:void(0)"><i class="fas fa-language"></i> Spoken Languages</a></li>
             @endif
 
-            <!-- Common Operations & Tracking -->
             <li class="menu-section-title">OPERATIONS</li>
             <li>
                 <a href="{{ Route::has('vendor.orders.index') ? route('vendor.orders.index') : '#' }}"><i class="fas fa-shopping-cart"></i> Booking / Orders</a>
@@ -216,7 +203,6 @@
                 <a href="{{ Route::has('vendor.payments.index') ? route('vendor.payments.index') : '#' }}"><i class="fas fa-wallet"></i> Payment Status</a>
             </li>
 
-            <!-- Account Settings / Logout -->
             <li class="menu-section-title">ACCOUNT</li>
             <li>
                 <a href="{{ route('vendor.profile') }}" class="{{ request()->routeIs('vendor.profile') ? 'active' : '' }}">
@@ -240,16 +226,14 @@
         <!-- Top Navbar -->
         <nav class="top-navbar">
             <div class="d-flex align-items-center">
-                <!-- Toggle Button for Mobile View -->
                 <button class="btn btn-light border me-3 d-lg-none" type="button" onclick="toggleSidebar()">
                     <i class="fas fa-bars fs-5"></i>
                 </button>
                 <span class="badge bg-primary me-2">{{ ucfirst(Auth::user()->role ?? 'Business') }}</span>
-                <span class="badge bg-dark text-uppercase me-2">{{ Auth::user()->service_type ?? 'Food' }}</span>
+                <span class="badge bg-dark text-uppercase me-2">{{ $serviceName }}</span>
                 <span class="text-muted small d-none d-sm-inline">Mobile: <strong class="text-dark">{{ Auth::user()->mobile ?? 'N/A' }}</strong></span>
             </div>
 
-            <!-- Profile Dropdown -->
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'User') }}&background=2563eb&color=fff" alt="Profile" class="me-2">
@@ -283,11 +267,11 @@
                 </div>
             @endif
 
-            <!-- Welcome Header -->
+            <!-- Welcome Header Dynamic -->
             <div class="mb-4 d-flex justify-content-between align-items-center">
                 <div>
                     <h3 class="fw-bold text-dark">Welcome back, {{ Auth::user()->name ?? 'User' }}! 👋</h3>
-                    <p class="text-muted mb-0">Managing Service: <strong class="text-primary text-uppercase">{{ Auth::user()->service_type ?? 'Food & Restaurant' }}</strong></p>
+                    <p class="text-muted mb-0">Managing Service: <strong class="text-primary text-uppercase">{{ $serviceName }}</strong></p>
                 </div>
             </div>
 
@@ -342,8 +326,8 @@
                 </div>
             </div>
 
-            <!-- DYNAMIC DASHBOARD CONTENT BASED ON SERVICE TYPE -->
-            @if(Auth::user()->service_type == 'taxi')
+            <!-- DYNAMIC DASHBOARD CONTENT BASED ON BUSINESS TYPE -->
+            @if($businessType == 'taxi')
                 <div class="card-box border-start border-4 border-warning mb-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -353,7 +337,7 @@
                         <button class="btn btn-success fw-bold"><i class="fas fa-power-off me-1"></i> Switch ONLINE</button>
                     </div>
                 </div>
-            @elseif(Auth::user()->service_type == 'money_exchange')
+            @elseif($businessType == 'money_exchange')
                 <div class="card-box border-start border-4 border-success mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
@@ -431,7 +415,12 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">Category <span class="text-danger">*</span></label>
                             @php
-                                $categories = \App\Models\Vendor\ItemCategory::pluck('name');
+                                try {
+                                    $categories = \App\Models\Vendor\ItemCategory::pluck('name');
+                                } catch (\Exception $e) {
+                                    $categories = collect([]);
+                                }
+
                                 if($categories->isEmpty()){
                                     $categories = collect(['General', 'Main Course', 'Starters', 'Beverages', 'Desserts', 'Souvenirs', 'Handicrafts']);
                                 }
@@ -480,7 +469,7 @@
     function openRequestModal() {
         var modalElement = document.getElementById('requestNewItemModal');
         if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-            var myModal = new bootstrap.Modal(modalElement);
+            var myModal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
             myModal.show();
         } else {
             modalElement.classList.add('show');
@@ -491,9 +480,20 @@
 
     function closeRequestModal() {
         var modalElement = document.getElementById('requestNewItemModal');
-        modalElement.classList.remove('show');
-        modalElement.style.display = 'none';
-        document.body.classList.remove('modal-open');
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            var myModal = bootstrap.Modal.getInstance(modalElement);
+            if (myModal) {
+                myModal.hide();
+            } else {
+                modalElement.classList.remove('show');
+                modalElement.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        } else {
+            modalElement.classList.remove('show');
+            modalElement.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
     }
     </script>
 </body>

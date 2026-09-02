@@ -8,16 +8,15 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('service_type')->default('food')->after('role'); // food, taxi, hotel, money_exchange, emporium, guide
-            $table->string('vehicle_no')->nullable()->after('service_type'); // For Taxi Vendor
-            $table->string('license_no')->nullable()->after('vehicle_no'); // For Guide / Money Exchange
-        });
+    $table->string('vehicle_no')->nullable()->after('service_type');
+    $table->string('license_no')->nullable()->after('vehicle_no');
+});
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['service_type', 'vehicle_no', 'license_no']);
+            $table->dropColumn(['vehicle_no', 'license_no']);
         });
     }
 };

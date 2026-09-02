@@ -36,30 +36,28 @@
         </div>
 
         <!-- Role Selection -->
-<div class="mt-4">
-    <label for="role" class="block font-semibold text-sm text-gray-800">Select Account Type</label>
-    <select id="role" name="role" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" required onchange="handleRoleChange(this.value)">
-        <option value="member" {{ old('role') == 'member' ? 'selected' : '' }}>Member / Customer / Tourist</option>
-        <option value="business" {{ old('role') == 'business' ? 'selected' : '' }}>Business / Service Partner</option>
-        
-        <!-- Employee Registration Disabled (Approval process required later) -->
-        <!-- <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee</option> -->
-    </select>
-    <x-input-error :messages="$errors->get('role')" class="mt-2 text-red-600" />
-</div>
+        <div class="mt-4">
+            <label for="role" class="block font-semibold text-sm text-gray-800">Select Account Type</label>
+            <select id="role" name="role" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" required onchange="handleRoleChange(this.value)">
+                <option value="member" {{ old('role') == 'member' ? 'selected' : '' }}>Member / Customer / Tourist</option>
+                <option value="business" {{ old('role') == 'business' ? 'selected' : '' }}>Business / Service Partner</option>
+            </select>
+            <x-input-error :messages="$errors->get('role')" class="mt-2 text-red-600" />
+        </div>
 
-        <!-- Dynamic Business Service Type Section -->
+        <!-- Dynamic Business Type Section -->
         <div id="vendor-fields-container" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl" style="display: none;">
             <div class="mb-3">
-                <label for="service_type" class="block font-semibold text-sm text-gray-800">Select Service Category</label>
-                <select id="service_type" name="service_type" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600" onchange="handleServiceTypeChange(this.value)">
-                    <option value="food">🍽️ Restaurant / Food & Kitchen</option>
-                    <option value="taxi">🚖 Taxi & Tourist Vehicle</option>
-                    <option value="hotel">🏨 Hotel Room Stay</option>
-                    <option value="money_exchange">💱 Money & Currency Exchange</option>
-                    <option value="emporium">🛍️ Emporium & Souvenir Store</option>
-                    <option value="guide">🚩 Approved Tourist Guide</option>
+                <label for="business_type" class="block font-semibold text-sm text-gray-800">Select Your Business Service <span class="text-red-600">*</span></label>
+                <select name="business_type" id="business_type" class="form-select rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full" required onchange="handleBusinessTypeChange(this.value)">
+                    <option value="" disabled selected>-- Select Service Type --</option>
+                    <option value="food">Food & Restaurant</option>
+                    <option value="emporium">Emporium</option>
+                    <option value="taxi">Taxi / Cab Service</option>
+                    <option value="money_exchange">Money Exchange</option>
+                    <option value="guide">Tourist Guide</option>
                 </select>
+                <x-input-error :messages="$errors->get('business_type')" class="mt-2 text-red-600" />
             </div>
 
             <!-- Taxi Vehicle Field -->
@@ -88,6 +86,14 @@
             <input id="password_confirmation" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="password" name="password_confirmation" required autocomplete="new-password" placeholder="••••••••" />
         </div>
 
+        <!-- Terms & Conditions Checkbox -->
+        <div class="mt-4 flex items-center">
+            <input type="checkbox" name="terms" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" id="terms" required>
+            <label class="ms-2 text-sm text-gray-600" for="terms">
+                I agree to the <a href="#" class="text-blue-600 hover:underline">Terms & Conditions</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+            </label>
+        </div>
+
         <!-- Register Button -->
         <div class="mt-6">
             <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition duration-200">
@@ -104,24 +110,48 @@
     </form>
 
     <script>
-        function handleRoleChange(role) {
-            const container = document.getElementById('vendor-fields-container');
-            if (role === 'business') {
-                container.style.display = 'block';
-                handleServiceTypeChange(document.getElementById('service_type').value);
-            } else {
-                container.style.display = 'none';
+    function handleRoleChange(role) {
+        const container = document.getElementById('vendor-fields-container');
+        const businessSelect = document.getElementById('business_type');
+        
+        if (role === 'business') {
+            container.style.display = 'block';
+            if (businessSelect) {
+                businessSelect.disabled = false;
+                businessSelect.setAttribute('required', 'required');
+                if (!businessSelect.value) {
+                    businessSelect.value = 'food';
+                }
+                handleBusinessTypeChange(businessSelect.value);
             }
+        } else {
+            container.style.display = 'none';
+            if (businessSelect) {
+                businessSelect.removeAttribute('required');
+                businessSelect.disabled = true;
+            }
+            document.getElementById('vehicle-field').style.display = 'none';
+            document.getElementById('license-field').style.display = 'none';
         }
+    }
 
-        function handleServiceTypeChange(type) {
-            document.getElementById('vehicle-field').style.display = (type === 'taxi') ? 'block' : 'none';
-            document.getElementById('license-field').style.display = (type === 'money_exchange' || type === 'guide') ? 'block' : 'none';
+    function handleBusinessTypeChange(type) {
+        const vehicleField = document.getElementById('vehicle-field');
+        const licenseField = document.getElementById('license-field');
+
+        if (vehicleField) {
+            vehicleField.style.display = (type === 'taxi') ? 'block' : 'none';
         }
+        if (licenseField) {
+            licenseField.style.display = (type === 'money_exchange' || type === 'guide') ? 'block' : 'none';
+        }
+    }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            const roleSelect = document.getElementById('role');
-            if (roleSelect) handleRoleChange(roleSelect.value);
-        });
+    document.addEventListener("DOMContentLoaded", function() {
+        const roleSelect = document.getElementById('role');
+        if (roleSelect) {
+            handleRoleChange(roleSelect.value);
+        }
+    });
     </script>
 </x-guest-layout>
