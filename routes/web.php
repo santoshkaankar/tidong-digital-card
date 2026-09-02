@@ -46,6 +46,8 @@ Route::prefix('employee')->name('employee.')->group(function () {
     require __DIR__ . '/employee.php';
 });
 
+require __DIR__.'/payment.php';
+
 // Public Guest Order Routes (CatalogController से लिंक्ड)
 Route::get('/c/{slug}', [CatalogController::class, 'showPublicCatalog'])->name('catalogs.public');
 Route::post('/menu/{slug}/order', [CatalogController::class, 'placeOrder'])->name('menu.order');
