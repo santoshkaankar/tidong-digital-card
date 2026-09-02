@@ -10,7 +10,6 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #333; overflow-x: hidden; }
         .hero-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 70px 0; }
         
-        /* Enhanced Feature Cards with Modern Shadows and Borders */
         .feature-card { 
             border: 1px solid rgba(226, 232, 240, 0.8); 
             border-radius: 16px; 
@@ -36,9 +35,7 @@
             box-shadow: 0 20px 35px -10px rgba(37, 99, 235, 0.15), 0 12px 15px -8px rgba(37, 99, 235, 0.1);
             border-color: rgba(37, 99, 235, 0.3);
         }
-        .feature-card:hover::before {
-            opacity: 1;
-        }
+        .feature-card:hover::before { opacity: 1; }
 
         .btn-custom-primary { background: #2563eb; color: #fff; padding: 8px 20px; border-radius: 50px; font-weight: 600; }
         .btn-custom-primary:hover { background: #1d4ed8; color: #fff; }
@@ -47,9 +44,11 @@
         .feature-card:hover .icon-box { background: #2563eb; color: #fff; transform: scale(1.05); }
         .user-avatar { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; border: 2px solid #2563eb; }
         
-        /* Action Icon Hover Effects */
         .action-icon { transition: transform 0.2s ease; display: inline-block; }
         .action-icon:hover { transform: scale(1.15); }
+
+        .hover-up { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .hover-up:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
     </style>
 </head>
 <body>
@@ -65,11 +64,11 @@
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center gap-3">
+                    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#quick-services">Services</a></li>
                     <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#features">Features</a></li>
                     <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#ads-section">Sponsored Ads</a></li>
                     
                     @auth
-                        <!-- Dashboard Link Based on Role -->
                         <li class="nav-item">
                             @php
                                 $role = Auth::user()->role ?? 'user';
@@ -85,8 +84,6 @@
                                 <i class="fas fa-columns me-1"></i> Dashboard
                             </a>
                         </li>
-
-                        <!-- Logged In User Profile & Logout -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 py-0" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if(Auth::user()->profile_pic ?? false)
@@ -110,7 +107,6 @@
                             </ul>
                         </li>
                     @else
-                        <!-- Logged Out Options -->
                         <li class="nav-item">
                             <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm px-4 rounded-pill">Login</a>
                         </li>
@@ -137,7 +133,6 @@
                         @auth
                             <a href="{{ $dashboardRoute ?? route('member.dashboard') }}" class="btn btn-custom-primary btn-lg shadow">Go to Dashboard</a>
                         @else
-                            {{-- Redirects directly to Login --}}
                             <a href="{{ route('login') }}" class="btn btn-custom-primary btn-lg shadow">Create Your Card Now</a>
                         @endauth
                         <a href="#features" class="btn btn-outline-light btn-lg rounded-pill px-4">Explore Features</a>
@@ -146,15 +141,12 @@
                 <div class="col-lg-5 text-center">
                     <div class="p-4 bg-white bg-opacity-10 rounded-4 shadow-lg backdrop-blur border border-secondary border-opacity-25">
                         <div class="d-flex justify-content-center gap-3 mb-3">
-                            <!-- WhatsApp Clickable Link -->
                             <a href="https://wa.me/919634759912" target="_blank" class="action-icon" title="Chat on WhatsApp">
                                 <span class="badge bg-success p-2 fs-5 rounded-circle shadow-sm"><i class="fab fa-whatsapp text-white"></i></span>
                             </a>
-                            <!-- Direct Mobile Call Link -->
                             <a href="tel:9634759912" class="action-icon" title="Call Now">
                                 <span class="badge bg-primary p-2 fs-5 rounded-circle shadow-sm"><i class="fas fa-phone text-white"></i></span>
                             </a>
-                            <!-- Email Direct Link -->
                             <a href="mailto:santoshkaankar@gmail.com" class="action-icon" title="Send Email">
                                 <span class="badge bg-danger p-2 fs-5 rounded-circle shadow-sm"><i class="fas fa-envelope text-white"></i></span>
                             </a>
@@ -162,6 +154,92 @@
                         <h4 class="fw-bold text-white mb-2">One-Tap Direct Connection</h4>
                         <p class="text-light small mb-0">No apps required for viewers. They click WhatsApp icon and land straight into your WhatsApp chat instantly!</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Services Menu Grid -->
+    <section id="quick-services" class="py-5 bg-light border-bottom">
+        <div class="container">
+            <div class="text-center mb-4">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-uppercase" style="letter-spacing: 1px;">
+                    <i class="fas fa-th-large me-1"></i> Quick Services Menu
+                </span>
+                <h3 class="fw-bold text-dark mt-2">Explore Our Digital Ecosystem</h3>
+            </div>
+
+            <div class="row g-3 justify-content-center">
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="#features" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
+                            <div class="icon-shape bg-primary text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="fas fa-id-card fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1 small">Digital Card</h6>
+                            <span class="text-muted" style="font-size: 0.72rem;">Visiting Card</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="#features" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
+                            <div class="icon-shape bg-danger text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="fas fa-utensils fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1 small">Food & Dining</h6>
+                            <span class="text-muted" style="font-size: 0.72rem;">QR Catalogs</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="{{ route('vendor.taxi.rides') }}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
+                            <div class="icon-shape bg-warning text-dark rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="fas fa-taxi fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1 small">Taxi Rides</h6>
+                            <span class="text-muted" style="font-size: 0.72rem;">Book Cab</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="{{ route('vendor.exchange.rates') }}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
+                            <div class="icon-shape bg-success text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="fas fa-exchange-alt fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1 small">Forex Exchange</h6>
+                            <span class="text-muted" style="font-size: 0.72rem;">Daily Rates</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="{{ route('vendor.guide.bookings') }}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
+                            <div class="icon-shape bg-info text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="fas fa-map-marked-alt fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1 small">Tour Guide</h6>
+                            <span class="text-muted" style="font-size: 0.72rem;">Book Guide</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="{{ route('customer.hub') }}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
+                            <div class="icon-shape bg-dark text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="fas fa-qrcode fs-5"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1 small">Smart Hub</h6>
+                            <span class="text-muted" style="font-size: 0.72rem;">Scan & Connect</span>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -206,8 +284,30 @@
         </div>
     </div>
 
+    <!-- Universal QR Scan Section -->
+    <section class="py-5 bg-white border-top border-bottom">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-md-5 text-center">
+                    <div class="p-3 bg-light rounded-4 d-inline-block border shadow-sm">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode(route('customer.hub')) }}" alt="Tidong Universal QR Code" class="img-fluid rounded">
+                        <p class="mt-2 mb-0 fw-bold text-dark small"><i class="fas fa-camera text-primary me-1"></i> Scan to Access Tidong® Hub</p>
+                    </div>
+                </div>
+                <div class="col-md-7 text-center text-md-start">
+                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold mb-2">Universal Smart Access</span>
+                    <h3 class="fw-bold text-dark mb-3">Scan Any Tidong® QR Code</h3>
+                    <p class="text-muted mb-4">Users can scan this QR code using any smartphone camera to instantly open the platform, browse local store menus, request taxi rides, check live currency exchange rates, or book local tour guides without downloading any application.</p>
+                    <a href="{{ route('customer.hub') }}" class="btn btn-outline-primary rounded-pill px-4 font-weight-bold">
+                        <i class="fas fa-qrcode me-2"></i> Open Smart Hub Directly
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Features Section -->
-    <section id="features" class="py-5 bg-white">
+    <section id="features" class="py-5 bg-light">
         <div class="container py-4">
             <div class="text-center mb-5">
                 <h2 class="fw-bold text-dark">Why Everyone Loves Tidong® Platform</h2>
@@ -240,7 +340,7 @@
     </section>
 
     <!-- Sponsored Ads Section -->
-    <section id="ads-section" class="py-5 bg-light border-top">
+    <section id="ads-section" class="py-5 bg-white border-top">
         <div class="container py-4">
             <div class="text-center mb-4">
                 <h3 class="fw-bold text-dark"><i class="fas fa-ad text-warning me-2"></i> Sponsored Ads & Partner Offers</h3>
@@ -275,20 +375,89 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-4 text-center">
-        <div class="container">
-            <div class="mb-2 d-flex justify-content-center gap-4 small">
-                <a href="#" class="text-decoration-none text-muted">About Us</a>
-                <a href="#" class="text-decoration-none text-muted">Terms & Conditions</a>
-                <a href="#" class="text-decoration-none text-muted">Privacy Policy</a>
-                <a href="#" class="text-decoration-none text-muted">Contact Us</a>
+    <!-- Complete Modal Pages (About, Terms, Privacy, Contact) -->
+    
+    <!-- About Us Modal -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-primary" id="aboutModalLabel"><i class="fas fa-info-circle me-2"></i>About Tidong® Digital</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="lead">Tidong® Digital is an all-in-one digital business ecosystem designed to empower local business owners, service providers, and professionals.</p>
+                    <p class="text-muted">Our mission is to simplify digital interactions by offering one-tap digital visiting cards, instant QR-based catalogs for food and retail, real-time taxi bookings, forex currency conversion updates, and tour guide services—all accessible without downloading any mobile app.</p>
+                </div>
             </div>
-            <hr class="border-secondary my-3">
-            <p class="mb-1 small text-muted">&copy; 2023 - {{ date('Y') }} Tidong Marketing Pvt. Ltd. All rights reserved.</p>
-            <p class="mb-0 text-secondary" style="font-size: 12px;">Tidong® is a registered trademark.</p>
         </div>
-    </footer>
+    </div>
+
+    <!-- Terms & Conditions Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark" id="termsModalLabel"><i class="fas fa-file-contract me-2"></i>Terms & Conditions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <h6 class="fw-bold">1. Service Usage</h6>
+                    <p class="text-muted small">By accessing Tidong® Digital services, users and partners agree to provide accurate information and refrain from unauthorized activity on the platform.</p>
+                    <h6 class="fw-bold">2. Partner Listings</h6>
+                    <p class="text-muted small">Vendors, driver partners, and tour guides are responsible for maintaining up-to-date catalog items, rates, and availability status.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark" id="privacyModalLabel"><i class="fas fa-user-shield me-2"></i>Privacy Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted">We value your privacy. Tidong® Marketing Pvt. Ltd. collects minimal user identity details only to facilitate direct WhatsApp connections, booking fulfillment, and account verification. Your personal data is never sold to third-party brokers.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Us Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-primary" id="contactModalLabel"><i class="fas fa-envelope-open-text me-2"></i>Contact Us</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="mb-2"><i class="fas fa-building text-primary me-2"></i> <strong>Tidong Marketing Pvt. Ltd.</strong></p>
+                    <p class="mb-2"><i class="fas fa-phone text-success me-2"></i> +91 96347 59912</p>
+                    <p class="mb-3"><i class="fas fa-envelope text-danger me-2"></i> santoshkaankar@gmail.com</p>
+                    <a href="https://wa.me/919634759912" target="_blank" class="btn btn-success w-100 rounded-pill"><i class="fab fa-whatsapp me-2"></i>Chat on WhatsApp</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+<footer class="bg-dark text-white py-4 text-center">
+    <div class="container">
+        <div class="mb-3 d-flex justify-content-center gap-4 small flex-wrap">
+            <a href="{{ route('pages.about') }}" class="text-decoration-none text-light">About Us</a>
+            <a href="{{ route('pages.terms') }}" class="text-decoration-none text-light">Terms & Conditions</a>
+            <a href="{{ route('pages.privacy') }}" class="text-decoration-none text-light">Privacy Policy</a>
+            <a href="{{ route('pages.contact') }}" class="text-decoration-none text-light">Contact Us</a>
+        </div>
+        <hr class="border-secondary my-3">
+        <p class="mb-1 small text-muted">&copy; 2023 - {{ date('Y') }} Tidong Marketing Pvt. Ltd. All rights reserved.</p>
+        <p class="mb-0 text-secondary" style="font-size: 12px;">Tidong® is a registered trademark.</p>
+    </div>
+</footer>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

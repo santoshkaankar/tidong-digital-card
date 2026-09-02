@@ -5,23 +5,30 @@ use App\Http\Controllers\Vendor\VendorController;
 use App\Http\Controllers\Vendor\VendoritemController;
 use App\Http\Controllers\Vendor\CatalogController;
 use App\Http\Controllers\Vendor\VendorDashboardController;
+use App\Http\Controllers\Vendor\ExchangeRateController;
 
-// Auth Middleware के अंदर सभी Vendor Routes
-Route::middleware(['auth'])->group(function () {
+// Auth & Business Role Middleware ke andar sabhi Vendor Routes
+Route::middleware(['auth', 'role:business'])->group(function () {
     
-    // Business Dashboard Route (अब URL बनेगा: /vendor/dashboard)
+    // Business Dashboard Route
     Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');
 
-    // Kitchen Dashboard Route
+    // Duty Status Switch (Taxi & Guide Online/Offline)
+    Route::post('/duty-status', [ExchangeRateController::class, 'updateDutyStatus'])->name('duty.status');
+
+    // Service Specific Routes (Taxi, Money Exchange, Guide)
+    Route::get('/taxi/rides', [ExchangeRateController::class, 'taxiRides'])->name('taxi.rides');
+    Route::get('/exchange/rates', [ExchangeRateController::class, 'ratesIndex'])->name('exchange.rates');
+    Route::get('/guide/bookings', [ExchangeRateController::class, 'guideBookings'])->name('guide.bookings');
+
+    // Kitchen Dashboard Routes
     Route::get('/kitchen', [VendoritemController::class, 'kitchenDashboard'])->name('kitchen.orders');
     Route::get('/kitchen/live', [VendoritemController::class, 'kitchenDashboard'])->name('kitchen.dashboard');
-    
-    // Profile Route
+    Route::post('/kitchen/order/complete/{orderId}', [VendoritemController::class, 'completeOrder'])->name('public.order.complete');
+
+    // Profile Routes
     Route::get('/profile', [VendorDashboardController::class, 'profile'])->name('profile');
     Route::post('/profile/update', [VendorDashboardController::class, 'updateProfile'])->name('profile.update');
-
-    // Order Complete Route
-    Route::post('/kitchen/order/complete/{orderId}', [VendoritemController::class, 'completeOrder'])->name('public.order.complete');
 
     // Pricing Routes
     Route::get('/pricing', [VendorController::class, 'pricingPage'])->name('pricing.index');
@@ -32,7 +39,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/categories/save', [VendorController::class, 'saveCategories'])->name('categories.save');
     Route::delete('/categories/{id}', [VendorController::class, 'destroyCategory'])->name('categories.destroy');
 
-    // Inventory Routes
+    // Inventory & Items Routes
     Route::get('/inventory', [VendorController::class, 'inventoryPage'])->name('inventory.index');
     Route::get('/items', [VendorController::class, 'inventoryPage'])->name('items');
     Route::post('/inventory/add', [VendorController::class, 'addItemsToInventory'])->name('inventory.add');
@@ -44,7 +51,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/item/toggle-status', [VendorController::class, 'toggleItemStatus'])->name('item.toggle');
     Route::post('/item/request', [VendorController::class, 'requestNewItem'])->name('item.request');
 
-    // QR Code
+    // QR Code Route
     Route::get('/qr-code', [VendorController::class, 'showQrCode'])->name('qrcode');
 
     // Smart Catalogs Routes

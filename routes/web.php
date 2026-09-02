@@ -50,7 +50,7 @@ Route::prefix('employee')->name('employee.')->group(function () {
 
 require __DIR__.'/payment.php';
 
-// Public Guest Order Routes (CatalogController से लिंक्ड)
+// Public Guest Order Routes (CatalogController)
 Route::get('/c/{slug}', [CatalogController::class, 'showPublicCatalog'])->name('catalogs.public');
 Route::post('/menu/{slug}/order', [CatalogController::class, 'placeOrder'])->name('menu.order');
 Route::get('/guest/order/{orderId}', [CatalogController::class, 'guestOrderStatus'])->name('guest.order.status');
@@ -60,3 +60,9 @@ Route::post('/guest/order/vacate/{orderId}', [CatalogController::class, 'vacateG
 Route::middleware([DeviceIdentityMiddleware::class])->group(function () {
     Route::get('/hub', [HubController::class, 'index'])->name('customer.hub');
 });
+
+// Public Pages Routes
+Route::view('/about-us', 'pages.about')->name('pages.about');
+Route::view('/terms-and-conditions', 'pages.terms')->name('pages.terms');
+Route::view('/privacy-policy', 'pages.privacy')->name('pages.privacy');
+Route::view('/contact-us', 'pages.contact')->name('pages.contact');
