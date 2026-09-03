@@ -55,7 +55,14 @@
         <div class="content-body">
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
+                    <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-1"></i> {{ session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
@@ -73,7 +80,7 @@
                     <div class="row align-items-end g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Select Category</label>
-                            <select name="categories[]" class="form-select" required>
+                            <select name="category" class="form-select" required>
                                 <option value="">-- Choose Category --</option>
                                 @foreach($allCategories as $cat)
                                     <option value="{{ $cat }}">{{ $cat }}</option>
@@ -89,14 +96,17 @@
                 <h6 class="fw-bold text-dark mt-4 mb-2">Your Selected Categories:</h6>
                 <div class="d-flex flex-wrap gap-2">
                     @forelse($selectedCategories ?? [] as $sCat)
-                        <div class="badge bg-secondary p-2 fs-6 d-flex align-items-center gap-2">
-                            <span>{{ is_object($sCat) ? $sCat->name : $sCat }}</span>
-                            <form action="{{ route('vendor.categories.destroy', is_object($sCat) ? $sCat->id : $sCat) }}" method="POST" class="d-inline" onsubmit="return confirm('Do you want to remove this category?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-close btn-close-white" style="font-size: 0.65rem;" aria-label="Remove"></button>
-                            </form>
-                        </div>
+                        @php $catName = is_array($sCat) ? ($sCat['name'] ?? '') : (is_object($sCat) ? $sCat->name : $sCat); @endphp
+                        @if(!empty($catName))
+                            <div class="badge bg-secondary p-2 fs-6 d-flex align-items-center gap-2">
+                                <span>{{ $catName }}</span>
+                                <form action="{{ route('vendor.categories.destroy', urlencode($catName)) }}" method="POST" class="d-inline" onsubmit="return confirm('Do you want to remove this category?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-close btn-close-white" style="font-size: 0.65rem;" aria-label="Remove"></button>
+                                </form>
+                            </div>
+                        @endif
                     @empty
                         <p class="text-muted small mb-0">No categories added yet.</p>
                     @endforelse

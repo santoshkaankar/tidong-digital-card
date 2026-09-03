@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -23,7 +22,8 @@ class User extends Authenticatable
         'google_id', 
         'avatar',
         'vehicle_no',
-        'license_no'
+        'license_no',
+        'categories',
     ];
 
     protected $hidden = [
@@ -36,6 +36,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'categories' => 'array',
         ];
     }
 }

@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Vendor;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\VendorItem;
-use App\Models\GlobalItem;
+use App\Models\Vendor\VendorItem;
+use App\Models\Vendor\ItemCategory;
+use App\Models\Vendor\GlobalItem;
+use App\Models\Vendor\VendorCategory;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class VendorCatalogController extends Controller
 {
-    // 1. Dashboard
+    // 1. Dashboard View
     public function dashboard()
     {
         return view('vendor.dashboard');
@@ -20,113 +24,68 @@ class VendorCatalogController extends Controller
     // 2. Categories Page View
     public function categoriesPage(Request $request)
     {
-        $user = Auth::user();
+        $userId = Auth::id();
 
-        // 1. Logged in vendor ki DB me existing categories fetch karna
-        $selectedCategories = [];
-
-        if (isset($user->categories)) {
-            $selectedCategories = is_array($user->categories) ? $user->categories : json_decode($user->categories, true) ?? [];
-        } else {
-            // Check in item_categories or vendor_categories table if exists
-            $selectedCategories = DB::table('item_categories')->pluck('name')->toArray();
-        }
-
-        // 2. All available Master Categories for Dropdown
-        $allCategories = GlobalItem::select('category')->distinct()->pluck('category')->toArray();
+        // Master Categories list for dropdown
+        $allCategories = ItemCategory::pluck('name')->toArray();
 
         if (empty($allCategories)) {
-            $allCategories = ['Fast-food & Snakes', 'Brack-fast', 'Lunch-food', 'Dinner-food'];
+            $allCategories = GlobalItem::whereNotNull('category')->distinct()->pluck('category')->toArray();
         }
+
+        // Vendor Selected Categories
+        $selectedCategories = VendorCategory::where('user_id', $userId)->pluck('name')->toArray();
 
         return view('vendor.categories', compact('allCategories', 'selectedCategories'));
     }
 
-    // 3. Save / Append New Category (Strict Fix For Overwriting Issue)
+    // 3. Save Selected Category
     public function saveCategories(Request $request)
     {
-        $user = Auth::user();
-        
-        // Form field ki input value nikalna (Single String or Array)
-        $newCategory = $request->input('categories') ?? $request->input('category');
+        $categoryName = trim($request->input('category') ?? $request->input('categories'));
 
-        if (empty($newCategory)) {
+        if (empty($categoryName)) {
             return redirect()->back()->with('error', 'Please select a category.');
         }
 
-        // Convert input into array format
-        $incomingArr = is_array($newCategory) ? $newCategory : [$newCategory];
+        $userId = Auth::id();
 
-        // --- STEP 1: Fetch Existing Saved Categories ---
-        $existingCategories = [];
-        if (isset($user->categories)) {
-            $existingCategories = is_array($user->categories) ? $user->categories : (json_decode($user->categories, true) ?? []);
-        } else {
-            $existingCategories = DB::table('item_categories')->pluck('name')->toArray();
-        }
+        ItemCategory::firstOrCreate(['name' => $categoryName]);
 
-        // --- STEP 2: Merge Existing + New Categories (Remove Duplicates) ---
-        $mergedCategories = array_unique(array_merge($existingCategories, $incomingArr));
+        VendorCategory::firstOrCreate([
+            'user_id' => $userId,
+            'name'    => $categoryName
+        ]);
 
-        // --- STEP 3: Save Merged Data Back to DB ---
-        // Case A: If user model has 'categories' field
-        if (Schema::hasColumn('users', 'categories')) {
-            $user->categories = json_encode(array_values($mergedCategories));
-            $user->save();
-        }
-
-        // Case B: Insert in 'item_categories' table without deleting existing
-        foreach ($incomingArr as $cat) {
-            $catName = trim($cat);
-            if (!empty($catName)) {
-                $exists = DB::table('item_categories')->where('name', $catName)->exists();
-                if (!$exists) {
-                    DB::table('item_categories')->insert([
-                        'name'       => $catName,
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ]);
-                }
-            }
-        }
-
-        return redirect()->back()->with('success', 'Categories updated successfully!');
+        return redirect()->route('vendor.categories.index')->with('success', 'Category added successfully!');
     }
 
-    // 4. Destroy / Remove Single Category
+    // 4. Delete / Remove Category for Vendor
     public function destroyCategory(Request $request, $id)
     {
-        $user = Auth::user();
+        $categoryName = urldecode($id);
+        $userId = Auth::id();
 
-        if (isset($user->categories) && Schema::hasColumn('users', 'categories')) {
-            $currentArr = is_array($user->categories) ? $user->categories : (json_decode($user->categories, true) ?? []);
-            
-            // Remove $id or category string from array
-            $updatedArr = array_filter($currentArr, function($value) use ($id) {
-                return $value !== $id;
-            });
+        VendorCategory::where('user_id', $userId)->where('name', $categoryName)->delete();
 
-            $user->categories = json_encode(array_values($updatedArr));
-            $user->save();
-        }
-
-        // Also delete from table if present
-        if (is_numeric($id)) {
-            DB::table('item_categories')->where('id', $id)->delete();
-        } else {
-            DB::table('item_categories')->where('name', $id)->delete();
-        }
-
-        return redirect()->back()->with('success', 'Category removed successfully!');
+        return redirect()->route('vendor.categories.index')->with('success', 'Category removed successfully!');
     }
 
-    // 5. Inventory Page View
+    // 5. Inventory Page View (Loads items matching only selected categories)
     public function inventoryPage(Request $request)
     {
         $userId = Auth::id();
+
+        // 1. Get categories selected by this vendor
+        $selectedCategories = VendorCategory::where('user_id', $userId)->pluck('name')->toArray();
+
+        // 2. Get Global Items belonging ONLY to selected categories ($globalItems variable for blade file)
+        $globalItems = GlobalItem::whereIn('category', $selectedCategories)->get();
+
+        // 3. Get Vendor's current Inventory items
         $myInventory = VendorItem::where('user_id', $userId)->get();
 
-        return view('vendor.inventory', compact('myInventory'));
+        return view('vendor.inventory', compact('globalItems', 'myInventory', 'selectedCategories'));
     }
 
     // 6. Pricing Page View
@@ -141,80 +100,89 @@ class VendorCatalogController extends Controller
         return redirect()->back()->with('success', 'Pricing updated successfully!');
     }
 
-    // 8. Catalog Index
+    // 8. Catalog Index Page
     public function index(Request $request)
     {
         $userId = Auth::id();
-        $user = Auth::user();
 
-        $selectedCategories = [];
-        if (isset($user->categories)) {
-            $selectedCategories = is_array($user->categories) ? $user->categories : json_decode($user->categories, true) ?? [];
-        } else {
-            $selectedCategories = DB::table('item_categories')->pluck('name')->toArray();
+        $allCategories = ItemCategory::pluck('name')->toArray();
+        $selectedCategories = VendorCategory::where('user_id', $userId)->pluck('name')->toArray();
+
+        $query = Schema::hasTable('global_items') ? DB::table('global_items') : null;
+        $globalItems = collect([]);
+
+        if ($query) {
+            if (!empty($selectedCategories)) {
+                $query->whereIn('category', $selectedCategories);
+            }
+
+            if ($request->filled('search')) {
+                $query->where('item_name', 'like', '%' . $request->search . '%');
+            }
+
+            if ($request->filled('category')) {
+                $query->where('category', $request->category);
+            }
+
+            $globalItems = $query->get();
         }
 
-        $allCategories = GlobalItem::select('category')->distinct()->pluck('category')->toArray();
-
-        $query = GlobalItem::query();
-        
-        if (!empty($selectedCategories)) {
-            $query->whereIn('category', $selectedCategories);
-        }
-
-        if ($request->filled('search')) {
-            $query->where('item_name', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-
-        $globalItems = $query->get();
         $myInventory = VendorItem::where('user_id', $userId)->get();
 
         return view('vendor.catalog', compact('allCategories', 'selectedCategories', 'globalItems', 'myInventory'));
     }
 
-    // 9. Add Items to Inventory
+    // 9. Add Selected Items to Vendor Inventory
     public function addItemsToInventory(Request $request)
     {
-        $request->validate([
-            'global_item_ids' => 'required|array',
-        ]);
-
         $userId = Auth::id();
 
-        foreach ($request->global_item_ids as $gId) {
-            $gItem = GlobalItem::findOrFail($gId);
+        // Extract item ID from array or single input
+        $globalItemIds = $request->input('global_item_ids', []);
+        $singleId = $request->input('global_item_id') ?? $request->input('item_id');
 
-            $exists = VendorItem::where('user_id', $userId)
-                ->where('item_name', $gItem->item_name)
-                ->exists();
+        if (!empty($singleId)) {
+            $globalItemIds[] = $singleId;
+        }
 
-            if (!$exists) {
-                VendorItem::create([
-                    'user_id'     => $userId,
-                    'category'    => $gItem->category,
-                    'item_name'   => $gItem->item_name,
-                    'description' => $gItem->description,
-                    'mrp'         => $gItem->mrp,
-                    'sale_price'  => $gItem->mrp,
-                    'status'      => 'active'
-                ]);
+        if (empty($globalItemIds)) {
+            return redirect()->back()->with('error', 'Please select an item to add.');
+        }
+
+        foreach ($globalItemIds as $gId) {
+            if (empty($gId)) continue;
+
+            $gItem = GlobalItem::find($gId);
+
+            if ($gItem) {
+                $exists = VendorItem::where('user_id', $userId)
+                    ->where('item_name', $gItem->item_name)
+                    ->exists();
+
+                if (!$exists) {
+                    VendorItem::create([
+                        'user_id'     => $userId,
+                        'category'    => $gItem->category,
+                        'item_name'   => $gItem->item_name,
+                        'description' => $gItem->description ?? '',
+                        'mrp'         => $gItem->mrp ?? 0,
+                        'price'       => $gItem->default_price ?? $gItem->mrp ?? 0,
+                        'status'      => 'active'
+                    ]);
+                }
             }
         }
 
-        return redirect()->back()->with('success', 'Selected items added to inventory!');
+        return redirect()->back()->with('success', 'Selected item added to inventory!');
     }
 
-    // 10. Update Inventory Item
+    // 10. Update Single Inventory Item
     public function updateInventoryItem(Request $request, $id)
     {
         $item = VendorItem::where('user_id', Auth::id())->findOrFail($id);
-        
+
         $item->update([
-            'sale_price'  => $request->filled('sale_price') ? $request->sale_price : $item->mrp,
+            'price'       => $request->filled('price') ? $request->price : $item->price,
             'description' => $request->filled('description') ? $request->description : $item->description,
             'status'      => $request->filled('status') ? $request->status : $item->status
         ]);
@@ -222,13 +190,27 @@ class VendorCatalogController extends Controller
         return redirect()->back()->with('success', 'Item updated successfully!');
     }
 
-    // 11. Request New Item
-    public function requestNewItem(Request $request)
+    // 11. Toggle Item Status (Active / Inactive)
+    public function toggleItemStatus(Request $request)
     {
-        return redirect()->back()->with('success', 'New item request submitted!');
+        if ($request->has('id')) {
+            $item = VendorItem::where('user_id', Auth::id())->find($request->id);
+            if ($item) {
+                $item->status = $item->status === 'active' ? 'inactive' : 'active';
+                $item->save();
+                return redirect()->back()->with('success', 'Item status updated!');
+            }
+        }
+        return redirect()->back()->with('error', 'Item not found.');
     }
 
-    // 12. Show QR Code
+    // 12. Request New Item
+    public function requestNewItem(Request $request)
+    {
+        return redirect()->back()->with('success', 'New item request submitted successfully!');
+    }
+
+    // 13. Show QR Code Page
     public function showQrCode(Request $request)
     {
         return view('vendor.qrcode');

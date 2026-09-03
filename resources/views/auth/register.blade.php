@@ -52,6 +52,7 @@
                 <select name="business_type" id="business_type" class="form-select rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full" required onchange="handleBusinessTypeChange(this.value)">
                     <option value="" disabled selected>-- Select Service Type --</option>
                     <option value="food">Food & Restaurant</option>
+                    <option value="Hotel">Hotel / Stay</option>
                     <option value="emporium">Emporium</option>
                     <option value="taxi">Taxi / Cab Service</option>
                     <option value="money_exchange">Money Exchange</option>
