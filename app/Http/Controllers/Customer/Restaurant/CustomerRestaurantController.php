@@ -48,7 +48,7 @@ class CustomerRestaurantController extends Controller
             }])->get();
 
         $activeOrder = RestaurantOrder::where('table_id', $table->id)
-            ->whereIn('status', ['pending', 'cooking', 'served'])
+            ->whereIn('status', ['pending', 'cooking', 'preparing', 'served'])
             ->where('payment_status', 'unpaid')
             ->with(['items.restaurantItem.globalItem'])
             ->latest()
@@ -72,7 +72,7 @@ class CustomerRestaurantController extends Controller
 
             $order = DB::transaction(function () use ($request, $table) {
                 $order = RestaurantOrder::where('table_id', $table->id)
-                    ->whereIn('status', ['pending', 'cooking', 'served'])
+                    ->whereIn('status', ['pending', 'cooking', 'preparing', 'served'])
                     ->where('payment_status', 'unpaid')
                     ->first();
 
@@ -95,7 +95,10 @@ class CustomerRestaurantController extends Controller
                         'notes' => $request->notes
                     ]);
 
-                    $table->update(['status' => 'occupied']);
+                    $table->update([
+                        'status' => 'occupied',
+                        'current_order_id' => $order->id
+                    ]);
                 }
 
                 $subTotal = 0;
@@ -218,34 +221,34 @@ class CustomerRestaurantController extends Controller
     }
 
     // 5. Customer Payment Request (Cash / UPI)
-    // Customer Side Payment Request Method
-public function requestPayment(Request $request, $token)
-{
-    $table = RestaurantTable::where('qr_code_token', $token)->firstOrFail();
+    public function requestPayment(Request $request, $token)
+    {
+        $table = RestaurantTable::where('qr_code_token', $token)->firstOrFail();
 
-    // Check if request already exists for this table
-    $existingCall = WaiterCall::where('table_id', $table->id)
-        ->where('call_type', 'pay_bill_cash')
-        ->first();
+        // Check if request already exists for this table
+        $existingCall = WaiterCall::where('table_id', $table->id)
+            ->where('call_type', 'pay_bill_cash')
+            ->where('status', 'pending')
+            ->first();
 
-    if ($existingCall) {
+        if ($existingCall) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Cash request already sent to counter!'
+            ]);
+        }
+
+        // Insert only if NOT exists
+        WaiterCall::create([
+            'user_id'   => $table->user_id,
+            'table_id'  => $table->id,
+            'call_type' => 'pay_bill_cash',
+            'status'    => 'pending'
+        ]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Cash request already sent to counter!'
+            'message' => 'Cash payment request sent successfully!'
         ]);
     }
-
-    // Insert only if NOT exists
-    WaiterCall::create([
-        'user_id'   => $table->user_id,
-        'table_id'  => $table->id,
-        'call_type' => 'pay_bill_cash',
-        'status'    => 'pending'
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Cash payment request sent successfully!'
-    ]);
-}
 }

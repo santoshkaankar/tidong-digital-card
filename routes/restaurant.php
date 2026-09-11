@@ -16,7 +16,7 @@ use App\Http\Controllers\Restaurant\OrderCashController;
 
 /*
 |--------------------------------------------------------------------------
-| Vendor Panel Routes (Dashboard, Menu, POS)
+| Vendor Panel Routes (Dashboard, Menu, POS, Orders)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('vendor.restaurant.')->group(function () {
@@ -42,11 +42,17 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
     // Dining Tables & QR Codes
     Route::resource('tables', TableController::class);
 
-    // POS Billing & Order Management (Corrected Method and Route Names)
+    // POS Billing & Order Management
     Route::get('/pos', [OrderController::class, 'posIndex'])->name('pos.index');
     Route::post('/pos/place-order', [OrderController::class, 'storePosOrder'])->name('pos.place-order');
+    Route::post('/pos/store', [OrderController::class, 'storePosOrder'])->name('pos.store');
+
+    // Orders History & Edit Routes
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+    Route::put('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
+    Route::get('/orders/{id}/print', [OrderController::class, 'printReceipt'])->name('orders.print');
 });
 
 // Alias Route mapping for compatibility with vendor.pos.store JS fetch request
@@ -71,7 +77,6 @@ Route::prefix('menu')->name('customer.restaurant.')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('vendor.restaurant.')->group(function () {
-    
     // KDS Screen Main Page
     Route::get('/kitchen-screen', [KitchenDisplayController::class, 'index'])->name('kitchen.screen');
 
@@ -95,8 +100,4 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
 // Dedicated Route for Cash Requests
 Route::middleware(['auth'])->prefix('vendor/restaurant')->name('vendor.restaurant.')->group(function () {
     Route::post('/cash-call/resolve/{id}', [OrderCashController::class, 'resolve'])->name('cash_call.resolve');
-});
-Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('vendor.restaurant.')->group(function () {
-    // Print KOT / Receipt Route
-    Route::get('/orders/{id}/print', [OrderController::class, 'printReceipt'])->name('orders.print');
 });

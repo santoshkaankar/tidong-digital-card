@@ -1,65 +1,75 @@
 <style>
-    /* Desktop Default Styles */
     .restaurant-sidebar {
         width: 260px;
-        min-width: 260px;
-        background: var(--sidebar-bg, #ffffff);
-        border-right: 1px solid var(--border-color, #e2e8f0);
+        max-width: 260px;
+        height: 100vh;
+        background: #ffffff;
+        border-right: 1px solid #e2e8f0;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
         z-index: 1050;
-        transition: transform 0.3s ease-in-out;
+        overflow: hidden;
+    }
+
+    .sidebar-top-content {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 70px);
+        overflow: hidden;
     }
 
     .brand-header {
-        padding: 20px 24px;
+        padding: 16px 20px;
         display: flex;
         align-items: center;
         gap: 12px;
-        border-bottom: 1px solid var(--border-color, #f1f5f9);
+        border-bottom: 1px solid #f1f5f9;
+        flex-shrink: 0;
     }
 
     .brand-icon {
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
         background: #4f46e5;
         color: #fff;
-        border-radius: 10px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 1rem;
         box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
     }
 
     .sidebar-menu {
         list-style: none;
-        padding: 16px 12px;
+        padding: 12px;
         margin: 0;
         overflow-y: auto;
-        max-height: calc(100vh - 140px);
+        flex-grow: 1;
     }
 
     .menu-label {
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         font-weight: 700;
         text-transform: uppercase;
         color: #94a3b8;
         letter-spacing: 0.8px;
-        padding: 12px 12px 6px 12px;
+        padding: 10px 10px 4px 10px;
     }
 
     .nav-item-link {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 9px 12px;
-        color: var(--text-muted, #64748b);
+        padding: 8px 12px;
+        color: #64748b;
         text-decoration: none;
         font-weight: 500;
-        font-size: 0.875rem;
+        font-size: 0.85rem;
         border-radius: 8px;
         transition: all 0.2s ease;
         margin-bottom: 2px;
@@ -67,7 +77,7 @@
 
     .nav-item-link:hover {
         color: #4f46e5;
-        background: rgba(79, 70, 229, 0.05);
+        background: #f8fafc;
     }
 
     .nav-item-link.active {
@@ -77,15 +87,17 @@
     }
 
     .nav-item-link i {
-        font-size: 1rem;
-        width: 20px;
+        font-size: 0.95rem;
+        width: 18px;
         text-align: center;
     }
 
     .sidebar-footer {
-        padding: 16px 12px;
-        border-top: 1px solid var(--border-color, #f1f5f9);
-        background: var(--sidebar-bg, #fff);
+        padding: 12px;
+        border-top: 1px solid #f1f5f9;
+        background: #fff;
+        height: 70px;
+        flex-shrink: 0;
     }
 
     .logout-btn {
@@ -94,7 +106,7 @@
         justify-content: center;
         gap: 8px;
         width: 100%;
-        padding: 9px 12px;
+        padding: 8px 12px;
         border: none;
         background: #fef2f2;
         color: #ef4444;
@@ -107,41 +119,10 @@
     .logout-btn:hover {
         background: #fee2e2;
     }
-
-    /* Mobile Offcanvas Styles */
-    @media (max-width: 991.98px) {
-        .restaurant-sidebar {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            bottom: 0 !important;
-            transform: translateX(-100%);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .restaurant-sidebar.show {
-            transform: translateX(0) !important;
-        }
-
-        .sidebar-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1040;
-        }
-
-        .sidebar-backdrop.show {
-            display: block;
-        }
-    }
 </style>
 
 <aside class="restaurant-sidebar" id="restaurantSidebar">
-    <div>
+    <div class="sidebar-top-content">
         <!-- Brand Header -->
         <div class="brand-header justify-content-between">
             <div class="d-flex align-items-center gap-2">
@@ -153,8 +134,7 @@
                     <small class="text-muted" style="font-size: 0.72rem;">Partner Panel</small>
                 </div>
             </div>
-            <!-- Mobile Close Cross Icon -->
-            <button class="btn-close d-lg-none" id="closeSidebarBtn" aria-label="Close"></button>
+            <button class="btn-close d-lg-none" id="closeRestaurantSidebar"></button>
         </div>
 
         <!-- Navigation Links -->
@@ -177,7 +157,7 @@
             </li>
             <li>
                 <a href="{{ route('vendor.restaurant.orders.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.orders.*') ? 'active' : '' }}">
-                    <i class="bi bi-receipt me-2"></i> Orders History
+                    <i class="bi bi-receipt"></i> Orders History
                 </a>
             </li>
 
@@ -230,30 +210,4 @@
     </div>
 </aside>
 
-<!-- Backdrop Overlay for Mobile -->
-<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const sidebar = document.getElementById("restaurantSidebar");
-        const backdrop = document.getElementById("sidebarBackdrop");
-        const closeBtn = document.getElementById("closeSidebarBtn");
-
-        function hideSidebar() {
-            if (sidebar) sidebar.classList.remove("show");
-            if (backdrop) backdrop.classList.remove("show");
-        }
-
-        if (backdrop) backdrop.addEventListener("click", hideSidebar);
-        if (closeBtn) closeBtn.addEventListener("click", hideSidebar);
-
-        // Mobile menu me link click hone par auto close ho jaye
-        document.querySelectorAll("#restaurantSidebar .nav-item-link").forEach(link => {
-            link.addEventListener("click", function () {
-                if (window.innerWidth < 992) {
-                    hideSidebar();
-                }
-            });
-        });
-    });
-</script>
+<div class="restaurant-sidebar-backdrop" id="restaurantSidebarBackdrop"></div>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Catalogs — Vendor Dashboard</title>
     
     <!-- Google Fonts & Bootstrap 5 CSS -->
@@ -18,11 +18,16 @@
         }
         .dashboard-wrapper {
             display: flex;
+            width: 100%;
             min-height: 100vh;
+        }
+        .sidebar-container {
+            width: 260px;
+            flex-shrink: 0;
         }
         .main-viewport {
             flex-grow: 1;
-            min-width: 0;
+            min-width: 0; /* Prevents flex items from overflowing container width */
         }
         .card-header-blue {
             background-color: #0d6efd;
@@ -58,7 +63,7 @@
             font-size: 0.78rem;
         }
 
-        /* PRINT SETUP: Only QR Card Will Print */
+        /* PRINT SETUP: Printable QR Card Styles */
         @media print {
             body * {
                 visibility: hidden !important;
@@ -87,14 +92,16 @@
 <body>
 
 <div class="dashboard-wrapper">
-    <!-- Include Existing Sidebar -->
+    <!-- Sidebar Partial Wrapper -->
     @if(View::exists('vendor.restaurant.partials.sidebar'))
-        @include('vendor.restaurant.partials.sidebar')
+        <div class="sidebar-container">
+            @include('vendor.restaurant.partials.sidebar')
+        </div>
     @endif
 
     <div class="main-viewport p-3 p-lg-4">
 
-        <!-- Flash Messages -->
+        <!-- Flash Alert Messages -->
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
@@ -109,7 +116,7 @@
             </div>
         @endif
 
-        <!-- Top Header Navigation -->
+        <!-- Header -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-qr-code-scan text-primary me-2"></i>Smart Catalogs</h4>
             <div class="d-flex gap-2">
@@ -127,8 +134,8 @@
         </div>
 
         <div class="row g-3">
-            <!-- Left Panel: Create New Catalog Form -->
-            <div class="col-12 col-xl-5">
+            <!-- Left Column: Create Form -->
+            <div class="col-12 col-lg-5">
                 <div class="card border-0 shadow-sm rounded-3">
                     <div class="card-header-blue d-flex align-items-center gap-2">
                         <i class="bi bi-plus-circle-fill fs-5"></i>
@@ -154,7 +161,7 @@
                                 @endif
                             </div>
 
-                            <!-- Items Selection Scroll Box -->
+                            <!-- Item List Box -->
                             <div class="item-selection-box mb-3">
                                 @php $itemFound = false; @endphp
                                 @if(isset($categories) && count($categories) > 0)
@@ -239,8 +246,8 @@
                 </div>
             </div>
 
-            <!-- Right Panel: Existing Catalogs List Table -->
-            <div class="col-12 col-xl-7">
+            <!-- Right Column: Catalogs List -->
+            <div class="col-12 col-lg-7">
                 <div class="card border-0 shadow-sm rounded-3">
                     <div class="card-header-dark d-flex justify-content-between align-items-center">
                         <span><i class="bi bi-list-task me-1"></i> Your Catalogs</span>
@@ -265,7 +272,7 @@
                                                 $token = $tbl->qr_code_token ?? $tbl->token ?? 'demo';
                                                 $publicUrl = Route::has('customer.restaurant.menu') ? route('customer.restaurant.menu', $token) : url('/c/' . $token);
                                                 
-                                                $selectedArr = $tbl->selected_items;
+                                                $selectedArr = $tbl->selected_items ?? [];
                                                 if (is_string($selectedArr)) {
                                                     $selectedArr = json_decode($selectedArr, true) ?? [];
                                                 }
@@ -273,10 +280,11 @@
                                                     $selectedArr = [];
                                                 }
                                                 $itemCount = count($selectedArr);
+                                                $tableName = $tbl->table_number ?? $tbl->table_name ?? $tbl->name ?? 'Table';
                                             @endphp
                                             <tr>
                                                 <td class="ps-3 fw-bold small text-muted">{{ $index + 1 }}</td>
-                                                <td class="fw-bold text-primary small">{{ $tbl->table_number ?? $tbl->name ?? 'Table' }}</td>
+                                                <td class="fw-bold text-primary small">{{ $tableName }}</td>
                                                 <td>
                                                     <span class="badge bg-info text-dark font-monospace">
                                                         {{ $itemCount }} Items
@@ -305,11 +313,11 @@
                                                             </form>
                                                         @endif
 
-                                                        <button type="button" class="btn btn-outline-primary" title="Edit Catalog" onclick="openEditModal('{{ $tbl->id }}', '{{ $tbl->table_number ?? $tbl->name }}', {{ json_encode($selectedArr) }})">
+                                                        <button type="button" class="btn btn-outline-primary" title="Edit Catalog" onclick='openEditModal(@json($tbl->id), @json($tableName), @json($selectedArr))'>
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
 
-                                                        <button type="button" class="btn btn-outline-primary fw-semibold" onclick="openQrModal('{{ auth()->user()->restaurant_name ?? auth()->user()->name ?? 'Restaurant Name' }}', '{{ $tbl->table_number ?? 'Table No' }}', '{{ auth()->user()->address ?? 'Restaurant Address' }}', '{{ $publicUrl }}')">
+                                                        <button type="button" class="btn btn-outline-primary fw-semibold" onclick='openQrModal(@json(auth()->user()->restaurant_name ?? auth()->user()->name ?? "Restaurant Name"), @json($tableName), @json(auth()->user()->address ?? "Restaurant Address"), @json($publicUrl))'>
                                                             View QR
                                                         </button>
 
@@ -345,36 +353,27 @@
     </div>
 </div>
 
-<!-- Modal with QR Indicator Tag and Clean Layout -->
+<!-- QR View Modal -->
 <div class="modal fade" id="qrViewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow text-center p-3">
             
-            <!-- Target Printable Card Area -->
             <div id="printableQrCard" class="p-2">
-                <!-- Restaurant Name -->
                 <h4 class="fw-bold text-dark mb-1" id="qrRestName" style="font-family: sans-serif;">Restaurant Name</h4>
-                
-                <!-- Table / Room Name -->
                 <h6 class="text-muted mb-2 fw-semibold" id="qrModalTitle" style="font-family: sans-serif;">Table No</h6>
                 
-                <!-- Tag Indicator Badge -->
                 <div class="my-2">
                     <span class="badge bg-primary px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.82rem; font-weight: 600;">
                         📱 Scan to View Menu & Order
                     </span>
                 </div>
 
-                <!-- QR Code Image -->
                 <img id="qrModalImg" src="" alt="Scan QR Code" class="img-fluid border p-2 rounded-3 my-1 mx-auto" style="max-width: 190px;">
                 
                 <p class="small text-secondary mb-0 mt-1" style="font-size: 0.72rem;">Point camera to scan digital menu</p>
-
-                <!-- Address -->
                 <p class="small text-muted mb-0 mt-2 px-1 fw-semibold" id="qrRestAddress" style="word-break: break-word; font-family: sans-serif;">Restaurant Address</p>
             </div>
 
-            <!-- Action Buttons (Hidden when printing) -->
             <div class="d-flex gap-2 justify-content-center mt-3 no-print">
                 <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold" onclick="window.print()">
                     <i class="bi bi-printer me-1"></i> Print QR
@@ -388,7 +387,7 @@
     </div>
 </div>
 
-<!-- Modal for Editing Catalog -->
+<!-- Edit Catalog Modal -->
 <div class="modal fade" id="editCatalogModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-3">
@@ -439,26 +438,33 @@
     </div>
 </div>
 
-<!-- Bootstrap 5 JS -->
+<!-- Bootstrap 5 JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function openQrModal(restName, tableName, address, targetUrl) {
-        document.getElementById('qrRestName').innerText = restName;
-        document.getElementById('qrModalTitle').innerText = tableName;
-        document.getElementById('qrRestAddress').innerText = address;
+        document.getElementById('qrRestName').innerText = restName || 'Restaurant Name';
+        document.getElementById('qrModalTitle').innerText = tableName || 'Table No';
+        document.getElementById('qrRestAddress').innerText = address || '';
         document.getElementById('qrModalImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}`;
         
         new bootstrap.Modal(document.getElementById('qrViewModal')).show();
     }
 
     function openEditModal(id, tableName, selectedItems) {
-        let updateUrl = "{{ route('vendor.restaurant.menu-card.update', ':id') }}".replace(':id', id);
-        document.getElementById('editCatalogForm').action = updateUrl;
-        
-        document.getElementById('edit_table_name').value = tableName;
+        @if(Route::has('vendor.restaurant.menu-card.update'))
+            let updateUrl = "{{ route('vendor.restaurant.menu-card.update', ':id') }}".replace(':id', id);
+        @elseif(Route::has('vendor.restaurant.catalogs.update'))
+            let updateUrl = "{{ route('vendor.restaurant.catalogs.update', ':id') }}".replace(':id', id);
+        @else
+            let updateUrl = "/vendor/restaurant/menu-card/" + id;
+        @endif
 
+        document.getElementById('editCatalogForm').action = updateUrl;
+        document.getElementById('edit_table_name').value = tableName || '';
+
+        const selectedSet = new Set((selectedItems || []).map(String));
         document.querySelectorAll('.edit-item-checkbox').forEach(cb => {
-            cb.checked = selectedItems.map(String).includes(String(cb.value));
+            cb.checked = selectedSet.has(String(cb.value));
         });
 
         new bootstrap.Modal(document.getElementById('editCatalogModal')).show();
