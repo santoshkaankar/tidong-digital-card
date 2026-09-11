@@ -1,14 +1,16 @@
 <style>
+    /* Desktop Default Styles */
     .restaurant-sidebar {
         width: 260px;
         min-width: 260px;
-        background: #ffffff;
-        border-right: 1px solid #e2e8f0;
+        background: var(--sidebar-bg, #ffffff);
+        border-right: 1px solid var(--border-color, #e2e8f0);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         min-height: 100vh;
-        z-index: 10;
+        z-index: 1050;
+        transition: transform 0.3s ease-in-out;
     }
 
     .brand-header {
@@ -16,7 +18,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--border-color, #f1f5f9);
     }
 
     .brand-icon {
@@ -54,7 +56,7 @@
         align-items: center;
         gap: 10px;
         padding: 9px 12px;
-        color: #64748b;
+        color: var(--text-muted, #64748b);
         text-decoration: none;
         font-weight: 500;
         font-size: 0.875rem;
@@ -65,7 +67,7 @@
 
     .nav-item-link:hover {
         color: #4f46e5;
-        background: #f8fafc;
+        background: rgba(79, 70, 229, 0.05);
     }
 
     .nav-item-link.active {
@@ -82,8 +84,8 @@
 
     .sidebar-footer {
         padding: 16px 12px;
-        border-top: 1px solid #f1f5f9;
-        background: #fff;
+        border-top: 1px solid var(--border-color, #f1f5f9);
+        background: var(--sidebar-bg, #fff);
     }
 
     .logout-btn {
@@ -105,19 +107,54 @@
     .logout-btn:hover {
         background: #fee2e2;
     }
+
+    /* Mobile Offcanvas Styles */
+    @media (max-width: 991.98px) {
+        .restaurant-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            transform: translateX(-100%);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .restaurant-sidebar.show {
+            transform: translateX(0) !important;
+        }
+
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+
+        .sidebar-backdrop.show {
+            display: block;
+        }
+    }
 </style>
 
-<aside class="restaurant-sidebar">
+<aside class="restaurant-sidebar" id="restaurantSidebar">
     <div>
         <!-- Brand Header -->
-        <div class="brand-header">
-            <div class="brand-icon">
-                <i class="bi bi-shop"></i>
+        <div class="brand-header justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="brand-icon">
+                    <i class="bi bi-shop"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.3px;">Restaurant Hub</h6>
+                    <small class="text-muted" style="font-size: 0.72rem;">Partner Panel</small>
+                </div>
             </div>
-            <div>
-                <h6 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.3px;">Restaurant Hub</h6>
-                <small class="text-muted" style="font-size: 0.72rem;">Partner Panel</small>
-            </div>
+            <!-- Mobile Close Cross Icon -->
+            <button class="btn-close d-lg-none" id="closeSidebarBtn" aria-label="Close"></button>
         </div>
 
         <!-- Navigation Links -->
@@ -139,7 +176,7 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('vendor.restaurant.orders.index') }}" class="nav-link {{ request()->routeIs('vendor.restaurant.orders.*') ? 'active' : '' }}">
+                <a href="{{ route('vendor.restaurant.orders.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.orders.*') ? 'active' : '' }}">
                     <i class="bi bi-receipt me-2"></i> Orders History
                 </a>
             </li>
@@ -155,12 +192,11 @@
                     <i class="bi bi-card-list"></i> Select Items
                 </a>
             </li>
-            
             <li>
-    <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
-        <i class="bi bi-book"></i> Create Catalog / Menu Card
-    </a>
-</li>
+                <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
+                    <i class="bi bi-book"></i> Create Catalog / Menu Card
+                </a>
+            </li>
 
             <li class="menu-label mt-2">Operations & Tables</li>
             <li>
@@ -193,3 +229,31 @@
         </form>
     </div>
 </aside>
+
+<!-- Backdrop Overlay for Mobile -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("restaurantSidebar");
+        const backdrop = document.getElementById("sidebarBackdrop");
+        const closeBtn = document.getElementById("closeSidebarBtn");
+
+        function hideSidebar() {
+            if (sidebar) sidebar.classList.remove("show");
+            if (backdrop) backdrop.classList.remove("show");
+        }
+
+        if (backdrop) backdrop.addEventListener("click", hideSidebar);
+        if (closeBtn) closeBtn.addEventListener("click", hideSidebar);
+
+        // Mobile menu me link click hone par auto close ho jaye
+        document.querySelectorAll("#restaurantSidebar .nav-item-link").forEach(link => {
+            link.addEventListener("click", function () {
+                if (window.innerWidth < 992) {
+                    hideSidebar();
+                }
+            });
+        });
+    });
+</script>
