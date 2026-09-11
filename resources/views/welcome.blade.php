@@ -445,19 +445,19 @@
     </div>
 
     <!-- Footer -->
-<footer class="bg-dark text-white py-4 text-center">
-    <div class="container">
-        <div class="mb-3 d-flex justify-content-center gap-4 small flex-wrap">
-            <a href="{{ route('pages.about') }}" class="text-decoration-none text-light">About Us</a>
-            <a href="{{ route('pages.terms') }}" class="text-decoration-none text-light">Terms & Conditions</a>
-            <a href="{{ route('pages.privacy') }}" class="text-decoration-none text-light">Privacy Policy</a>
-            <a href="{{ route('pages.contact') }}" class="text-decoration-none text-light">Contact Us</a>
+    <footer class="bg-dark text-white py-4 text-center">
+        <div class="container">
+            <div class="mb-3 d-flex justify-content-center gap-4 small flex-wrap">
+                <a href="{{ route('pages.about') }}" class="text-decoration-none text-light">About Us</a>
+                <a href="{{ route('pages.terms') }}" class="text-decoration-none text-light">Terms & Conditions</a>
+                <a href="{{ route('pages.privacy') }}" class="text-decoration-none text-light">Privacy Policy</a>
+                <a href="{{ route('pages.contact') }}" class="text-decoration-none text-light">Contact Us</a>
+            </div>
+            <hr class="border-secondary my-3">
+            <p class="mb-1 small text-muted">&copy; 2023 - {{ date('Y') }} Tidong Marketing Pvt. Ltd. All rights reserved.</p>
+            <p class="mb-0 text-secondary" style="font-size: 12px;">Tidong® is a registered trademark.</p>
         </div>
-        <hr class="border-secondary my-3">
-        <p class="mb-1 small text-muted">&copy; 2023 - {{ date('Y') }} Tidong Marketing Pvt. Ltd. All rights reserved.</p>
-        <p class="mb-0 text-secondary" style="font-size: 12px;">Tidong® is a registered trademark.</p>
-    </div>
-</footer>
+    </footer>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

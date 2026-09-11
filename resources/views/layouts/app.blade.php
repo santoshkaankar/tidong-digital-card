@@ -1,53 +1,63 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <title>{{ config('app.name', 'Laravel') }}</title>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-    <!-- Bootstrap CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Digital Visiting Card</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- FontAwesome Icons CDN -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Vite Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <!-- WhatsApp & Social Media Preview Tags -->
-    <meta property="og:title" content="My Digital Visiting Card">
-    <meta property="og:description" content="Click here to view my digital visiting card and connect with me.">
-    <meta property="og:image" content="https://tidong.in/images/card-banner.png">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:type" content="website">
-
-    <!-- Global Responsive & Material Styles -->
     <style>
-        /* Mobile Responsive Sidebar Fix */
-        @media (max-width: 991.98px) {
-            .sidebar, aside {
-                position: fixed !important;
-                top: 0 !important;
-                left: -300px !important; /* Mobile view me default hide rahega */
-                width: 260px !important;
-                height: 100vh !important;
-                z-index: 1050 !important;
-                transition: all 0.3s ease-in-out !important;
-                box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        body {
+            background-color: #f8f9fa;
+        }
+        /* Sidebar Styling */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: #212529;
+            color: #fff;
+            transition: all 0.3s;
+            z-index: 1050;
+        }
+        #sidebar .brand {
+            font-size: 1.2rem;
+            padding: 20px;
+            background: #1a1e21;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #373b3e;
+        }
+        #sidebar .nav-link {
+            color: #adb5bd;
+            padding: 12px 20px;
+            margin: 4px 10px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+        #sidebar .nav-link:hover, #sidebar .nav-link.active {
+            color: #fff;
+            background: #0d6efd;
+        }
+        /* Main Content Styling */
+        #main-content {
+            margin-left: 260px;
+            padding: 20px;
+        }
+        @media (max-width: 768px) {
+            #sidebar {
+                left: -260px;
             }
-            
-            /* Sidebar jab open hoga */
-            .sidebar.show, aside.show {
-                left: 0 !important;
+            #sidebar.show {
+                left: 0;
             }
-
-            /* Dark Overlay Background */
+            #main-content {
+                margin-left: 0;
+            }
             .sidebar-overlay {
                 display: none;
                 position: fixed;
@@ -58,49 +68,72 @@
                 background: rgba(0, 0, 0, 0.5);
                 z-index: 1040;
             }
-            
             .sidebar-overlay.show {
                 display: block !important;
             }
         }
-
-        /* Card Material Wrapper Pattern */
-        .card-material-wrapper {
-            background-size: cover !important;
-            background-repeat: no-repeat !important;
-            background-position: center !important;
-            transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
-        }
     </style>
 </head>
-<body class="font-sans antialiased">
-    
+<body>
+
     <!-- Mobile Overlay Div -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <div class="min-h-screen bg-light">
-        <!-- Page Content -->
-        <main>
+    <!-- Sidebar -->
+    <div id="sidebar" class="d-flex flex-column">
+        <div class="brand">
+            <i class="fas fa-shield-alt text-primary me-2"></i> Admin Panel
+        </div>
+        <ul class="nav nav-pills flex-column mb-auto p-2">
+            <li class="nav-item mb-1">
+                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                    <i class="fas fa-home me-2"></i> Dashboard
+                </a>
+            </li>
+            
+        </ul>
+        <div class="p-3 border-top border-secondary">
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
+                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div id="main-content">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-expand navbar-light bg-white px-4 rounded-4 shadow-sm mb-4">
+            <div class="container-fluid">
+                <button class="btn btn-light d-md-none me-3" type="button" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="navbar-brand mb-0 h5 fw-bold text-secondary">Welcome, Admin 👋</span>
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item dropdown">
+                        <span class="fw-bold text-dark">{{ Auth::user()->name ?? 'User' }}</span>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Dynamic Page Content -->
+        <div class="container-fluid px-0">
             @yield('content')
-        </main>
+        </div>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Global Sidebar Toggle Script -->
     <script>
-    function toggleSidebar() {
-        let sidebar = document.querySelector('.sidebar') || document.querySelector('aside');
-        let overlay = document.getElementById('sidebarOverlay');
-        
-        if (sidebar) {
-            sidebar.classList.toggle('show');
+        function toggleSidebar() {
+            let sidebar = document.getElementById('sidebar');
+            let overlay = document.getElementById('sidebarOverlay');
+            if (sidebar) sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
         }
-        if (overlay) {
-            overlay.classList.toggle('show');
-        }
-    }
     </script>
 </body>
 </html>

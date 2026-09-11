@@ -22,7 +22,7 @@
             background: #212529;
             color: #fff;
             transition: all 0.3s;
-            z-index: 1000;
+            z-index: 1050;
         }
         #sidebar .brand {
             font-size: 1.2rem;
@@ -50,17 +50,34 @@
         }
         @media (max-width: 768px) {
             #sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
+                left: -260px;
+            }
+            #sidebar.show {
+                left: 0;
             }
             #main-content {
                 margin-left: 0;
+            }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+            }
+            .sidebar-overlay.show {
+                display: block !important;
             }
         }
     </style>
 </head>
 <body>
+
+    <!-- Mobile Overlay Div -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar -->
     <div id="sidebar" class="d-flex flex-column">
@@ -90,6 +107,9 @@
         <!-- Top Navbar -->
         <nav class="navbar navbar-expand navbar-light bg-white px-4 rounded-4 shadow-sm mb-4">
             <div class="container-fluid">
+                <button class="btn btn-light d-md-none me-3" type="button" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <span class="navbar-brand mb-0 h5 fw-bold text-secondary">Welcome, Admin 👋</span>
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item dropdown">
@@ -107,5 +127,13 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            let sidebar = document.getElementById('sidebar');
+            let overlay = document.getElementById('sidebarOverlay');
+            if (sidebar) sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
+        }
+    </script>
 </body>
 </html>

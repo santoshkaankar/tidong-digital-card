@@ -18,6 +18,19 @@ Route::get('/fix-storage', function () {
     return 'Storage linked and caches cleared successfully!';
 });
 
+// Universal 20-Language Switcher (Connected with SetLocaleMiddleware)
+Route::get('/change-language/{locale}', function ($locale) {
+    $supportedLocales = [
+        'en', 'hi', 'es', 'fr', 'de', 'ja', 'zh', 'ar', 'ru', 'pt', 
+        'it', 'ko', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'pa', 'ur'
+    ];
+    if (in_array($locale, $supportedLocales)) {
+        session(['locale' => $locale]);
+        app()->setLocale($locale);
+    }
+    return redirect()->back();
+})->name('change.language');
+
 // Load Auth Routes
 require __DIR__ . '/auth.php';
 
@@ -26,7 +39,6 @@ Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.
 Route::get('/card/{slug}', [CardController::class, 'showPublic'])->name('card.show');
 Route::get('/search-locations', [CardController::class, 'searchLocations'])->name('search.locations');
 Route::get('/menu/{slug}', [MenuController::class, 'showPublicMenu'])->name('menu.public');
-Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'])->name('order.complete');
 
 // Customer Public Scan Routes
 Route::get('/m/{slug}', [MenuController::class, 'showPublicMenu'])->name('public.menu');
@@ -36,10 +48,6 @@ Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'
 // Authenticated Role Routes Inclusion
 require __DIR__ . '/admin.php';
 
-Route::prefix('vendor')->name('vendor.')->group(function () {
-    require __DIR__ . '/vendor.php';
-});
-
 Route::prefix('member')->name('member.')->group(function () {
     require __DIR__ . '/member.php';
 });
@@ -48,7 +56,14 @@ Route::prefix('employee')->name('employee.')->group(function () {
     require __DIR__ . '/employee.php';
 });
 
-require __DIR__.'/payment.php';
+// All Industry Modules Loaded
+require __DIR__ . '/payment.php';
+require __DIR__ . '/emporium.php';
+require __DIR__ . '/hotel.php';
+require __DIR__ . '/money_exchange.php';
+require __DIR__ . '/tourist_guide.php';
+require __DIR__ . '/restaurant.php';
+require __DIR__ . '/taxi.php';
 
 // Public Guest Order Routes (CatalogController)
 Route::get('/c/{slug}', [CatalogController::class, 'showPublicCatalog'])->name('catalogs.public');

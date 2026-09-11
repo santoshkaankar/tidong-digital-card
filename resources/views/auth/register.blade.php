@@ -4,7 +4,7 @@
         <p class="text-sm text-gray-600 mt-1 font-medium">Register as User, Merchant or Service Partner</p>
     </div>
 
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
         @csrf
 
         <!-- Name -->
@@ -49,28 +49,67 @@
         <div id="vendor-fields-container" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl" style="display: none;">
             <div class="mb-3">
                 <label for="business_type" class="block font-semibold text-sm text-gray-800">Select Your Business Service <span class="text-red-600">*</span></label>
-                <select name="business_type" id="business_type" class="form-select rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full" required onchange="handleBusinessTypeChange(this.value)">
+                <select name="business_type" id="business_type" class="form-select rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full" required onchange="handleBusinessTypeChange(this.value)">
                     <option value="" disabled selected>-- Select Service Type --</option>
-                    <option value="food">Food & Restaurant</option>
-                    <option value="Hotel">Hotel / Stay</option>
-                    <option value="emporium">Emporium</option>
-                    <option value="taxi">Taxi / Cab Service</option>
-                    <option value="money_exchange">Money Exchange</option>
-                    <option value="guide">Tourist Guide</option>
+                    
+                    <optgroup label="Food & Hospitality">
+                        <option value="restaurant">Restaurant (Dine-in / KDS / POS)</option>
+                        <option value="catering">Catering Service (Event & Bulk Food)</option>
+                        <option value="tiffin_service">Tiffin & Mess Service</option>
+                        <option value="street_food">Street Food & Food Stalls</option>
+                        <option value="cafe_icecream">Cafe & Ice Cream Parlour</option>
+                        <option value="bakery">Bakery & Cake Shop</option>
+                        <option value="hotel">Hotel / Resort / Guest House</option>
+                        <option value="homestay">Homestay / PG Accommodations</option>
+                    </optgroup>
+
+                    <optgroup label="Events, Venue & Media">
+                        <option value="marriage_home">Marriage Home / Banquet Hall / Garden</option>
+                        <option value="event_planner">Event & Wedding Planner</option>
+                        <option value="tent_decoration">Tent House & Decoration</option>
+                        <option value="photography">Photography & Videography</option>
+                        <option value="dj_sound">DJ & Sound System</option>
+                    </optgroup>
+
+                    <optgroup label="Transport & Travel">
+                        <option value="taxi">Taxi / Cab Service</option>
+                        <option value="bike_rental">Bike / Scooter Rental</option>
+                        <option value="tourist_guide">Tourist Guide</option>
+                        <option value="travel_agency">Travel & Tour Operator</option>
+                    </optgroup>
+
+                    <optgroup label="Retail & Shopping">
+                        <option value="emporium">Handicraft & Emporium</option>
+                        <option value="grocery">Grocery & Supermarket</option>
+                        <option value="clothing">Clothing & Fashion Store</option>
+                    </optgroup>
+
+                    <optgroup label="Health, Wellness & Beauty">
+                        <option value="salon_spa">Salon, Spa & Beauty Parlour</option>
+                        <option value="gym_fitness">Gym & Fitness Center</option>
+                        <option value="medical_pharmacy">Medical / Pharmacy</option>
+                    </optgroup>
+
+                    <optgroup label="Financial & Professional Services">
+                        <option value="money_exchange">Money Exchange (Forex)</option>
+                        <option value="real_estate">Real Estate & Property Dealer</option>
+                        <option value="coaching_tuition">Coaching & Education Institute</option>
+                        <option value="local_services">Local Utility & Support Services</option>
+                    </optgroup>
                 </select>
                 <x-input-error :messages="$errors->get('business_type')" class="mt-2 text-red-600" />
             </div>
 
-            <!-- Taxi Vehicle Field -->
+            <!-- Taxi & Rental Vehicle Field -->
             <div id="vehicle-field" class="mt-3" style="display: none;">
-                <label for="vehicle_no" class="block font-semibold text-sm text-gray-800">Vehicle Number / Permit</label>
+                <label for="vehicle_no" class="block font-semibold text-xs text-gray-700">Vehicle Number / Registration</label>
                 <input id="vehicle_no" name="vehicle_no" type="text" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm" placeholder="e.g. RJ-14-TA-1234" />
             </div>
 
-            <!-- License Field for Guide & Exchange -->
+            <!-- License Field for Regulated Services -->
             <div id="license-field" class="mt-3" style="display: none;">
-                <label for="license_no" class="block font-semibold text-sm text-gray-800">Govt License / Reg. Number</label>
-                <input id="license_no" name="license_no" type="text" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm" placeholder="e.g. LIC-2026-8890" />
+                <label for="license_no" class="block font-semibold text-xs text-gray-700">Govt License / FSSAI / Reg. Number</label>
+                <input id="license_no" name="license_no" type="text" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm" placeholder="e.g. FSSAI / LIC-2026-8890" />
             </div>
         </div>
 
@@ -121,7 +160,7 @@
                 businessSelect.disabled = false;
                 businessSelect.setAttribute('required', 'required');
                 if (!businessSelect.value) {
-                    businessSelect.value = 'food';
+                    businessSelect.value = 'restaurant';
                 }
                 handleBusinessTypeChange(businessSelect.value);
             }
@@ -140,11 +179,17 @@
         const vehicleField = document.getElementById('vehicle-field');
         const licenseField = document.getElementById('license-field');
 
+        const vehicleTypes = ['taxi', 'bike_rental'];
+        const licenseTypes = [
+            'money_exchange', 'tourist_guide', 'tiffin_service', 
+            'street_food', 'bakery', 'cafe_icecream', 'catering', 'marriage_home', 'medical_pharmacy'
+        ];
+
         if (vehicleField) {
-            vehicleField.style.display = (type === 'taxi') ? 'block' : 'none';
+            vehicleField.style.display = vehicleTypes.includes(type) ? 'block' : 'none';
         }
         if (licenseField) {
-            licenseField.style.display = (type === 'money_exchange' || type === 'guide') ? 'block' : 'none';
+            licenseField.style.display = licenseTypes.includes(type) ? 'block' : 'none';
         }
     }
 

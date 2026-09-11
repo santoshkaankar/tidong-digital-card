@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\SetLocaleMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Render / Cloudflare proxy ko trust karne ke liye
         $middleware->trustProxies(at: '*');
+
+        // Web Requests ke liye Auto Language Switcher Middleware
+        $middleware->web(append: [
+            SetLocaleMiddleware::class,
+        ]);
 
         // Custom Role Middleware Alias (ताकि routes me 'role:admin' use ho sake)
         $middleware->alias([

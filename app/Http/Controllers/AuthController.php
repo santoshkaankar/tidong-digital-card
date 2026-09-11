@@ -41,19 +41,8 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            $role = strtolower(Auth::user()->role);
-
-            if ($role == 'admin') {
-                return Route::has('admin.dashboard') ? redirect()->route('admin.dashboard') : view('admin.dashboard');
-            }
-            if ($role == 'business') {
-                return Route::has('vendor.dashboard') ? redirect()->route('vendor.dashboard') : view('vendor.dashboard');
-            }
-            if ($role == 'employee') {
-                return Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : view('employee.dashboard');
-            }
-
-            return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : view('member.dashboard');
+            
+            return $this->redirectToUserDashboard(Auth::user());
         }
 
         return back()->withErrors([
@@ -74,7 +63,7 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users',
             'mobile' => 'required|string|max:15|unique:users',
             'password' => 'required|min:6',
-            'role' => 'required|in:admin,employee,business,member',
+            'role' => 'required|in:admin,employee,business,member,vendor',
             'business_type' => 'nullable|string|max:255'
         ]);
 
@@ -86,21 +75,47 @@ class AuthController extends Controller
             'mobile' => $request->mobile,
             'password' => Hash::make($request->password),
             'role' => $request->role,
-            'business_type' => $request->role == 'business' ? $request->business_type : null
+            'business_type' => in_array($request->role, ['business', 'vendor']) ? $request->business_type : null
         ]);
 
         Auth::login($user);
 
+        return $this->redirectToUserDashboard($user);
+    }
+
+    /**
+     * Helper to handle dynamic redirects based on role and business type
+     */
+    private function redirectToUserDashboard($user)
+    {
         $role = strtolower($user->role);
 
-        if ($role == 'business') {
-            return Route::has('vendor.dashboard') ? redirect()->route('vendor.dashboard') : view('vendor.dashboard');
-        } elseif ($role == 'admin') {
+        if ($role === 'admin') {
             return Route::has('admin.dashboard') ? redirect()->route('admin.dashboard') : view('admin.dashboard');
-        } elseif ($role == 'employee') {
+        }
+
+        if ($role === 'employee') {
             return Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : view('employee.dashboard');
         }
-        
+
+        if (in_array($role, ['business', 'vendor'])) {
+            $routeName = match ($user->business_type) {
+                'taxi' => 'vendor.taxi.dashboard',
+                'hotel' => 'vendor.hotel.dashboard',
+                'emporium' => 'vendor.emporium.dashboard',
+                'food', 'restaurant' => 'vendor.restaurant.dashboard',
+                'money_exchange' => 'vendor.exchange.dashboard',
+                'tourist_guide' => 'vendor.guide.dashboard',
+                default => null,
+            };
+
+            if ($routeName && Route::has($routeName)) {
+                return redirect()->route($routeName);
+            }
+
+            return redirect('/');
+        }
+
         return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : view('member.dashboard');
     }
 
