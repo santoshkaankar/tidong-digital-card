@@ -13,6 +13,7 @@
         left: 0;
         z-index: 1050;
         overflow: hidden;
+        transition: transform 0.3s ease-in-out;
     }
 
     .sidebar-top-content {
@@ -119,6 +120,33 @@
     .logout-btn:hover {
         background: #fee2e2;
     }
+
+    /* Mobile Backdrop & Responsive Fixes */
+    .restaurant-sidebar-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.5);
+        z-index: 1040;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    @media (max-width: 991.98px) {
+        .restaurant-sidebar {
+            transform: translateX(-100%);
+        }
+        .restaurant-sidebar.show {
+            transform: translateX(0);
+        }
+        .restaurant-sidebar-backdrop.show {
+            display: block;
+            opacity: 1;
+        }
+    }
 </style>
 
 <aside class="restaurant-sidebar" id="restaurantSidebar">
@@ -134,7 +162,7 @@
                     <small class="text-muted" style="font-size: 0.72rem;">Partner Panel</small>
                 </div>
             </div>
-            <button class="btn-close d-lg-none" id="closeRestaurantSidebar"></button>
+            <button type="button" class="btn-close d-lg-none" id="closeRestaurantSidebar"></button>
         </div>
 
         <!-- Navigation Links -->
@@ -211,3 +239,45 @@
 </aside>
 
 <div class="restaurant-sidebar-backdrop" id="restaurantSidebarBackdrop"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("restaurantSidebar");
+        const backdrop = document.getElementById("restaurantSidebarBackdrop");
+        const closeBtn = document.getElementById("closeRestaurantSidebar");
+        const toggleBtn = document.getElementById("restaurantSidebarToggle");
+
+        function openSidebar() {
+            if (sidebar && backdrop) {
+                sidebar.classList.add("show");
+                backdrop.classList.add("show");
+            }
+        }
+
+        function closeSidebar() {
+            if (sidebar && backdrop) {
+                sidebar.classList.remove("show");
+                backdrop.classList.remove("show");
+            }
+        }
+
+        // Toggle Open Click
+        if (toggleBtn) {
+            toggleBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                openSidebar();
+            });
+        }
+
+        // Close Click (Cross Button & Backdrop)
+        if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
+        if (backdrop) backdrop.addEventListener("click", closeSidebar);
+
+        // Delegation fallback for dynamically rendered headers
+        document.addEventListener("click", function (e) {
+            if (e.target.closest("#restaurantSidebarToggle")) {
+                openSidebar();
+            }
+        });
+    });
+</script>
