@@ -1,6 +1,6 @@
 <!-- File Path: resources/views/vendor/restaurant/partials/header.blade.php -->
 
-<header class="navbar navbar-expand bg-white border-bottom sticky-top px-3 py-2" style="z-index: 1000;">
+<header class="navbar navbar-expand bg-white border-bottom sticky-top px-3 py-2" style="z-index: 1020;">
     <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
         
         <!-- Left: Mobile Toggle Button & Title -->
@@ -11,7 +11,7 @@
             <span class="fw-bold fs-6 text-dark d-lg-none">Restaurant Hub</span>
         </div>
 
-        <!-- Right: Actions & User Info Profile Dropdown -->
+        <!-- Right: Profile Dropdown -->
         <div class="d-flex align-items-center gap-2 ms-auto">
             <div class="dropdown ms-2">
                 <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-2 border-0 bg-transparent" type="button" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -27,20 +27,18 @@
                         </a>
                     </li>
                     
+                    <li><hr class="dropdown-divider"></li>
+
+                    <!-- 1. Language Switcher Partial -->
                     @if(View::exists('vendor.restaurant.partials.language_switcher'))
-                        <li>
-                            <div class="px-3 py-1">
-                                @include('vendor.restaurant.partials.language_switcher')
-                            </div>
-                        </li>
+                        @include('vendor.restaurant.partials.language_switcher')
                     @endif
 
+                    <li><hr class="dropdown-divider"></li>
+
+                    <!-- 2. Theme Switcher Partial -->
                     @if(View::exists('vendor.restaurant.partials.theme_switcher'))
-                        <li>
-                            <div class="px-3 py-1">
-                                @include('vendor.restaurant.partials.theme_switcher')
-                            </div>
-                        </li>
+                        @include('vendor.restaurant.partials.theme_switcher')
                     @endif
                     
                     <li><hr class="dropdown-divider"></li>
