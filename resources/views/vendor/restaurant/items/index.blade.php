@@ -10,21 +10,46 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; }
-        .dashboard-wrapper { display: flex; min-height: 100vh; }
-        .main-viewport { flex-grow: 1; min-width: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; }
+        
+        .dashboard-wrapper { display: flex; min-height: 100vh; width: 100%; }
+
+        /* Sidebar overlapping fix */
+        .sidebar-area {
+            width: 260px;
+            flex-shrink: 0;
+        }
+
+        .main-viewport { 
+            flex-grow: 1; 
+            min-width: 0; 
+            width: calc(100% - 260px);
+        }
+
         .table-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
         .custom-table th { background-color: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 1rem; }
         .custom-table td { padding: 1rem; vertical-align: middle; }
+
+        @media (max-width: 991.98px) {
+            .sidebar-area { width: 0; }
+            .main-viewport { width: 100%; padding: 1rem !important; }
+            .action-buttons { width: 100%; }
+            .action-buttons .btn { flex: 1; text-align: center; justify-content: center; }
+        }
     </style>
 </head>
 <body>
 
 <div class="dashboard-wrapper">
-    @include('vendor.restaurant.partials.sidebar')
+    <!-- Sidebar Wrapper -->
+    <div class="sidebar-area">
+        @include('vendor.restaurant.partials.sidebar')
+    </div>
 
-    <div class="main-viewport p-4 p-lg-5">
+    <!-- Main Viewport Content -->
+    <div class="main-viewport p-3 p-md-4 p-lg-5">
         
+        <!-- Top Header Bar -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
             <div>
                 <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-semibold" style="font-size: 0.75rem;">FOOD CATALOG</span>
@@ -32,14 +57,19 @@
                 <p class="text-muted small mb-0">Manage menu pricing, MRP, and discounted offer rates.</p>
             </div>
 
-            <div class="d-flex gap-2">
-                <!-- Select Global Item Trigger -->
+            <div class="d-flex flex-wrap gap-2 action-buttons align-items-center">
+                @if(Route::has('vendor.restaurant.dashboard'))
+                    <a href="{{ route('vendor.restaurant.dashboard') }}" class="btn btn-outline-secondary rounded-3 px-3 py-2 fw-semibold d-flex align-items-center gap-1">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        <span>Dashboard</span>
+                    </a>
+                @endif
+
                 <button type="button" class="btn btn-primary rounded-3 px-3 py-2 fw-semibold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#selectGlobalModal">
                     <i class="bi bi-list-check"></i>
                     <span>Select Global Item</span>
                 </button>
 
-                <!-- Add New Item Trigger -->
                 <button type="button" class="btn btn-outline-primary rounded-3 px-3 py-2 fw-semibold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addCustomModal">
                     <i class="bi bi-plus-lg"></i>
                     <span>Add New Item</span>
@@ -57,7 +87,7 @@
         <!-- Table Display -->
         <div class="table-card">
             <div class="table-responsive">
-                <table class="table custom-table mb-0 align-middle">
+                <table class="table custom-table mb-0 align-middle" style="min-width: 700px;">
                     <thead>
                         <tr>
                             <th width="60">#</th>
@@ -73,23 +103,23 @@
                         @forelse($items as $key => $item)
                             <tr>
                                 <td class="fw-bold text-muted">{{ $key + 1 }}</td>
-                                <td class="fw-semibold">{{ $item->globalItem->item_name ?? 'N/A' }}</td>
-                                <td><span class="badge bg-light text-dark border">{{ $item->category->name ?? 'General' }}</span></td>
+                                <td class="fw-semibold">{{ $item->globalItem->item_name ?? $item->name ?? 'N/A' }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ $item->category->name ?? $item->category_name ?? 'General' }}</span></td>
                                 <td>
-                                    @php $type = $item->globalItem->food_type ?? 'veg'; @endphp
+                                    @php $type = $item->globalItem->food_type ?? $item->type ?? 'veg'; @endphp
                                     <span class="badge {{ $type == 'veg' ? 'bg-success' : 'bg-danger' }} bg-opacity-10 {{ $type == 'veg' ? 'text-success' : 'text-danger' }}">
                                         {{ ucfirst($type) }}
                                     </span>
                                 </td>
                                 
-                                <td class="text-muted">₹{{ number_format($item->mrp, 2) }}</td>
+                                <td class="text-muted">₹{{ number_format($item->mrp ?? 0, 2) }}</td>
 
                                 <td>
-                                    @if($item->price < $item->mrp && $item->price > 0)
+                                    @if(isset($item->price) && $item->price < $item->mrp && $item->price > 0)
                                         <del class="text-muted small me-1">₹{{ number_format($item->mrp, 2) }}</del>
                                         <span class="fw-bold text-success fs-6">₹{{ number_format($item->price, 2) }}</span>
                                     @else
-                                        <span class="fw-bold text-dark fs-6">₹{{ number_format($item->mrp, 2) }}</span>
+                                        <span class="fw-bold text-dark fs-6">₹{{ number_format($item->mrp ?? $item->price ?? 0, 2) }}</span>
                                     @endif
                                 </td>
 
@@ -132,11 +162,13 @@
                         <label class="form-label fw-semibold">Choose Global Item</label>
                         <select name="global_item_id" class="form-select form-select-lg rounded-3 fs-6" required>
                             <option value="" selected disabled>-- Select Food Item --</option>
-                            @foreach($globalItems as $gItem)
-                                <option value="{{ $gItem->id }}">
-                                    {{ $gItem->item_name }} ({{ ucfirst($gItem->food_type ?? 'veg') }})
-                                </option>
-                            @endforeach
+                            @if(isset($globalItems))
+                                @foreach($globalItems as $gItem)
+                                    <option value="{{ $gItem->id }}">
+                                        {{ $gItem->item_name }} ({{ ucfirst($gItem->food_type ?? 'veg') }})
+                                    </option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
                     <div class="row g-3">
@@ -179,9 +211,11 @@
                         <label class="form-label fw-semibold">Category</label>
                         <select name="restaurant_category_id" id="customCategorySelect" class="form-select form-select-lg rounded-3">
                             <option value="" selected>-- Select Category (Optional) --</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" data-name="{{ $category->name }}">{{ $category->name }}</option>
-                            @endforeach
+                            @if(isset($categories))
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" data-name="{{ $category->name }}">{{ $category->name }}</option>
+                                @endforeach
+                            @endif
                         </select>
                         <input type="hidden" name="category_name" id="hiddenCategoryName" value="General">
                     </div>
@@ -215,7 +249,6 @@
     </div>
 </div>
 
-<!-- Mandatory Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>

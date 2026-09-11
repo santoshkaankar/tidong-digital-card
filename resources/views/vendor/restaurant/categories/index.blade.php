@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Categories — Restaurant Hub</title>
     
-    <!-- Google Fonts & Bootstrap 5 -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -29,6 +28,13 @@
         .dashboard-wrapper {
             display: flex;
             min-height: 100vh;
+            width: 100%;
+        }
+
+        /* Sidebar overlapping fix */
+        .sidebar-area {
+            width: 260px;
+            flex-shrink: 0;
         }
 
         .main-viewport {
@@ -36,6 +42,7 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
+            width: calc(100% - 260px);
         }
 
         .table-card {
@@ -63,15 +70,24 @@
             color: var(--text-main);
             font-weight: 500;
         }
+
+        @media (max-width: 991.98px) {
+            .sidebar-area { width: 0; }
+            .main-viewport { width: 100%; padding: 1rem !important; }
+            .header-actions { width: 100%; }
+            .header-actions .btn { flex: 1; text-align: center; justify-content: center; }
+        }
     </style>
 </head>
 <body>
 
 <div class="dashboard-wrapper">
-    <!-- Restaurant Sidebar Partial -->
-    @include('vendor.restaurant.partials.sidebar')
+    <!-- Sidebar Wrapper -->
+    <div class="sidebar-area">
+        @include('vendor.restaurant.partials.sidebar')
+    </div>
 
-    <div class="main-viewport p-4 p-lg-5">
+    <div class="main-viewport p-3 p-md-4 p-lg-5">
         
         <!-- Header Bar -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
@@ -83,10 +99,20 @@
                 <p class="text-muted small mb-0">Select or assign categories from the global dropdown for your menu.</p>
             </div>
 
-            <button class="btn btn-primary rounded-3 px-4 py-2.5 fw-semibold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#selectCategoryModal">
-                <i class="bi bi-plus-lg fs-6"></i>
-                <span>Select / Add Category</span>
-            </button>
+            <!-- Header Action Buttons -->
+            <div class="d-flex flex-wrap gap-2 header-actions align-items-center">
+                @if(Route::has('vendor.restaurant.dashboard'))
+                    <a href="{{ route('vendor.restaurant.dashboard') }}" class="btn btn-outline-secondary rounded-3 px-3 py-2 fw-semibold d-flex align-items-center gap-1">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        <span>Dashboard</span>
+                    </a>
+                @endif
+
+                <button class="btn btn-primary rounded-3 px-4 py-2 fw-semibold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#selectCategoryModal">
+                    <i class="bi bi-plus-lg fs-6"></i>
+                    <span>Select / Add Category</span>
+                </button>
+            </div>
         </div>
 
         @if(session('success'))
@@ -110,12 +136,11 @@
         <!-- Selected Categories Table -->
         <div class="table-card">
             <div class="table-responsive">
-                <table class="table custom-table mb-0 align-middle">
+                <table class="table custom-table mb-0 align-middle" style="min-width: 600px;">
                     <thead>
                         <tr>
                             <th width="80">#</th>
                             <th>Category Name</th>
-                            
                             <th>Status</th>
                             <th class="text-end" width="120">Actions</th>
                         </tr>
@@ -130,7 +155,6 @@
                                         <span class="fw-semibold">{{ $category->name }}</span>
                                     </div>
                                 </td>
-                                
                                 <td>
                                     <span class="badge bg-success bg-opacity-10 text-success px-2.5 py-1.5 rounded-2 fw-semibold">
                                         Active
@@ -182,19 +206,18 @@
             <form action="{{ route('vendor.restaurant.categories.store') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
-                    
-                    <!-- Global Dropdown Select -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-dark">Global Category Choose Karein</label>
                         <select name="global_category_id" class="form-select form-select-lg rounded-3 fs-6" required>
                             <option value="" selected disabled>-- Dropdown se Category Select Karein --</option>
-                            @foreach($globalCategories as $globalCat)
-                                <option value="{{ $globalCat->id }}">{{ $globalCat->name }}</option>
-                            @endforeach
+                            @if(isset($globalCategories))
+                                @foreach($globalCategories as $globalCat)
+                                    <option value="{{ $globalCat->id }}">{{ $globalCat->name }}</option>
+                                @endforeach
+                            @endif
                         </select>
                         <div class="form-text">Yeh category aapke restaurant menu me apply ho jayegi.</div>
                     </div>
-
                 </div>
                 <div class="modal-footer bg-light px-4 py-3 rounded-bottom-4 border-top-0">
                     <button type="button" class="btn btn-outline-secondary rounded-3 px-3 py-2 fw-semibold" data-bs-dismiss="modal">Cancel</button>
@@ -208,7 +231,6 @@
     </div>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>

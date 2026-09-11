@@ -15,6 +15,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #f4f6f9;
             color: #0f172a;
+            overflow-x: hidden;
         }
         .dashboard-wrapper {
             display: flex;
@@ -28,6 +29,7 @@
         .main-viewport {
             flex-grow: 1;
             min-width: 0; /* Prevents flex items from overflowing container width */
+            width: 100%;
         }
         .card-header-blue {
             background-color: #0d6efd;
@@ -58,9 +60,40 @@
             padding: 10px 12px;
             margin-bottom: 8px;
         }
-        .action-btn-group .btn {
-            padding: 0.25rem 0.45rem;
-            font-size: 0.78rem;
+
+        /* Responsive Fixes for Mobile Devices */
+        @media (max-width: 767.98px) {
+            .main-viewport {
+                padding: 12px !important;
+            }
+            .header-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .header-buttons .btn {
+                flex: 1;
+            }
+            .action-btn-group {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                justify-content: flex-end;
+            }
+            .action-btn-group .btn, 
+            .action-btn-group form {
+                display: inline-block;
+                margin: 0 !important;
+            }
+            .action-btn-group .btn {
+                padding: 0.25rem 0.4rem !important;
+                font-size: 0.72rem !important;
+            }
+            .table-responsive {
+                border: 0;
+            }
+            .item-selection-box {
+                max-height: 280px;
+            }
         }
 
         /* PRINT SETUP: Printable QR Card Styles */
@@ -94,12 +127,12 @@
 <div class="dashboard-wrapper">
     <!-- Sidebar Partial Wrapper -->
     @if(View::exists('vendor.restaurant.partials.sidebar'))
-        <div class="sidebar-container">
+        <div class="sidebar-container d-none d-lg-block">
             @include('vendor.restaurant.partials.sidebar')
         </div>
     @endif
 
-    <div class="main-viewport p-3 p-lg-4">
+    <div class="main-viewport p-2 p-sm-3 p-lg-4">
 
         <!-- Flash Alert Messages -->
         @if(session('success'))
@@ -119,7 +152,7 @@
         <!-- Header -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-qr-code-scan text-primary me-2"></i>Smart Catalogs</h4>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 header-buttons">
                 @if(Route::has('vendor.restaurant.dashboard'))
                     <a href="{{ route('vendor.restaurant.dashboard') }}" class="btn btn-outline-secondary btn-sm fw-semibold">
                         <i class="bi bi-arrow-left me-1"></i> Dashboard
@@ -183,11 +216,11 @@
                                                     <div class="d-flex align-items-center gap-2">
                                                         <input class="form-check-input item-checkbox" type="checkbox" name="items[]" value="{{ $item->id }}" id="chk-{{ $item->id }}" checked>
 
-                                                        <div style="width: 45px; height: 45px; flex-shrink: 0;">
+                                                        <div style="width: 40px; height: 40px; flex-shrink: 0;">
                                                             @if($imagePath)
                                                                 <img src="{{ $imagePath }}" alt="{{ $itemName }}" class="rounded border" style="width: 100%; height: 100%; object-fit: cover;">
                                                             @else
-                                                                <div class="bg-light border rounded d-flex align-items-center justify-content-center text-muted" style="width: 100%; height: 100%; font-size: 1.1rem;">
+                                                                <div class="bg-light border rounded d-flex align-items-center justify-content-center text-muted" style="width: 100%; height: 100%; font-size: 1rem;">
                                                                     <i class="bi bi-card-image"></i>
                                                                 </div>
                                                             @endif
@@ -230,13 +263,13 @@
                             </div>
 
                             <div class="row g-2">
-                                <div class="col-8">
-                                    <button type="submit" class="btn btn-primary w-100 fw-bold">
+                                <div class="col-7 col-sm-8">
+                                    <button type="submit" class="btn btn-primary w-100 fw-bold btn-sm py-2">
                                         <i class="bi bi-floppy-fill me-1"></i> Save Catalog
                                     </button>
                                 </div>
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-outline-secondary w-100 fw-semibold" onclick="document.querySelectorAll('.item-checkbox').forEach(c => c.checked = true)">
+                                <div class="col-5 col-sm-4">
+                                    <button type="button" class="btn btn-outline-secondary w-100 fw-semibold btn-sm py-2" onclick="document.querySelectorAll('.item-checkbox').forEach(c => c.checked = true)">
                                         <i class="bi bi-check2-all me-1"></i> Select All
                                     </button>
                                 </div>
@@ -255,7 +288,7 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
+                            <table class="table table-hover align-middle mb-0" style="min-width: 580px;">
                                 <thead class="table-light small text-secondary">
                                     <tr>
                                         <th class="ps-3">#</th>
@@ -291,7 +324,7 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <div class="input-group input-group-sm" style="min-width: 140px; max-width: 190px;">
+                                                    <div class="input-group input-group-sm" style="width: 130px;">
                                                         <input type="text" class="form-control bg-light" value="{{ $publicUrl }}" readonly>
                                                         <button class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText('{{ $publicUrl }}'); alert('Link Copied!');">
                                                             <i class="bi bi-copy"></i>
@@ -299,25 +332,25 @@
                                                     </div>
                                                 </td>
                                                 <td class="pe-3 text-end">
-                                                    <div class="action-btn-group btn-group btn-group-sm">
-                                                        <a href="{{ $publicUrl }}" target="_blank" class="btn btn-outline-info" title="View Public Menu">
+                                                    <div class="action-btn-group">
+                                                        <a href="{{ $publicUrl }}" target="_blank" class="btn btn-outline-info btn-sm" title="View Public Menu">
                                                             <i class="bi bi-eye"></i>
                                                         </a>
                                                         
                                                         @if(Route::has('vendor.restaurant.menu-card.copy'))
                                                             <form action="{{ route('vendor.restaurant.menu-card.copy', $tbl->id) }}" method="POST" class="d-inline">
                                                                 @csrf
-                                                                <button type="submit" class="btn btn-outline-warning text-dark fw-semibold" title="Copy To Next Catalog">
+                                                                <button type="submit" class="btn btn-outline-warning btn-sm text-dark fw-semibold" title="Copy To Next Catalog">
                                                                     <i class="bi bi-files"></i> Copy
                                                                 </button>
                                                             </form>
                                                         @endif
 
-                                                        <button type="button" class="btn btn-outline-primary" title="Edit Catalog" onclick='openEditModal(@json($tbl->id), @json($tableName), @json($selectedArr))'>
+                                                        <button type="button" class="btn btn-outline-primary btn-sm" title="Edit Catalog" onclick='openEditModal(@json($tbl->id), @json($tableName), @json($selectedArr))'>
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
 
-                                                        <button type="button" class="btn btn-outline-primary fw-semibold" onclick='openQrModal(@json(auth()->user()->restaurant_name ?? auth()->user()->name ?? "Restaurant Name"), @json($tableName), @json(auth()->user()->address ?? "Restaurant Address"), @json($publicUrl))'>
+                                                        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" onclick='openQrModal(@json(auth()->user()->restaurant_name ?? auth()->user()->name ?? "Restaurant Name"), @json($tableName), @json(auth()->user()->address ?? "Restaurant Address"), @json($publicUrl))'>
                                                             View QR
                                                         </button>
 
@@ -325,7 +358,7 @@
                                                             <form action="{{ route('vendor.restaurant.menu-card.destroy', $tbl->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this catalog?');">
                                                                 @csrf
                                                                 @method('DELETE')
-                                                                <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </form>
