@@ -1,5 +1,7 @@
+<!-- File Path: resources/views/vendor/restaurant/partials/sidebar.blade.php -->
+
 <style>
-    /* Desktop Sidebar Rules */
+    /* 1. Base Sidebar Styling */
     .restaurant-sidebar {
         width: 260px;
         max-width: 260px;
@@ -12,7 +14,7 @@
         position: fixed;
         top: 0;
         left: 0;
-        z-index: 1060; /* Higher z-index to avoid overlay issues */
+        z-index: 1060 !important; /* Backdrop (1050) se bada taaki upar aaye */
         overflow: hidden;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -122,25 +124,25 @@
         background: #fee2e2;
     }
 
-    /* Mobile Backdrop Setup */
+    /* 2. Backdrop Setup */
     .restaurant-sidebar-backdrop {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(15, 23, 42, 0.5);
-        z-index: 1055;
+        background: rgba(15, 23, 42, 0.6);
+        z-index: 1050 !important; /* Navbar se upar, Sidebar se niche */
         display: none;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
 
-    /* Responsive Mobile Rules */
+    /* 3. Mobile Specific Override */
     @media (max-width: 991.98px) {
         .restaurant-sidebar {
             transform: translateX(-100%) !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.25);
         }
         .restaurant-sidebar.show-sidebar {
             transform: translateX(0) !important;
@@ -241,50 +243,51 @@
     </div>
 </aside>
 
+<!-- Black Overlay Screen -->
 <div class="restaurant-sidebar-backdrop" id="restaurantSidebarBackdrop"></div>
 
+<!-- Mobile Toggle Logic JS -->
 <script>
     (function() {
-        function initSidebar() {
+        function initSidebarToggle() {
             const sidebar = document.getElementById("restaurantSidebar");
             const backdrop = document.getElementById("restaurantSidebarBackdrop");
-            const closeBtn = document.getElementById("closeRestaurantSidebar");
 
-            function toggleSidebar(show) {
-                if (!sidebar || !backdrop) return;
-                
-                if (show) {
-                    sidebar.classList.add("show-sidebar");
-                    backdrop.classList.add("show-backdrop");
-                    document.body.style.overflow = "hidden"; // Prevent background scroll
-                } else {
-                    sidebar.classList.remove("show-sidebar");
-                    backdrop.classList.remove("show-backdrop");
-                    document.body.style.overflow = "";
-                }
+            function openSidebar() {
+                if (sidebar) sidebar.classList.add("show-sidebar");
+                if (backdrop) backdrop.classList.add("show-backdrop");
+                document.body.style.overflow = "hidden";
             }
 
-            // Click listener using Event Delegation (Har jagah se click pakadne ke liye)
-            document.addEventListener("click", function (e) {
-                const toggleBtn = e.target.closest("#restaurantSidebarToggle");
-                const closeClick = e.target.closest("#closeRestaurantSidebar");
-                const backdropClick = e.target === backdrop;
+            function closeSidebar() {
+                if (sidebar) sidebar.classList.remove("show-sidebar");
+                if (backdrop) backdrop.classList.remove("show-backdrop");
+                document.body.style.overflow = "";
+            }
 
-                if (toggleBtn) {
+            document.addEventListener("click", function (e) {
+                // Check if toggle button clicked
+                if (e.target.closest("#restaurantSidebarToggle")) {
                     e.preventDefault();
                     e.stopPropagation();
-                    const isOpen = sidebar.classList.contains("show-sidebar");
-                    toggleSidebar(!isOpen);
-                } else if (closeClick || backdropClick) {
-                    toggleSidebar(false);
+                    if (sidebar && sidebar.classList.contains("show-sidebar")) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
+                    }
+                }
+                
+                // Close on backdrop click or close-button click
+                if (e.target.closest("#closeRestaurantSidebar") || e.target === backdrop) {
+                    closeSidebar();
                 }
             });
         }
 
         if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", initSidebar);
+            document.addEventListener("DOMContentLoaded", initSidebarToggle);
         } else {
-            initSidebar();
+            initSidebarToggle();
         }
     })();
 </script>

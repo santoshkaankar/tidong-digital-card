@@ -1,7 +1,9 @@
+<!-- File Path: resources/views/vendor/restaurant/partials/header.blade.php -->
+
 <header class="navbar navbar-expand bg-white border-bottom sticky-top px-3 py-2" style="z-index: 1000;">
     <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
         
-        <!-- Left: Mobile Toggle & Title -->
+        <!-- Left: Mobile Toggle Button & Title -->
         <div class="d-flex align-items-center gap-2">
             <button class="btn btn-light d-lg-none border-0 p-2" type="button" id="restaurantSidebarToggle">
                 <i class="bi bi-list fs-4"></i>
@@ -9,10 +11,8 @@
             <span class="fw-bold fs-6 text-dark d-lg-none">Restaurant Hub</span>
         </div>
 
-        <!-- Right: Actions & User Info -->
+        <!-- Right: Actions & User Info Profile Dropdown -->
         <div class="d-flex align-items-center gap-2 ms-auto">
-
-            <!-- Profile Dropdown -->
             <div class="dropdown ms-2">
                 <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-2 border-0 bg-transparent" type="button" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4f46e5&color=fff" class="rounded-circle" width="34" height="34" alt="Profile">
@@ -58,6 +58,3 @@
 
     </div>
 </header>
-
-<!-- Bootstrap 5 JS Bundle (Check karein ki ye aapke main layout file me </body> tag se pehle shaamil ho) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
