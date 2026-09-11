@@ -119,35 +119,34 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Global Mobile Sidebar Toggle Handler Script -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const wrapper = document.getElementById("layoutWrapper");
-            const backdrop = document.getElementById("layoutOverlayBackdrop");
+    <style>
+    /* Mobile me Sidebar sabse upar dikhe */
+    @media (max-width: 991.98px) {
+        .restaurant-sidebar, 
+        aside {
+            z-index: 99999 !important; /* Backdrop ke upar laane ke liye */
+        }
+        .restaurant-layout-wrapper.toggled .restaurant-sidebar,
+        .restaurant-layout-wrapper.toggled aside {
+            transform: translateX(0) !important;
+            display: block !important;
+        }
+    }
+</style>
 
-            function toggleSidebar() {
-                if (wrapper) {
-                    wrapper.classList.toggle("toggled");
-                }
-            }
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggleBtn = document.getElementById("restaurantSidebarToggle");
+        const wrapper = document.querySelector(".restaurant-layout-wrapper");
 
-            function closeSidebar() {
-                if (wrapper) {
-                    wrapper.classList.remove("toggled");
-                }
-            }
-
-            // Document Delegation: Handle click on 3 lines button, close icon, or backdrop
-            document.addEventListener("click", function (e) {
-                if (e.target.closest("#restaurantSidebarToggle")) {
-                    e.preventDefault();
-                    toggleSidebar();
-                } else if (e.target.closest("#closeRestaurantSidebar") || e.target === backdrop) {
-                    closeSidebar();
-                }
+        if (toggleBtn && wrapper) {
+            toggleBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                wrapper.classList.toggle("toggled");
             });
-        });
-    </script>
-
+        }
+    });
+</script>
     @stack('scripts')
 </body>
 </html>

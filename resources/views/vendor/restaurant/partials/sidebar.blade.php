@@ -1,31 +1,27 @@
 <!-- File Path: resources/views/vendor/restaurant/partials/sidebar.blade.php -->
 
 <style>
-    /* Desktop Fixed Sidebar Style */
-    @media (min-width: 992px) {
-        #restaurantSidebar {
-            position: fixed !important;
-            top: 0;
-            left: 0;
-            width: 260px !important;
-            height: 100vh !important;
-            visibility: visible !important;
-            transform: none !important;
-            border-right: 1px solid #e2e8f0;
-            background: #ffffff;
-            z-index: 1030;
-        }
-        .offcanvas-backdrop {
-            display: none !important;
-        }
-    }
-
-    /* Common Internal Sidebar Styling */
-    .sidebar-wrapper {
+    /* 1. Base Sidebar Styling */
+    .restaurant-sidebar {
+        width: 260px;
+        height: 100vh;
+        background: #ffffff;
+        border-right: 1px solid #e2e8f0;
         display: flex;
         flex-direction: column;
-        height: 100%;
         justify-content: space-between;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999 !important; /* Highest Z-Index so it appears ABOVE the gray backdrop */
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-top-content {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 70px);
+        overflow: hidden;
     }
 
     .brand-header {
@@ -115,96 +111,106 @@
         border-radius: 8px;
         font-size: 0.85rem;
     }
+
+    /* 2. Mobile Responsive Rules */
+    @media (max-width: 991.98px) {
+        .restaurant-sidebar {
+            transform: translateX(-100%);
+            box-shadow: 4px 0 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Active Class when Mobile Button is Clicked */
+        .restaurant-sidebar.show-sidebar {
+            transform: translateX(0) !important;
+        }
+    }
 </style>
 
-<!-- Bootstrap Native Offcanvas Container -->
-<div class="offcanvas-lg offcanvas-start bg-white" tabindex="-1" id="restaurantSidebar" aria-labelledby="restaurantSidebarLabel">
-    <div class="sidebar-wrapper">
-        <div class="sidebar-top-content">
-            <!-- Brand Header -->
-            <div class="brand-header justify-content-between">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="brand-icon">
-                        <i class="bi bi-shop"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0 text-dark" id="restaurantSidebarLabel" style="letter-spacing: -0.3px;">Restaurant Hub</h6>
-                        <small class="text-muted" style="font-size: 0.72rem;">Partner Panel</small>
-                    </div>
+<aside class="restaurant-sidebar" id="restaurantSidebar">
+    <div class="sidebar-top-content">
+        <!-- Brand Header -->
+        <div class="brand-header justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="brand-icon">
+                    <i class="bi bi-shop"></i>
                 </div>
-                <button type="button" class="btn-close text-reset d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#restaurantSidebar" aria-label="Close"></button>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.3px;">Restaurant Hub</h6>
+                    <small class="text-muted" style="font-size: 0.72rem;">Partner Panel</small>
+                </div>
             </div>
-
-            <!-- Navigation Links -->
-            <ul class="sidebar-menu">
-                <li class="menu-label">Main Menu</li>
-                <li>
-                    <a href="{{ route('vendor.restaurant.dashboard') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.dashboard') ? 'active' : '' }}">
-                        <i class="bi bi-grid-1x2-fill"></i> Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('vendor.restaurant.kitchen.screen') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.kitchen.screen') ? 'active' : '' }}">
-                        <i class="bi bi-tv-fill"></i> Live Kitchen (KDS)
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('vendor.restaurant.pos.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.pos.*') ? 'active' : '' }}">
-                        <i class="bi bi-calculator-fill"></i> POS / Counter Billing
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('vendor.restaurant.orders.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.orders.*') ? 'active' : '' }}">
-                        <i class="bi bi-receipt"></i> Orders History
-                    </a>
-                </li>
-
-                <li class="menu-label mt-2">Menu & Catalog</li>
-                <li>
-                    <a href="{{ route('vendor.restaurant.categories.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.categories.*') ? 'active' : '' }}">
-                        <i class="bi bi-tags"></i> Select Category
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('vendor.restaurant.items.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.items.*') ? 'active' : '' }}">
-                        <i class="bi bi-card-list"></i> Select Items
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
-                        <i class="bi bi-book"></i> Create Catalog / Menu Card
-                    </a>
-                </li>
-
-                <li class="menu-label mt-2">Operations & Tables</li>
-                <li>
-                    <a href="{{ route('vendor.restaurant.tables.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.tables.*') ? 'active' : '' }}">
-                        <i class="bi bi-qr-code-scan"></i> QR Codes & Tables
-                    </a>
-                </li>
-
-                <li class="menu-label mt-2">Marketing & Wallet</li>
-                <li>
-                    <a href="#" class="nav-item-link">
-                        <i class="bi bi-wallet2"></i> Wallet
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-item-link">
-                        <i class="bi bi-send-check"></i> Push Notifications / Offers
-                    </a>
-                </li>
-            </ul>
+            <button type="button" class="btn-close d-lg-none" id="closeRestaurantSidebar" aria-label="Close"></button>
         </div>
 
-        <!-- Sidebar Footer / Logout -->
-        <div class="sidebar-footer">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="logout-btn">
-                    <i class="bi bi-box-arrow-right"></i> Logout
-                </button>
-            </form>
-        </div>
+        <!-- Navigation Links -->
+        <ul class="sidebar-menu">
+            <li class="menu-label">Main Menu</li>
+            <li>
+                <a href="{{ route('vendor.restaurant.dashboard') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.dashboard') ? 'active' : '' }}">
+                    <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.kitchen.screen') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.kitchen.screen') ? 'active' : '' }}">
+                    <i class="bi bi-tv-fill"></i> Live Kitchen (KDS)
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.pos.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.pos.*') ? 'active' : '' }}">
+                    <i class="bi bi-calculator-fill"></i> POS / Counter Billing
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.orders.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.orders.*') ? 'active' : '' }}">
+                    <i class="bi bi-receipt"></i> Orders History
+                </a>
+            </li>
+
+            <li class="menu-label mt-2">Menu & Catalog</li>
+            <li>
+                <a href="{{ route('vendor.restaurant.categories.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.categories.*') ? 'active' : '' }}">
+                    <i class="bi bi-tags"></i> Select Category
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.items.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.items.*') ? 'active' : '' }}">
+                    <i class="bi bi-card-list"></i> Select Items
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
+                    <i class="bi bi-book"></i> Create Catalog / Menu Card
+                </a>
+            </li>
+
+            <li class="menu-label mt-2">Operations & Tables</li>
+            <li>
+                <a href="{{ route('vendor.restaurant.tables.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.tables.*') ? 'active' : '' }}">
+                    <i class="bi bi-qr-code-scan"></i> QR Codes & Tables
+                </a>
+            </li>
+
+            <li class="menu-label mt-2">Marketing & Wallet</li>
+            <li>
+                <a href="#" class="nav-item-link">
+                    <i class="bi bi-wallet2"></i> Wallet
+                </a>
+            </li>
+            <li>
+                <a href="#" class="nav-item-link">
+                    <i class="bi bi-send-check"></i> Push Notifications / Offers
+                </a>
+            </li>
+        </ul>
     </div>
-</div>
+
+    <!-- Sidebar Footer / Logout -->
+    <div class="sidebar-footer">
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="logout-btn">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </form>
+    </div>
+</aside>
