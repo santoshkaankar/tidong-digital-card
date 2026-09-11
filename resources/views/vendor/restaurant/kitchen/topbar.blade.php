@@ -25,7 +25,7 @@
         </div>
 
         <!-- Global Language Switcher Component -->
-        @include('partials.language_switcher')
+        @include('vendor.restaurant.partials.language_switcher')
 
         <!-- Test Voice Button -->
         <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" onclick="testVoice()">

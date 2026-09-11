@@ -11,22 +11,45 @@
 
         <!-- Right: Actions & User Info -->
         <div class="d-flex align-items-center gap-2 ms-auto">
-            <!-- Language Switcher -->
-            @include('partials.language_switcher')
 
             <!-- Profile Dropdown -->
             <div class="dropdown ms-2">
-                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle gap-2" data-bs-toggle="dropdown">
+                <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-2 border-0 bg-transparent" type="button" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4f46e5&color=fff" class="rounded-circle" width="34" height="34" alt="Profile">
                     <span class="fw-semibold small text-dark d-none d-md-inline">{{ Auth::user()->name }}</span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i> Settings</a></li>
+                    <i class="bi bi-chevron-down text-muted small ms-1"></i>
+                </button>
+                
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" aria-labelledby="userProfileDropdown">
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            <i class="bi bi-gear me-2"></i> Settings
+                        </a>
+                    </li>
+                    
+                    @if(View::exists('vendor.restaurant.partials.language_switcher'))
+                        <li>
+                            <div class="px-3 py-1">
+                                @include('vendor.restaurant.partials.language_switcher')
+                            </div>
+                        </li>
+                    @endif
+
+                    @if(View::exists('vendor.restaurant.partials.theme_switcher'))
+                        <li>
+                            <div class="px-3 py-1">
+                                @include('vendor.restaurant.partials.theme_switcher')
+                            </div>
+                        </li>
+                    @endif
+                    
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</button>
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i> Logout
+                            </button>
                         </form>
                     </li>
                 </ul>
@@ -35,3 +58,6 @@
 
     </div>
 </header>
+
+<!-- Bootstrap 5 JS Bundle (Check karein ki ye aapke main layout file me </body> tag se pehle shaamil ho) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
