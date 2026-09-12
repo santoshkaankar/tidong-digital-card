@@ -70,7 +70,7 @@ class KitchenDisplayController extends Controller
                 ?? $item->name 
                 ?? $item->restaurantItem->globalItem->name 
                 ?? $item->restaurantItem->name 
-                ?? ('Item #' . $item->id);
+                ?? (__('Item #') . $item->id);
                 
             return $item;
         });
@@ -86,36 +86,36 @@ class KitchenDisplayController extends Controller
     /**
      * Live Polling Endpoint (Data Feed for UI Sync)
      */
-   public function liveOrders()
-{
-    $userId = Auth::id();
+    public function liveOrders()
+    {
+        $userId = Auth::id();
 
-    // Active Waiter Calls
-    $waiterCalls = WaiterCall::with('table')
-        ->where('user_id', $userId)
-        ->whereIn('call_type', ['waiter', 'call_waiter'])
-        ->where(function($q) {
-            $q->where('status', 'pending')->orWhereNull('status');
-        })
-        ->orderBy('created_at', 'desc')
-        ->get();
+        // Active Waiter Calls
+        $waiterCalls = WaiterCall::with('table')
+            ->where('user_id', $userId)
+            ->whereIn('call_type', ['waiter', 'call_waiter'])
+            ->where(function($q) {
+                $q->where('status', 'pending')->orWhereNull('status');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    // Active Cash Payment Requests (MISSING PART)
-    $cashRequests = cashrequests::with('table')
-        ->where('user_id', $userId)
-        ->whereIn('call_type', ['pay_bill_cash', 'bill_cash', 'cash_payment', 'cash_requested'])
-        ->where(function($q) {
-            $q->where('status', 'pending')->orWhereNull('status');
-        })
-        ->orderBy('created_at', 'desc')
-        ->get();
+        // BUG FIXED: 'cashrequests' was incorrect model. Changed to WaiterCall
+        $cashRequests = WaiterCall::with('table')
+            ->where('user_id', $userId)
+            ->whereIn('call_type', ['pay_bill_cash', 'bill_cash', 'cash_payment', 'cash_requested'])
+            ->where(function($q) {
+                $q->where('status', 'pending')->orWhereNull('status');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'waiter_calls' => $waiterCalls,
-        'cash_requests' => $cashRequests
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'waiter_calls' => $waiterCalls,
+            'cash_requests' => $cashRequests
+        ]);
+    }
 
     /**
      * Update Kitchen Order Status & Release Table on Completion
@@ -134,7 +134,7 @@ class KitchenDisplayController extends Controller
             if (!$order) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Order nahi mila!'
+                    'message' => __('Order not found!')
                 ], 404);
             }
 
@@ -152,13 +152,12 @@ class KitchenDisplayController extends Controller
                     ->where('user_id', $userId)
                     ->update([
                         'status' => 'available'
-                        
                     ]);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order status updated successfully'
+                'message' => __('Order status updated successfully.')
             ]);
 
         } catch (\Exception $e) {
@@ -166,7 +165,7 @@ class KitchenDisplayController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Server Error: ' . $e->getMessage()
+                'message' => __('Server Error: ') . $e->getMessage()
             ], 500);
         }
     }
@@ -201,7 +200,7 @@ class KitchenDisplayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment received, order completed, and table released successfully.'
+            'message' => __('Payment received, order completed, and table released successfully.')
         ]);
     }
 }

@@ -57,22 +57,35 @@
                         $upiId = auth()->user()->upi_id ?? 'merchant@upi';
                         $restName = auth()->user()->restaurant_name ?? auth()->user()->name ?? 'Restaurant';
                         
-                        // UPI Deep Link (Auto-fills amount in GPay/PhonePe/Paytm)
                         $upiPayUrl = "upi://pay?pa=" . rawurlencode($upiId) . "&pn=" . rawurlencode($restName) . "&am=" . $order->total_amount . "&cu=INR&tn=" . rawurlencode("Order " . $order->order_number);
                         
                         $custPhone = $order->customer_phone ?? $order->phone ?? null;
                         $waMsg = "Hello! Your bill for Order #{$order->order_number} is ₹{$order->total_amount}.\nPay instantly via UPI: " . $upiPayUrl;
                         $waUrl = $custPhone ? "https://wa.me/91" . preg_replace('/[^0-9]/', '', $custPhone) . "?text=" . urlencode($waMsg) : null;
+                        
+                        $orderTypeLabel = strtoupper(str_replace('_', ' ', $order->order_type));
+                        $tableLabel = $order->table ? 'Table #'.$order->table->table_number : 'N/A';
+
+                        // Prepare items list for JS
+                        $itemsList = [];
+                        foreach($order->items as $orderItem) {
+                            $itemName = $orderItem->item->name ?? $orderItem->item_name ?? 'Item';
+                            $itemsList[] = [
+                                'name' => $itemName,
+                                'qty' => $orderItem->quantity,
+                                'price' => $orderItem->price ?? ($orderItem->total / max($orderItem->quantity, 1))
+                            ];
+                        }
                     @endphp
                     <tr>
                         <td class="fw-bold text-primary">#{{ $order->order_number }}</td>
                         <td>
                             <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2.5 py-1">
-                                {{ strtoupper(str_replace('_', ' ', $order->order_type)) }}
+                                {{ $orderTypeLabel }}
                             </span>
                         </td>
                         <td class="fw-semibold text-dark">
-                            {{ $order->table ? 'Table #'.$order->table->table_number : 'N/A' }}
+                            {{ $tableLabel }}
                         </td>
                         <td>
                             <span class="text-muted small">
@@ -97,7 +110,7 @@
                         
                         <td class="text-end pe-3">
                             <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-outline-dark" title="Print Receipt" onclick="printReceipt('{{ $order->order_number }}', '{{ $order->total_amount }}')">
+                                <button type="button" class="btn btn-outline-dark" title="Print Receipt" onclick='printReceipt(@json($order->order_number), @json($orderTypeLabel), @json($tableLabel), @json($order->total_amount), @json($order->created_at->format("d-m-Y h:i A")), @json($itemsList))'>
                                     <i class="bi bi-printer"></i> Prt
                                 </button>
                                 
@@ -105,7 +118,6 @@
                                     <i class="bi bi-eye"></i> View
                                 </button>
 
-                                <!-- Edit Order Button Added Here -->
                                 @if(Route::has('vendor.restaurant.orders.edit'))
                                     <a href="{{ route('vendor.restaurant.orders.edit', $order->id) }}" class="btn btn-outline-primary" title="Edit Order">
                                         <i class="bi bi-pencil"></i> Edit
@@ -132,7 +144,6 @@
                                 <div class="modal-body p-4 text-center">
                                     <h6 class="fw-bold">Total Amount: ₹{{ number_format($order->total_amount, 2) }}</h6>
                                     
-                                    <!-- Dynamic Auto Amount QR -->
                                     <div class="my-3 p-3 bg-light rounded-3">
                                         <p class="small text-muted mb-2">Scan & Pay via any UPI App</p>
                                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode($upiPayUrl) }}" alt="UPI QR" class="img-fluid border p-2 bg-white rounded-3">
@@ -162,18 +173,77 @@
 
 @push('scripts')
 <script>
-    function printReceipt(orderNo, amount) {
-        let printWin = window.open('', '', 'width=400,height=600');
-        printWin.document.write('<html><head><title>Receipt</title></head><body style="text-align:center;font-family:sans-serif;">');
-        printWin.document.write('<h2>Receipt</h2><p>Order #' + orderNo + '</p><h3>Total Amount: ₹' + amount + '</h3>');
-        printWin.document.write('</body></html>');
+    function printReceipt(orderNumber, type, table, amount, date, items) {
+        let itemsHtml = '';
+        items.forEach(function(item) {
+            let itemTotal = (item.price * item.qty).toFixed(2);
+            itemsHtml += `
+                <tr>
+                    <td>${item.name} (x${item.qty})</td>
+                    <td class="text-right">₹${itemTotal}</td>
+                </tr>
+            `;
+        });
+
+        let printWin = window.open('', '_blank', 'width=400,height=600');
+        printWin.document.write(`
+            <html>
+            <head>
+                <title>Receipt - #${orderNumber}</title>
+                <style>
+                    body { 
+                        font-family: 'Courier New', Courier, monospace; 
+                        width: 280px; 
+                        margin: 0 auto; 
+                        padding: 10px; 
+                        font-size: 12px;
+                        color: #000000;
+                    }
+                    .text-center { text-align: center; }
+                    .text-right { text-align: right; }
+                    .border-bottom { 
+                        border-bottom: 1px dashed #000; 
+                        margin-bottom: 8px; 
+                        padding-bottom: 8px; 
+                    }
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                    }
+                    td { 
+                        text-align: left; 
+                        padding: 4px 0; 
+                        vertical-align: top;
+                    }
+                </style>
+            </head>
+            <body onload="window.print();">
+                <div class="text-center border-bottom">
+                    <h3 style="margin: 0; font-size: 16px;">KOT / RECEIPT</h3>
+                    <p style="margin: 4px 0;">Order #: <strong>${orderNumber}</strong></p>
+                    <p style="margin: 0;">Type: <strong>${type}</strong> | Table: <strong>${table}</strong></p>
+                    <p style="margin: 4px 0;">Date: ${date}</p>
+                </div>
+                <div class="border-bottom">
+                    <table>
+                        ${itemsHtml}
+                    </table>
+                </div>
+                <div class="border-bottom">
+                    <table>
+                        <tr>
+                            <td><strong>Grand Total:</strong></td>
+                            <td class="text-right"><strong>₹${amount}</strong></td>
+                        </tr>
+                    </table>
+                </div>
+                <p class="text-center" style="margin-top: 12px; margin-bottom: 0;">*** Thank You! ***</p>
+            </body>
+            </html>
+        `);
         printWin.document.close();
-        printWin.focus();
-        printWin.print();
-        printWin.close();
     }
 
-    // Auto launch WhatsApp payment link after POS order save
     @if(session('whatsapp_url'))
         window.open("{{ session('whatsapp_url') }}", '_blank');
     @endif

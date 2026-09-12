@@ -81,7 +81,7 @@ class OrderController extends Controller
             if ($activeOrderExists) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Is Table par pehle se running order chal raha hai! Kripya pehle purana order complete karein ya use edit karein.'
+                    'message' => __('This table already has a running order! Please complete or edit the old order first.')
                 ], 422);
             }
         }
@@ -105,7 +105,7 @@ class OrderController extends Controller
                 'order_number'    => $orderNumber,
                 'order_type'      => $request->order_type,
                 'is_guest'        => true,
-                'customer_name'   => $request->customer_name ?? 'Counter Customer',
+                'customer_name'   => $request->customer_name ?? __('Counter Customer'),
                 'customer_phone'  => $request->customer_phone,
                 'sub_total'       => $subTotal,
                 'discount_amount' => 0.00,
@@ -145,24 +145,24 @@ class OrderController extends Controller
             DB::commit();
 
             $upiId = Auth::user()->upi_id ?? 'merchant@upi';
-            $restaurantName = Auth::user()->restaurant_name ?? Auth::user()->name ?? 'Restaurant';
+            $restaurantName = Auth::user()->restaurant_name ?? Auth::user()->name ?? __('Restaurant');
             
             $upiDeepLink = "upi://pay?pa=" . rawurlencode($upiId) . "&pn=" . rawurlencode($restaurantName) . "&am={$subTotal}&cu=INR&tn=" . rawurlencode("Order #{$orderNumber}");
 
             $whatsappUrl = null;
             if ($request->customer_phone) {
                 $cleanPhone = preg_replace('/[^0-9]/', '', $request->customer_phone);
-                $msg = "Thank you for dining at {$restaurantName}!\n";
-                $msg .= "Order Number: #{$orderNumber}\n";
-                $msg .= "Total Bill: ₹" . number_format($subTotal, 2) . "\n";
-                $msg .= "Pay instantly via GPay / PhonePe / Paytm link:\n" . $upiDeepLink;
+                $msg = __('Thank you for dining at :restaurant!', ['restaurant' => $restaurantName]) . "\n";
+                $msg .= __('Order Number:') . " #{$orderNumber}\n";
+                $msg .= __('Total Bill:') . " ₹" . number_format($subTotal, 2) . "\n";
+                $msg .= __('Pay instantly via GPay / PhonePe / Paytm link:') . "\n" . $upiDeepLink;
 
                 $whatsappUrl = "https://wa.me/91{$cleanPhone}?text=" . urlencode($msg);
             }
 
             return response()->json([
                 'success'      => true,
-                'message'      => 'Order placed successfully!',
+                'message'      => __('Order placed successfully!'),
                 'order_id'     => $order->id,
                 'payment_link' => $upiDeepLink,
                 'whatsapp_url' => $whatsappUrl
@@ -173,7 +173,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to place order: ' . $e->getMessage()
+                'message' => __('Failed to place order: ') . $e->getMessage()
             ], 500);
         }
     }
@@ -233,7 +233,7 @@ class OrderController extends Controller
                 $itemSubtotal = $itemData['price'] * $itemData['qty'];
                 
                 $itemObj = RestaurantItem::with('globalItem')->find($itemData['item_id']);
-                $itemName = $itemData['name'] ?? $itemObj->globalItem->item_name ?? $itemObj->name ?? 'Food Item';
+                $itemName = $itemData['name'] ?? $itemObj->globalItem->item_name ?? $itemObj->name ?? __('Food Item');
 
                 RestaurantOrderItem::create([
                     'order_id'       => $order->id,
@@ -252,7 +252,7 @@ class OrderController extends Controller
             $order->update([
                 'order_type'     => $request->order_type,
                 'table_id'       => $request->order_type === 'dine_in' ? $request->table_id : null,
-                'customer_name'  => $request->customer_name ?? 'Counter Customer',
+                'customer_name'  => $request->customer_name ?? __('Counter Customer'),
                 'customer_phone' => $request->customer_phone,
                 'status'         => $request->status,
                 'payment_status' => $request->payment_status,
@@ -278,11 +278,11 @@ class OrderController extends Controller
             DB::commit();
 
             return redirect()->route('vendor.restaurant.orders.index')
-                             ->with('success', 'Order #' . $order->order_number . ' updated successfully!');
+                             ->with('success', __('Order #:number updated successfully!', ['number' => $order->order_number]));
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Update Failed: ' . $e->getMessage());
+            return back()->with('error', __('Update Failed: ') . $e->getMessage());
         }
     }
 
@@ -291,7 +291,8 @@ class OrderController extends Controller
      */
     public function printReceipt($id)
     {
-        $order = RestaurantOrder::with(['items', 'table'])
+        // Added deep relationships loading to prevent blank items
+        $order = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 

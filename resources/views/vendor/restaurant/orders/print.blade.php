@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KOT / Receipt - #{{ $order->order_number }}</title>
+    <title>{{ __('KOT / Receipt') }} - #{{ $order->order_number }}</title>
     <style>
         * {
             box-sizing: border-box;
@@ -46,27 +46,31 @@
 <body onload="window.print();">
 
     <div class="text-center border-bottom">
-        <h3 style="margin: 0; font-size: 16px;">KOT / RECEIPT</h3>
-        <p style="margin: 4px 0;">Order #: <strong>{{ $order->order_number }}</strong></p>
-        <p style="margin: 0;">Type: <strong>{{ strtoupper(str_replace('_', ' ', $order->order_type)) }}</strong> | Table: <strong>{{ $order->table->table_number ?? 'N/A' }}</strong></p>
-        <p style="margin: 4px 0;">Date: {{ $order->created_at->format('d-m-Y h:i A') }}</p>
+        <h3 style="margin: 0; font-size: 16px;">{{ __('KOT / RECEIPT') }}</h3>
+        <p style="margin: 4px 0;">{{ __('Order #:') }} <strong>{{ $order->order_number }}</strong></p>
+        <p style="margin: 0;">
+            {{ __('Type:') }} <strong>{{ __(strtoupper(str_replace('_', ' ', $order->order_type))) }}</strong> | 
+            {{ __('Table:') }} <strong>{{ $order->table->table_number ?? __('N/A') }}</strong>
+        </p>
+        <p style="margin: 4px 0;">{{ __('Date:') }} {{ $order->created_at->format('d-m-Y h:i A') }}</p>
     </div>
 
     <table class="border-bottom">
         <thead>
             <tr>
-                <th>Item</th>
-                <th class="text-center" style="width: 40px;">Qty</th>
-                <th class="text-right" style="width: 70px;">Price</th>
+                <th>{{ __('Item') }}</th>
+                <th class="text-center" style="width: 40px;">{{ __('Qty') }}</th>
+                <th class="text-right" style="width: 70px;">{{ __('Price') }}</th>
             </tr>
         </thead>
         <tbody>
             @foreach($order->items as $item)
                 @php
+                    // Using 'item' relationship safely to prevent 500 errors
                     $name = $item->item_name 
-                            ?? $item->item->name 
-                            ?? $item->item->globalItem->item_name 
-                            ?? 'Item';
+                            ?? optional($item->item)->name 
+                            ?? optional(optional($item->item)->globalItem)->item_name 
+                            ?? __('Unknown Item');
                 @endphp
                 <tr>
                     <td>{{ $name }}</td>
@@ -80,19 +84,26 @@
     <div class="border-bottom">
         <table>
             <tr>
-                <td><strong>Grand Total:</strong></td>
+                <td><strong>{{ __('Grand Total:') }}</strong></td>
                 <td class="text-right"><strong>₹{{ number_format($order->total_amount, 2) }}</strong></td>
             </tr>
         </table>
     </div>
 
-    <p class="text-center" style="margin-top: 12px; margin-bottom: 0;">*** Thank You! ***</p>
+    <p class="text-center" style="margin-top: 12px; margin-bottom: 0;">*** {{ __('Thank You!') }} ***</p>
 
     <script>
         // Redirect back to orders list after closing or completing the print window
         window.onafterprint = function() {
             window.location.href = "{{ route('vendor.restaurant.orders.index') }}";
         };
+
+        // Fallback for browsers that don't support onafterprint well (like some mobile browsers)
+        setTimeout(function() {
+            if (!document.hidden) {
+                window.location.href = "{{ route('vendor.restaurant.orders.index') }}";
+            }
+        }, 5000); // 5 seconds timer as a backup
     </script>
 </body>
 </html>
