@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('KOT / Receipt') }} - #{{ $order->order_number }}</title>
+    <title>{{ __('Receipt') }} - #{{ $order->order_number }}</title>
     <style>
         * {
             box-sizing: border-box;
@@ -70,42 +70,35 @@
                             ?? optional($item->item)->name 
                             ?? optional(optional($item->item)->globalItem)->item_name 
                             ?? __('Unknown Item');
+                    $itemTotal = $item->price * $item->quantity;
                 @endphp
                 <tr>
                     <td>{{ $name }}</td>
                     <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">₹{{ number_format($item->subtotal ?? ($item->price * $item->quantity), 2) }}</td>
+                    <td class="text-right">₹{{ number_format($itemTotal, 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <!-- TAX SECTION -->
-    @if(isset($order->tax_amount) && $order->tax_amount > 0)
+    <!-- SUBTOTAL & DIVIDED TAX SECTION -->
     <div class="border-bottom">
         <table>
-            <tbody>
-                <tr>
-                    <td>{{ __('Tax / GST') }}</td>
-                    <td class="text-right">+ ₹{{ number_format($order->tax_amount, 2) }}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    @elseif(isset($taxLines) && count($taxLines) > 0)
-    <div class="border-bottom">
-        <table>
-            <tbody>
+            <tr>
+                <td>{{ __('Subtotal') }}</td>
+                <td class="text-right">₹{{ number_format($order->sub_total, 2) }}</td>
+            </tr>
+
+            @if(isset($taxLines) && count($taxLines) > 0)
                 @foreach($taxLines as $tax)
                 <tr>
                     <td>{{ $tax['name'] }}</td>
                     <td class="text-right">+ ₹{{ $tax['amount'] }}</td>
                 </tr>
                 @endforeach
-            </tbody>
+            @endif
         </table>
     </div>
-    @endif
 
     <div class="border-bottom">
         <table>
@@ -120,14 +113,8 @@
 
     <script>
         window.onafterprint = function() {
-            window.location.href = "{{ route('vendor.restaurant.orders.index') }}";
+            window.close();
         };
-
-        setTimeout(function() {
-            if (!document.hidden) {
-                window.location.href = "{{ route('vendor.restaurant.orders.index') }}";
-            }
-        }, 5000);
     </script>
 </body>
 </html>

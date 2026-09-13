@@ -186,12 +186,31 @@
             `;
         });
 
+        let totalTax = Number(taxAmount) || 0;
+        let subtotal = Number(amount) - totalTax;
+        let halfTax = totalTax / 2;
+
         let taxHtml = '';
-        if (Number(taxAmount) > 0) {
+        if (totalTax > 0) {
             taxHtml = `
                 <tr>
-                    <td>Tax / GST:</td>
-                    <td class="text-right">₹${Number(taxAmount).toFixed(2)}</td>
+                    <td>Subtotal:</td>
+                    <td class="text-right">₹${subtotal.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td>CGST:</td>
+                    <td class="text-right">+ ₹${halfTax.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td>SGST:</td>
+                    <td class="text-right">+ ₹${halfTax.toFixed(2)}</td>
+                </tr>
+            `;
+        } else {
+            taxHtml = `
+                <tr>
+                    <td>Subtotal:</td>
+                    <td class="text-right">₹${Number(amount).toFixed(2)}</td>
                 </tr>
             `;
         }
@@ -245,7 +264,7 @@
                         ${taxHtml}
                         <tr>
                             <td><strong>Grand Total:</strong></td>
-                            <td class="text-right"><strong>₹${amount}</strong></td>
+                            <td class="text-right"><strong>₹${Number(amount).toFixed(2)}</strong></td>
                         </tr>
                     </table>
                 </div>

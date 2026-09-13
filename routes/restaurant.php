@@ -101,3 +101,6 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
 Route::middleware(['auth'])->prefix('vendor/restaurant')->name('vendor.restaurant.')->group(function () {
     Route::post('/cash-call/resolve/{id}', [OrderCashController::class, 'resolve'])->name('cash_call.resolve');
 });
+
+Route::get('/vendor/restaurant/orders/{id}/receipt', [App\Http\Controllers\Restaurant\OrderController::class, 'printReceipt'])
+    ->name('vendor.restaurant.orders.receipt');

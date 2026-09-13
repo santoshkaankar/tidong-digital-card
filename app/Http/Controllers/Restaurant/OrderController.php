@@ -52,7 +52,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Store POS Order via AJAX (Includes Item-wise Tax Calculation)
+     * Store POS Order via AJAX (Includes Inclusive Tax Breakdown & Auto Popup Print URL)
      */
     public function storePosOrder(Request $request)
     {
@@ -95,9 +95,9 @@ class OrderController extends Controller
             $totalTax = 0;
             $processedCart = [];
 
-            // 1. Calculate Tax & Subtotal per item
+            // 1. Inclusive Tax & Subtotal Breakdown Calculation
             foreach ($cart as $item) {
-                $itemSubtotal = $item['price'] * $item['quantity'];
+                $itemTotal = $item['price'] * $item['quantity']; // Inclusive total amount
                 
                 $taxPercentage = 0;
                 $restaurantItem = DB::table('restaurant_items')->where('id', $item['id'])->first();
@@ -109,9 +109,15 @@ class OrderController extends Controller
                     }
                 }
                 
-                $itemTax = ($itemSubtotal * $taxPercentage) / 100;
+                if ($taxPercentage > 0) {
+                    $basePrice = $itemTotal / (1 + ($taxPercentage / 100));
+                    $itemTax = $itemTotal - $basePrice;
+                } else {
+                    $basePrice = $itemTotal;
+                    $itemTax = 0;
+                }
                 
-                $subTotal += $itemSubtotal;
+                $subTotal += $basePrice;
                 $totalTax += $itemTax;
                 
                 $processedCart[] = [
@@ -119,7 +125,7 @@ class OrderController extends Controller
                     'name'       => $item['name'],
                     'price'      => $item['price'],
                     'quantity'   => $item['quantity'],
-                    'subtotal'   => $itemSubtotal,
+                    'subtotal'   => $basePrice,
                     'tax_amount' => $itemTax
                 ];
             }
@@ -157,7 +163,7 @@ class OrderController extends Controller
                     'quantity'       => $item['quantity'],
                     'price'          => $item['price'],
                     'tax_amount'     => round($item['tax_amount'], 2),
-                    'subtotal'       => $item['subtotal'],
+                    'subtotal'       => round($item['subtotal'], 2),
                     'batch_number'   => 1,
                     'kitchen_status' => 'sent_to_kitchen',
                 ]);
@@ -173,7 +179,7 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // 4. Payment Link logic updated with totalAmount
+            // 4. Payment Link & WhatsApp Generation
             $upiId = Auth::user()->upi_id ?? 'merchant@upi';
             $restaurantName = Auth::user()->restaurant_name ?? Auth::user()->name ?? __('Restaurant');
             
@@ -185,7 +191,7 @@ class OrderController extends Controller
                 $msg = __('Thank you for dining at :restaurant!', ['restaurant' => $restaurantName]) . "\n";
                 $msg .= __('Order Number:') . " #{$orderNumber}\n";
                 $msg .= __('Total Bill:') . " ₹" . number_format($totalAmount, 2) . "\n";
-                $msg .= __('Pay instantly via GPay / PhonePe / Paytm link:') . "\n" . $upiDeepLink;
+                $msg .= __('Pay instantly via UPI link:') . "\n" . $upiDeepLink;
 
                 $whatsappUrl = "https://wa.me/91{$cleanPhone}?text=" . urlencode($msg);
             }
@@ -194,6 +200,7 @@ class OrderController extends Controller
                 'success'      => true,
                 'message'      => __('Order placed successfully!'),
                 'order_id'     => $order->id,
+                'print_url'    => route('vendor.restaurant.orders.receipt', $order->id),
                 'payment_link' => $upiDeepLink,
                 'whatsapp_url' => $whatsappUrl
             ], 200);
@@ -226,7 +233,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Update Order Data & Recalculate Totals Properly (Tax included)
+     * Update Order Data & Recalculate Totals Properly (Inclusive Tax)
      */
     public function update(Request $request, $id)
     {
@@ -253,9 +260,9 @@ class OrderController extends Controller
             $totalTax = 0;
             $processedItems = [];
 
-            // 1. Recalculate Tax & Subtotal per item
+            // 1. Recalculate Inclusive Tax & Subtotal per item
             foreach ($request->items as $itemData) {
-                $itemSubtotal = $itemData['price'] * $itemData['qty'];
+                $itemTotal = $itemData['price'] * $itemData['qty'];
                 
                 $taxPercentage = 0;
                 $restaurantItem = DB::table('restaurant_items')->where('id', $itemData['item_id'])->first();
@@ -266,21 +273,27 @@ class OrderController extends Controller
                     }
                 }
                 
-                $itemTax = ($itemSubtotal * $taxPercentage) / 100;
+                if ($taxPercentage > 0) {
+                    $basePrice = $itemTotal / (1 + ($taxPercentage / 100));
+                    $itemTax = $itemTotal - $basePrice;
+                } else {
+                    $basePrice = $itemTotal;
+                    $itemTax = 0;
+                }
                 
-                $subTotal += $itemSubtotal;
+                $subTotal += $basePrice;
                 $totalTax += $itemTax;
                 
                 // Fallback for Name
                 $itemObj = RestaurantItem::with('globalItem')->find($itemData['item_id']);
-                $itemName = $itemData['name'] ?? $itemObj->globalItem->item_name ?? $itemObj->name ?? __('Food Item');
+                $itemName = $itemData['name'] ?? optional($itemObj->globalItem)->item_name ?? optional($itemObj)->name ?? __('Food Item');
 
                 $processedItems[] = [
                     'item_id'    => $itemData['item_id'],
                     'name'       => $itemName,
                     'price'      => $itemData['price'],
                     'qty'        => $itemData['qty'],
-                    'subtotal'   => $itemSubtotal,
+                    'subtotal'   => $basePrice,
                     'tax_amount' => $itemTax
                 ];
             }
@@ -299,7 +312,7 @@ class OrderController extends Controller
                     'quantity'       => $itemData['qty'],
                     'price'          => $itemData['price'],
                     'tax_amount'     => round($itemData['tax_amount'], 2),
-                    'subtotal'       => $itemData['subtotal'],
+                    'subtotal'       => round($itemData['subtotal'], 2),
                     'batch_number'   => 1,
                     'kitchen_status' => 'sent_to_kitchen',
                 ]);
