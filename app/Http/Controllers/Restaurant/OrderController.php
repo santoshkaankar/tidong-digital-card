@@ -52,7 +52,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Store POS Order via AJAX (Includes Active Table Order Validation)
+     * Store POS Order via AJAX (Includes Item-wise Tax Calculation)
      */
     public function storePosOrder(Request $request)
     {
@@ -92,12 +92,42 @@ class OrderController extends Controller
             $cart = $request->cart;
 
             $subTotal = 0;
+            $totalTax = 0;
+            $processedCart = [];
+
+            // 1. Calculate Tax & Subtotal per item
             foreach ($cart as $item) {
-                $subTotal += ($item['price'] * $item['quantity']);
+                $itemSubtotal = $item['price'] * $item['quantity'];
+                
+                $taxPercentage = 0;
+                $restaurantItem = DB::table('restaurant_items')->where('id', $item['id'])->first();
+                
+                if ($restaurantItem && $restaurantItem->tax_id) {
+                    $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
+                    if ($taxData) {
+                        $taxPercentage = $taxData->tax_percentage;
+                    }
+                }
+                
+                $itemTax = ($itemSubtotal * $taxPercentage) / 100;
+                
+                $subTotal += $itemSubtotal;
+                $totalTax += $itemTax;
+                
+                $processedCart[] = [
+                    'id'         => $item['id'],
+                    'name'       => $item['name'],
+                    'price'      => $item['price'],
+                    'quantity'   => $item['quantity'],
+                    'subtotal'   => $itemSubtotal,
+                    'tax_amount' => $itemTax
+                ];
             }
 
+            $totalAmount = $subTotal + $totalTax;
             $orderNumber = 'ORD-' . strtoupper(Str::random(6)) . '-' . time();
 
+            // 2. Create Order
             $order = RestaurantOrder::create([
                 'user_id'         => $vendorId,
                 'customer_id'     => null,
@@ -107,28 +137,27 @@ class OrderController extends Controller
                 'is_guest'        => true,
                 'customer_name'   => $request->customer_name ?? __('Counter Customer'),
                 'customer_phone'  => $request->customer_phone,
-                'sub_total'       => $subTotal,
+                'sub_total'       => round($subTotal, 2),
                 'discount_amount' => 0.00,
-                'tax_amount'      => 0.00,
+                'tax_amount'      => round($totalTax, 2),
                 'tip_amount'      => 0.00,
-                'total_amount'    => $subTotal,
+                'total_amount'    => round($totalAmount, 2),
                 'currency_code'   => 'INR',
                 'status'          => 'pending',
                 'payment_status'  => 'unpaid',
                 'payment_method'  => 'cash',
             ]);
 
-            foreach ($cart as $item) {
-                $itemSubtotal = $item['price'] * $item['quantity'];
-
+            // 3. Insert Order Items
+            foreach ($processedCart as $item) {
                 RestaurantOrderItem::create([
                     'order_id'       => $order->id,
                     'item_id'        => $item['id'],
                     'item_name'      => $item['name'],
                     'quantity'       => $item['quantity'],
                     'price'          => $item['price'],
-                    'tax_amount'     => 0.00,
-                    'subtotal'       => $itemSubtotal,
+                    'tax_amount'     => round($item['tax_amount'], 2),
+                    'subtotal'       => $item['subtotal'],
                     'batch_number'   => 1,
                     'kitchen_status' => 'sent_to_kitchen',
                 ]);
@@ -144,17 +173,18 @@ class OrderController extends Controller
 
             DB::commit();
 
+            // 4. Payment Link logic updated with totalAmount
             $upiId = Auth::user()->upi_id ?? 'merchant@upi';
             $restaurantName = Auth::user()->restaurant_name ?? Auth::user()->name ?? __('Restaurant');
             
-            $upiDeepLink = "upi://pay?pa=" . rawurlencode($upiId) . "&pn=" . rawurlencode($restaurantName) . "&am={$subTotal}&cu=INR&tn=" . rawurlencode("Order #{$orderNumber}");
+            $upiDeepLink = "upi://pay?pa=" . rawurlencode($upiId) . "&pn=" . rawurlencode($restaurantName) . "&am=" . round($totalAmount, 2) . "&cu=INR&tn=" . rawurlencode("Order #{$orderNumber}");
 
             $whatsappUrl = null;
             if ($request->customer_phone) {
                 $cleanPhone = preg_replace('/[^0-9]/', '', $request->customer_phone);
                 $msg = __('Thank you for dining at :restaurant!', ['restaurant' => $restaurantName]) . "\n";
                 $msg .= __('Order Number:') . " #{$orderNumber}\n";
-                $msg .= __('Total Bill:') . " ₹" . number_format($subTotal, 2) . "\n";
+                $msg .= __('Total Bill:') . " ₹" . number_format($totalAmount, 2) . "\n";
                 $msg .= __('Pay instantly via GPay / PhonePe / Paytm link:') . "\n" . $upiDeepLink;
 
                 $whatsappUrl = "https://wa.me/91{$cleanPhone}?text=" . urlencode($msg);
@@ -196,7 +226,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Update Order Data & Recalculate Totals Properly
+     * Update Order Data & Recalculate Totals Properly (Tax included)
      */
     public function update(Request $request, $id)
     {
@@ -220,35 +250,62 @@ class OrderController extends Controller
             $order = RestaurantOrder::where('user_id', $vendorId)->findOrFail($id);
 
             $subTotal = 0;
-            foreach ($request->items as $itemData) {
-                $subTotal += ($itemData['price'] * $itemData['qty']);
-            }
+            $totalTax = 0;
+            $processedItems = [];
 
-            $totalAmount = $subTotal + ($order->tax_amount ?? 0) + ($order->tip_amount ?? 0) - ($order->discount_amount ?? 0);
-
-            // Clear old items and recreate updated order list
-            RestaurantOrderItem::where('order_id', $order->id)->delete();
-
+            // 1. Recalculate Tax & Subtotal per item
             foreach ($request->items as $itemData) {
                 $itemSubtotal = $itemData['price'] * $itemData['qty'];
                 
+                $taxPercentage = 0;
+                $restaurantItem = DB::table('restaurant_items')->where('id', $itemData['item_id'])->first();
+                if ($restaurantItem && $restaurantItem->tax_id) {
+                    $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
+                    if ($taxData) {
+                        $taxPercentage = $taxData->tax_percentage;
+                    }
+                }
+                
+                $itemTax = ($itemSubtotal * $taxPercentage) / 100;
+                
+                $subTotal += $itemSubtotal;
+                $totalTax += $itemTax;
+                
+                // Fallback for Name
                 $itemObj = RestaurantItem::with('globalItem')->find($itemData['item_id']);
                 $itemName = $itemData['name'] ?? $itemObj->globalItem->item_name ?? $itemObj->name ?? __('Food Item');
 
+                $processedItems[] = [
+                    'item_id'    => $itemData['item_id'],
+                    'name'       => $itemName,
+                    'price'      => $itemData['price'],
+                    'qty'        => $itemData['qty'],
+                    'subtotal'   => $itemSubtotal,
+                    'tax_amount' => $itemTax
+                ];
+            }
+
+            // Recalculate Total (Taking existing discount/tip into account)
+            $totalAmount = $subTotal + $totalTax + ($order->tip_amount ?? 0) - ($order->discount_amount ?? 0);
+
+            // 2. Clear old items and recreate updated order list
+            RestaurantOrderItem::where('order_id', $order->id)->delete();
+
+            foreach ($processedItems as $itemData) {
                 RestaurantOrderItem::create([
                     'order_id'       => $order->id,
                     'item_id'        => $itemData['item_id'],
-                    'item_name'      => $itemName,
+                    'item_name'      => $itemData['name'],
                     'quantity'       => $itemData['qty'],
                     'price'          => $itemData['price'],
-                    'tax_amount'     => 0.00,
-                    'subtotal'       => $itemSubtotal,
+                    'tax_amount'     => round($itemData['tax_amount'], 2),
+                    'subtotal'       => $itemData['subtotal'],
                     'batch_number'   => 1,
                     'kitchen_status' => 'sent_to_kitchen',
                 ]);
             }
 
-            // Update main order table details
+            // 3. Update main order table details
             $order->update([
                 'order_type'     => $request->order_type,
                 'table_id'       => $request->order_type === 'dine_in' ? $request->table_id : null,
@@ -256,11 +313,12 @@ class OrderController extends Controller
                 'customer_phone' => $request->customer_phone,
                 'status'         => $request->status,
                 'payment_status' => $request->payment_status,
-                'sub_total'      => $subTotal,
-                'total_amount'   => $totalAmount,
+                'sub_total'      => round($subTotal, 2),
+                'tax_amount'     => round($totalTax, 2),
+                'total_amount'   => round($totalAmount, 2),
             ]);
 
-            // Free or occupy table based on state
+            // 4. Free or occupy table based on state
             if ($order->table_id) {
                 if ($request->status === 'completed' || $request->status === 'cancelled' || $request->payment_status === 'paid') {
                     RestaurantTable::where('id', $order->table_id)->update([
@@ -287,15 +345,51 @@ class OrderController extends Controller
     }
 
     /**
-     * Print Receipt
+     * Print Receipt (Calculates CGST/SGST safely for Blade)
      */
     public function printReceipt($id)
     {
-        // Added deep relationships loading to prevent blank items
         $order = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 
-        return view('vendor.restaurant.orders.print', compact('order'));
+        // Group tax amounts by percentage for CGST and SGST display
+        $taxSlabs = [];
+        foreach ($order->items as $orderItem) {
+            if ($orderItem->tax_amount > 0) {
+                $taxPercentage = 0;
+                $restaurantItem = DB::table('restaurant_items')->where('id', $orderItem->item_id)->first();
+                if ($restaurantItem && $restaurantItem->tax_id) {
+                    $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
+                    if ($taxData) {
+                        $taxPercentage = $taxData->tax_percentage;
+                    }
+                }
+                
+                $taxKey = (string) (float) $taxPercentage;
+                if (!isset($taxSlabs[$taxKey])) {
+                    $taxSlabs[$taxKey] = 0;
+                }
+                $taxSlabs[$taxKey] += $orderItem->tax_amount;
+            }
+        }
+
+        // Format into CGST/SGST lines so Blade view requires ZERO math
+        $taxLines = [];
+        foreach ($taxSlabs as $percentage => $totalTaxAmount) {
+            $halfPercentage = number_format((float)$percentage / 2, 2);
+            $halfAmount = number_format($totalTaxAmount / 2, 2);
+            
+            $taxLines[] = [
+                'name' => "CGST ({$halfPercentage}%)",
+                'amount' => $halfAmount
+            ];
+            $taxLines[] = [
+                'name' => "SGST ({$halfPercentage}%)",
+                'amount' => $halfAmount
+            ];
+        }
+
+        return view('vendor.restaurant.orders.print', compact('order', 'taxLines'));
     }
 }

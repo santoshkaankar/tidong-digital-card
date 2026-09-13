@@ -8,6 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // 0. Global Taxes Master Table (For Multi-Business & Multi-Vendor)
+        Schema::create('taxes', function (Blueprint $table) {
+            $table->id();
+            $table->string('tax_name'); // e.g., GST 0%, GST 5%, GST 18%, CESS
+            $table->decimal('tax_percentage', 5, 2)->default(0.00);
+            $table->decimal('cess_percentage', 5, 2)->default(0.00);
+            $table->string('tax_type')->default('GST'); // GST, VAT, Service Tax
+            $table->boolean('is_active')->default(true);
+            $table->text('remark')->nullable();
+            $table->timestamps();
+        });
+
         // 1. Restaurant Tables
         Schema::create('restaurant_tables', function (Blueprint $table) {
             $table->id();
@@ -16,13 +28,14 @@ return new class extends Migration
             $table->integer('seating_capacity')->default(4);
             $table->string('qr_code_token')->nullable()->unique();
             $table->string('qr_code_image')->nullable();
-            $table->json('selected_items')->nullable(); // <-- YE NAYA FIELD ADD HUA HAI
+            $table->json('selected_items')->nullable();
             $table->unsignedBigInteger('current_order_id')->nullable();
             $table->enum('status', ['available', 'occupied', 'reserved'])->default('available');
+            $table->text('remark')->nullable();
             $table->timestamps();
         });
 
-        // 2. Restaurant Categories (Removed table_id to fix constraint & keep categories universal)
+        // 2. Restaurant Categories
         Schema::create('restaurant_categories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
@@ -32,15 +45,17 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->integer('sort_order')->default(0);
             $table->boolean('status')->default(true);
+            $table->text('remark')->nullable();
             $table->timestamps();
         });
 
-        // 3. Restaurant Items
+        // 3. Restaurant Items (Linked with Global Tax Master)
         Schema::create('restaurant_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('global_item_id')->constrained('global_items')->onDelete('cascade');
             $table->foreignId('restaurant_category_id')->nullable()->constrained('restaurant_categories')->onDelete('cascade');
+            $table->foreignId('tax_id')->nullable()->constrained('taxes')->nullOnDelete(); // Linked Tax Slab
             
             $table->string('image')->nullable();
             $table->text('description')->nullable();
@@ -48,26 +63,26 @@ return new class extends Migration
             
             $table->decimal('mrp', 10, 2)->default(0);
             $table->decimal('price', 10, 2)->default(0);
-            $table->decimal('tax_rate', 5, 2)->default(0);
+            $table->decimal('tax_rate', 5, 2)->default(0); // Legacy/Backup rate
             
             $table->boolean('is_available')->default(true);
             $table->boolean('status')->default(true);
+            $table->text('remark')->nullable();
             $table->timestamps();
 
             $table->unique(['user_id', 'global_item_id']);
         });
 
-        // 4. Restaurant Orders (Registered + Unregistered Guest Device Support)
+        // 4. Restaurant Orders
         Schema::create('restaurant_orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Vendor / Restaurant Owner ID
-            $table->foreignId('customer_id')->nullable()->constrained('users')->onDelete('set null'); // Registered User
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('customer_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('table_id')->nullable()->constrained('restaurant_tables')->onDelete('set null');
             
             $table->string('order_number')->unique();
             $table->string('order_type')->default('dine_in');
             
-            // Guest Device Tracking
             $table->boolean('is_guest')->default(true);
             $table->string('guest_session_id')->nullable()->index();
             $table->string('device_ip', 45)->nullable();
@@ -77,7 +92,7 @@ return new class extends Migration
 
             $table->decimal('sub_total', 10, 2)->default(0);
             $table->decimal('discount_amount', 10, 2)->default(0);
-            $table->decimal('tax_amount', 10, 2)->default(0);
+            $table->decimal('tax_amount', 10, 2)->default(0); // Total Tax Calculated
             $table->decimal('tip_amount', 10, 2)->default(0);
             $table->decimal('total_amount', 10, 2)->default(0);
             
@@ -94,6 +109,7 @@ return new class extends Migration
             $table->string('payment_proof')->nullable();
             
             $table->text('notes')->nullable();
+            $table->text('remark')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
         });
@@ -112,6 +128,7 @@ return new class extends Migration
             $table->integer('batch_number')->default(1);
             $table->enum('kitchen_status', ['sent_to_kitchen', 'cooking', 'ready', 'served'])->default('sent_to_kitchen');
             $table->text('item_notes')->nullable();
+            $table->text('remark')->nullable();
             
             $table->timestamps();
         });
@@ -125,6 +142,7 @@ return new class extends Migration
             $table->string('guest_session_id')->nullable();
             $table->enum('call_type', ['call_waiter', 'request_bill', 'water_request', 'pay_bill_cash', 'bill_cash', 'cash_payment', 'cash_requested'])->default('call_waiter');
             $table->enum('status', ['pending', 'attended'])->default('pending');
+            $table->text('remark')->nullable();
             $table->timestamps();
         });
     }
@@ -137,5 +155,6 @@ return new class extends Migration
         Schema::dropIfExists('restaurant_items');
         Schema::dropIfExists('restaurant_categories');
         Schema::dropIfExists('restaurant_tables');
+        Schema::dropIfExists('taxes');
     }
 };

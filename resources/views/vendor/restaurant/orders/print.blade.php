@@ -66,7 +66,6 @@
         <tbody>
             @foreach($order->items as $item)
                 @php
-                    // Using 'item' relationship safely to prevent 500 errors
                     $name = $item->item_name 
                             ?? optional($item->item)->name 
                             ?? optional(optional($item->item)->globalItem)->item_name 
@@ -81,6 +80,33 @@
         </tbody>
     </table>
 
+    <!-- TAX SECTION -->
+    @if(isset($order->tax_amount) && $order->tax_amount > 0)
+    <div class="border-bottom">
+        <table>
+            <tbody>
+                <tr>
+                    <td>{{ __('Tax / GST') }}</td>
+                    <td class="text-right">+ ₹{{ number_format($order->tax_amount, 2) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    @elseif(isset($taxLines) && count($taxLines) > 0)
+    <div class="border-bottom">
+        <table>
+            <tbody>
+                @foreach($taxLines as $tax)
+                <tr>
+                    <td>{{ $tax['name'] }}</td>
+                    <td class="text-right">+ ₹{{ $tax['amount'] }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+
     <div class="border-bottom">
         <table>
             <tr>
@@ -93,17 +119,15 @@
     <p class="text-center" style="margin-top: 12px; margin-bottom: 0;">*** {{ __('Thank You!') }} ***</p>
 
     <script>
-        // Redirect back to orders list after closing or completing the print window
         window.onafterprint = function() {
             window.location.href = "{{ route('vendor.restaurant.orders.index') }}";
         };
 
-        // Fallback for browsers that don't support onafterprint well (like some mobile browsers)
         setTimeout(function() {
             if (!document.hidden) {
                 window.location.href = "{{ route('vendor.restaurant.orders.index') }}";
             }
-        }, 5000); // 5 seconds timer as a backup
+        }, 5000);
     </script>
 </body>
 </html>

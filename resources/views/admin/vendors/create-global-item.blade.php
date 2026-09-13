@@ -68,7 +68,6 @@
                                     <option value="{{ $cat->name }}">{{ $cat->name }}</option>
                                 @endforeach
                             </select>
-                            <div class="form-text text-danger">Agar item category list mein nahi hai, toh pehle upar "Step 1" se add karein.</div>
                         </div>
 
                         <div class="mb-3">
@@ -77,8 +76,27 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label fw-bold">Food Type</label>
+                            <select name="food_type" class="form-select" required>
+                                <option value="veg">Veg</option>
+                                <option value="non-veg">Non-Veg</option>
+                                <option value="egg">Egg</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tax Slab / GST</label>
+                            <select name="tax_id" class="form-select">
+                                <option value="">-- Choose Tax --</option>
+                                @foreach($taxes ?? [] as $tax)
+                                    <option value="{{ $tax->id }}">{{ $tax->tax_name }} ({{ $tax->tax_percentage }}%)</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label fw-bold">Item Picture</label>
-                            <input type="file" name="item_pic" class="form-control" accept="image/*">
+                            <input type="file" name="item_pic" class="form-control" accept="image/*" required>
                         </div>
 
                         <div class="mb-3">

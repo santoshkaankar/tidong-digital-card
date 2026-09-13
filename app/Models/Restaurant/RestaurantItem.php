@@ -5,6 +5,7 @@ namespace App\Models\Restaurant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Admin\GlobalItem;
+use App\Models\Admin\Tax;
 
 class RestaurantItem extends Model
 {
@@ -14,6 +15,7 @@ class RestaurantItem extends Model
         'user_id',
         'global_item_id',
         'restaurant_category_id',
+        'tax_id',
         'mrp',
         'price',
         'is_available',
@@ -30,5 +32,11 @@ class RestaurantItem extends Model
     public function category()
     {
         return $this->belongsTo(RestaurantCategory::class, 'restaurant_category_id');
+    }
+
+    // Tax Details laane ke liye
+    public function tax()
+    {
+        return $this->belongsTo(Tax::class, 'tax_id');
     }
 }

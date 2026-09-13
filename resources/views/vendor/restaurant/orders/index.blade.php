@@ -76,6 +76,7 @@
                                 'price' => $orderItem->price ?? ($orderItem->total / max($orderItem->quantity, 1))
                             ];
                         }
+                        $taxVal = $order->tax_amount ?? 0;
                     @endphp
                     <tr>
                         <td class="fw-bold text-primary">#{{ $order->order_number }}</td>
@@ -110,7 +111,7 @@
                         
                         <td class="text-end pe-3">
                             <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-outline-dark" title="Print Receipt" onclick='printReceipt(@json($order->order_number), @json($orderTypeLabel), @json($tableLabel), @json($order->total_amount), @json($order->created_at->format("d-m-Y h:i A")), @json($itemsList))'>
+                                <button type="button" class="btn btn-outline-dark" title="Print Receipt" onclick='printReceipt(@json($order->order_number), @json($orderTypeLabel), @json($tableLabel), @json($order->total_amount), @json($order->created_at->format("d-m-Y h:i A")), @json($itemsList), @json($taxVal))'>
                                     <i class="bi bi-printer"></i> Prt
                                 </button>
                                 
@@ -173,17 +174,27 @@
 
 @push('scripts')
 <script>
-    function printReceipt(orderNumber, type, table, amount, date, items) {
+    function printReceipt(orderNumber, type, table, amount, date, items, taxAmount = 0) {
         let itemsHtml = '';
         items.forEach(function(item) {
-            let itemTotal = (item.price * item.qty).toFixed(2);
+            let itemTotal = (item.price * item.qty);
             itemsHtml += `
                 <tr>
                     <td>${item.name} (x${item.qty})</td>
-                    <td class="text-right">₹${itemTotal}</td>
+                    <td class="text-right">₹${itemTotal.toFixed(2)}</td>
                 </tr>
             `;
         });
+
+        let taxHtml = '';
+        if (Number(taxAmount) > 0) {
+            taxHtml = `
+                <tr>
+                    <td>Tax / GST:</td>
+                    <td class="text-right">₹${Number(taxAmount).toFixed(2)}</td>
+                </tr>
+            `;
+        }
 
         let printWin = window.open('', '_blank', 'width=400,height=600');
         printWin.document.write(`
@@ -217,7 +228,7 @@
                     }
                 </style>
             </head>
-            <body onload="window.print();">
+            <body>
                 <div class="text-center border-bottom">
                     <h3 style="margin: 0; font-size: 16px;">KOT / RECEIPT</h3>
                     <p style="margin: 4px 0;">Order #: <strong>${orderNumber}</strong></p>
@@ -231,6 +242,7 @@
                 </div>
                 <div class="border-bottom">
                     <table>
+                        ${taxHtml}
                         <tr>
                             <td><strong>Grand Total:</strong></td>
                             <td class="text-right"><strong>₹${amount}</strong></td>
@@ -242,6 +254,11 @@
             </html>
         `);
         printWin.document.close();
+
+        setTimeout(() => {
+            printWin.focus();
+            printWin.print();
+        }, 400);
     }
 
     @if(session('whatsapp_url'))

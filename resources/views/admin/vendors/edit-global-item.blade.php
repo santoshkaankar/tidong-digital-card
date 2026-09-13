@@ -40,6 +40,27 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label">Food Type</label>
+                    <select name="food_type" class="form-select" required>
+                        <option value="veg" {{ $item->food_type == 'veg' ? 'selected' : '' }}>Veg</option>
+                        <option value="non-veg" {{ $item->food_type == 'non-veg' ? 'selected' : '' }}>Non-Veg</option>
+                        <option value="egg" {{ $item->food_type == 'egg' ? 'selected' : '' }}>Egg</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tax Slab / GST</label>
+                    <select name="tax_id" class="form-select">
+                        <option value="">-- Choose Tax --</option>
+                        @foreach($taxes ?? [] as $tax)
+                            <option value="{{ $tax->id }}" {{ $item->tax_id == $tax->id ? 'selected' : '' }}>
+                                {{ $tax->tax_name }} ({{ $tax->tax_percentage }}%)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">MRP (₹)</label>
                     <input type="number" step="0.01" name="mrp" class="form-control" value="{{ old('mrp', $item->mrp) }}" required>
                 </div>

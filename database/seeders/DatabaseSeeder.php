@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             CountrySeeder::class,
             PincodeSeeder::class,
             GlobalItemsSeeder::class,
+            TaxSeeder::class,
             
         ]);
     }

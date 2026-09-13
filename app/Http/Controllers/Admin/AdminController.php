@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Member\VisitingCard;
-use App\Models\Vendor\GlobalItem;
-use App\Models\Vendor\ItemCategory;
+use App\Models\Admin\GlobalItem;
+use App\Models\Admin\ItemCategory;
 use App\Models\Vendor\Vendoritem;
 use App\Models\User;
 use Illuminate\Http\Request;

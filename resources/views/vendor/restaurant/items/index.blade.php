@@ -14,7 +14,6 @@
         
         .dashboard-wrapper { display: flex; min-height: 100vh; width: 100%; }
 
-        /* Sidebar overlapping fix */
         .sidebar-area {
             width: 260px;
             flex-shrink: 0;
@@ -54,7 +53,7 @@
             <div>
                 <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-semibold" style="font-size: 0.75rem;">FOOD CATALOG</span>
                 <h2 class="fw-bold mt-2 mb-0">Food Items Management</h2>
-                <p class="text-muted small mb-0">Manage menu pricing, MRP, and discounted offer rates.</p>
+                <p class="text-muted small mb-0">Manage menu pricing, MRP, taxes, and discounted offer rates.</p>
             </div>
 
             <div class="d-flex flex-wrap gap-2 action-buttons align-items-center">
@@ -84,6 +83,17 @@
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show border-0 rounded-3 mb-4" role="alert">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
         <!-- Table Display -->
         <div class="table-card">
             <div class="table-responsive">
@@ -94,6 +104,7 @@
                             <th>Item Name</th>
                             <th>Category</th>
                             <th>Type</th>
+                            <th>Tax</th>
                             <th>MRP (₹)</th>
                             <th>Selling Price (₹)</th>
                             <th class="text-end" width="120">Actions</th>
@@ -107,13 +118,16 @@
                                 <td><span class="badge bg-light text-dark border">{{ $item->category->name ?? $item->category_name ?? 'General' }}</span></td>
                                 <td>
                                     @php $type = $item->globalItem->food_type ?? $item->type ?? 'veg'; @endphp
-                                    <span class="badge {{ $type == 'veg' ? 'bg-success' : 'bg-danger' }} bg-opacity-10 {{ $type == 'veg' ? 'text-success' : 'text-danger' }}">
+                                    <span class="badge {{ $type == 'veg' ? 'bg-success' : ($type == 'non-veg' ? 'bg-danger' : 'bg-warning text-dark') }} bg-opacity-10">
                                         {{ ucfirst($type) }}
                                     </span>
                                 </td>
-                                
+                                <td>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                        {{ $item->tax->tax_name ?? 'No Tax' }} {{ isset($item->tax) ? '(' . $item->tax->tax_percentage . '%)' : '' }}
+                                    </span>
+                                </td>
                                 <td class="text-muted">₹{{ number_format($item->mrp ?? 0, 2) }}</td>
-
                                 <td>
                                     @if(isset($item->price) && $item->price < $item->mrp && $item->price > 0)
                                         <del class="text-muted small me-1">₹{{ number_format($item->mrp, 2) }}</del>
@@ -122,7 +136,6 @@
                                         <span class="fw-bold text-dark fs-6">₹{{ number_format($item->mrp ?? $item->price ?? 0, 2) }}</span>
                                     @endif
                                 </td>
-
                                 <td class="text-end">
                                     <form action="{{ route('vendor.restaurant.items.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Remove item from menu?');">
                                         @csrf
@@ -133,7 +146,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
+                                <td colspan="8" class="text-center py-5 text-muted">
                                     <i class="bi bi-box-seam display-5 d-block mb-2 opacity-50"></i>
                                     No food items added yet. Click on "Select Global Item" or "Add New Item".
                                 </td>
@@ -160,21 +173,36 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Choose Global Item</label>
-                        <select name="global_item_id" class="form-select form-select-lg rounded-3 fs-6" required>
+                        <select name="global_item_id" id="globalItemSelect" class="form-select form-select-lg rounded-3 fs-6" required>
                             <option value="" selected disabled>-- Select Food Item --</option>
                             @if(isset($globalItems))
                                 @foreach($globalItems as $gItem)
-                                    <option value="{{ $gItem->id }}">
+                                    <option value="{{ $gItem->id }}" 
+                                            data-mrp="{{ $gItem->mrp }}" 
+                                            data-tax="{{ $gItem->tax_id }}">
                                         {{ $gItem->item_name }} ({{ ucfirst($gItem->food_type ?? 'veg') }})
                                     </option>
                                 @endforeach
                             @endif
                         </select>
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tax Slab</label>
+                        <select name="tax_id" id="globalTaxSelect" class="form-select rounded-3">
+                            <option value="">-- Choose Tax (Optional) --</option>
+                            @if(isset($taxes))
+                                @foreach($taxes as $tax)
+                                    <option value="{{ $tax->id }}">{{ $tax->tax_name }} ({{ $tax->tax_percentage }}%)</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+
                     <div class="row g-3">
                         <div class="col-6">
                             <label class="form-label fw-semibold">MRP (₹)</label>
-                            <input type="number" step="0.01" name="mrp" class="form-control rounded-3" placeholder="200.00" required>
+                            <input type="number" step="0.01" name="mrp" id="globalMrpInput" class="form-control rounded-3" placeholder="200.00" required>
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-semibold">Selling Price (₹)</label>
@@ -221,11 +249,23 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Type</label>
+                        <label class="form-label fw-semibold">Type (Veg / Non-Veg / Egg)</label>
                         <select name="type" class="form-select rounded-3" required>
                             <option value="veg">Veg</option>
                             <option value="non-veg">Non-Veg</option>
                             <option value="egg">Egg</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tax Slab</label>
+                        <select name="tax_id" class="form-select rounded-3">
+                            <option value="">-- Choose Tax (Optional) --</option>
+                            @if(isset($taxes))
+                                @foreach($taxes as $tax)
+                                    <option value="{{ $tax->id }}">{{ $tax->tax_name }} ({{ $tax->tax_percentage }}%)</option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
 
@@ -252,10 +292,29 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    // Custom Category selection handler
     document.getElementById('customCategorySelect')?.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const categoryName = selectedOption.getAttribute('data-name') || 'General';
         document.getElementById('hiddenCategoryName').value = categoryName;
+    });
+
+    // Global Item auto-fill handler for MRP and Tax
+    document.getElementById('globalItemSelect')?.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        const mrp = selectedOption.getAttribute('data-mrp');
+        const taxId = selectedOption.getAttribute('data-tax');
+
+        const mrpInput = document.getElementById('globalMrpInput');
+        if (mrpInput && mrp) {
+            mrpInput.value = mrp;
+        }
+
+        const taxSelect = document.getElementById('globalTaxSelect');
+        if (taxSelect) {
+            taxSelect.value = taxId ? taxId : "";
+        }
     });
 </script>
 </body>

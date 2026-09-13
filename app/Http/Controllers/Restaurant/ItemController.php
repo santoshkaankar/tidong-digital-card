@@ -15,28 +15,27 @@ class ItemController extends Controller
     {
         $userId = auth()->id();
 
-        // 1. Vendor items with relationships
+        // 1. Vendor items with relationships (including tax)
         $items = RestaurantItem::where('user_id', $userId)
-            ->with(['globalItem', 'category'])
+            ->with(['globalItem', 'category', 'tax'])
             ->latest()
             ->get();
 
-        // 2. Vendor Categories (Jo category restaurant ne select/create ki hain)
+        // 2. Vendor Categories
         $categories = RestaurantCategory::where('user_id', $userId)->get();
-
-        // Restaurant ki selected categories ke names ki list
         $categoryNames = $categories->pluck('name')->toArray();
 
-        // 3. Filter Global items:
-        // - Jo abhi tak menu me select nahi hue hain (whereNotIn selectedGlobalIds)
-        // - AUR jinki category restaurant ki selected categories se match hoti ho (whereIn category)
+        // 3. Filter Global items
         $selectedGlobalIds = $items->pluck('global_item_id')->filter()->toArray();
 
         $globalItems = GlobalItem::whereNotIn('id', $selectedGlobalIds)
-            ->whereIn('category', $categoryNames) // <--- SIRF SELECTED CATEGORIES KE ITEMS HIN DIKhenge
+            ->whereIn('category', $categoryNames)
             ->get();
 
-        return view('vendor.restaurant.items.index', compact('items', 'globalItems', 'categories'));
+        // 4. Get active taxes for the modals
+        $taxes = DB::table('taxes')->where('is_active', 1)->get();
+
+        return view('vendor.restaurant.items.index', compact('items', 'globalItems', 'categories', 'taxes'));
     }
 
     // Modal 1: Pick Existing Item from Global Catalog
@@ -44,6 +43,7 @@ class ItemController extends Controller
     {
         $request->validate([
             'global_item_id' => 'required|exists:global_items,id',
+            'tax_id'         => 'nullable|exists:taxes,id',
             'mrp'            => 'required|numeric|min:0',
             'price'          => 'nullable|numeric|min:0',
         ]);
@@ -59,7 +59,6 @@ class ItemController extends Controller
             return redirect()->back()->with('error', 'Yeh item pehle se aapke menu me added hai!');
         }
 
-        // Global item ki category se matching restaurant_category_id find karein
         $globalItem = GlobalItem::find($request->global_item_id);
         $restaurantCategory = RestaurantCategory::where('user_id', auth()->id())
             ->where('name', $globalItem->category)
@@ -69,6 +68,7 @@ class ItemController extends Controller
             'user_id'                => auth()->id(),
             'global_item_id'         => $request->global_item_id,
             'restaurant_category_id' => $restaurantCategory?->id,
+            'tax_id'                 => $request->tax_id,
             'mrp'                    => $mrp,
             'price'                  => $price,
             'is_available'           => true,
@@ -86,6 +86,7 @@ class ItemController extends Controller
             'restaurant_category_id' => 'nullable|exists:restaurant_categories,id',
             'category_name'          => 'nullable|string',
             'type'                   => 'required|in:veg,non-veg,egg',
+            'tax_id'                 => 'nullable|exists:taxes,id',
             'mrp'                    => 'required|numeric|min:0',
             'price'                  => 'nullable|numeric|min:0',
         ]);
@@ -108,6 +109,7 @@ class ItemController extends Controller
                 'category'      => $categoryName,
                 'item_name'     => $request->name,
                 'food_type'     => $request->type,
+                'tax_id'        => $request->tax_id,
                 'mrp'           => $mrp,
                 'default_price' => $price,
                 'status'        => 'approved',
@@ -118,6 +120,7 @@ class ItemController extends Controller
                 'user_id'                => auth()->id(),
                 'global_item_id'         => $globalItem->id,
                 'restaurant_category_id' => $request->restaurant_category_id,
+                'tax_id'                 => $request->tax_id,
                 'mrp'                    => $mrp,
                 'price'                  => $price,
                 'is_available'           => true,
