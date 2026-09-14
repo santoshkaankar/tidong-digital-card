@@ -23,15 +23,16 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name'             => ['required', 'string', 'max:255'],
-            'email'            => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'mobile'           => ['required', 'string', 'max:15', 'unique:users,mobile'],
-            'password'         => ['required', 'confirmed', Rules\Password::defaults()],
-            'role'             => ['required', 'string', 'in:member,business'],
-            'business_type'    => ['nullable', 'string'],
-            'sponsor_username' => ['nullable', 'string', 'min:12', 'exists:users,username'],
-            'position'         => ['nullable', 'in:left,right'],
-            'terms'            => ['accepted'],
+            'name'                => ['required', 'string', 'max:255'],
+            'email'               => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'mobile'              => ['required', 'string', 'max:15', 'unique:users,mobile'],
+            'password'            => ['required', 'confirmed', Rules\Password::defaults()],
+            'role'                => ['required', 'string', 'in:member,business'],
+            'business_type'       => ['nullable', 'string'],
+            // Member ke liye sponsor ki referral_id database mein honi zaroori hai (Fake ID block)
+            'sponsor_referral_id' => ['required_if:role,member', 'string', 'exists:users,referral_id'],
+            'position'            => ['required_if:role,member', 'string', 'in:left,right'],
+            'terms'               => ['accepted'],
         ]);
 
         $businessType = null;
@@ -44,36 +45,37 @@ class RegisteredUserController extends Controller
         $parentId = null;
         $sponsorId = null;
         $position = null;
+        $referralId = null;
 
         if ($request->role === 'member') {
-            $sponsorUsername = $request->sponsor_username;
-
-            // Agar user ne sponsor ID nahi bhari, toh system ki pehli ID (Root User) ko default maan lo
-            if (empty($sponsorUsername)) {
-                $sponsor = User::orderBy('id', 'asc')->first();
-            } else {
-                $sponsor = User::where('username', $sponsorUsername)->first();
+            // Sponsor ko uski referral_id se dhundhein
+            $sponsor = User::where('referral_id', $request->sponsor_referral_id)->first();
+            
+            if (!$sponsor) {
+                throw ValidationException::withMessages([
+                    'sponsor_referral_id' => 'Yeh Sponsor Referral ID system mein mojood nahi hai!'
+                ]);
             }
 
-            if ($sponsor) {
-                $sponsorId = $sponsor->id;
+            $sponsorId = $sponsor->id;
 
-                // Agar leg position select nahi ki, toh default 'left' set ho jayegi
-                $preferredPosition = $request->filled('position') ? $request->position : 'left';
-
-                // Binary Spillover Placement Logic
-                $placement = $this->findPlacementNode($sponsor->id, $preferredPosition);
-                $parentId = $placement['parent_id'];
-                $position = $placement['position'];
-            }
+            // Binary Spillover Placement Logic (Parent ID aur Position find karna)
+            $placement = $this->findPlacementNode($sponsor->id, $request->position);
+            $parentId = $placement['parent_id'];
+            $position = $placement['position'];
         }
 
-        // Agar username nahi diya, toh minimum 12+ characters ka unique code auto-generate hoga
-        $username = $request->filled('username') ? $request->username : 'TABS' . time() . rand(10, 99);
+        // Agar user member hai toh uske liye 12 characters ki unique referral_id generate hogi
+        if ($request->role === 'member') {
+            do {
+                $referralId = 'TABS' . strtoupper(bin2hex(random_bytes(4))); // Total 12 chars
+            } while (User::where('referral_id', $referralId)->exists());
+        }
 
         $user = User::create([
             'name'          => $request->name,
-            'username'      => $username,
+            'username'      => $request->username ?? $request->email, // Normal login username/email
+            'referral_id'   => $referralId, // 12-character MLM Referral ID
             'email'         => $request->email,
             'mobile'        => $request->mobile,
             'password'      => Hash::make($request->password),

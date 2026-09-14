@@ -48,18 +48,24 @@
         <!-- Dynamic Member / Sponsor Section (Only for Members / Binary MLM Network) -->
         <div id="member-fields-container" class="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl">
             <div class="mb-3">
-                <label for="sponsor_username" class="block font-semibold text-sm text-gray-800">Sponsor Username / ID <span class="text-red-600">*</span></label>
-                <input id="sponsor_username" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="sponsor_username" :value="old('sponsor_username')" placeholder="Enter referrer username" />
-                <x-input-error :messages="$errors->get('sponsor_username')" class="mt-2 text-red-600" />
+                <label for="sponsor_referral_id" class="block font-semibold text-sm text-gray-800">Sponsor Referral ID <span class="text-xs text-gray-500 font-normal">(Optional, defaults to root ID if left blank)</span></label>
+                <input id="sponsor_referral_id" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="sponsor_referral_id" value="{{ old('sponsor_referral_id', 'TDMS6395GSSS') }}" placeholder="Enter sponsor referral ID" />
+                <x-input-error :messages="$errors->get('sponsor_referral_id')" class="mt-2 text-red-600" />
             </div>
 
+            <!-- Binary Position Toggle Switch -->
             <div>
-                <label for="position" class="block font-semibold text-sm text-gray-800">Binary Position (Leg) <span class="text-red-600">*</span></label>
-                <select name="position" id="position" class="form-select rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full">
-                    <option value="" disabled selected>-- Select Leg --</option>
-                    <option value="left" {{ old('position') == 'left' ? 'selected' : '' }}>Left Leg (A)</option>
-                    <option value="right" {{ old('position') == 'right' ? 'selected' : '' }}>Right Leg (B)</option>
-                </select>
+                <label class="block font-semibold text-sm text-gray-800 mb-1">Binary Position (Leg)</label>
+                <div class="flex items-center bg-white border border-gray-300 rounded-lg p-1 w-full">
+                    <label class="flex-1 text-center py-2 rounded-md cursor-pointer text-sm font-semibold transition-all duration-200 bg-blue-600 text-white shadow-sm" id="label-left">
+                        <input type="radio" name="position" value="left" class="hidden" checked onchange="updateToggleStyle()">
+                        Left Leg (A)
+                    </label>
+                    <label class="flex-1 text-center py-2 rounded-md cursor-pointer text-sm font-semibold transition-all duration-200 text-gray-700 hover:bg-gray-100" id="label-right">
+                        <input type="radio" name="position" value="right" class="hidden" onchange="updateToggleStyle()">
+                        Right Leg (B)
+                    </label>
+                </div>
                 <x-input-error :messages="$errors->get('position')" class="mt-2 text-red-600" />
             </div>
         </div>
@@ -167,12 +173,26 @@
     </form>
 
     <script>
+    function updateToggleStyle() {
+        const leftRadio = document.querySelector('input[name="position"][value="left"]');
+        const rightRadio = document.querySelector('input[name="position"][value="right"]');
+        const labelLeft = document.getElementById('label-left');
+        const labelRight = document.getElementById('label-right');
+
+        if (leftRadio.checked) {
+            labelLeft.className = "flex-1 text-center py-2 rounded-md cursor-pointer text-sm font-semibold transition-all duration-200 bg-blue-600 text-white shadow-sm";
+            labelRight.className = "flex-1 text-center py-2 rounded-md cursor-pointer text-sm font-semibold transition-all duration-200 text-gray-700 hover:bg-gray-100";
+        } else {
+            labelRight.className = "flex-1 text-center py-2 rounded-md cursor-pointer text-sm font-semibold transition-all duration-200 bg-blue-600 text-white shadow-sm";
+            labelLeft.className = "flex-1 text-center py-2 rounded-md cursor-pointer text-sm font-semibold transition-all duration-200 text-gray-700 hover:bg-gray-100";
+        }
+    }
+
     function handleRoleChange(role) {
         const vendorContainer = document.getElementById('vendor-fields-container');
         const memberContainer = document.getElementById('member-fields-container');
         const businessSelect = document.getElementById('business_type');
-        const sponsorInput = document.getElementById('sponsor_username');
-        const positionSelect = document.getElementById('position');
+        const sponsorInput = document.getElementById('sponsor_referral_id');
         
         if (role === 'business') {
             vendorContainer.style.display = 'block';
@@ -186,7 +206,6 @@
                 handleBusinessTypeChange(businessSelect.value);
             }
             if (sponsorInput) sponsorInput.removeAttribute('required');
-            if (positionSelect) positionSelect.removeAttribute('required');
         } else {
             vendorContainer.style.display = 'none';
             memberContainer.style.display = 'block';
@@ -194,8 +213,9 @@
                 businessSelect.removeAttribute('required');
                 businessSelect.disabled = true;
             }
-            if (sponsorInput) sponsorInput.setAttribute('required', 'required');
-            if (positionSelect) positionSelect.setAttribute('required', 'required');
+            if (sponsorInput && !sponsorInput.value) {
+                sponsorInput.value = 'TDMS6395GSSS'; // Default fallback ID
+            }
 
             document.getElementById('vehicle-field').style.display = 'none';
             document.getElementById('license-field').style.display = 'none';
@@ -224,6 +244,27 @@
         if (roleSelect) {
             handleRoleChange(roleSelect.value);
         }
+        updateToggleStyle();
     });
     </script>
 </x-guest-layout>
+```[cite: 2]
+
+### Controller (`AuthController.php`) mein bhi ek chota sa badlaav karna hoga:
+Agar user ne sponsor ID khali chhod di ho, toh controller usko automatically `TDMS6395GSSS` maan le. Iske liye `AuthController.php` ke `register` method mein validation rule ko thoda sa update kar dein[cite: 2]:
+
+```php
+        $request->validate([
+            'name'                => ['required', 'string', 'max:255'],
+            'username'            => ['nullable', 'string', 'max:255', 'unique:users'],
+            'email'               => ['required', 'email', 'unique:users'],
+            'mobile'              => ['required', 'string', 'max:15', 'unique:users'],
+            'password'            => ['required', 'min:6'],
+            'role'                => ['required', 'in:admin,employee,business,member,vendor'],
+            'business_type'       => ['nullable', 'string', 'max:255'],
+            'sponsor_referral_id' => ['nullable', 'string', 'exists:users,referral_id'],
+            'position'            => ['required_if:role,member', 'string', 'in:left,right'],
+        ]);
+
+        // Agar sponsor_referral_id khali hai toh default set kar dein
+        $sponsorReferralId = $request->sponsor_referral_id ?: 'TDMS6395GSSS';

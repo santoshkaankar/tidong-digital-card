@@ -24,6 +24,11 @@ class User extends Authenticatable
         'vehicle_no',
         'license_no',
         'categories',
+        'referral_id', // MLM Referral ID
+        'sponsor_id',  // MLM Sponsor ID
+        'parent_id',   // MLM Binary Parent ID
+        'position',    // MLM Binary Position (left/right)
+        'slug',        // URL slug
     ];
 
     protected $hidden = [

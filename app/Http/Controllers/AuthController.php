@@ -58,34 +58,109 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => 'nullable|string|max:255|unique:users',
-            'email' => 'required|email|unique:users',
-            'mobile' => 'required|string|max:15|unique:users',
-            'password' => 'required|min:6',
-            'role' => 'required|in:admin,employee,business,member,vendor',
-            'business_type' => 'nullable|string|max:255'
+            'name'                => ['required', 'string', 'max:255'],
+            'username'            => ['nullable', 'string', 'max:255', 'unique:users'],
+            'email'               => ['required', 'email', 'unique:users'],
+            'mobile'              => ['required', 'string', 'max:15', 'unique:users'],
+            'password'            => ['required', 'min:6'],
+            'role'                => ['required', 'in:admin,employee,business,member,vendor'],
+            'business_type'       => ['nullable', 'string', 'max:255'],
+            'sponsor_referral_id' => ['nullable', 'string', 'exists:users,referral_id'],
+            'position'            => ['required_if:role,member', 'string', 'in:left,right'],
         ]);
 
+        $parentId = null;
+        $sponsorId = null;
+        $position = 'left'; // Default position
+        $referralId = null;
+
+        if ($request->role === 'member') {
+            // Agar sponsor ID khali chhod di gayi hai, toh default root ID set karein
+            $sponsorRefId = $request->sponsor_referral_id ?: 'TDMS6395GSSS';
+
+            $sponsor = User::where('referral_id', $sponsorRefId)->first();
+            
+            if (!$sponsor) {
+                return back()->withErrors(['sponsor_referral_id' => 'Yeh Sponsor Referral ID system mein mojood nahi hai!'])->withInput();
+            }
+
+            $sponsorId = $sponsor->id;
+
+            // User dwara toggle se select ki gayi position (default left)
+            $preferredPosition = $request->position ?: 'left';
+
+            $placement = $this->findPlacementNode($sponsor->id, $preferredPosition);
+            $parentId = $placement['parent_id'];
+            $position = $placement['position'];
+
+            do {
+                $referralId = 'TABS' . strtoupper(Str::random(8));
+            } while (User::where('referral_id', $referralId)->exists());
+        }
+
         $user = User::create([
-            'name' => $request->name,
-            'username' => $request->username ?? null,
-            'slug' => Str::slug($request->name) . '-' . rand(1000, 9999),
-            'email' => $request->email,
-            'mobile' => $request->mobile,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'name'          => $request->name,
+            'username'      => $request->username ?? null,
+            'referral_id'   => $referralId,
+            'sponsor_id'    => $sponsorId,
+            'parent_id'     => $parentId,
+            'position'      => $position,
+            'slug'          => Str::slug($request->name) . '-' . rand(1000, 9999),
+            'email'         => $request->email,
+            'mobile'        => $request->mobile,
+            'password'      => Hash::make($request->password),
+            'role'          => $request->role,
             'business_type' => in_array($request->role, ['business', 'vendor']) ? $request->business_type : null
         ]);
+
+        // Binary Tree Upline Counting Logic
+        if ($request->role === 'member' && $parentId) {
+            $currentParentId = $parentId;
+            $currentPosition = $position;
+
+            while ($currentParentId) {
+                $parentUser = User::find($currentParentId);
+                if (!$parentUser) {
+                    break;
+                }
+
+                if ($currentPosition === 'left') {
+                    $parentUser->increment('left_count');
+                } else {
+                    $parentUser->increment('right_count');
+                }
+
+                $currentPosition = $parentUser->position;
+                $currentParentId = $parentUser->parent_id;
+            }
+        }
 
         Auth::login($user);
 
         return $this->redirectToUserDashboard($user);
     }
 
-    /**
-     * Helper to handle dynamic redirects based on role and business type
-     */
+    private function findPlacementNode($startNodeId, $preferredPosition)
+    {
+        $currentId = $startNodeId;
+        $currentPos = $preferredPosition;
+
+        while (true) {
+            $existingChild = User::where('parent_id', $currentId)
+                                 ->where('position', $currentPos)
+                                 ->first();
+
+            if (!$existingChild) {
+                return [
+                    'parent_id' => $currentId,
+                    'position' => $currentPos
+                ];
+            }
+
+            $currentId = $existingChild->id;
+        }
+    }
+
     private function redirectToUserDashboard($user)
     {
         $role = strtolower($user->role);
@@ -118,10 +193,6 @@ class AuthController extends Controller
 
         return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : view('member.dashboard');
     }
-
-    // ==========================================
-    // COMPLETE PASSWORD RESET LOGIC
-    // ==========================================
 
     public function showForgotPassword()
     {
@@ -170,9 +241,9 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        Auth::logout();
         return redirect()->route('login');
     }
 }
