@@ -8,11 +8,15 @@
         * {
             box-sizing: border-box;
         }
+        @page {
+            size: 80mm auto;
+            margin: 3mm; /* Yahan margin badha diya hai taaki upar jagah rahe */
+        }
         body { 
             font-family: 'Courier New', Courier, monospace; 
-            width: 280px; 
+            width: 72mm; 
             margin: 0 auto; 
-            padding: 5px; 
+            padding: 4mm 2mm; /* Upar-neeche thodi padding aur de di hai */
             font-size: 12px;
             color: #000000;
             background: #fff;
@@ -35,11 +39,8 @@
         }
         @media print {
             body { 
-                width: 100%; 
-                padding: 0; 
-            }
-            @page { 
-                margin: 0; 
+                width: 72mm; 
+                margin: 0 auto;
             }
         }
     </style>
@@ -47,7 +48,7 @@
 <body>
 
     <div class="text-center border-bottom">
-        <h3 style="margin: 0; font-size: 15px;">{{ __('KOT / RECEIPT') }}</h3>
+        <h3 style="margin: 0 0 5px 0; font-size: 15px;">{{ __('KOT / RECEIPT') }}</h3>
         <p style="margin: 3px 0;">{{ __('Order #:') }} <strong>{{ $order->order_number ?? '-' }}</strong></p>
         <p style="margin: 0;">
             {{ __('Type:') }} <strong>{{ isset($order->order_type) ? __(strtoupper(str_replace('_', ' ', $order->order_type))) : '-' }}</strong> | 
@@ -68,7 +69,6 @@
             @if(isset($order->items) && count($order->items) > 0)
                 @foreach($order->items as $item)
                     @php
-                        // Fixed item name resolution for both Global items and Custom items
                         $name = $item->item_name 
                             ?? optional($item->item)->name 
                             ?? optional($item->globalItem)->item_name
@@ -94,7 +94,6 @@
         </tbody>
     </table>
 
-    <!-- SUBTOTAL & TAX SECTION -->
     <div class="border-bottom">
         <table>
             <tr>
@@ -125,7 +124,6 @@
     <p class="text-center" style="margin-top: 8px; margin-bottom: 0;">*** {{ __('Thank You!') }} ***</p>
 
     <script>
-        // Auto print trigger and clean window close after printing
         window.onload = function() {
             window.print();
         };

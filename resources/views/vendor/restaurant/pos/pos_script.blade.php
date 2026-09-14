@@ -50,7 +50,6 @@ $(document).ready(function () {
 
         if (!id) return;
 
-        // Unique cart key to separate regular and custom items with same numeric ID if any
         const cartKey = (isCustom ? 'c_' : 'i_') + id;
 
         if (posCart[cartKey]) {
@@ -187,7 +186,12 @@ $(document).ready(function () {
             dataType: "json",
             success: function (response) {
                 if (response.success) {
-                    alert(response.message || 'Order placed successfully!');
+                    // Auto open print window right after successful order placement
+                    if (response.print_url) {
+                        window.open(response.print_url, '_blank');
+                    } else if (response.order_id) {
+                        window.open("/vendor/restaurant/orders/" + response.order_id + "/print", '_blank');
+                    }
 
                     if (response.whatsapp_url) {
                         window.open(response.whatsapp_url, '_blank');
