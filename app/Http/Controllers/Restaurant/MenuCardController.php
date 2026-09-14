@@ -29,6 +29,7 @@ class MenuCardController extends Controller
         // Fetch custom items so they appear in catalogs / menu cards
         $customItems = RestaurantCustomItem::where('user_id', $userId)
             ->where('is_available', true)
+            ->with(['category'])
             ->get();
 
         // Dynamic Tables/Catalogs fetch

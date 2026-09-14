@@ -49,6 +49,7 @@ class OrderController extends Controller
 
         $customItems = RestaurantCustomItem::where('user_id', $vendorId)
             ->where('is_available', true)
+            ->with(['category'])
             ->get();
 
         $tables = RestaurantTable::where('user_id', $vendorId)->get();

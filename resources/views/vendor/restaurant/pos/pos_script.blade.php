@@ -1,8 +1,7 @@
 <script>
 $(document).ready(function () {
-    let cart = {};
+    let posCart = {};
 
-    // CSRF Header setup
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -40,20 +39,30 @@ $(document).ready(function () {
         }
     });
 
-    // 3. Add to Cart
-    $(document).on('click', '.add-to-cart', function (e) {
+    // 3. Add to Cart Click (Handling Integer IDs & Custom Flags Separately)
+    $(document).on('click', '.add-to-cart-btn', function (e) {
         e.preventDefault();
 
-        const id = $(this).data('id');
+        const id = parseInt($(this).data('id'));
+        const isCustom = parseInt($(this).data('is-custom')) || 0;
         const name = $(this).data('name');
         const price = parseFloat($(this).data('price'));
 
         if (!id) return;
 
-        if (cart[id]) {
-            cart[id].quantity += 1;
+        // Unique cart key to separate regular and custom items with same numeric ID if any
+        const cartKey = (isCustom ? 'c_' : 'i_') + id;
+
+        if (posCart[cartKey]) {
+            posCart[cartKey].quantity += 1;
         } else {
-            cart[id] = { id: id, name: name, price: price, quantity: 1 };
+            posCart[cartKey] = { 
+                id: id, 
+                is_custom: isCustom, 
+                name: name, 
+                price: price, 
+                quantity: 1 
+            };
         }
 
         renderCart();
@@ -61,17 +70,17 @@ $(document).ready(function () {
 
     // Quantity Plus/Minus
     $(document).on('click', '.btn-qty', function () {
-        const id = $(this).data('id');
+        const cartKey = $(this).data('key');
         const action = $(this).data('action');
 
-        if (!cart[id]) return;
+        if (!posCart[cartKey]) return;
 
         if (action === 'increase') {
-            cart[id].quantity += 1;
+            posCart[cartKey].quantity += 1;
         } else if (action === 'decrease') {
-            cart[id].quantity -= 1;
-            if (cart[id].quantity <= 0) {
-                delete cart[id];
+            posCart[cartKey].quantity -= 1;
+            if (posCart[cartKey].quantity <= 0) {
+                delete posCart[cartKey];
             }
         }
         renderCart();
@@ -79,9 +88,9 @@ $(document).ready(function () {
 
     // Remove Item
     $(document).on('click', '.remove-item', function () {
-        const id = $(this).data('id');
-        if (cart[id]) {
-            delete cart[id];
+        const cartKey = $(this).data('key');
+        if (posCart[cartKey]) {
+            delete posCart[cartKey];
             renderCart();
         }
     });
@@ -91,7 +100,7 @@ $(document).ready(function () {
         const $cartBody = $('#cart-body');
         $cartBody.empty();
 
-        const keys = Object.keys(cart);
+        const keys = Object.keys(posCart);
 
         if (keys.length === 0) {
             $cartBody.html(`
@@ -105,29 +114,31 @@ $(document).ready(function () {
 
         let grandTotal = 0;
 
-        keys.forEach(id => {
-            const item = cart[id];
+        keys.forEach(cartKey => {
+            const item = posCart[cartKey];
             const itemTotal = item.price * item.quantity;
             grandTotal += itemTotal;
 
             const row = `
                 <tr>
-                    <td class="text-start fw-semibold small text-truncate" style="max-width: 120px;">${item.name}</td>
+                    <td class="text-start fw-semibold small text-truncate" style="max-width: 120px;">
+                        ${item.name} ${item.is_custom ? '<span class="badge bg-warning text-dark" style="font-size:0.55rem;">Custom</span>' : ''}
+                    </td>
                     <td class="small">₹${item.price.toFixed(2)}</td>
                     <td>
                         <div class="d-flex align-items-center justify-content-center border rounded-2 p-1">
-                            <button type="button" class="btn btn-sm btn-link text-dark p-0 me-1 btn-qty" data-id="${item.id}" data-action="decrease">
+                            <button type="button" class="btn btn-sm btn-link text-dark p-0 me-1 btn-qty" data-key="${cartKey}" data-action="decrease">
                                 <i class="bi bi-dash"></i>
                             </button>
                             <span class="fw-bold small px-1">${item.quantity}</span>
-                            <button type="button" class="btn btn-sm btn-link text-dark p-0 ms-1 btn-qty" data-id="${item.id}" data-action="increase">
+                            <button type="button" class="btn btn-sm btn-link text-dark p-0 ms-1 btn-qty" data-key="${cartKey}" data-action="increase">
                                 <i class="bi bi-plus"></i>
                             </button>
                         </div>
                     </td>
                     <td class="fw-bold small">₹${itemTotal.toFixed(2)}</td>
                     <td>
-                        <button type="button" class="btn btn-sm text-danger p-0 remove-item" data-id="${item.id}">
+                        <button type="button" class="btn btn-sm text-danger p-0 remove-item" data-key="${cartKey}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -145,7 +156,7 @@ $(document).ready(function () {
         const tableId = $('#table_id').val();
         const customerName = $('#customer_name').val();
         const customerPhone = $('#customer_phone').val();
-        const cartItems = Object.values(cart);
+        const cartItems = Object.values(posCart);
 
         if (cartItems.length === 0) {
             alert('Please add at least one item to the cart.');
@@ -182,7 +193,7 @@ $(document).ready(function () {
                         window.open(response.whatsapp_url, '_blank');
                     }
 
-                    cart = {};
+                    posCart = {};
                     renderCart();
                     $('#customer_name').val('');
                     $('#customer_phone').val('');
