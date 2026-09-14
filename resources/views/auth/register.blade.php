@@ -45,18 +45,35 @@
             <x-input-error :messages="$errors->get('role')" class="mt-2 text-red-600" />
         </div>
 
+        <!-- Dynamic Member / Sponsor Section (Only for Members / Binary MLM Network) -->
+        <div id="member-fields-container" class="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl">
+            <div class="mb-3">
+                <label for="sponsor_username" class="block font-semibold text-sm text-gray-800">Sponsor Username / ID <span class="text-red-600">*</span></label>
+                <input id="sponsor_username" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="sponsor_username" :value="old('sponsor_username')" placeholder="Enter referrer username" />
+                <x-input-error :messages="$errors->get('sponsor_username')" class="mt-2 text-red-600" />
+            </div>
+
+            <div>
+                <label for="position" class="block font-semibold text-sm text-gray-800">Binary Position (Leg) <span class="text-red-600">*</span></label>
+                <select name="position" id="position" class="form-select rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full">
+                    <option value="" disabled selected>-- Select Leg --</option>
+                    <option value="left" {{ old('position') == 'left' ? 'selected' : '' }}>Left Leg (A)</option>
+                    <option value="right" {{ old('position') == 'right' ? 'selected' : '' }}>Right Leg (B)</option>
+                </select>
+                <x-input-error :messages="$errors->get('position')" class="mt-2 text-red-600" />
+            </div>
+        </div>
+
         <!-- Dynamic Business Type Section -->
         <div id="vendor-fields-container" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl" style="display: none;">
             <div class="mb-3">
                 <label for="business_type" class="block font-semibold text-sm text-gray-800">Select Your Business Service <span class="text-red-600">*</span></label>
-                <select name="business_type" id="business_type" class="form-select rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full" required onchange="handleBusinessTypeChange(this.value)">
+                <select name="business_type" id="business_type" class="form-select rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full" disabled onchange="handleBusinessTypeChange(this.value)">
                     <option value="" disabled selected>-- Select Service Type --</option>
                     
                     <optgroup label="Food & Hospitality">
-                        <option value="restaurant">Restaurant (Dine-in / KDS / POS)</option>
+                        <option value="restaurant">Restaurant (Dine-in / KDS / POS / Tiffin / Street Food)</option>
                         <option value="catering">Catering Service (Event & Bulk Food)</option>
-                        <option value="tiffin_service">Tiffin & Mess Service</option>
-                        <option value="street_food">Street Food & Food Stalls</option>
                         <option value="cafe_icecream">Cafe & Ice Cream Parlour</option>
                         <option value="bakery">Bakery & Cake Shop</option>
                         <option value="hotel">Hotel / Resort / Guest House</option>
@@ -151,11 +168,15 @@
 
     <script>
     function handleRoleChange(role) {
-        const container = document.getElementById('vendor-fields-container');
+        const vendorContainer = document.getElementById('vendor-fields-container');
+        const memberContainer = document.getElementById('member-fields-container');
         const businessSelect = document.getElementById('business_type');
+        const sponsorInput = document.getElementById('sponsor_username');
+        const positionSelect = document.getElementById('position');
         
         if (role === 'business') {
-            container.style.display = 'block';
+            vendorContainer.style.display = 'block';
+            memberContainer.style.display = 'none';
             if (businessSelect) {
                 businessSelect.disabled = false;
                 businessSelect.setAttribute('required', 'required');
@@ -164,12 +185,18 @@
                 }
                 handleBusinessTypeChange(businessSelect.value);
             }
+            if (sponsorInput) sponsorInput.removeAttribute('required');
+            if (positionSelect) positionSelect.removeAttribute('required');
         } else {
-            container.style.display = 'none';
+            vendorContainer.style.display = 'none';
+            memberContainer.style.display = 'block';
             if (businessSelect) {
                 businessSelect.removeAttribute('required');
                 businessSelect.disabled = true;
             }
+            if (sponsorInput) sponsorInput.setAttribute('required', 'required');
+            if (positionSelect) positionSelect.setAttribute('required', 'required');
+
             document.getElementById('vehicle-field').style.display = 'none';
             document.getElementById('license-field').style.display = 'none';
         }
@@ -181,8 +208,7 @@
 
         const vehicleTypes = ['taxi', 'bike_rental'];
         const licenseTypes = [
-            'money_exchange', 'tourist_guide', 'tiffin_service', 
-            'street_food', 'bakery', 'cafe_icecream', 'catering', 'marriage_home', 'medical_pharmacy'
+            'money_exchange', 'tourist_guide', 'bakery', 'cafe_icecream', 'catering', 'marriage_home', 'medical_pharmacy'
         ];
 
         if (vehicleField) {
