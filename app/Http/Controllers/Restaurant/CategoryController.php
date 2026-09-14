@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Restaurant;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin\GlobalCategory;
+use App\Models\Admin\ItemCategory;
 use App\Models\Restaurant\RestaurantCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -21,7 +21,7 @@ class CategoryController extends Controller
         $alreadySelectedIds = $categories->pluck('category_id')->filter()->toArray();
 
         // Remaining global categories
-        $globalCategories = GlobalCategory::whereNotIn('id', $alreadySelectedIds)->get();
+        $globalCategories = ItemCategory::whereNotIn('id', $alreadySelectedIds)->get();
 
         return view('vendor.restaurant.categories.index', compact('categories', 'globalCategories'));
     }
@@ -33,7 +33,7 @@ class CategoryController extends Controller
         ]);
 
         $userId = auth()->id();
-        $globalCategory = GlobalCategory::findOrFail($request->global_category_id);
+        $globalCategory = ItemCategory::findOrFail($request->global_category_id);
 
         RestaurantCategory::create([
             'user_id'     => $userId,

@@ -173,7 +173,12 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('vendor.restaurant.items.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.items.*') ? 'active' : '' }}">
+                <a href="{{ route('vendor.restaurant.items.create_custom') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.items.create_custom') ? 'active' : '' }}">
+                    <i class="bi bi-box-seam"></i> Thali / Tiffin Items
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.items.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.items.index') ? 'active' : '' }}">
                     <i class="bi bi-card-list"></i> Select Items
                 </a>
             </li>

@@ -11,20 +11,9 @@
 
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; }
-        
         .dashboard-wrapper { display: flex; min-height: 100vh; width: 100%; }
-
-        .sidebar-area {
-            width: 260px;
-            flex-shrink: 0;
-        }
-
-        .main-viewport { 
-            flex-grow: 1; 
-            min-width: 0; 
-            width: calc(100% - 260px);
-        }
-
+        .sidebar-area { width: 260px; flex-shrink: 0; }
+        .main-viewport { flex-grow: 1; min-width: 0; width: calc(100% - 260px); }
         .table-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
         .custom-table th { background-color: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 1rem; }
         .custom-table td { padding: 1rem; vertical-align: middle; }
@@ -53,7 +42,7 @@
             <div>
                 <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-semibold" style="font-size: 0.75rem;">FOOD CATALOG</span>
                 <h2 class="fw-bold mt-2 mb-0">Food Items Management</h2>
-                <p class="text-muted small mb-0">Manage menu pricing, MRP, taxes, and discounted offer rates.</p>
+                <p class="text-muted small mb-0">Manage menu pricing, MRP, taxes, and custom restaurant items.</p>
             </div>
 
             <div class="d-flex flex-wrap gap-2 action-buttons align-items-center">
@@ -71,7 +60,7 @@
 
                 <button type="button" class="btn btn-outline-primary rounded-3 px-3 py-2 fw-semibold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addCustomModal">
                     <i class="bi bi-plus-lg"></i>
-                    <span>Add New Item</span>
+                    <span>Add New Custom Item</span>
                 </button>
             </div>
         </div>
@@ -111,20 +100,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($items as $key => $item)
+                        @php $counter = 1; @endphp
+
+                        <!-- 1. Normal Global / Imported Items -->
+                        @foreach($items as $item)
                             <tr>
-                                <td class="fw-bold text-muted">{{ $key + 1 }}</td>
-                                <td class="fw-semibold">{{ $item->globalItem->item_name ?? $item->name ?? 'N/A' }}</td>
-                                <td><span class="badge bg-light text-dark border">{{ $item->category->name ?? $item->category_name ?? 'General' }}</span></td>
+                                <td class="fw-bold text-muted">{{ $counter++ }}</td>
+                                <td class="fw-semibold">{{ $item->globalItem->item_name ?? 'N/A' }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ $item->category->name ?? 'General' }}</span></td>
                                 <td>
-                                    @php $type = $item->globalItem->food_type ?? $item->type ?? 'veg'; @endphp
+                                    @php $type = $item->globalItem->food_type ?? 'veg'; @endphp
                                     <span class="badge {{ $type == 'veg' ? 'bg-success' : ($type == 'non-veg' ? 'bg-danger' : 'bg-warning text-dark') }} bg-opacity-10">
                                         {{ ucfirst($type) }}
                                     </span>
                                 </td>
                                 <td>
                                     <span class="badge bg-secondary bg-opacity-10 text-secondary">
-                                        {{ $item->tax->tax_name ?? 'No Tax' }} {{ isset($item->tax) ? '(' . $item->tax->tax_percentage . '%)' : '' }}
+                                        {{ $item->tax?->tax_name ?? 'No Tax' }} {{ isset($item->tax) ? '(' . $item->tax->tax_percentage . '%)' : '' }}
                                     </span>
                                 </td>
                                 <td class="text-muted">₹{{ number_format($item->mrp ?? 0, 2) }}</td>
@@ -144,14 +136,63 @@
                                     </form>
                                 </td>
                             </tr>
-                        @empty
+                        @endforeach
+
+                        <!-- 2. Custom Thali / Items (Restaurant Personal) -->
+                        @if(isset($customItems))
+                            @foreach($customItems as $custom)
+                                <tr>
+                                    <td class="fw-bold text-muted">{{ $counter++ }}</td>
+                                    <td class="fw-semibold d-flex align-items-center gap-2">
+                                        @if($custom->image)
+                                            <img src="{{ asset('storage/' . $custom->image) }}" width="36" height="36" class="rounded-circle object-fit-cover border">
+                                        @else
+                                            <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center text-secondary" style="width: 36px; height: 36px; font-size: 14px;"><i class="bi bi-image"></i></div>
+                                        @endif
+                                        <div>
+                                            {{ $custom->name }}
+                                            <span class="badge bg-primary bg-opacity-10 text-primary ms-1" style="font-size: 10px;">Custom</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-light text-dark border">{{ $custom->category->name ?? 'General' }}</span></td>
+                                    <td>
+                                        <span class="badge {{ $custom->type == 'veg' ? 'bg-success' : ($custom->type == 'non-veg' ? 'bg-danger' : 'bg-warning text-dark') }} bg-opacity-10">
+                                            {{ ucfirst($custom->type) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                            {{ $custom->tax?->tax_name ?? 'No Tax' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">₹{{ number_format($custom->mrp ?? 0, 2) }}</td>
+                                    <td>
+                                        @if(isset($custom->price) && $custom->price < $custom->mrp && $custom->price > 0)
+                                            <del class="text-muted small me-1">₹{{ number_format($custom->mrp, 2) }}</del>
+                                            <span class="fw-bold text-success fs-6">₹{{ number_format($custom->price, 2) }}</span>
+                                        @else
+                                            <span class="fw-bold text-dark fs-6">₹{{ number_format($custom->mrp ?? 0, 2) }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-end">
+                                        <form action="{{ route('vendor.restaurant.custom-items.destroy', $custom->id) }}" method="POST" onsubmit="return confirm('Remove custom item?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-light border text-danger p-1.5"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
+
+                        @if($items->isEmpty() && (empty($customItems) || $customItems->isEmpty()))
                             <tr>
                                 <td colspan="8" class="text-center py-5 text-muted">
                                     <i class="bi bi-box-seam display-5 d-block mb-2 opacity-50"></i>
-                                    No food items added yet. Click on "Select Global Item" or "Add New Item".
+                                    No food items added yet. Click on "Select Global Item" or "Add New Custom Item".
                                 </td>
                             </tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -219,7 +260,7 @@
     </div>
 </div>
 
-<!-- Modal 2: Add Custom Item -->
+<!-- Modal 2: Add Custom Item (Direct Popup Modal) -->
 <div class="modal fade" id="addCustomModal" tabindex="-1" aria-labelledby="addCustomModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">

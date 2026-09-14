@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Restaurant;
 use App\Http\Controllers\Controller;
 use App\Models\Restaurant\RestaurantCategory;
 use App\Models\Restaurant\RestaurantItem;
+use App\Models\Restaurant\RestaurantCustomItem;
 use App\Models\Restaurant\RestaurantOrder;
 use App\Models\Restaurant\RestaurantOrderItem;
 use App\Models\Restaurant\RestaurantTable;
@@ -46,9 +47,13 @@ class OrderController extends Controller
             ->with(['globalItem', 'category'])
             ->get();
 
+        $customItems = RestaurantCustomItem::where('user_id', $vendorId)
+            ->where('is_available', true)
+            ->get();
+
         $tables = RestaurantTable::where('user_id', $vendorId)->get();
 
-        return view('vendor.restaurant.pos.index', compact('categories', 'items', 'tables'));
+        return view('vendor.restaurant.pos.index', compact('categories', 'items', 'customItems', 'tables'));
     }
 
     /**
@@ -62,7 +67,7 @@ class OrderController extends Controller
             'customer_phone'  => 'nullable|string|min:10|max:15',
             'customer_name'   => 'nullable|string|max:100',
             'cart'            => 'required|array|min:1',
-            'cart.*.id'       => 'required|exists:restaurant_items,id',
+            'cart.*.id'       => 'required',
             'cart.*.name'     => 'required|string',
             'cart.*.price'    => 'required|numeric',
             'cart.*.quantity' => 'required|integer|min:1',
@@ -101,6 +106,9 @@ class OrderController extends Controller
                 
                 $taxPercentage = 0;
                 $restaurantItem = DB::table('restaurant_items')->where('id', $item['id'])->first();
+                if (!$restaurantItem) {
+                    $restaurantItem = DB::table('restaurant_custom_items')->where('id', $item['id'])->first();
+                }
                 
                 if ($restaurantItem && $restaurantItem->tax_id) {
                     $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
@@ -228,8 +236,11 @@ class OrderController extends Controller
             ->where('is_available', true)
             ->with(['globalItem'])
             ->get();
+        $availableCustomItems = RestaurantCustomItem::where('user_id', $vendorId)
+            ->where('is_available', true)
+            ->get();
 
-        return view('vendor.restaurant.orders.edit', compact('order', 'tables', 'availableItems'));
+        return view('vendor.restaurant.orders.edit', compact('order', 'tables', 'availableItems', 'availableCustomItems'));
     }
 
     /**
@@ -245,7 +256,7 @@ class OrderController extends Controller
             'status'          => 'required|in:pending,preparing,cooking,ready,served,completed,cancelled',
             'payment_status'  => 'required|in:unpaid,paid',
             'items'           => 'required|array|min:1',
-            'items.*.item_id' => 'required|exists:restaurant_items,id',
+            'items.*.item_id' => 'required',
             'items.*.price'   => 'required|numeric',
             'items.*.qty'     => 'required|integer|min:1',
         ]);
@@ -266,6 +277,10 @@ class OrderController extends Controller
                 
                 $taxPercentage = 0;
                 $restaurantItem = DB::table('restaurant_items')->where('id', $itemData['item_id'])->first();
+                if (!$restaurantItem) {
+                    $restaurantItem = DB::table('restaurant_custom_items')->where('id', $itemData['item_id'])->first();
+                }
+
                 if ($restaurantItem && $restaurantItem->tax_id) {
                     $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
                     if ($taxData) {
@@ -286,7 +301,10 @@ class OrderController extends Controller
                 
                 // Fallback for Name
                 $itemObj = RestaurantItem::with('globalItem')->find($itemData['item_id']);
-                $itemName = $itemData['name'] ?? optional($itemObj->globalItem)->item_name ?? optional($itemObj)->name ?? __('Food Item');
+                if (!$itemObj) {
+                    $itemObj = RestaurantCustomItem::find($itemData['item_id']);
+                }
+                $itemName = $itemData['name'] ?? optional($itemObj)->item_name ?? optional($itemObj)->name ?? __('Food Item');
 
                 $processedItems[] = [
                     'item_id'    => $itemData['item_id'],
@@ -298,7 +316,6 @@ class OrderController extends Controller
                 ];
             }
 
-            // Recalculate Total (Taking existing discount/tip into account)
             $totalAmount = $subTotal + $totalTax + ($order->tip_amount ?? 0) - ($order->discount_amount ?? 0);
 
             // 2. Clear old items and recreate updated order list
@@ -362,16 +379,19 @@ class OrderController extends Controller
      */
     public function printReceipt($id)
     {
-        $order = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
+        $order = RestaurantOrder::with(['items', 'table'])
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 
-        // Group tax amounts by percentage for CGST and SGST display
         $taxSlabs = [];
         foreach ($order->items as $orderItem) {
             if ($orderItem->tax_amount > 0) {
                 $taxPercentage = 0;
                 $restaurantItem = DB::table('restaurant_items')->where('id', $orderItem->item_id)->first();
+                if (!$restaurantItem) {
+                    $restaurantItem = DB::table('restaurant_custom_items')->where('id', $orderItem->item_id)->first();
+                }
+
                 if ($restaurantItem && $restaurantItem->tax_id) {
                     $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
                     if ($taxData) {
@@ -387,7 +407,6 @@ class OrderController extends Controller
             }
         }
 
-        // Format into CGST/SGST lines so Blade view requires ZERO math
         $taxLines = [];
         foreach ($taxSlabs as $percentage => $totalTaxAmount) {
             $halfPercentage = number_format((float)$percentage / 2, 2);

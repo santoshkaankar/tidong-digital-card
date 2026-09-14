@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Restaurant;
 use App\Http\Controllers\Controller;
 use App\Models\Restaurant\RestaurantCategory;
 use App\Models\Restaurant\RestaurantItem;
+use App\Models\Restaurant\RestaurantCustomItem;
 use App\Models\Restaurant\RestaurantTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -18,10 +19,6 @@ class MenuCardController extends Controller
 
         // Active Categories and Items fetch with globalItem relationship
         $categories = RestaurantCategory::where('user_id', $userId)
-            ->whereHas('items', function ($query) use ($userId) {
-                $query->where('user_id', $userId)
-                      ->where('status', true);
-            })
             ->with(['items' => function ($query) use ($userId) {
                 $query->where('user_id', $userId)
                       ->where('status', true)
@@ -29,10 +26,15 @@ class MenuCardController extends Controller
             }])
             ->get();
 
+        // Fetch custom items so they appear in catalogs / menu cards
+        $customItems = RestaurantCustomItem::where('user_id', $userId)
+            ->where('is_available', true)
+            ->get();
+
         // Dynamic Tables/Catalogs fetch
         $tables = RestaurantTable::where('user_id', $userId)->latest()->get();
 
-        return view('vendor.restaurant.menu-card.index', compact('categories', 'user', 'tables'));
+        return view('vendor.restaurant.menu-card.index', compact('categories', 'customItems', 'user', 'tables'));
     }
 
     /**

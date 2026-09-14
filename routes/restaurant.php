@@ -13,6 +13,7 @@ use App\Http\Controllers\Restaurant\WaiterCallController;
 use App\Http\Controllers\Restaurant\KitchenOrderController;
 use App\Http\Controllers\Restaurant\CompletedOrderController;
 use App\Http\Controllers\Restaurant\OrderCashController;
+use App\Http\Controllers\Restaurant\CustomItemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -104,3 +105,12 @@ Route::middleware(['auth'])->prefix('vendor/restaurant')->name('vendor.restauran
 
 Route::get('/vendor/restaurant/orders/{id}/receipt', [App\Http\Controllers\Restaurant\OrderController::class, 'printReceipt'])
     ->name('vendor.restaurant.orders.receipt');
+
+    Route::get('/restaurant/items/create-custom', [App\Http\Controllers\Restaurant\ItemController::class, 'createCustomItem'])->name('vendor.restaurant.items.create_custom');
+Route::post('/restaurant/items/store-custom', [App\Http\Controllers\Restaurant\ItemController::class, 'storeCustomItem'])->name('vendor.restaurant.items.store_custom');
+
+
+
+Route::get('/restaurant/items/create-custom', [CustomItemController::class, 'create'])->name('vendor.restaurant.items.create_custom');
+Route::post('/restaurant/items/store-custom', [CustomItemController::class, 'store'])->name('vendor.restaurant.items.store_custom');
+Route::delete('/restaurant/items/custom/{id}', [CustomItemController::class, 'destroy'])->name('vendor.restaurant.custom-items.destroy');

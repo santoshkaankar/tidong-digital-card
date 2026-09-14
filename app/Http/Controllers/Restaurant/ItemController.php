@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin\GlobalItem;
 use App\Models\Restaurant\RestaurantCategory;
 use App\Models\Restaurant\RestaurantItem;
+use App\Models\Restaurant\RestaurantCustomItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,27 +16,33 @@ class ItemController extends Controller
     {
         $userId = auth()->id();
 
-        // 1. Vendor items with relationships (including tax)
+        // 1. Vendor items (Global / Imported items)
         $items = RestaurantItem::where('user_id', $userId)
             ->with(['globalItem', 'category', 'tax'])
             ->latest()
             ->get();
 
-        // 2. Vendor Categories
+        // 2. Vendor Custom Items (Personal Restaurant Items) - FIXED HERE
+        $customItems = RestaurantCustomItem::where('user_id', $userId)
+            ->with(['category', 'tax'])
+            ->latest()
+            ->get();
+
+        // 3. Vendor Categories
         $categories = RestaurantCategory::where('user_id', $userId)->get();
         $categoryNames = $categories->pluck('name')->toArray();
 
-        // 3. Filter Global items
+        // 4. Filter Global items
         $selectedGlobalIds = $items->pluck('global_item_id')->filter()->toArray();
 
         $globalItems = GlobalItem::whereNotIn('id', $selectedGlobalIds)
             ->whereIn('category', $categoryNames)
             ->get();
 
-        // 4. Get active taxes for the modals
+        // 5. Active Taxes for Modals
         $taxes = DB::table('taxes')->where('is_active', 1)->get();
 
-        return view('vendor.restaurant.items.index', compact('items', 'globalItems', 'categories', 'taxes'));
+        return view('vendor.restaurant.items.index', compact('items', 'customItems', 'globalItems', 'categories', 'taxes'));
     }
 
     // Modal 1: Pick Existing Item from Global Catalog
@@ -78,7 +85,7 @@ class ItemController extends Controller
         return redirect()->back()->with('success', 'Global item successfully added to menu!');
     }
 
-    // Modal 2: First Save to Global Master, then Link to Restaurant Menu
+    // Modal 2: Save Custom Item to Global Master & Link to Menu (Alternatively handled by CustomItemController, but kept safe here)
     public function storeCustomItem(Request $request)
     {
         $request->validate([
@@ -109,7 +116,6 @@ class ItemController extends Controller
                 'category'      => $categoryName,
                 'item_name'     => $request->name,
                 'food_type'     => $request->type,
-                'tax_id'        => $request->tax_id,
                 'mrp'           => $mrp,
                 'default_price' => $price,
                 'status'        => 'approved',
@@ -128,7 +134,7 @@ class ItemController extends Controller
             ]);
         });
 
-        return redirect()->back()->with('success', 'Item global master aur aapke menu dono me add ho gaya!');
+        return redirect()->back()->with('success', 'Custom item successfully added to menu!');
     }
 
     public function destroy($id)

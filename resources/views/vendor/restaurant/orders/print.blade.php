@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Receipt') }} - #{{ $order->order_number }}</title>
+    <title>{{ __('Receipt') }} - #{{ $order->order_number ?? '000' }}</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,16 +12,17 @@
             font-family: 'Courier New', Courier, monospace; 
             width: 280px; 
             margin: 0 auto; 
-            padding: 10px; 
+            padding: 5px; 
             font-size: 12px;
             color: #000000;
+            background: #fff;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .border-bottom { 
             border-bottom: 1px dashed #000; 
-            margin-bottom: 8px; 
-            padding-bottom: 8px; 
+            margin-bottom: 6px; 
+            padding-bottom: 6px; 
         }
         table { 
             width: 100%; 
@@ -29,7 +30,7 @@
         }
         th, td { 
             text-align: left; 
-            padding: 4px 0; 
+            padding: 3px 0; 
             vertical-align: top;
         }
         @media print {
@@ -43,50 +44,62 @@
         }
     </style>
 </head>
-<body onload="window.print();">
+<body>
 
     <div class="text-center border-bottom">
-        <h3 style="margin: 0; font-size: 16px;">{{ __('KOT / RECEIPT') }}</h3>
-        <p style="margin: 4px 0;">{{ __('Order #:') }} <strong>{{ $order->order_number }}</strong></p>
+        <h3 style="margin: 0; font-size: 15px;">{{ __('KOT / RECEIPT') }}</h3>
+        <p style="margin: 3px 0;">{{ __('Order #:') }} <strong>{{ $order->order_number ?? '-' }}</strong></p>
         <p style="margin: 0;">
-            {{ __('Type:') }} <strong>{{ __(strtoupper(str_replace('_', ' ', $order->order_type))) }}</strong> | 
+            {{ __('Type:') }} <strong>{{ isset($order->order_type) ? __(strtoupper(str_replace('_', ' ', $order->order_type))) : '-' }}</strong> | 
             {{ __('Table:') }} <strong>{{ $order->table->table_number ?? __('N/A') }}</strong>
         </p>
-        <p style="margin: 4px 0;">{{ __('Date:') }} {{ $order->created_at->format('d-m-Y h:i A') }}</p>
+        <p style="margin: 3px 0;">{{ __('Date:') }} {{ isset($order->created_at) ? $order->created_at->format('d-m-Y h:i A') : date('d-m-Y h:i A') }}</p>
     </div>
 
     <table class="border-bottom">
         <thead>
             <tr>
                 <th>{{ __('Item') }}</th>
-                <th class="text-center" style="width: 40px;">{{ __('Qty') }}</th>
-                <th class="text-right" style="width: 70px;">{{ __('Price') }}</th>
+                <th class="text-center" style="width: 35px;">{{ __('Qty') }}</th>
+                <th class="text-right" style="width: 65px;">{{ __('Price') }}</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($order->items as $item)
-                @php
-                    $name = $item->item_name 
+            @if(isset($order->items) && count($order->items) > 0)
+                @foreach($order->items as $item)
+                    @php
+                        // Fixed item name resolution for both Global items and Custom items
+                        $name = $item->item_name 
                             ?? optional($item->item)->name 
-                            ?? optional(optional($item->item)->globalItem)->item_name 
-                            ?? __('Unknown Item');
-                    $itemTotal = $item->price * $item->quantity;
-                @endphp
+                            ?? optional($item->globalItem)->item_name
+                            ?? optional(optional($item->item)->globalItem)->item_name
+                            ?? optional(optional($item)->customItem)->name
+                            ?? __('Food Item');
+                            
+                        $price = $item->price ?? 0;
+                        $qty = $item->quantity ?? 1;
+                        $itemTotal = $price * $qty;
+                    @endphp
+                    <tr>
+                        <td>{{ $name }}</td>
+                        <td class="text-center">{{ $qty }}</td>
+                        <td class="text-right">₹{{ number_format($itemTotal, 2) }}</td>
+                    </tr>
+                @endforeach
+            @else
                 <tr>
-                    <td>{{ $name }}</td>
-                    <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">₹{{ number_format($itemTotal, 2) }}</td>
+                    <td colspan="3" class="text-center">{{ __('No items found') }}</td>
                 </tr>
-            @endforeach
+            @endif
         </tbody>
     </table>
 
-    <!-- SUBTOTAL & DIVIDED TAX SECTION -->
+    <!-- SUBTOTAL & TAX SECTION -->
     <div class="border-bottom">
         <table>
             <tr>
                 <td>{{ __('Subtotal') }}</td>
-                <td class="text-right">₹{{ number_format($order->sub_total, 2) }}</td>
+                <td class="text-right">₹{{ number_format($order->sub_total ?? 0, 2) }}</td>
             </tr>
 
             @if(isset($taxLines) && count($taxLines) > 0)
@@ -104,14 +117,19 @@
         <table>
             <tr>
                 <td><strong>{{ __('Grand Total:') }}</strong></td>
-                <td class="text-right"><strong>₹{{ number_format($order->total_amount, 2) }}</strong></td>
+                <td class="text-right"><strong>₹{{ number_format($order->total_amount ?? 0, 2) }}</strong></td>
             </tr>
         </table>
     </div>
 
-    <p class="text-center" style="margin-top: 12px; margin-bottom: 0;">*** {{ __('Thank You!') }} ***</p>
+    <p class="text-center" style="margin-top: 8px; margin-bottom: 0;">*** {{ __('Thank You!') }} ***</p>
 
     <script>
+        // Auto print trigger and clean window close after printing
+        window.onload = function() {
+            window.print();
+        };
+
         window.onafterprint = function() {
             window.close();
         };
