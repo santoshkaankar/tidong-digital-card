@@ -1,14 +1,16 @@
-@extends('layouts.app')
+@extends('member.partials.layout')
+
+@section('title', 'My Wallet - Tidong®')
 
 @section('content')
-<div class="container py-4">
+<div class="container-fluid py-4 px-4">
     <!-- Header with Back to Dashboard Button -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="fw-bold m-0">My Wallet</h3>
-            <p class="text-muted small m-0">Apna INR balance aur T-Coins history yahan dekhein</p>
+            <h4 class="fw-bold text-dark mb-1"><i class="fas fa-wallet text-warning me-2"></i>My Wallet</h4>
+            <p class="text-muted small mb-0">Apna INR balance aur T-Coins history yahan dekhein</p>
         </div>
-        <a href="{{ route('member.dashboard') }}" class="btn btn-outline-secondary rounded-3">
+        <a href="{{ url('/member/dashboard') }}" class="btn btn-outline-secondary rounded-3">
             <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
         </a>
     </div>

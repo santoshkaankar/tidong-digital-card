@@ -1,11 +1,11 @@
-@extends('layouts.app')
+@extends('member.partials.layout')
 
 @section('content')
-<div class="container py-4">
+<div class="container-fluid py-4 px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="fw-bold m-0">My Digital Visiting Cards</h3>
-            <p class="text-muted small m-0">Aapke sabhi custom card variants aur sharing links</p>
+            <h4 class="fw-bold text-dark mb-1"><i class="fas fa-id-card text-primary me-2"></i>My Digital Visiting Cards</h4>
+            <p class="text-muted small mb-0">Aapke sabhi custom card variants aur sharing links</p>
         </div>
         
         <div class="d-flex align-items-center gap-2">
@@ -37,18 +37,18 @@
                     </div>
 
                     <div class="card-body p-3 d-flex align-items-center justify-content-center bg-light rounded-3 m-2">
-    @include('member.card.render_engine', [
-        'cardView'         => $view,
-        'masterCard'       => $masterCard,
-        'instanceId'       => $view->id,
-        'themeStyle'       => $view->theme_style ?? $view->theme ?? 'default',
-        'customTextColor'  => $view->custom_text_color ?? $view->text_color ?? null,
-        'customIconColor'  => $view->custom_icon_color ?? $view->icon_color ?? null,
-        'customIconStyle'  => $view->icon_style ?? $view->custom_icon_style ?? 'solid',
-        'iconDisplayMode'  => $view->icon_display_mode ?? $view->display_mode ?? 'icon_text',
-        'customFont'       => $view->font_family ?? $view->font ?? "'Poppins', sans-serif"
-    ])
-</div>
+                        @include('member.card.render_engine', [
+                            'cardView'         => $view,
+                            'masterCard'       => $masterCard,
+                            'instanceId'       => $view->id,
+                            'themeStyle'       => $view->theme_style ?? $view->theme ?? 'default',
+                            'customTextColor'  => $view->custom_text_color ?? $view->text_color ?? null,
+                            'customIconColor'  => $view->custom_icon_color ?? $view->icon_color ?? null,
+                            'customIconStyle'  => $view->icon_style ?? $view->custom_icon_style ?? 'solid',
+                            'iconDisplayMode'  => $view->icon_display_mode ?? $view->display_mode ?? 'icon_text',
+                            'customFont'       => $view->font_family ?? $view->font ?? "'Poppins', sans-serif"
+                        ])
+                    </div>
 
                     <div class="card-footer bg-white border-top-0 p-3">
                         <div class="input-group mb-2">

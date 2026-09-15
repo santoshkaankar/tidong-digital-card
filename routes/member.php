@@ -6,6 +6,7 @@ use App\Http\Controllers\Member\WalletController;
 use App\Http\Controllers\Member\FriendController;
 use App\Http\Controllers\Member\SearchController;
 use App\Http\Controllers\Member\ProfileController;
+use App\Http\Controllers\Member\OrderController; // <-- Ye import add karein
 
 // Dashboard Route
 Route::get('/dashboard', function () {
@@ -52,7 +53,6 @@ Route::get('/referral', function () {
 // Friend Circle Route
 Route::get('/friend-circle/{type}', [FriendController::class, 'index'])->name('friend.index');
 
-// Orders Route
-Route::get('/orders', function () {
-    return view('member.orders');
-})->name('orders');
+// Orders Routes (Ab Controller ke zariye chalenge)
+Route::get('/orders', [OrderController::class, 'index'])->name('orders');
+Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');

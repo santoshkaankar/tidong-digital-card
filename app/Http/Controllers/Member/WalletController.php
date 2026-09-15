@@ -1,7 +1,6 @@
 <?php
 
-namespace App\Http\Controllers
-;
+namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -14,7 +13,7 @@ class WalletController extends Controller
     {
         $userId = Auth::id();
 
-        // Check if wallet exists, if not create one with 0 balance
+        // Check if wallet exists, if not create one with 0 balance[cite: 3]
         $wallet = DB::table('wallets')->where('user_id', $userId)->first();
         if (!$wallet) {
             DB::table('wallets')->insert([
@@ -27,13 +26,13 @@ class WalletController extends Controller
             $wallet = DB::table('wallets')->where('user_id', $userId)->first();
         }
 
-        // Fetch Real Money Transactions (PhonePe / UPI)
+        // Fetch Real Money Transactions (PhonePe / UPI)[cite: 3]
         $transactions = DB::table('transactions')
                             ->where('user_id', $userId)
                             ->orderBy('created_at', 'desc')
                             ->get();
 
-        // Fetch T-Coin Transactions
+        // Fetch T-Coin Transactions[cite: 3]
         $tCoinTransactions = DB::table('t_coin_transactions')
                                 ->where('user_id', $userId)
                                 ->orderBy('created_at', 'desc')
