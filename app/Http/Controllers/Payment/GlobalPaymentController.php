@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Gateways\RazorpayGateway;
 use App\Gateways\PhonePeGateway;
 use App\Models\Vendor\Order;
+use App\Models\Payment\VendorWallet;
+use App\Models\Payment\WalletTransaction;
 
 class GlobalPaymentController extends Controller
 {

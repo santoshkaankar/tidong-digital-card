@@ -9,6 +9,9 @@ use App\Models\Restaurant\RestaurantCustomItem;
 use App\Models\Restaurant\RestaurantOrder;
 use App\Models\Restaurant\RestaurantOrderItem;
 use App\Models\Restaurant\RestaurantTable;
+// Wallet Models Added
+use App\Models\Payment\VendorWallet;
+use App\Models\Payment\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -163,7 +166,32 @@ class OrderController extends Controller
                 'payment_method'  => 'cash',
             ]);
 
-            // 3. Insert Order Items
+            // ==========================================
+            // 3. ₹1 PER ORDER WALLET DEDUCTION LOGIC
+            // ==========================================
+            $wallet = VendorWallet::firstOrCreate(
+                ['vendor_id' => $vendorId],
+                ['bonus_balance' => 200.00, 'sales_balance' => 0.00]
+            );
+
+            if ($wallet->bonus_balance >= 1.00) {
+                $wallet->decrement('bonus_balance', 1.00);
+                $walletType = 'bonus';
+            } else {
+                $wallet->decrement('sales_balance', 1.00);
+                $walletType = 'sales';
+            }
+
+            WalletTransaction::create([
+                'vendor_id'   => $vendorId,
+                'wallet_type' => $walletType,
+                'type'        => 'debit',
+                'amount'      => 1.00,
+                'description' => 'Order Processing Fee (₹1 per order) - Order #' . $order->order_number,
+                'status'      => 'success'
+            ]);
+
+            // 4. Insert Order Items
             foreach ($processedCart as $item) {
                 RestaurantOrderItem::create([
                     'order_id'       => $order->id,
@@ -188,7 +216,7 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // 4. Payment Link & WhatsApp Generation
+            // 5. Payment Link & WhatsApp Generation
             $upiId = Auth::user()->upi_id ?? 'merchant@upi';
             $restaurantName = Auth::user()->restaurant_name ?? Auth::user()->name ?? __('Restaurant');
             

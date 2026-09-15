@@ -197,8 +197,8 @@
 
             <li class="menu-label mt-2">Marketing & Wallet</li>
             <li>
-                <a href="#" class="nav-item-link">
-                    <i class="bi bi-wallet2"></i> Wallet
+                <a href="{{ route('vendor.wallet.index') }}" class="nav-item-link {{ request()->routeIs('vendor.wallet.*') ? 'active' : '' }}">
+                    <i class="bi bi-wallet2"></i> Business Wallet
                 </a>
             </li>
             <li>
