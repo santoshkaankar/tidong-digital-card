@@ -46,7 +46,7 @@ Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
 
 // Referral & Earn Route
 Route::get('/referral', function () {
-    return view('member.referral');
+    return view('member.affiliates.referral');
 })->name('referral');
 
 // Friend Circle Route

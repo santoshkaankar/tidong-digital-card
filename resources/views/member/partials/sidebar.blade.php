@@ -18,9 +18,16 @@
             <a href="{{ route('member.search') }}"><i class="fas fa-search"></i> Advanced Search</a>
         </li>
 
-        <!-- Referral Code / Refer & Earn with Active Route -->
+        <!-- Affiliates Dashboard Menu -->
         <li class="{{ request()->is('member/referral*') ? 'active' : '' }}">
-            <a href="{{ url('/member/referral') }}"><i class="fas fa-gift text-info"></i> Referral & Earn</a>
+            <a href="{{ url('/member/referral') }}"><i class="fas fa-users-cog text-info"></i> Affiliates</a>
+        </li>
+
+        <!-- Refer & Earn Modal Trigger Button -->
+        <li>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#referEarnModal">
+                <i class="fas fa-gift text-success"></i> Refer & Earn
+            </a>
         </li>
 
         <li class="{{ request()->is('member/wallet*') ? 'active' : '' }}">
@@ -48,7 +55,6 @@
                         <i class="fas fa-user-friends me-1"></i> Real Friends
                     </a>
                 </li>
-                
                 <li>
                     <a href="{{ url('/member/friend?type=relative') }}" class="ps-4">
                         <i class="fas fa-user-tie me-1"></i> Relatives
@@ -95,3 +101,88 @@
         </li>
     </ul>
 </nav>
+
+<!-- Refer & Earn Share Modal Popup -->
+<div class="modal fade" id="referEarnModal" tabindex="-1" aria-labelledby="referEarnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="referEarnModalLabel">
+                    <i class="fas fa-gift text-success me-2"></i>Refer & Earn
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-3">Share your referral link instantly with your network via social media or messaging!</p>
+                
+                <!-- Referral Link Input -->
+                <div class="input-group mb-4">
+                    <input type="text" class="form-control rounded-start-3 bg-light" id="modalReferralLink" value="{{ route('register', ['ref' => Auth::user()->referral_id ?? '']) }}" readonly>
+                    <button class="btn btn-primary px-3 rounded-end-3 fw-semibold" type="button" onclick="copyModalReferralLink()">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <small class="text-success mb-3 d-block fw-semibold" id="modalCopyMsg" style="display: none;">
+                    <i class="fas fa-check-circle me-1"></i> Link copied to clipboard!
+                </small>
+
+                <!-- Social & Messaging Share Buttons Grid -->
+                <div class="row g-2">
+                    <!-- WhatsApp Share -->
+                    <div class="col-4">
+                        <a href="https://api.whatsapp.com/send?text={{ urlencode('Join Tidong Portal using my referral link: ' . route('register', ['ref' => Auth::user()->referral_id ?? ''])) }}" target="_blank" class="btn btn-success w-100 btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center">
+                            <i class="fab fa-whatsapp me-1 fs-5"></i> WhatsApp
+                        </a>
+                    </div>
+                    <!-- Facebook Share -->
+                    <div class="col-4">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('register', ['ref' => Auth::user()->referral_id ?? ''])) }}" target="_blank" class="btn btn-primary w-100 btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center" style="background-color: #1877f2; border-color: #1877f2;">
+                            <i class="fab fa-facebook-f me-1"></i> Facebook
+                        </a>
+                    </div>
+                    <!-- Twitter / X Share -->
+                    <div class="col-4">
+                        <a href="https://twitter.com/intent/tweet?url={{ urlencode(route('register', ['ref' => Auth::user()->referral_id ?? ''])) }}&text={{ urlencode('Join Tidong Portal using my referral link!') }}" target="_blank" class="btn btn-dark w-100 btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center" style="background-color: #000000; border-color: #000000;">
+                            <i class="fab fa-x-twitter me-1"></i> Twitter
+                        </a>
+                    </div>
+                    <!-- Instagram (Direct copy guidance / Profile link note since IG doesn't support direct web link sharing via URL API) -->
+                    <div class="col-4">
+                        <button type="button" onclick="copyModalReferralLink(); alert('Link copied! You can now paste it in your Instagram bio or story.');" class="btn w-100 btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center text-white" style="background: linear-num(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%,#d6249f 60%,#285AEB 90%);">
+                            <i class="fab fa-instagram me-1"></i> Instagram
+                        </button>
+                    </div>
+                    <!-- Email Share -->
+                    <div class="col-4">
+                        <a href="mailto:?subject=Join Tidong Portal&body={{ urlencode('Hey, join Tidong Portal using my referral link: ' . route('register', ['ref' => Auth::user()->referral_id ?? ''])) }}" class="btn btn-danger w-100 btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center">
+                            <i class="fas fa-envelope me-1"></i> Email
+                        </a>
+                    </div>
+                    <!-- SMS / Message Share -->
+                    <div class="col-4">
+                        <a href="sms:?body={{ urlencode('Join Tidong Portal using my referral link: ' . route('register', ['ref' => Auth::user()->referral_id ?? ''])) }}" class="btn btn-secondary w-100 btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center">
+                            <i class="fas fa-sms me-1"></i> SMS
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+function copyModalReferralLink() {
+    var copyText = document.getElementById("modalReferralLink");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); 
+    navigator.clipboard.writeText(copyText.value);
+    
+    var msg = document.getElementById("modalCopyMsg");
+    msg.style.display = "block";
+    setTimeout(function() {
+        msg.style.display = "none";
+    }, 3000);
+}
+</script>
+@endpush
