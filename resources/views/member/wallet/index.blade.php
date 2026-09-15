@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold text-dark mb-1"><i class="fas fa-wallet text-warning me-2"></i>My Wallet</h4>
-            <p class="text-muted small mb-0">Apna INR balance aur T-Coins history yahan dekhein</p>
+            <p class="text-muted small mb-0">Apna balance aur transaction history yahan dekhein</p>
         </div>
         <a href="{{ url('/member/dashboard') }}" class="btn btn-outline-secondary rounded-3">
             <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
@@ -17,27 +17,41 @@
 
     <!-- Balance Cards Row -->
     <div class="row g-4 mb-4">
-        <!-- INR Balance Wallet Card -->
-        <div class="col-md-6">
+        <!-- 1. Non-Withdrawable Balance Card (Avl Bal. / Locked) -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-info text-white rounded-4 p-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-uppercase small fw-bold opacity-75 mb-0">Avl Bal.</h6>
+                        <span class="badge bg-dark text-white px-2 py-1"><i class="fas fa-lock me-1"></i> Locked</span>
+                    </div>
+                    <h2 class="fw-bold mb-3">₹ {{ number_format($wallet->non_withdrawable_balance ?? 0, 2) }}</h2>
+                    <span class="small opacity-75">Non-withdrawable balance</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Withdrawable Balance Card (Withdrawable Bal. / Fund Transfer) -->
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm bg-primary text-white rounded-4 p-4 h-100">
                 <div class="card-body">
-                    <h6 class="text-uppercase small fw-bold opacity-75">INR Balance</h6>
+                    <h6 class="text-uppercase small fw-bold opacity-75">Withdrawable Bal.</h6>
                     <h2 class="fw-bold mb-3">₹ {{ number_format($wallet->real_balance ?? 0, 2) }}</h2>
-                    <button class="btn btn-light text-primary fw-bold rounded-pill px-4 btn-sm" disabled>
-                        <i class="fas fa-plus me-1"></i> Add Money (Coming Soon)
+                    <button class="btn btn-light text-primary fw-bold rounded-pill px-3 btn-sm">
+                        <i class="fas fa-exchange-alt me-1"></i> Fund Transfer
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- T-Coins Wallet Card -->
-        <div class="col-md-6">
+        <!-- 3. T-Coins Wallet Card (T-Coin Bal. / Share with Friends) -->
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm bg-success text-white rounded-4 p-4 h-100">
                 <div class="card-body">
-                    <h6 class="text-uppercase small fw-bold opacity-75">T-Coins</h6>
-                    <h2 class="fw-bold mb-3"><i class="fas fa-coins me-1"></i> {{ number_format($wallet->t_coins ?? 0, 2) }}</h2>
-                    <button class="btn btn-light text-success fw-bold rounded-pill px-4 btn-sm" disabled>
-                        <i class="fas fa-exchange-alt me-1"></i> Earn / Spend Tokens
+                    <h6 class="text-uppercase small fw-bold opacity-75">T-Coin Bal.</h6>
+                    <h2 class="fw-bold mb-3"><i class="fas fa-coins text-warning me-1"></i> {{ number_format($wallet->t_coins ?? 0, 2) }}</h2>
+                    <button class="btn btn-light text-success fw-bold rounded-pill px-3 btn-sm">
+                        <i class="fas fa-share-alt me-1"></i> Share with Friends
                     </button>
                 </div>
             </div>

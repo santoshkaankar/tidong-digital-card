@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             PincodeSeeder::class,
             GlobalItemsSeeder::class,
             TaxSeeder::class,
-            
+            AffiliateStageSeeder::class,
         ]);
     }
 }

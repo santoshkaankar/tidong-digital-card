@@ -13,12 +13,13 @@ class WalletController extends Controller
     {
         $userId = Auth::id();
 
-        // Check if wallet exists, if not create one with 0 balance[cite: 3]
+        // Check if wallet exists, if not create one with 0 balance including non_withdrawable_balance[cite: 2, 3]
         $wallet = DB::table('wallets')->where('user_id', $userId)->first();
         if (!$wallet) {
             DB::table('wallets')->insert([
                 'user_id' => $userId,
                 'real_balance' => 0.00,
+                'non_withdrawable_balance' => 0.00,
                 't_coins' => 0.00,
                 'created_at' => now(),
                 'updated_at' => now(),

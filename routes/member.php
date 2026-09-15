@@ -6,7 +6,8 @@ use App\Http\Controllers\Member\WalletController;
 use App\Http\Controllers\Member\FriendController;
 use App\Http\Controllers\Member\SearchController;
 use App\Http\Controllers\Member\ProfileController;
-use App\Http\Controllers\Member\OrderController; // <-- Ye import add karein
+use App\Http\Controllers\Member\OrderController;
+use App\Http\Controllers\Member\AffiliateController; // <-- Naya Affiliate Controller import kiya gaya hai
 
 // Dashboard Route
 Route::get('/dashboard', function () {
@@ -45,14 +46,12 @@ Route::get('/search', [SearchController::class, 'index'])->name('search');
 // Wallet Route
 Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
 
-// Referral & Earn Route
-Route::get('/referral', function () {
-    return view('member.affiliates.referral');
-})->name('referral');
+// Referral & Earn Route (Ab yeh AffiliateController ke index method ko call karega)
+Route::get('/referral', [AffiliateController::class, 'index'])->name('referral');
 
 // Friend Circle Route
 Route::get('/friend-circle/{type}', [FriendController::class, 'index'])->name('friend.index');
 
-// Orders Routes (Ab Controller ke zariye chalenge)
+// Orders Routes
 Route::get('/orders', [OrderController::class, 'index'])->name('orders');
 Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
