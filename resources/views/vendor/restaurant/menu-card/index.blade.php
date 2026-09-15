@@ -478,5 +478,5 @@
 @endsection
 
 @push('scripts')
-@include('vendor.restaurant.menu_card.menu_card_script')
+@include('vendor.restaurant.menu-card.menu_card_script')
 @endpush
