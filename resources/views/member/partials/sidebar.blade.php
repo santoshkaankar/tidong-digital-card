@@ -13,9 +13,16 @@
             <a href="{{ url('/member/profile') }}"><i class="fas fa-user-circle"></i> My Profile & Stats</a>
         </li>
 
+        <!-- Advanced Search with Active Route -->
         <li class="{{ request()->is('member/search*') ? 'active' : '' }}">
-            <a href="#"><i class="fas fa-search"></i> Advanced Search</a>
+            <a href="{{ route('member.search') }}"><i class="fas fa-search"></i> Advanced Search</a>
         </li>
+
+        <!-- Referral Code / Refer & Earn with Active Route -->
+        <li class="{{ request()->is('member/referral*') ? 'active' : '' }}">
+            <a href="{{ url('/member/referral') }}"><i class="fas fa-gift text-info"></i> Referral & Earn</a>
+        </li>
+
         <li class="{{ request()->is('member/wallet*') ? 'active' : '' }}">
             <a href="{{ url('/member/wallet') }}"><i class="fas fa-wallet text-warning"></i> My Wallet</a>
         </li>

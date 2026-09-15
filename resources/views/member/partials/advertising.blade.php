@@ -1,3 +1,5 @@
+<!-- File Path: resources/views/member/partials/advertising.blade.php -->
+
 <!-- Advertising & Banners Component -->
 <div class="row mb-4">
     <div class="col-12">
