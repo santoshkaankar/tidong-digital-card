@@ -21,7 +21,7 @@ class CustomItemController extends Controller
         }
 
         $categories = RestaurantCategory::where('user_id', $userId)->where('status', true)->get();
-        $taxes = DB::table('taxes')->where('is_active', 1)->get();
+        $taxes = DB::table('taxes')->where('is_active', true)->get();
 
         return view('vendor.restaurant.items.create_custom', compact('categories', 'taxes'));
     }
