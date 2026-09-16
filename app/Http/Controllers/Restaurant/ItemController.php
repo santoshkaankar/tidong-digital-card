@@ -40,7 +40,7 @@ class ItemController extends Controller
             ->get();
 
         // 5. Active Taxes for Modals
-        $taxes = DB::table('taxes')->where('is_active', 1)->get();
+        $taxes = DB::table('taxes')->where('is_active', true)->get();
 
         return view('vendor.restaurant.items.index', compact('items', 'customItems', 'globalItems', 'categories', 'taxes'));
     }
