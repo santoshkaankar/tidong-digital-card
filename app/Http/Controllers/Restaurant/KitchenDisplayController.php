@@ -86,36 +86,52 @@ class KitchenDisplayController extends Controller
     /**
      * Live Polling Endpoint (Data Feed for UI Sync)
      */
-    public function liveOrders()
-    {
-        $userId = Auth::id();
+    public function liveOrders(Request $request)
+{
+    $userId = Auth::id();
 
-        // Active Waiter Calls
-        $waiterCalls = WaiterCall::with('table')
-            ->where('user_id', $userId)
-            ->whereIn('call_type', ['waiter', 'call_waiter'])
-            ->where(function($q) {
-                $q->where('status', 'pending')->orWhereNull('status');
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
+    // 1. Active Waiter Calls
+    $waiterCalls = WaiterCall::with('table')
+        ->where('user_id', $userId)
+        ->whereIn('call_type', ['waiter', 'call_waiter'])
+        ->where(function($q) {
+            $q->where('status', 'pending')->orWhereNull('status');
+        })
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        // BUG FIXED: 'cashrequests' was incorrect model. Changed to WaiterCall
-        $cashRequests = WaiterCall::with('table')
-            ->where('user_id', $userId)
-            ->whereIn('call_type', ['pay_bill_cash', 'bill_cash', 'cash_payment', 'cash_requested'])
-            ->where(function($q) {
-                $q->where('status', 'pending')->orWhereNull('status');
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
+    // 2. Cash Requests
+    $cashRequests = WaiterCall::with('table')
+        ->where('user_id', $userId)
+        ->whereIn('call_type', ['pay_bill_cash', 'bill_cash', 'cash_payment', 'cash_requested'])
+        ->where(function($q) {
+            $q->where('status', 'pending')->orWhereNull('status');
+        })
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        return response()->json([
-            'success' => true,
-            'waiter_calls' => $waiterCalls,
-            'cash_requests' => $cashRequests
-        ]);
-    }
+    // 3. Running Orders (Sahi Model: RestaurantOrder)
+    $runningOrders = \App\Models\Restaurant\RestaurantOrder::with(['items.item', 'table'])
+        ->where('user_id', $userId)
+        ->whereIn('status', ['pending', 'cooking', 'preparing', 'waiting', 'accepted'])
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    $activeOrdersCount = $runningOrders->count();
+
+    return response()->json([
+        'success' => true,
+        'activeOrdersCount' => $activeOrdersCount,
+        'waiter_calls' => $waiterCalls,
+        'cash_requests' => $cashRequests,
+        'cash_requests_html' => view('vendor.restaurant.kitchen.cash_requests', compact('cashRequests'))->render(),
+        'waiter_calls_html' => view('vendor.restaurant.kitchen.waiter_calls', compact('waiterCalls'))->render(),
+        'running_orders_html' => view('vendor.restaurant.kitchen.running_orders', [
+            'activeOrders' => $runningOrders, 
+            'activeOrdersCount' => $activeOrdersCount
+        ])->render(),
+    ]);
+}
 
     /**
      * Update Kitchen Order Status & Release Table on Completion
