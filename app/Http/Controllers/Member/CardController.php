@@ -95,50 +95,58 @@ class CardController extends Controller
 
         $card = VisitingCard::firstOrNew(['user_id' => Auth::id()]);
 
+        // Fill form attributes first
+        $card->fill($request->except(['_token', 'photo', 'qr_code', 'card_no']));
+
+        // Generate Card Number if creating a new master card
         if (!$card->exists) {
             $tidongId = '12';
-            $countryObj = Country::find($request->input('country_id'));
+            $countryObj = $request->input('country_id') ? Country::find($request->input('country_id')) : null;
             $countryCode = $countryObj ? $countryObj->code : '091';
 
-            $stateObj = State::find($request->input('state_id'));
+            $stateObj = $request->input('state_id') ? State::find($request->input('state_id')) : null;
             $stateCode = $stateObj ? $stateObj->code : '08';
-            $stateName = $stateObj ? $stateObj->name : 'Rajasthan';
+            $stateName = $stateObj ? $stateObj->name : ($request->input('state') ?: 'Rajasthan');
 
-            $stateCardCount = VisitingCard::where('state', 'LIKE', "%{$stateName}%")->count() + 1;
+            $stateCardCount = VisitingCard::whereRaw('LOWER(state) LIKE ?', ['%' . strtolower($stateName) . '%'])->count() + 1;
             $serialNo = str_pad($stateCardCount, 7, '0', STR_PAD_LEFT);
 
-            $card->card_no = "{$tidongId}{$countryCode}-{$stateCode}{$serialNo}";
-            $card->state   = $stateName;
+            $card->card_no   = "{$tidongId}{$countryCode}-{$stateCode}{$serialNo}";
+            $card->state     = $stateName;
             $card->plan_type = 'free';
         }
 
+        // Photo Upload Logic
         if ($request->hasFile('photo')) {
-            if (!empty($card->photo) && Storage::disk('public')->exists(str_replace('storage/', '', $card->photo))) {
-                Storage::disk('public')->delete(str_replace('storage/', '', $card->photo));
-            }
-
-            $file = $request->file('photo');
-            $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('uploads/photos', $filename, 'public');
+            $this->deleteStoredFile($card->photo);
+            $path = $request->file('photo')->store('uploads/photos', 'public');
             $card->photo = 'storage/' . $path;
         }
 
+        // QR Code Upload Logic
         if ($request->hasFile('qr_code')) {
-            if (!empty($card->qr_code) && Storage::disk('public')->exists(str_replace('storage/', '', $card->qr_code))) {
-                Storage::disk('public')->delete(str_replace('storage/', '', $card->qr_code));
-            }
-
-            $file = $request->file('qr_code');
-            $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('uploads/qrcodes', $filename, 'public');
+            $this->deleteStoredFile($card->qr_code);
+            $path = $request->file('qr_code')->store('uploads/qrcodes', 'public');
             $card->qr_code = 'storage/' . $path;
         }
 
-        $card->fill($request->except(['_token', 'photo', 'qr_code']));
         $card->save();
 
         return redirect()->route('member.card.configure')
             ->with('success', 'Master profile successfully save ho gayi!');
+    }
+
+    /**
+     * Helper to clean up existing uploaded file from public disk
+     */
+    private function deleteStoredFile(?string $filePath): void
+    {
+        if (!empty($filePath)) {
+            $relativePath = str_replace('storage/', '', $filePath);
+            if (Storage::disk('public')->exists($relativePath)) {
+                Storage::disk('public')->delete($relativePath);
+            }
+        }
     }
 
     public function store(Request $request)
@@ -221,41 +229,47 @@ class CardController extends Controller
             }
         } while ($exists);
 
-        $rawToggles = $request->input('toggles', []);
-        $toggles = [
-            'show_name'          => isset($rawToggles['show_name']) ? (bool)$rawToggles['show_name'] : true,
-            'show_photo'         => isset($rawToggles['show_photo']) ? (bool)$rawToggles['show_photo'] : false,
-            'show_business_name' => isset($rawToggles['show_business_name']) ? (bool)$rawToggles['show_business_name'] : true,
-            'show_designation'   => isset($rawToggles['show_designation']) ? (bool)$rawToggles['show_designation'] : true,
-            'show_tagline'       => isset($rawToggles['show_tagline']) ? (bool)$rawToggles['show_tagline'] : false,
-            'show_nickname'      => isset($rawToggles['show_nickname']) ? (bool)$rawToggles['show_nickname'] : false,
-            'show_phone'         => isset($rawToggles['show_phone']) ? (bool)$rawToggles['show_phone'] : true,
-            'show_alt_phone'     => isset($rawToggles['show_alt_phone']) ? (bool)$rawToggles['show_alt_phone'] : false,
-            'show_whatsapp'      => isset($rawToggles['show_whatsapp']) ? (bool)$rawToggles['show_whatsapp'] : true,
-            'show_gmail'         => isset($rawToggles['show_gmail']) ? (bool)$rawToggles['show_gmail'] : false,
-            'show_yahoo_email'   => isset($rawToggles['show_yahoo_email']) ? (bool)$rawToggles['show_yahoo_email'] : false,
-            'show_other_email'   => isset($rawToggles['show_other_email']) ? (bool)$rawToggles['show_other_email'] : false,
-            'show_website'       => isset($rawToggles['show_website']) ? (bool)$rawToggles['show_website'] : false,
-            'show_facebook'      => isset($rawToggles['show_facebook']) ? (bool)$rawToggles['show_facebook'] : false,
-            'show_instagram'     => isset($rawToggles['show_instagram']) ? (bool)$rawToggles['show_instagram'] : false,
-            'show_linkedin'      => isset($rawToggles['show_linkedin']) ? (bool)$rawToggles['show_linkedin'] : false,
-            'show_youtube'       => isset($rawToggles['show_youtube']) ? (bool)$rawToggles['show_youtube'] : false,
-            'show_telegram'      => isset($rawToggles['show_telegram']) ? (bool)$rawToggles['show_telegram'] : false,
-            'show_upi_id'        => isset($rawToggles['show_upi_id']) ? (bool)$rawToggles['show_upi_id'] : false,
-            'show_gpay'          => isset($rawToggles['show_gpay']) ? (bool)$rawToggles['show_gpay'] : false,
-            'show_paytm'         => isset($rawToggles['show_paytm']) ? (bool)$rawToggles['show_paytm'] : false,
-            'show_qr_code'       => isset($rawToggles['show_qr_code']) ? (bool)$rawToggles['show_qr_code'] : false,
-            'show_about'         => isset($rawToggles['show_about']) ? (bool)$rawToggles['show_about'] : false,
-            'show_other_details' => isset($rawToggles['show_other_details']) ? (bool)$rawToggles['show_other_details'] : false,
-            'show_address'       => isset($rawToggles['show_address']) ? (bool)$rawToggles['show_address'] : false,
-            'show_area'          => isset($rawToggles['show_area']) ? (bool)$rawToggles['show_area'] : false,
-            'show_pincode'       => isset($rawToggles['show_pincode']) ? (bool)$rawToggles['show_pincode'] : false,
-            'show_city'          => isset($rawToggles['show_city']) ? (bool)$rawToggles['show_city'] : false,
-            'show_state'         => isset($rawToggles['show_state']) ? (bool)$rawToggles['show_state'] : false,
-            'show_location_url'  => isset($rawToggles['show_location_url']) ? (bool)$rawToggles['show_location_url'] : false,
+        // Standardized toggles map with default fallbacks
+        $defaultToggles = [
+            'show_name'          => true,
+            'show_photo'         => false,
+            'show_business_name' => true,
+            'show_designation'   => true,
+            'show_tagline'       => false,
+            'show_nickname'      => false,
+            'show_phone'         => true,
+            'show_alt_phone'     => false,
+            'show_whatsapp'      => true,
+            'show_gmail'         => false,
+            'show_yahoo_email'   => false,
+            'show_other_email'   => false,
+            'show_website'       => false,
+            'show_facebook'      => false,
+            'show_instagram'     => false,
+            'show_linkedin'      => false,
+            'show_youtube'       => false,
+            'show_telegram'      => false,
+            'show_upi_id'        => false,
+            'show_gpay'          => false,
+            'show_paytm'         => false,
+            'show_qr_code'       => false,
+            'show_about'         => false,
+            'show_other_details' => false,
+            'show_address'       => false,
+            'show_area'          => false,
+            'show_pincode'       => false,
+            'show_city'          => false,
+            'show_state'         => false,
+            'show_location_url'  => false,
         ];
 
-        // Strict fallback for NULL values from front-end form
+        $rawToggles = $request->input('toggles', []);
+        $toggles = [];
+        foreach ($defaultToggles as $key => $defaultValue) {
+            $toggles[$key] = isset($rawToggles[$key]) ? (bool)$rawToggles[$key] : $defaultValue;
+        }
+
+        // Color Fallbacks
         $textColor = $request->input('custom_text_color') ?: ($request->input('text_color') ?: '#ffffff');
         $iconColor = $request->input('custom_icon_color') ?: ($request->input('icon_color') ?: '#ffffff');
         $bgColor   = $request->input('custom_bg_color')   ?: ($request->input('bg_color')   ?: '#1e293b');
@@ -306,13 +320,17 @@ class CardController extends Controller
 
     public function searchLocations(Request $request)
     {
-        $search = $request->get('q');
+        $search = trim($request->get('q'));
         
+        if (empty($search)) {
+            return response()->json([]);
+        }
+
         $locations = DB::table('pincodes')
-            ->where('office_name', 'LIKE', "%{$search}%")
+            ->whereRaw('LOWER(office_name) LIKE ?', ['%' . strtolower($search) . '%'])
             ->orWhere('pincode', 'LIKE', "%{$search}%")
-            ->orWhere('district', 'LIKE', "%{$search}%")
-            ->orWhere('state_name', 'LIKE', "%{$search}%")
+            ->orWhereRaw('LOWER(district) LIKE ?', ['%' . strtolower($search) . '%'])
+            ->orWhereRaw('LOWER(state_name) LIKE ?', ['%' . strtolower($search) . '%'])
             ->limit(30)
             ->get();
 

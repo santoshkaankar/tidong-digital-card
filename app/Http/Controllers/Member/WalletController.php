@@ -13,27 +13,27 @@ class WalletController extends Controller
     {
         $userId = Auth::id();
 
-        // Check if wallet exists, if not create one with 0 balance including non_withdrawable_balance[cite: 2, 3]
+        // Check if wallet exists, if not create one with 4,540,000 T-Coins
         $wallet = DB::table('wallets')->where('user_id', $userId)->first();
         if (!$wallet) {
             DB::table('wallets')->insert([
-                'user_id' => $userId,
-                'real_balance' => 0.00,
+                'user_id'                  => $userId,
+                'real_balance'             => 0.00,
                 'non_withdrawable_balance' => 0.00,
-                't_coins' => 0.00,
-                'created_at' => now(),
-                'updated_at' => now(),
+                't_coins'                  => 4540000.00, // Initial Registration T-Coins
+                'created_at'               => now(),
+                'updated_at'               => now(),
             ]);
             $wallet = DB::table('wallets')->where('user_id', $userId)->first();
         }
 
-        // Fetch Real Money Transactions (PhonePe / UPI)[cite: 3]
+        // Fetch Real Money Transactions
         $transactions = DB::table('transactions')
                             ->where('user_id', $userId)
                             ->orderBy('created_at', 'desc')
                             ->get();
 
-        // Fetch T-Coin Transactions[cite: 3]
+        // Fetch T-Coin Transactions
         $tCoinTransactions = DB::table('t_coin_transactions')
                                 ->where('user_id', $userId)
                                 ->orderBy('created_at', 'desc')

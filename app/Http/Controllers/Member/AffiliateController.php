@@ -15,101 +15,21 @@ class AffiliateController extends Controller
     {
         $user = Auth::user();
 
-        // 1. Safe Check for User's own total shopping/spending
-        $myTotalShopping = 0;
-        if (Schema::hasTable('transactions')) {
-            $myTotalShopping = DB::table('transactions')
-                ->where('user_id', $user->id)
-                ->where(function($q) {
-                    $q->where('status', 'success')
-                      ->orWhere('status', 'completed')
-                      ->orWhere('status', 'paid');
-                })->sum('amount') ?? 0;
-        } elseif (Schema::hasTable('user_plans')) {
-            $myTotalShopping = DB::table('user_plans')->where('user_id', $user->id)->sum('amount') ?? 0;
-        } else {
-            $myTotalShopping = $user->total_purchase ?? 0;
-        }
+        // Table Existence Check
+        $hasTransactions = Schema::hasTable('transactions');
+        $hasUserPlans = !$hasTransactions && Schema::hasTable('user_plans');
 
-        $isUserEligible = ($myTotalShopping >= 10000);
+        // Check if SELF shopping is >= 25,000
+        $myTotalShopping = $this->getUserShoppingTotal($user->id, $hasTransactions, $hasUserPlans, $user->total_purchase ?? 0);
+        $isSelfEligible = ($myTotalShopping >= 25000);
 
-        // 2. Fetch Downlines based on AuthController logic (sponsor_id or parent_id matching user->id)
-        $activeA = 0; $inactiveA = 0;
-        $activeB = 0; $inactiveB = 0;
+        // Fetch Downlines (Leg A & Leg B)
+        $legAUsers = $this->getLegUsers($user, ['left', 'L']);
+        $legBUsers = $this->getLegUsers($user, ['right', 'R']);
 
-        // Leg A (Left Position)
-        $legAUsers = DB::table('users')
-            ->where(function($query) use ($user) {
-                $query->where('sponsor_id', $user->id)
-                      ->orWhere('parent_id', $user->id)
-                      ->orWhere('sponsor_id', $user->referral_id)
-                      ->orWhere('parent_id', $user->referral_id);
-            })
-            ->where(function($q) {
-                $q->where('position', 'left')
-                  ->orWhere('position', 'L');
-            })
-            ->get();
-
-        foreach ($legAUsers as $member) {
-            $memberShopping = 0;
-            if (Schema::hasTable('transactions')) {
-                $memberShopping = DB::table('transactions')
-                    ->where('user_id', $member->id)
-                    ->where(function($q) {
-                        $q->where('status', 'success')
-                          ->orWhere('status', 'completed')
-                          ->orWhere('status', 'paid');
-                    })->sum('amount') ?? 0;
-            } elseif (Schema::hasTable('user_plans')) {
-                $memberShopping = DB::table('user_plans')->where('user_id', $member->id)->sum('amount') ?? 0;
-            } else {
-                $memberShopping = $member->total_purchase ?? 0;
-            }
-
-            if ($memberShopping >= 10000) {
-                $activeA++;
-            } else {
-                $inactiveA++;
-            }
-        }
-
-        // Leg B (Right Position)
-        $legBUsers = DB::table('users')
-            ->where(function($query) use ($user) {
-                $query->where('sponsor_id', $user->id)
-                      ->orWhere('parent_id', $user->id)
-                      ->orWhere('sponsor_id', $user->referral_id)
-                      ->orWhere('parent_id', $user->referral_id);
-            })
-            ->where(function($q) {
-                $q->where('position', 'right')
-                  ->orWhere('position', 'R');
-            })
-            ->get();
-
-        foreach ($legBUsers as $member) {
-            $memberShopping = 0;
-            if (Schema::hasTable('transactions')) {
-                $memberShopping = DB::table('transactions')
-                    ->where('user_id', $member->id)
-                    ->where(function($q) {
-                        $q->where('status', 'success')
-                          ->orWhere('status', 'completed')
-                          ->orWhere('status', 'paid');
-                    })->sum('amount') ?? 0;
-            } elseif (Schema::hasTable('user_plans')) {
-                $memberShopping = DB::table('user_plans')->where('user_id', $member->id)->sum('amount') ?? 0;
-            } else {
-                $memberShopping = $member->total_purchase ?? 0;
-            }
-
-            if ($memberShopping >= 10000) {
-                $activeB++;
-            } else {
-                $inactiveB++;
-            }
-        }
+        // Calculate total and active (25k shopping) counts
+        [$activeA, $inactiveA] = $this->calculateLegStats($legAUsers, $hasTransactions, $hasUserPlans);
+        [$activeB, $inactiveB] = $this->calculateLegStats($legBUsers, $hasTransactions, $hasUserPlans);
 
         $totalA = $activeA + $inactiveA;
         $totalB = $activeB + $inactiveB;
@@ -125,63 +45,142 @@ class AffiliateController extends Controller
             'grand_total' => $grandTotal
         ];
 
-        // 3. Evaluate Stages and handle Locked/Unlocked status
-        $this->evaluateStagesWithCondition($user, $activeA, $activeB, $isUserEligible);
+        // Evaluate Stages based on joining and shopping conditions
+        $this->evaluateStagesWithCondition($user, $totalA, $totalB, $activeA, $activeB, $isSelfEligible);
 
-        // 4. Fetch payouts history from database
+        // Fetch payouts history
         $rewards = DB::table('user_affiliate_payouts')
                     ->join('affiliate_stages', 'user_affiliate_payouts.stage_id', '=', 'affiliate_stages.id')
                     ->where('user_affiliate_payouts.user_id', $user->id)
                     ->select('user_affiliate_payouts.*', 'affiliate_stages.stage_name', 'affiliate_stages.stage_no')
                     ->get();
 
-        return view('member.affiliates.referral', compact('user', 'stats', 'rewards', 'isUserEligible'));
+        return view('member.affiliates.referral', compact('user', 'stats', 'rewards', 'isSelfEligible'));
     }
 
-    private function evaluateStagesWithCondition($user, $activeA, $activeB, $isUserEligible)
+    private function getLegUsers($user, array $positions)
+    {
+        return DB::table('users')
+            ->where(function($query) use ($user) {
+                $query->where('sponsor_id', $user->id)
+                      ->orWhere('parent_id', $user->id);
+
+                if (!empty($user->referral_id) && is_numeric($user->referral_id)) {
+                    $query->orWhere('sponsor_id', $user->referral_id)
+                          ->orWhere('parent_id', $user->referral_id);
+                }
+            })
+            ->whereIn('position', $positions)
+            ->get();
+    }
+
+    private function calculateLegStats($members, $hasTransactions, $hasUserPlans)
+    {
+        if ($members->isEmpty()) {
+            return [0, 0];
+        }
+
+        $memberIds = $members->pluck('id')->toArray();
+        $shoppingTotals = [];
+
+        if ($hasTransactions) {
+            $shoppingTotals = DB::table('transactions')
+                ->whereIn('user_id', $memberIds)
+                ->whereIn('status', ['success', 'completed', 'paid'])
+                ->groupBy('user_id')
+                ->selectRaw('user_id, SUM(amount) as total')
+                ->pluck('total', 'user_id')
+                ->toArray();
+        } elseif ($hasUserPlans) {
+            $shoppingTotals = DB::table('user_plans')
+                ->whereIn('user_id', $memberIds)
+                ->groupBy('user_id')
+                ->selectRaw('user_id, SUM(amount) as total')
+                ->pluck('total', 'user_id')
+                ->toArray();
+        }
+
+        $active = 0;
+        $inactive = 0;
+
+        foreach ($members as $member) {
+            $amount = $shoppingTotals[$member->id] ?? ($member->total_purchase ?? 0);
+            if ($amount >= 25000) {
+                $active++;
+            } else {
+                $inactive++;
+            }
+        }
+
+        return [$active, $inactive];
+    }
+
+    private function getUserShoppingTotal($userId, $hasTransactions, $hasUserPlans, $defaultPurchase)
+    {
+        if ($hasTransactions) {
+            return DB::table('transactions')
+                ->where('user_id', $userId)
+                ->whereIn('status', ['success', 'completed', 'paid'])
+                ->sum('amount') ?? 0;
+        } elseif ($hasUserPlans) {
+            return DB::table('user_plans')
+                ->where('user_id', $userId)
+                ->sum('amount') ?? 0;
+        }
+
+        return $defaultPurchase;
+    }
+
+    private function evaluateStagesWithCondition($user, $totalA, $totalB, $activeA, $activeB, $isSelfEligible)
     {
         $stages = DB::table('affiliate_stages')->get();
 
         foreach ($stages as $stage) {
-            if ($activeA >= $stage->leg_a_count && $activeB >= $stage->leg_b_count) {
-                
+            $exists = DB::table('user_affiliate_payouts')
+                ->where('user_id', $user->id)
+                ->where('stage_id', $stage->id)
+                ->first();
+
+            $gross = $stage->incentive_amount;
+            $adminCharge = $gross * 0.10; 
+            $hasPan = !empty($user->pan_number); 
+            $tdsRate = $hasPan ? 0.05 : 0.20; 
+            $tdsAmount = $gross * $tdsRate;
+            $netAmount = $gross - ($adminCharge + $tdsAmount);
+
+            // Step 1: Log Add condition met -> Move amount from T-Coins to Locked Wallet
+            if (!$exists && $totalA >= $stage->leg_a_count && $totalB >= $stage->leg_b_count) {
+                DB::transaction(function () use ($user, $stage, $gross, $adminCharge, $tdsAmount, $netAmount) {
+                    DB::table('user_affiliate_payouts')->insert([
+                        'user_id'      => $user->id,
+                        'stage_id'     => $stage->id,
+                        'gross_amount' => $gross,
+                        'admin_charge' => $adminCharge,
+                        'tds_amount'   => $tdsAmount,
+                        'net_amount'   => $netAmount,
+                        'status'       => 'locked',
+                        'created_at'   => now(),
+                        'updated_at'   => now(),
+                    ]);
+
+                    $wallet = Wallet::firstOrCreate(
+                        ['user_id' => $user->id],
+                        ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 4540000.00]
+                    );
+
+                    $wallet->decrement('t_coins', $netAmount);
+                    $wallet->increment('non_withdrawable_balance', $netAmount);
+                });
+
                 $exists = DB::table('user_affiliate_payouts')
                     ->where('user_id', $user->id)
                     ->where('stage_id', $stage->id)
                     ->first();
+            }
 
-                $gross = $stage->incentive_amount;
-                $adminCharge = $gross * 0.10; 
-                $hasPan = !empty($user->pan_number); 
-                $tdsRate = $hasPan ? 0.05 : 0.20; 
-                $tdsAmount = $gross * $tdsRate;
-                $netAmount = $gross - ($adminCharge + $tdsAmount);
-
-                if (!$exists) {
-                    $status = $isUserEligible ? 'unlocked' : 'locked';
-
-                    DB::transaction(function () use ($user, $stage, $gross, $adminCharge, $tdsAmount, $netAmount, $status, $isUserEligible) {
-                        DB::table('user_affiliate_payouts')->insert([
-                            'user_id'      => $user->id,
-                            'stage_id'     => $stage->id,
-                            'gross_amount' => $gross,
-                            'admin_charge' => $adminCharge,
-                            'tds_amount'   => $tdsAmount,
-                            'net_amount'   => $netAmount,
-                            'status'       => $status,
-                            'created_at'   => now(),
-                            'updated_at'   => now(),
-                        ]);
-
-                        if ($isUserEligible) {
-                            $wallet = Wallet::firstOrCreate(
-                                ['user_id' => $user->id],
-                                ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 0.00]
-                            );
-                            $wallet->increment('non_withdrawable_balance', $netAmount);
-                        }
-                    });
-                } elseif ($exists->status == 'locked' && $isUserEligible) {
+            // Step 2: Shopping condition met (Self >= 25k AND Required Team Active >= 25k) -> Move Locked to Real Money
+            if ($exists && $exists->status == 'locked') {
+                if ($isSelfEligible && $activeA >= $stage->leg_a_count && $activeB >= $stage->leg_b_count) {
                     DB::transaction(function () use ($exists, $user, $netAmount) {
                         DB::table('user_affiliate_payouts')
                             ->where('id', $exists->id)
@@ -189,9 +188,13 @@ class AffiliateController extends Controller
 
                         $wallet = Wallet::firstOrCreate(
                             ['user_id' => $user->id],
-                            ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 0.00]
+                            ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 4540000.00]
                         );
-                        $wallet->increment('non_withdrawable_balance', $netAmount);
+
+                        if ($wallet->non_withdrawable_balance >= $netAmount) {
+                            $wallet->decrement('non_withdrawable_balance', $netAmount);
+                        }
+                        $wallet->increment('real_balance', $netAmount);
                     });
                 }
             }

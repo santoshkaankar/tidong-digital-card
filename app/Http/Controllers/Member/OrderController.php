@@ -3,26 +3,35 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order; // Order Model Un-commented
 use Illuminate\Http\Request;
-// Agar aapka Order model kisi specific namespace mein hai toh use yahan use karein, jaise:
-// use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
+    /**
+     * Display a listing of the logged-in user's orders.
+     */
     public function index()
     {
-        // Agar aapke paas Order model hai, toh aap is tarah data fetch kar sakte hain:
-        // $orders = Order::where('user_id', auth()->id())->latest()->paginate(10);
-        
-        // Filhal testing ke liye empty pagination ya collection pass kar rahe hain:
-        $orders = collect(); // Jab database table ban jaye tab model query use karein
+        // Auth user ke orders latest paginate karke fetch karein
+        $orders = Order::where('user_id', Auth::id())
+            ->latest()
+            ->paginate(10);
 
         return view('member.orders.index', compact('orders'));
     }
 
+    /**
+     * Display the specified order details.
+     */
     public function show($id)
     {
-        // $order = Order::findOrFail($id);
-        return view('member.orders.show', compact('id'));
+        // Check karein ki order exist karta hai aur wo isi user ka hai
+        $order = Order::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        return view('member.orders.show', compact('order'));
     }
 }
