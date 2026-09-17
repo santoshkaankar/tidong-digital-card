@@ -49,6 +49,9 @@
 
         .hover-up { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .hover-up:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+        
+        footer a.footer-link { color: #cbd5e1; text-decoration: none; transition: color 0.2s ease; }
+        footer a.footer-link:hover { color: #38bdf8; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -444,18 +447,83 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-4 text-center">
-        <div class="container">
-            <div class="mb-3 d-flex justify-content-center gap-4 small flex-wrap">
-                <a href="{{ route('pages.about') }}" class="text-decoration-none text-light">About Us</a>
-                <a href="{{ route('pages.terms') }}" class="text-decoration-none text-light">Terms & Conditions</a>
-                <a href="{{ route('pages.privacy') }}" class="text-decoration-none text-light">Privacy Policy</a>
-                <a href="{{ route('pages.contact') }}" class="text-decoration-none text-light">Contact Us</a>
+    <!-- Footer with All Category Links & Guidance Pages -->
+    <footer class="bg-dark text-white pt-5 pb-4">
+        <div class="container text-center text-md-start">
+            <div class="row g-4">
+                <!-- Column 1: Brand & Value Rule -->
+                <div class="col-md-4 col-lg-4">
+                    <h5 class="fw-bold text-primary mb-3">
+                        <i class="fas fa-layer-group me-2"></i>Tidong<span class="text-white">®</span> Digital
+                    </h5>
+                    <p class="small text-slate-300 text-muted lh-base mb-3">
+                        Interactive digital visiting cards, multi-stage affiliate rewards system, and smart digital catalogs for businesses.
+                    </p>
+                    <div class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-bold border border-success border-opacity-25">
+                        <i class="fas fa-coins text-warning me-1"></i> 1 T-Coin = ₹1 INR
+                    </div>
+                </div>
+
+                <!-- Column 2: Affiliate & Guidance Pages -->
+                <div class="col-md-4 col-lg-4">
+                    <h6 class="fw-bold text-warning text-uppercase mb-3" style="letter-spacing: 1px;">
+                        <i class="fas fa-project-diagram me-1"></i> Program & Guidance
+                    </h6>
+                    <ul class="list-unstyled small mb-0 lh-lg">
+                        <li class="mb-1">
+                            <a href="{{ route('pages.affiliate') }}" class="footer-link">
+                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Affiliate Program & Stages
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="{{ route('guidance.member') }}" class="footer-link">
+                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Member Guidance Guide
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="{{ route('guidance.restaurant') }}" class="footer-link">
+                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Restaurant & Partner Guidance
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Company & Legal Pages -->
+                <div class="col-md-4 col-lg-4">
+                    <h6 class="fw-bold text-warning text-uppercase mb-3" style="letter-spacing: 1px;">
+                        <i class="fas fa-shield-alt me-1"></i> Company & Legal
+                    </h6>
+                    <ul class="list-unstyled small mb-0 lh-lg">
+                        <li class="mb-1">
+                            <a href="{{ route('pages.about') }}" class="footer-link">
+                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> About Us
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="{{ route('pages.terms') }}" class="footer-link">
+                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Terms & Conditions
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="{{ route('pages.privacy') }}" class="footer-link">
+                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Privacy Policy
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="{{ route('pages.contact') }}" class="footer-link">
+                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Contact Us
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <hr class="border-secondary my-3">
-            <p class="mb-1 small text-muted">&copy; 2023 - {{ date('Y') }} Tidong Marketing Pvt. Ltd. All rights reserved.</p>
-            <p class="mb-0 text-secondary" style="font-size: 12px;">Tidong® is a registered trademark.</p>
+
+            <hr class="border-secondary my-4">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center small text-muted">
+                <p class="mb-0">&copy; 2023 - {{ date('Y') }} Tidong Marketing Pvt. Ltd. All rights reserved.</p>
+                <p class="mb-0">Tidong® is a registered trademark.</p>
+            </div>
         </div>
     </footer>
 
