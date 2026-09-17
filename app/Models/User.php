@@ -21,6 +21,9 @@ class User extends Authenticatable
         'mobile', 
         'google_id', 
         'avatar',
+        'profile_photo',
+        'gender',
+        'dob',
         'vehicle_no',
         'license_no',
         'categories',
@@ -29,6 +32,24 @@ class User extends Authenticatable
         'parent_id',   // MLM Binary Parent ID
         'position',    // MLM Binary Position (left/right)
         'slug',        // URL slug
+        // KYC Fields
+        'pan_number',
+        'pan_image',
+        'aadhaar_number',
+        'aadhaar_front_image',
+        'aadhaar_back_image',
+        'kyc_status',
+        // Bank Details
+        'account_holder_name',
+        'bank_name',
+        'account_number',
+        'ifsc_code',
+        'upi_id',
+        // Address Details
+        'address',
+        'city',
+        'state',
+        'pincode',
     ];
 
     protected $hidden = [

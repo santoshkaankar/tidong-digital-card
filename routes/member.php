@@ -60,3 +60,6 @@ Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show'
 Route::get('/affiliate-program', function () {
     return view('pages.affiliate');
 })->name('pages.affiliate');
+
+// Pincode & Area Live Search Route
+Route::get('/pincode-search', [ProfileController::class, 'searchPincode'])->name('pincode.search');
