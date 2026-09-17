@@ -81,3 +81,14 @@ Route::view('/about-us', 'pages.about')->name('pages.about');
 Route::view('/terms-and-conditions', 'pages.terms')->name('pages.terms');
 Route::view('/privacy-policy', 'pages.privacy')->name('pages.privacy');
 Route::view('/contact-us', 'pages.contact')->name('pages.contact');
+
+// Guidance Pages
+Route::prefix('guidance')->group(function () {
+    Route::get('/member', function () {
+        return view('pages.guidance.member');
+    })->name('guidance.member');
+
+    Route::get('/restaurant', function () {
+        return view('pages.guidance.restaurant');
+    })->name('guidance.restaurant');
+});

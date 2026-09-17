@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold text-dark mb-1"><i class="fas fa-wallet text-warning me-2"></i>My Wallet</h4>
-            <p class="text-muted small mb-0">Apna balance aur transaction history yahan dekhein</p>
+            <p class="text-muted small mb-0">View your wallet balance and transaction history here</p>
         </div>
         <a href="{{ url('/member/dashboard') }}" class="btn btn-outline-secondary rounded-3">
             <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
@@ -17,21 +17,21 @@
 
     <!-- Balance Cards Row -->
     <div class="row g-4 mb-4">
-        <!-- 1. Non-Withdrawable Balance Card (Avl Bal. / Locked) -->
+        <!-- 1. Reserved Income Card -->
         <div class="col-md-4">
             <div class="card border-0 shadow-sm bg-info text-white rounded-4 p-4 h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="text-uppercase small fw-bold opacity-75 mb-0">Avl Bal.</h6>
-                        <span class="badge bg-dark text-white px-2 py-1"><i class="fas fa-lock me-1"></i> Locked</span>
+                        <h6 class="text-uppercase small fw-bold opacity-75 mb-0">Reserved Reward</h6>
+                        <span class="badge bg-dark text-warning px-2 py-1"><i class="fas fa-hourglass-half me-1"></i> Pending Unlock</span>
                     </div>
                     <h2 class="fw-bold mb-3">₹ {{ number_format($wallet->non_withdrawable_balance ?? 0, 2) }}</h2>
-                    <span class="small opacity-75">Non-withdrawable balance</span>
+                    <span class="small opacity-90"><i class="fas fa-shield-alt me-1"></i> Guaranteed reward balance (Unlocked upon stage completion)</span>
                 </div>
             </div>
         </div>
 
-        <!-- 2. Withdrawable Balance Card (Withdrawable Bal. / Fund Transfer) -->
+        <!-- 2. Withdrawable Balance Card -->
         <div class="col-md-4">
             <div class="card border-0 shadow-sm bg-primary text-white rounded-4 p-4 h-100">
                 <div class="card-body">
@@ -44,15 +44,59 @@
             </div>
         </div>
 
-        <!-- 3. T-Coins Wallet Card (T-Coin Bal. / Share with Friends) -->
+        <!-- 3. T-Coins Wallet Card -->
         <div class="col-md-4">
             <div class="card border-0 shadow-sm bg-success text-white rounded-4 p-4 h-100">
                 <div class="card-body">
                     <h6 class="text-uppercase small fw-bold opacity-75">T-Coin Bal.</h6>
                     <h2 class="fw-bold mb-3"><i class="fas fa-coins text-warning me-1"></i> {{ number_format($wallet->t_coins ?? 0, 2) }}</h2>
-                    <button class="btn btn-light text-success fw-bold rounded-pill px-3 btn-sm">
-                        <i class="fas fa-share-alt me-1"></i> Share with Friends
-                    </button>
+                    <div class="badge bg-white text-success fw-bold rounded-pill px-3 py-2 fs-6 shadow-sm">
+                        <i class="fas fa-check-circle text-success me-1"></i> 1 T-Coin = 1 RS
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Box (English Transformed + Transaction Criteria) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-light border-start border-4 border-warning">
+        <div class="card-body p-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="fas fa-info-circle text-warning me-2"></i> Important Rules: T-Coin Decay, TDS & Limits</h5>
+            <div class="row g-4 small text-dark">
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded-3 border h-100">
+                        <h6 class="fw-bold text-primary"><i class="fas fa-fire me-1"></i> Daily T-Coin Decay Rule</h6>
+                        <p class="mb-1">The faster you complete 14 stages, the lower your daily deduction will be:</p>
+                        <ul class="mb-0 ps-3">
+                            <li><strong>Stage 0:</strong> 14 T-Coins / day</li>
+                            <li><strong>Stage 1:</strong> 13 T-Coins / day</li>
+                            <li><strong>Stage 2:</strong> 12 T-Coins / day</li>
+                            <li><strong>Stage 10:</strong> 4 T-Coins / day</li>
+                            <li><strong>Stage 14:</strong> 0 T-Coins / day</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded-3 border h-100">
+                        <h6 class="fw-bold text-danger"><i class="fas fa-percent me-1"></i> TDS & Admin Deductions</h6>
+                        <p class="mb-1">The following deductions apply upon amount transfer:</p>
+                        <ul class="mb-0 ps-3">
+                            <li><strong>10%</strong> Admin Service Charge</li>
+                            <li><strong>5% TDS</strong> (With linked PAN Card)</li>
+                            <li><strong>20% TDS</strong> (Without PAN Card)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-white rounded-3 border h-100">
+                        <h6 class="fw-bold text-success"><i class="fas fa-receipt me-1"></i> Transaction Criteria</h6>
+                        <p class="mb-1">Requirements to unlock Reserved Balance:</p>
+                        <ul class="mb-0 ps-3">
+                            <li>Self minimum transaction: <strong>₹25,000</strong></li>
+                            <li>Leg A required transaction: <strong>₹25,000</strong></li>
+                            <li>Leg B required transaction: <strong>₹25,000</strong></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>

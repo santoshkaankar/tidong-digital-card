@@ -55,3 +55,8 @@ Route::get('/friend-circle/{type}', [FriendController::class, 'index'])->name('f
 // Orders Routes
 Route::get('/orders', [OrderController::class, 'index'])->name('orders');
 Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+
+// Affiliate Page
+Route::get('/affiliate-program', function () {
+    return view('pages.affiliate');
+})->name('pages.affiliate');

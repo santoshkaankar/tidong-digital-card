@@ -19,7 +19,7 @@ class AffiliateController extends Controller
         $hasTransactions = Schema::hasTable('transactions');
         $hasUserPlans = !$hasTransactions && Schema::hasTable('user_plans');
 
-        // Check if SELF shopping is >= 25,000
+        // Check if SELF transaction total is >= 25,000
         $myTotalShopping = $this->getUserShoppingTotal($user->id, $hasTransactions, $hasUserPlans, $user->total_purchase ?? 0);
         $isSelfEligible = ($myTotalShopping >= 25000);
 
@@ -27,7 +27,7 @@ class AffiliateController extends Controller
         $legAUsers = $this->getLegUsers($user, ['left', 'L']);
         $legBUsers = $this->getLegUsers($user, ['right', 'R']);
 
-        // Calculate total and active (25k shopping) counts
+        // Calculate total members and active (>= 25,000 transaction) counts
         [$activeA, $inactiveA] = $this->calculateLegStats($legAUsers, $hasTransactions, $hasUserPlans);
         [$activeB, $inactiveB] = $this->calculateLegStats($legBUsers, $hasTransactions, $hasUserPlans);
 
@@ -45,7 +45,7 @@ class AffiliateController extends Controller
             'grand_total' => $grandTotal
         ];
 
-        // Evaluate Stages based on joining and shopping conditions
+        // Evaluate Stages based on joining and transaction conditions
         $this->evaluateStagesWithCondition($user, $totalA, $totalB, $activeA, $activeB, $isSelfEligible);
 
         // Fetch payouts history
@@ -131,6 +131,26 @@ class AffiliateController extends Controller
         return $defaultPurchase;
     }
 
+    /**
+     * Fixed Deductions Calculation Helper
+     * 10% Admin Charge + 5% TDS (with PAN) OR 20% TDS (without PAN)
+     */
+    private function calculateDeductions($grossAmount, $panNumber)
+    {
+        $adminCharge = $grossAmount * 0.10; // 10% Admin Charge
+        $hasPan = !empty($panNumber);
+        $tdsRate = $hasPan ? 0.05 : 0.20;  // 5% TDS if PAN present, else 20%
+        $tdsAmount = $grossAmount * $tdsRate;
+        $netAmount = $grossAmount - ($adminCharge + $tdsAmount);
+
+        return [
+            'gross'        => $grossAmount,
+            'admin_charge' => $adminCharge,
+            'tds_amount'   => $tdsAmount,
+            'net_amount'   => $netAmount,
+        ];
+    }
+
     private function evaluateStagesWithCondition($user, $totalA, $totalB, $activeA, $activeB, $isSelfEligible)
     {
         $stages = DB::table('affiliate_stages')->get();
@@ -141,14 +161,14 @@ class AffiliateController extends Controller
                 ->where('stage_id', $stage->id)
                 ->first();
 
-            $gross = $stage->incentive_amount;
-            $adminCharge = $gross * 0.10; 
-            $hasPan = !empty($user->pan_number); 
-            $tdsRate = $hasPan ? 0.05 : 0.20; 
-            $tdsAmount = $gross * $tdsRate;
-            $netAmount = $gross - ($adminCharge + $tdsAmount);
+            // Exact Deductions Calculation
+            $deduction = $this->calculateDeductions($stage->incentive_amount, $user->pan_number);
+            $gross       = $deduction['gross'];
+            $adminCharge = $deduction['admin_charge'];
+            $tdsAmount   = $deduction['tds_amount'];
+            $netAmount   = $deduction['net_amount'];
 
-            // Step 1: Log Add condition met -> Move amount from T-Coins to Locked Wallet
+            // Step 1: Member Joining Target Met -> Deduct T-Coins and move Net Amount to Reserved/Locked Wallet
             if (!$exists && $totalA >= $stage->leg_a_count && $totalB >= $stage->leg_b_count) {
                 DB::transaction(function () use ($user, $stage, $gross, $adminCharge, $tdsAmount, $netAmount) {
                     DB::table('user_affiliate_payouts')->insert([
@@ -178,7 +198,7 @@ class AffiliateController extends Controller
                     ->first();
             }
 
-            // Step 2: Shopping condition met (Self >= 25k AND Required Team Active >= 25k) -> Move Locked to Real Money
+            // Step 2: Transaction Criteria Met (Self >= 25k AND Leg A/B Members Active >= 25k) -> Move Locked Balance to Real Money Balance
             if ($exists && $exists->status == 'locked') {
                 if ($isSelfEligible && $activeA >= $stage->leg_a_count && $activeB >= $stage->leg_b_count) {
                     DB::transaction(function () use ($exists, $user, $netAmount) {
