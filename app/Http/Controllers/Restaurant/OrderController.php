@@ -165,20 +165,23 @@ class OrderController extends Controller
                 'payment_status'  => 'unpaid',
                 'payment_method'  => 'cash',
             ]);
-
-            // ==========================================
-            // 3. ₹1 PER ORDER WALLET DEDUCTION LOGIC
+// ==========================================
+            // 3. 1% PER ORDER (MINIMUM ₹1) COMMISSION LOGIC
             // ==========================================
             $wallet = VendorWallet::firstOrCreate(
                 ['vendor_id' => $vendorId],
                 ['bonus_balance' => 200.00, 'sales_balance' => 0.00]
             );
 
-            if ($wallet->bonus_balance >= 1.00) {
-                $wallet->decrement('bonus_balance', 1.00);
+            // Total amount ka 1% nikalenge, aur agar wo ₹1 se kam hai toh kam se kam ₹1 katega
+            $commissionFee = max(1.00, $totalAmount * 0.01);
+            $commissionFee = round($commissionFee, 2);
+
+            if ($wallet->bonus_balance >= $commissionFee) {
+                $wallet->decrement('bonus_balance', $commissionFee);
                 $walletType = 'bonus';
             } else {
-                $wallet->decrement('sales_balance', 1.00);
+                $wallet->decrement('sales_balance', $commissionFee);
                 $walletType = 'sales';
             }
 
@@ -186,8 +189,8 @@ class OrderController extends Controller
                 'vendor_id'   => $vendorId,
                 'wallet_type' => $walletType,
                 'type'        => 'debit',
-                'amount'      => 1.00,
-                'description' => 'Order Processing Fee (₹1 per order) - Order #' . $order->order_number,
+                'amount'      => $commissionFee,
+                'description' => 'Order Commission Fee (1% / Min ₹1) - Order #' . $order->order_number,
                 'status'      => 'success'
             ]);
 

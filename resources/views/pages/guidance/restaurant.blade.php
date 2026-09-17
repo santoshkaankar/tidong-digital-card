@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>रेस्टोरेंट एवं फूड हब - यूजर गाइड | Tidong® Platform</title>
+    <title>Restaurant & Food Hub - User Guide | Tidong® Platform</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -18,9 +18,9 @@
 
     <div class="guide-header">
         <div class="container">
-            <a href="{{ url('/') }}" class="btn btn-outline-light btn-sm rounded-pill mb-3"><i class="fas fa-arrow-left me-1"></i> मुख्य प्लेटफार्म पर लौटें</a>
-            <h1 class="fw-bold mb-2">tidong डिजिटल: रेस्टोरेंट एवं फूड हब - यूजर गाइड</h1>
-            <p class="text-light mb-0 small">रेस्टोरेंट, टिफिन सर्विस और स्ट्रीट फूड वेंडर्स के लिए डिजिटल पहचान, मेनू प्रबंधन, पीओएस बिलिंग और लाइव किचन की पूरी मार्गदर्शिका</p>
+            <a href="{{ url('/') }}" class="btn btn-outline-light btn-sm rounded-pill mb-3"><i class="fas fa-arrow-left me-1"></i> Return to Main Platform</a>
+            <h1 class="fw-bold mb-2">Tidong Digital: Restaurant & Food Hub - User Guide</h1>
+            <p class="text-light mb-0 small">Comprehensive operational guidelines for restaurants, tiffin services, and street food vendors covering digital identity, menu management, POS billing, and live kitchen displays</p>
         </div>
     </div>
 
@@ -28,83 +28,83 @@
         <div class="guide-content shadow-sm">
 
             <!-- Step 1 -->
-            <h4 class="section-title">स्टेप 1: वेबसाइट पर रजिस्ट्रेशन करना (Sign Up)</h4>
+            <h4 class="section-title">Step 1: Website Sign Up & Registration</h4>
             <div class="step-box">
                 <ul class="lh-lg text-dark mb-0">
-                    <li><strong>वेबसाइट विजिट करें:</strong> सबसे पहले अपने ब्राउज़र में <code>tidong.in</code> खोलें, जहाँ आपको tidong डिजिटल का मुख्य पृष्ठ दिखाई देगा।</li>
-                    <li><strong>रजिस्टर बटन दबाएं:</strong> ऊपर दाएं कोने पर दिए गए <strong>Register</strong> बटन पर क्लिक करें।</li>
-                    <li><strong>विवरण भरें:</strong> रजिस्ट्रेशन फॉर्म में अपना नाम या बिजनेस का नाम, ईमेल, मोबाइल नंबर और पासवर्ड दर्ज करें।</li>
-                    <li><strong>अकाउंट प्रकार चुनें:</strong> 
+                    <li><strong>Visit Website:</strong> Open <code>tidong.in</code> in your browser to access the main platform portal.</li>
+                    <li><strong>Click Register:</strong> Click the <strong>Register</strong> button at the top-right corner.</li>
+                    <li><strong>Enter Details:</strong> Provide your name or business title, email address, mobile number, and secure password in the registration form.</li>
+                    <li><strong>Select Account Type:</strong> 
                         <ul class="mt-1">
-                            <li>ड्रॉपडाउन से <strong>Business / Service Partner</strong> चुनें।</li>
-                            <li>उसके नीचे <strong>Select Your Business Service</strong> में अपने काम के अनुसार <strong>Restaurant (Dine-in / KDS / POS / Tiffin / Street Food)</strong> चुनकर अपना खाता बना लें।</li>
+                            <li>Choose <strong>Business / Service Partner</strong> from the dropdown menu.</li>
+                            <li>Under <strong>Select Your Business Service</strong>, select <strong>Restaurant (Dine-in / KDS / POS / Tiffin / Street Food)</strong> corresponding to your operations and complete registration.</li>
                         </ul>
                     </li>
                 </ul>
             </div>
 
             <!-- Step 2 -->
-            <h4 class="section-title">स्टेप 2: अकाउंट लॉगिन करना</h4>
+            <h4 class="section-title">Step 2: Accessing Account Login</h4>
             <div class="step-box">
                 <ul class="lh-lg text-dark mb-0">
-                    <li><strong>लॉगिन पेज:</strong> यदि आपका खाता पहले से बना हुआ है, तो <code>tidong.in/login</code> पर जाएं।</li>
-                    <li><strong>जानकारी दर्ज करें:</strong> अपना ईमेल, मोबाइल नंबर या यूजरनेम और पासवर्ड डालकर <strong>LOG IN</strong> बटन पर क्लिक करें। लॉगिन होते ही आप सीधे अपने <strong>Restaurant Partner Panel (Dashboard)</strong> पर पहुंच जाएंगे।</li>
+                    <li><strong>Login Portal:</strong> If you already have an account, navigate to <code>tidong.in/login</code>.</li>
+                    <li><strong>Authenticate:</strong> Input your registered email, mobile number, or username along with your password, then click <strong>LOG IN</strong> to open your dedicated <strong>Restaurant Partner Panel (Dashboard)</strong>.</li>
                 </ul>
             </div>
 
             <!-- Step 3 -->
-            <h4 class="section-title">स्टेप 3: डैशबोर्ड को समझना</h4>
+            <h4 class="section-title">Step 3: Navigating the Dashboard</h4>
             <div class="step-box">
-                <p class="text-muted small mb-2"><i class="fas fa-info-circle text-primary me-1"></i> लॉगिन करने के बाद आपको मुख्य डैशबोर्ड दिखाई देगा जहाँ से आप सभी गतिविधियों को नियंत्रित कर सकते हैं:</p>
+                <p class="text-muted small mb-2"><i class="fas fa-info-circle text-primary me-1"></i> Upon logging in, you will access the main dashboard to oversee all establishment metrics:</p>
                 <ul class="lh-lg text-dark mb-0">
-                    <li><strong>Total Orders:</strong> आज के या अब तक के कुल ऑर्डर्स की संख्या देखें।</li>
-                    <li><strong>Active / Running:</strong> जो ऑर्डर्स अभी किचन में या प्रक्रिया में हैं।</li>
-                    <li><strong>Completed:</strong> जो ऑर्डर्स सफलतापूर्वक पूरे हो चुके हैं।</li>
-                    <li><strong>Today's Revenue:</strong> आज की कुल बिक्री और कमाई ट्रैक करें।</li>
+                    <li><strong>Total Orders:</strong> Monitor daily and cumulative order volumes.</li>
+                    <li><strong>Active / Running:</strong> Track live orders currently being prepared in the kitchen.</li>
+                    <li><strong>Completed:</strong> Review successfully fulfilled orders.</li>
+                    <li><strong>Today's Revenue:</strong> Track daily sales volume and earnings.</li>
                 </ul>
             </div>
 
             <!-- Step 4 -->
-            <h4 class="section-title">स्टेप 4: फूड कैटेगरी और मेनू / थाली आइटम सेट करना</h4>
+            <h4 class="section-title">Step 4: Setting Up Food Categories & Thali/Menu Items</h4>
             <div class="step-box">
                 <ul class="lh-lg text-dark mb-0">
-                    <li><strong>कैटेगरी जोड़ें:</strong> बाएं मेनू से <strong>Select Category</strong> पर क्लिक करके अपनी भोजन श्रेणियां (जैसे Main Course - Veg, Breads / Roti, Rice & Biryani, Starters, Desserts) प्रबंधित करें।</li>
-                    <li><strong>कस्टम आइटम या थाली बनाएं:</strong> मेनू में <strong>Thali / Tiffin Items</strong> या <strong>Create Catalog / Menu Card</strong> पर जाएं।
+                    <li><strong>Add Categories:</strong> Click <strong>Select Category</strong> in the left sidebar menu to organize food categories (e.g., Main Course - Veg, Breads / Roti, Rice & Biryani, Starters, Desserts).</li>
+                    <li><strong>Create Custom Items or Thalis:</strong> Go to <strong>Thali / Tiffin Items</strong> or <strong>Create Catalog / Menu Card</strong>.
                         <ul class="mt-1">
-                            <li>आइटम या थाली का नाम लिखें (जैसे Special Thali या Paneer Tikka)।</li>
-                            <li>कैटेगरी, प्रकार (Veg/Non-Veg), टैक्स रेट और कीमत सेट करें।</li>
-                            <li>आइटम की फोटो अपलोड करें और विवरण में लिखें कि उसमें क्या-क्या शामिल है (जैसे 4 रोटी, दाल फ्राई, शाही पनीर, चावल)। इसके बाद <strong>Save Custom Item</strong> पर क्लिक कर दें।</li>
+                            <li>Enter the item or thali name (e.g., Special Thali or Paneer Tikka).</li>
+                            <li>Configure the category, food classification (Veg/Non-Veg), tax rate, and pricing.</li>
+                            <li>Upload item imagery and specify ingredients or components in the description (e.g., 4 rotis, dal fry, shahi paneer, rice), then click <strong>Save Custom Item</strong>.</li>
                         </ul>
                     </li>
                 </ul>
             </div>
 
             <!-- Step 5 -->
-            <h4 class="section-title">स्टेप 5: पीओएस / काउंटर बिलिंग (ऑर्डर लेना)</h4>
+            <h4 class="section-title">Step 5: POS & Counter Billing Operations</h4>
             <div class="step-box">
                 <ul class="lh-lg text-dark mb-0">
-                    <li><strong>POS स्क्रीन:</strong> बाएं मेनू से <strong>POS / Counter Billing</strong> पर क्लिक करें।</li>
-                    <li><strong>ऑर्डर का प्रकार चुनें:</strong> ऑर्डर का प्रकार चुनें (जैसे Dine In, Takeaway, या Tiffin delivery) और यदि Dine-in है तो टेबल नंबर चुनें।</li>
-                    <li><strong>आइटम जोड़ें:</strong> मेनू आइटम पर दिए गए <strong>+ Add</strong> बटन पर क्लिक करके आइटम्स को आर्डर कार्ट में जोड़ें।</li>
-                    <li><strong>KOT प्रिंट करें:</strong> ग्राहक की जानकारी (नाम/मोबाइल) भरकर <strong>Place Order & Print KOT</strong> पर क्लिक करें। ऑर्डर तुरंत किचन और इतिहास में अपडेट हो जाएगा।</li>
+                    <li><strong>POS Screen:</strong> Select <strong>POS / Counter Billing</strong> from the sidebar menu.</li>
+                    <li><strong>Select Order Mode:</strong> Choose the service type (Dine In, Takeaway, or Tiffin Delivery) and specify the table number if Dine-in.</li>
+                    <li><strong>Add Items:</strong> Click the <strong>+ Add</strong> button on menu items to populate the order cart.</li>
+                    <li><strong>Print KOT:</strong> Input customer details (name/mobile) and click <strong>Place Order & Print KOT</strong> to transmit instructions directly to the kitchen and record the order.</li>
                 </ul>
             </div>
 
             <!-- Step 6 -->
-            <h4 class="section-title">स्टेप 6: लाइव किचन डिस्प्ले सिस्टम (KDS)</h4>
+            <h4 class="section-title">Step 6: Live Kitchen Display System (KDS)</h4>
             <div class="step-box">
                 <ul class="lh-lg text-dark mb-0">
-                    <li><strong>KDS स्क्रीन:</strong> यदि किचन में शेफ के पास स्क्रीन लगी है, तो बाएं मेनू से <strong>Live Kitchen (KDS)</strong> खोलें।</li>
-                    <li><strong>रियल-टाइम अपडेट्स:</strong> जैसे ही काउंटर से कोई ऑर्डर दिया जाएगा, वह तुरंत यहाँ लाइव दिखने लगेगा ताकि शेफ बिना किसी देरी के खाना बनाना शुरू कर सके।</li>
+                    <li><strong>KDS Screen:</strong> If display terminals are installed in the kitchen, open <strong>Live Kitchen (KDS)</strong> from the sidebar.</li>
+                    <li><strong>Real-Time Updates:</strong> Orders placed at the counter appear instantly on the KDS screen, allowing chefs to initiate preparation without delay.</li>
                 </ul>
             </div>
 
             <!-- Step 7 -->
-            <h4 class="section-title">स्टेप 7: ऑर्डर हिस्ट्री और पेमेंट ट्रैकिंग</h4>
+            <h4 class="section-title">Step 7: Order History & Payment Tracking</h4>
             <div class="step-box">
                 <ul class="lh-lg text-dark mb-0">
-                    <li><strong>Orders History:</strong> बाएं मेनू में <strong>Orders History</strong> पर क्लिक करके आप सभी पुराने और नए ऑर्डर्स की सूची देख सकते हैं।</li>
-                    <li><strong>स्थिति ट्रैक करें:</strong> प्रत्येक ऑर्डर के सामने उसकी राशि, भुगतान की स्थिति (Paid या Unpaid), और पूर्ण होने की स्थिति (Completed) दिखाई देती है। यहाँ से आप किसी भी बिल को प्रिंट, देख, संपादित (Edit) या भुगतान कर सकते हैं।</li>
+                    <li><strong>Orders History:</strong> Click <strong>Orders History</strong> in the sidebar to review logs of all past and active orders.</li>
+                    <li><strong>Track Status:</strong> View billing amounts, payment statuses (Paid or Unpaid), and fulfillment statuses (Completed) for every ticket, with options to print, view, edit, or settle bills directly.</li>
                 </ul>
             </div>
 

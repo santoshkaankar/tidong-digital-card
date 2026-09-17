@@ -8,6 +8,7 @@ use App\Http\Controllers\Member\SearchController;
 use App\Http\Controllers\Member\ProfileController;
 use App\Http\Controllers\Member\OrderController;
 use App\Http\Controllers\Member\AffiliateController;
+use App\Http\Controllers\Member\RoyaltyController;
 
 // Strict Auth Middleware Group for Members
 Route::middleware(['auth'])->group(function () {
@@ -58,6 +59,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Pincode & Area Live Search Route
     Route::get('/pincode-search', [ProfileController::class, 'searchPincode'])->name('pincode.search');
+
+    // Royalty Program Route (Inside Auth Group)
+    Route::get('/royalty-program', [RoyaltyController::class, 'index'])->name('royalty.index');
 });
 
 // Public Card View Link (No Auth Required)

@@ -20,7 +20,7 @@
         <div class="container">
             <a href="{{ url('/') }}" class="btn btn-outline-light btn-sm rounded-pill mb-3"><i class="fas fa-arrow-left me-1"></i> Return to Main Platform</a>
             <h1 class="fw-bold mb-2">Member Guidance & Platform Guide</h1>
-            <p class="text-light mb-0 small">Tidong® Digital Platform को उपयोग करने, कार्ड बनाने और कमाई करने की पूरी मार्गदर्शिका</p>
+            <p class="text-light mb-0 small">Comprehensive instruction manual for utilizing the Tidong® Digital Platform, creating visiting cards, and expanding affiliate earnings</p>
         </div>
     </div>
 
@@ -28,56 +28,56 @@
         <div class="guide-content shadow-sm">
 
             <!-- Step 1 -->
-            <h4 class="section-title">1. वेबसाइट पर रजिस्ट्रेशन और स्वागत बोनस</h4>
+            <h4 class="section-title">1. Website Registration & Welcome Bonus</h4>
             <div class="step-box">
                 <ol class="lh-lg text-dark mb-0">
-                    <li>सबसे पहले अपने मोबाइल या कंप्यूटर के ब्राउज़र में <strong>tidong.in</strong> खोलें।</li>
-                    <li>वेबसाइट के होमपेज पर ऊपर दिए गए <strong>"Register"</strong> बटन पर क्लिक करें।</li>
-                    <li>सामने आने वाले फॉर्म में अपना पूरा नाम, सक्रिय ईमेल आईडी, चालू मोबाइल नंबर और मजबूत पासवर्ड भरकर फॉर्म सबमिट करें।</li>
-                    <li>खाता बनते ही सिस्टम की तरफ से आपके वॉलेट में तुरंत <strong>45,40,000 T-Coins</strong> (1 T-Coin = ₹1) का धमाकेदार रजिस्ट्रेशन बोनस जमा कर दिया जाएगा!</li>
+                    <li>Open <strong>tidong.in</strong> in your mobile or computer browser.</li>
+                    <li>Click on the <strong>"Register"</strong> button located at the top right of the homepage.</li>
+                    <li>Fill out the registration form with your full legal name, active email address, working mobile number, and secure password, then submit the form.</li>
+                    <li>Upon successful account creation, an instant welcome bonus of <strong>4,540,000 T-Coins</strong> (1 T-Coin = ₹1) is credited directly to your wallet!</li>
                 </ol>
             </div>
 
             <!-- Step 2 -->
-            <h4 class="section-title">2. लॉगिन और डैशबोर्ड की जानकारी</h4>
+            <h4 class="section-title">2. Account Login & Dashboard Overview</h4>
             <div class="step-box">
                 <ol class="lh-lg text-dark mb-0">
-                    <li>रजिस्ट्रेशन के बाद कभी भी <strong>"Login"</strong> पर क्लिक करें।</li>
-                    <li>अपना रजिस्टर्ड मोबाइल/ईमेल और पासवर्ड दर्ज करके अपने अकाउंट में प्रवेश करें।</li>
-                    <li>लॉगिन होते ही आपके सामने आपका <strong>डैशबोर्ड (Dashboard)</strong> खुल जाएगा, जहाँ से आप अपने कुल T-Coins, डिजिटल कार्ड्स और पूरी टीम के नेटवर्क को नियंत्रित कर सकते हैं।</li>
+                    <li>Click on <strong>"Login"</strong> anytime after registration.</li>
+                    <li>Enter your registered mobile/email and password to access your account.</li>
+                    <li>Upon logging in, your personal <strong>Dashboard</strong> will load, allowing you to manage your total T-Coins, digital visiting cards, and complete team network.</li>
                 </ol>
             </div>
 
             <!-- Step 3 -->
-            <h4 class="section-title">3. स्मार्ट डिजिटल विज़िटिंग कार्ड बनाना और उसका उपयोग</h4>
+            <h4 class="section-title">3. Creating & Utilizing Smart Digital Visiting Cards</h4>
             <div class="step-box">
-                <p class="text-muted small mb-2"><i class="fas fa-info-circle text-primary me-1"></i> Tidong की सबसे बड़ी खासियत यह है कि इसके लिए किसी भी मोबाइल ऐप को डाउनलोड करने की बिल्कुल जरूरत नहीं है!</p>
+                <p class="text-muted small mb-2"><i class="fas fa-info-circle text-primary me-1"></i> A key advantage of Tidong is that no mobile application installation is required!</p>
                 <ol class="lh-lg text-dark mb-0">
-                    <li>डैशबोर्ड में जाकर <strong>"Visiting Cards"</strong> या <strong>"Card Configure"</strong> वाले विकल्प पर क्लिक करें।</li>
-                    <li><strong>"Create Card"</strong> चुनें और अपनी व्यावसायिक जानकारी (व्यवसाय का नाम, पद, फोन नंबर, सोशल मीडिया लिंक्स) भरें।</li>
-                    <li>अपनी पसंद का शानदार डिज़ाइन चुनकर <strong>Save</strong> कर दें।</li>
-                    <li>कार्ड बनते ही आपको एक <strong>यूनिक पब्लिक लिंक</strong> मिल जाएगी (जैसे tidong.in/card/v/aapka-naam)।</li>
-                    <li><strong>इंटरेक्टिव आइकन्स:</strong> इस लिंक को आप व्हाट्सएप या फेसबुक पर शेयर कर सकते हैं। कार्ड पर दिए गए <strong>WhatsApp</strong> या <strong>Call</strong> आइकॉन पर क्लिक करते ही सामने वाला सीधे चैट या कॉल पर जुड़ जाता है—बिना किसी ऐप की झंझट के!</li>
+                    <li>Navigate to your dashboard and select <strong>"Visiting Cards"</strong> or <strong>"Card Configure"</strong>.</li>
+                    <li>Click <strong>"Create Card"</strong> and input your professional details (business name, designation, phone number, social media links).</li>
+                    <li>Choose your preferred visual layout design and save the profile.</li>
+                    <li>Once generated, you will receive a unique public link (e.g., tidong.in/card/v/your-name).</li>
+                    <li><strong>Interactive Icons:</strong> Share this link instantly via WhatsApp or Facebook. Clients can click the direct <strong>WhatsApp</strong> or <strong>Call</strong> icons on your digital card to connect instantly without app downloading hurdles!</li>
                 </ol>
             </div>
 
             <!-- Step 4 -->
-            <h4 class="section-title">4. टीम और मेंबर बनाना (Referral System)</h4>
+            <h4 class="section-title">4. Team Building & Referral System</h4>
             <div class="step-box">
                 <ol class="lh-lg text-dark mb-0">
-                    <li>डैशबोर्ड में <strong>"Referral"</strong> या <strong>"Friend Circle"</strong> सेक्शन में जाएं।</li>
-                    <li>वहाँ मिलने वाले अपने <strong>रेफरल लिंक</strong> को दोस्तों और बिजनेस पार्टनर के साथ शेयर करें।</li>
-                    <li>जुड़ने वाले नए सदस्यों को सिस्टम के नियमों के अनुसार दो भागों—<strong>Leg A</strong> और <strong>Leg B</strong> में व्यवस्थित किया जाता है, जिससे मजबूत टीम का निर्माण होता है।</li>
+                    <li>Go to the <strong>"Referral"</strong> or <strong>"Friend Circle"</strong> section in your dashboard.</li>
+                    <li>Share your unique referral link with prospective associates and business partners.</li>
+                    <li>New members joining through your link are systematically organized into two balance legs—<strong>Leg A</strong> and <strong>Leg B</strong>—establishing a robust community network.</li>
                 </ol>
             </div>
 
             <!-- Step 5 -->
-            <h4 class="section-title">5. कमाई और T-Coins का पूरा गणित</h4>
+            <h4 class="section-title">5. Earnings & T-Coin Mathematics</h4>
             <div class="step-box">
                 <ul class="lh-lg text-dark mb-0">
-                    <li><strong>शॉपिंग / ट्रांजैक्शन लिमिट:</strong> अपने रिजर्व्ड रिवॉर्ड्स को वास्तविक निकालने योग्य (Withdrawable) बैलेंस में बदलने के लिए न्यूनतम <strong>₹25,000 की शॉपिंग या ट्रांजैक्शन लिमिट</strong> पूरी करनी होती है।</li>
-                    <li><strong>एफिलिएट स्टेजेस (14 Stages):</strong> Leg A और Leg B की शर्तें पूरी होने पर 14 एफिलिएट लेवल्स एक-एक करके अनलॉक होते हैं और शानदार ग्रॉस इंसेंटिव्स प्राप्त होते हैं।</li>
-                    <li><strong>टैक्स और कटौतियां:</strong> इंसेंटिव भुगतान पर 10% प्रशासनिक शुल्क (Admin Charge) और टीडीएस (पैन लिंक होने पर 5% या बिना पैन के 20%) की कटौती के बाद शेष राशि सुरक्षित रूप से वॉलेट में आ जाती है।</li>
+                    <li><strong>Shopping / Transaction Limit:</strong> To convert reserved rewards into withdrawable real balances, a minimum cumulative shopping or transaction threshold of <strong>₹25,000</strong> must be fulfilled.</li>
+                    <li><strong>Affiliate Stages (14 Stages):</strong> Fulfilling the structural criteria for Leg A and Leg B unlocks 14 progressive affiliate tiers sequentially, yielding substantial gross incentives.</li>
+                    <li><strong>Tax & Deductions:</strong> Incentive disbursements are processed after deducting a 10% Administrative Charge and applicable TDS (5% with PAN verification or 20% without PAN).</li>
                 </ul>
             </div>
 

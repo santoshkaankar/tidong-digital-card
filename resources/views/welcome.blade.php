@@ -476,6 +476,11 @@
                             </a>
                         </li>
                         <li class="mb-1">
+                            <a href="{{ route('pages.royalty') }}" class="footer-link">
+                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Royalty Program & Leadership
+                            </a>
+                        </li>
+                        <li class="mb-1">
                             <a href="{{ route('guidance.member') }}" class="footer-link">
                                 <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Member Guidance Guide
                             </a>

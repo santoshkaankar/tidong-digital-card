@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Affiliate Program & Stages - Tidong® International Platform</title>
+    <title>Affiliate Program, Stages & Royalty Structure - Tidong® International Platform</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -19,8 +19,8 @@
     <div class="aff-header">
         <div class="container">
             <a href="{{ url('/') }}" class="btn btn-outline-light btn-sm rounded-pill mb-3"><i class="fas fa-arrow-left me-1"></i> Return to Main Platform</a>
-            <h1 class="fw-bold mb-2">Affiliate Program & Stage Structure</h1>
-            <p class="text-light mb-0 small">Poore 14 Stages, T&C, Shopping Limits aur Deductions ki poori jankari</p>
+            <h1 class="fw-bold mb-2">Affiliate Program, Stage Structure & Royalty</h1>
+            <p class="text-light mb-0 small">Comprehensive Overview of All 14 Stages, Terms & Conditions, Shopping Limits, Deductions, and Royalty Income Structure</p>
         </div>
     </div>
 
@@ -33,35 +33,35 @@
                     <div class="rule-card text-center">
                         <i class="fas fa-gift text-success fs-1 mb-2"></i>
                         <h6 class="fw-bold text-dark">Registration Bonus</h6>
-                        <p class="small text-muted mb-0">Sign up par instant <strong>4,540,000 T-Coins</strong> (1 T-Coin = ₹1) prapt karein.</p>
+                        <p class="small text-muted mb-0">Receive an instant registration bonus of <strong>4,540,000 T-Coins</strong> (1 T-Coin = ₹1) upon sign-up.</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="rule-card text-center">
                         <i class="fas fa-shopping-cart text-primary fs-1 mb-2"></i>
                         <h6 class="fw-bold text-dark">₹25,000 Shopping Limit</h6>
-                        <p class="small text-muted mb-0">Self aur Team members ki minimum ₹25k shopping par hi stage clear hoti hai.</p>
+                        <p class="small text-muted mb-0">Stage clearance requires a minimum cumulative shopping threshold of ₹25,000 by self and team members.</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="rule-card text-center">
                         <i class="fas fa-clock text-warning fs-1 mb-2"></i>
                         <h6 class="fw-bold text-dark">Daily T-Coin Deduction</h6>
-                        <p class="small text-muted mb-0">14 minus (Completed Stages) = Daily deduction. Jitni jaldi stage poori karende, deduction utna kam hoga.</p>
+                        <p class="small text-muted mb-0">Calculated as: 14 minus completed stages equals daily deduction. Faster stage completion minimizes daily deductions.</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="rule-card text-center">
                         <i class="fas fa-file-invoice-dollar text-danger fs-1 mb-2"></i>
                         <h6 class="fw-bold text-dark">TDS & Admin Deductions</h6>
-                        <p class="small text-muted mb-0">10% Admin Charge + 5% TDS (PAN Verified) / 20% TDS (Without PAN) deduct hota hai.</p>
+                        <p class="small text-muted mb-0">Incentive disbursements are subject to a 10% Administrative Charge plus 5% TDS (with PAN verification) or 20% TDS (without PAN).</p>
                     </div>
                 </div>
             </div>
 
             <!-- Stages Table -->
             <h4 class="section-title mb-3">All 14 Affiliate Stages</h4>
-            <div class="table-responsive rounded-3 border">
+            <div class="table-responsive rounded-3 border mb-5">
                 <table class="table table-hover text-center align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -86,11 +86,36 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-muted py-4">No affiliate stages found in system.</td>
+                            <td colspan="5" class="text-muted py-4">No affiliate stages found in the system.</td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Royalty Income Section -->
+            <h4 class="section-title mb-3">Royalty Program Structure</h4>
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="rule-card bg-light border-primary p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-award text-primary fs-1 me-3"></i>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1">Executive Stage & Leadership Royalty Qualification</h5>
+                                <p class="small text-muted mb-0">Achieve elite milestones to unlock recurring corporate revenue shares and specialized performance bonuses.</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <p class="text-dark mb-2">Upon successful qualification and progression beyond the foundational leadership tiers, members unlock exclusive corporate royalty benefits designed to support sustained network expansion and reward top-tier leadership excellence across international operations.</p>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <span class="badge bg-success fs-6 px-4 py-3 shadow-sm">Royalty Income: ₹200,000 Per Month*</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>
