@@ -1,3 +1,32 @@
+@php
+if (!function_exists('format_indian_currency')) {
+    function format_indian_currency($number) {
+        $decimal = (string)($number - floor($number));
+        $money = floor($number);
+        $length = strlen($money);
+        $delimiter = '';
+        $output = '';
+        if ($length > 3) {
+            $delimiter = substr($money, -3);
+            $money = substr($money, 0, strlen($money) - 3);
+            while (strlen($money) > 2) {
+                $delimiter = substr($money, -2) . ',' . $delimiter;
+                $money = substr($money, 0, strlen($money) - 2);
+            }
+            if (strlen($money) > 0) {
+                $delimiter = $money . ',' . $delimiter;
+            }
+            $output = $delimiter;
+        } else {
+            $output = $money;
+        }
+        $decimal = preg_replace("/0\./", "", $decimal);
+        $decimal = str_pad($decimal, 2, "0", STR_PAD_RIGHT);
+        return $output . '.' . substr($decimal, 0, 2);
+    }
+}
+@endphp
+
 @extends('member.partials.layout')
 
 @section('title', 'My Wallet - Tidong®')
@@ -25,7 +54,7 @@
                         <h6 class="text-uppercase small fw-bold opacity-75 mb-0">Reserved Reward</h6>
                         <span class="badge bg-dark text-warning px-2 py-1"><i class="fas fa-hourglass-half me-1"></i> Pending Unlock</span>
                     </div>
-                    <h2 class="fw-bold mb-3">₹ {{ number_format($wallet->non_withdrawable_balance ?? 0, 2) }}</h2>
+                    <h2 class="fw-bold mb-3">₹ {{ format_indian_currency($wallet->non_withdrawable_balance ?? 0) }}</h2>
                     <span class="small opacity-90"><i class="fas fa-shield-alt me-1"></i> Guaranteed reward balance (Unlocked upon stage completion)</span>
                 </div>
             </div>
@@ -36,7 +65,7 @@
             <div class="card border-0 shadow-sm bg-primary text-white rounded-4 p-4 h-100">
                 <div class="card-body">
                     <h6 class="text-uppercase small fw-bold opacity-75">Withdrawable Bal.</h6>
-                    <h2 class="fw-bold mb-3">₹ {{ number_format($wallet->real_balance ?? 0, 2) }}</h2>
+                    <h2 class="fw-bold mb-3">₹ {{ format_indian_currency($wallet->real_balance ?? 0) }}</h2>
                     <button class="btn btn-light text-primary fw-bold rounded-pill px-3 btn-sm">
                         <i class="fas fa-exchange-alt me-1"></i> Fund Transfer
                     </button>
@@ -49,7 +78,7 @@
             <div class="card border-0 shadow-sm bg-success text-white rounded-4 p-4 h-100">
                 <div class="card-body">
                     <h6 class="text-uppercase small fw-bold opacity-75">T-Coin Bal.</h6>
-                    <h2 class="fw-bold mb-3"><i class="fas fa-coins text-warning me-1"></i> {{ number_format($wallet->t_coins ?? 0, 2) }}</h2>
+                    <h2 class="fw-bold mb-3"><i class="fas fa-coins text-warning me-1"></i> {{ format_indian_currency($wallet->t_coins ?? 0) }}</h2>
                     <div class="badge bg-white text-success fw-bold rounded-pill px-3 py-2 fs-6 shadow-sm">
                         <i class="fas fa-check-circle text-success me-1"></i> 1 T-Coin = 1 RS
                     </div>
@@ -133,7 +162,7 @@
                                         </span>
                                     </td>
                                     <td class="fw-bold {{ $tx->type == 'credit' ? 'text-success' : 'text-danger' }}">
-                                        {{ $tx->type == 'credit' ? '+' : '-' }} ₹ {{ number_format($tx->amount, 2) }}
+                                        {{ $tx->type == 'credit' ? '+' : '-' }} ₹ {{ format_indian_currency($tx->amount) }}
                                     </td>
                                     <td>
                                         <span class="badge bg-{{ $tx->status == 'success' ? 'success' : ($tx->status == 'pending' ? 'warning' : 'danger') }}">
@@ -178,7 +207,7 @@
                                         </span>
                                     </td>
                                     <td class="fw-bold {{ $tc->type == 'credit' ? 'text-success' : 'text-danger' }}">
-                                        {{ $tc->type == 'credit' ? '+' : '-' }} {{ number_format($tc->coins, 2) }} T-Coins
+                                        {{ $tc->type == 'credit' ? '+' : '-' }} {{ format_indian_currency($tc->coins) }} T-Coins
                                     </td>
                                     <td class="text-muted small">{{ date('d M Y, h:i A', strtotime($tc->created_at)) }}</td>
                                 </tr>

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order; // Order Model Un-commented
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Restaurant\RestaurantOrder as Order; // <--- Yeh wali line yahan jodh dein
 
 class OrderController extends Controller
 {
