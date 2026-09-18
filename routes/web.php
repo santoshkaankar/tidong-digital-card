@@ -92,7 +92,7 @@ require __DIR__ . '/money_exchange.php';
 require __DIR__ . '/tourist_guide.php';
 require __DIR__ . '/restaurant.php';
 require __DIR__ . '/taxi.php';
-
+require __DIR__ .'/retail.php';
 /*
 |--------------------------------------------------------------------------
 | 6. Public Guest Orders & Hub Routes

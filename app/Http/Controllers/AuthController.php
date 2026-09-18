@@ -71,11 +71,10 @@ class AuthController extends Controller
 
         $parentId = null;
         $sponsorId = null;
-        $position = 'left'; // Default position
+        $position = 'left';
         $referralId = null;
 
         if ($request->role === 'member') {
-            // Agar sponsor ID khali chhod di gayi hai, toh default root ID set karein
             $sponsorRefId = $request->sponsor_referral_id ?: 'TDMS6395GSSS';
 
             $sponsor = User::where('referral_id', $sponsorRefId)->first();
@@ -85,8 +84,6 @@ class AuthController extends Controller
             }
 
             $sponsorId = $sponsor->id;
-
-            // User dwara toggle se select ki gayi position (default left)
             $preferredPosition = $request->position ?: 'left';
 
             $placement = $this->findPlacementNode($sponsor->id, $preferredPosition);
@@ -113,7 +110,6 @@ class AuthController extends Controller
             'business_type' => in_array($request->role, ['business', 'vendor']) ? $request->business_type : null
         ]);
 
-        // Binary Tree Upline Counting Logic
         if ($request->role === 'member' && $parentId) {
             $currentParentId = $parentId;
             $currentPosition = $position;
@@ -171,6 +167,11 @@ class AuthController extends Controller
 
         if ($role === 'employee') {
             return Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : view('employee.dashboard');
+        }
+
+        // Strict Check for Retail Dashboard
+        if ($user->business_type === 'retail') {
+            return Route::has('retail.dashboard') ? redirect()->route('retail.dashboard') : redirect('/retail/dashboard');
         }
 
         if (in_array($role, ['business', 'vendor'])) {

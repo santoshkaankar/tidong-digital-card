@@ -45,7 +45,7 @@
             <x-input-error :messages="$errors->get('role')" class="mt-2 text-red-600" />
         </div>
 
-        <!-- Dynamic Member / Sponsor Section (Only for Members / Binary MLM Network) -->
+        <!-- Dynamic Member / Sponsor Section -->
         <div id="member-fields-container" class="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl">
             <div class="mb-3">
                 <label for="sponsor_referral_id" class="block font-semibold text-sm text-gray-800">Sponsor Referral ID <span class="text-xs text-gray-500 font-normal">(Optional, defaults to root ID if left blank)</span></label>
@@ -101,10 +101,9 @@
                         <option value="travel_agency">Travel & Tour Operator</option>
                     </optgroup>
 
+                    <!-- Merged Retail & Shopping Option -->
                     <optgroup label="Retail & Shopping">
-                        <option value="emporium">Handicraft & Emporium</option>
-                        <option value="grocery">Grocery & Supermarket</option>
-                        <option value="clothing">Clothing & Fashion Store</option>
+                        <option value="retail">Retail & Shopping Store (General / Fashion / Grocery / Emporium)</option>
                     </optgroup>
 
                     <optgroup label="Health, Wellness & Beauty">
@@ -201,7 +200,7 @@
                 businessSelect.disabled = false;
                 businessSelect.setAttribute('required', 'required');
                 if (!businessSelect.value) {
-                    businessSelect.value = 'restaurant';
+                    businessSelect.value = 'retail';
                 }
                 handleBusinessTypeChange(businessSelect.value);
             }
@@ -214,7 +213,7 @@
                 businessSelect.disabled = true;
             }
             if (sponsorInput && !sponsorInput.value) {
-                sponsorInput.value = 'TDMS6395GSSS'; // Default fallback ID
+                sponsorInput.value = 'TDMS6395GSSS';
             }
 
             document.getElementById('vehicle-field').style.display = 'none';
@@ -248,23 +247,3 @@
     });
     </script>
 </x-guest-layout>
-```[cite: 2]
-
-### Controller (`AuthController.php`) mein bhi ek chota sa badlaav karna hoga:
-Agar user ne sponsor ID khali chhod di ho, toh controller usko automatically `TDMS6395GSSS` maan le. Iske liye `AuthController.php` ke `register` method mein validation rule ko thoda sa update kar dein[cite: 2]:
-
-```php
-        $request->validate([
-            'name'                => ['required', 'string', 'max:255'],
-            'username'            => ['nullable', 'string', 'max:255', 'unique:users'],
-            'email'               => ['required', 'email', 'unique:users'],
-            'mobile'              => ['required', 'string', 'max:15', 'unique:users'],
-            'password'            => ['required', 'min:6'],
-            'role'                => ['required', 'in:admin,employee,business,member,vendor'],
-            'business_type'       => ['nullable', 'string', 'max:255'],
-            'sponsor_referral_id' => ['nullable', 'string', 'exists:users,referral_id'],
-            'position'            => ['required_if:role,member', 'string', 'in:left,right'],
-        ]);
-
-        // Agar sponsor_referral_id khali hai toh default set kar dein
-        $sponsorReferralId = $request->sponsor_referral_id ?: 'TDMS6395GSSS';

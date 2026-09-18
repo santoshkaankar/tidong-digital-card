@@ -66,7 +66,7 @@
             <div class="col-lg-10">
                 <div class="card card-custom p-4 p-md-5 mb-4">
                     
-                    <!-- Highlight Rule Box (Transparency & Mandatory 10k Active Rule Fixed Here) -->
+                    <!-- Highlight Rule Box -->
                     <div class="alert highlight-rule p-4 mb-5 shadow-sm">
                         <div class="d-flex align-items-center">
                             <div class="fs-1 text-warning me-4">
@@ -77,7 +77,8 @@
                                 <p class="mb-0 text-dark fs-5 fw-bold">
                                     "Top ranks & winners will be revealed strictly through our Public Open Lucky Draw!"
                                 </p>
-                                <small class="text-muted"><strong>Mandatory Rule:</strong> To check eligibility and qualify, being among the <strong>first 10,000 Active Members</strong> with a total transaction of <strong>₹25,000+</strong> is strictly required!</small>
+                                <small class="text-muted d-block mt-1"><strong>Mandatory Rule:</strong> Being among the <strong>first 10,000 Active Members</strong> with a total transaction of <strong>₹25,000+</strong> is strictly required to qualify!</small>
+                                <small class="text-dark fw-bold d-block mt-1"><i class="fas fa-check-circle text-success me-1"></i> Important Note: Both Online and Offline transactions through Tidong are fully valid and counted towards the ₹25,000 limit!</small>
                             </div>
                         </div>
                     </div>
@@ -96,7 +97,7 @@
                             <div class="step-box text-center h-100">
                                 <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center fs-4 mb-3" style="width: 55px; height: 55px;">2</div>
                                 <h5 class="fw-bold text-dark">Reach ₹25,000+ Activity</h5>
-                                <p class="text-muted small mb-0">Complete platform transactions totaling ₹25,000+ to enter the active pool.</p>
+                                <p class="text-muted small mb-0">Complete online or offline transactions via Tidong totaling ₹25,000+.</p>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -108,7 +109,7 @@
                         </div>
                     </div>
 
-                    <!-- Live Eligible Customers List Section (Transparent Tracker) -->
+                    <!-- Live Eligible Customers List Section -->
                     <div class="mb-5">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h3 class="fw-bold text-primary mb-0"><i class="fas fa-users me-2 text-success"></i>First 10,000 Active Qualified List</h3>
@@ -122,7 +123,7 @@
                                     <tr>
                                         <th>Sr. No.</th>
                                         <th>Customer Name / ID</th>
-                                        <th>Total Transaction</th>
+                                        <th>Total Transaction (Online/Offline)</th>
                                         <th class="text-end">Eligibility Status</th>
                                     </tr>
                                 </thead>
@@ -145,19 +146,19 @@
                                         <tr>
                                             <td>#1</td>
                                             <td class="fw-bold text-dark">Rahul Sharma (TID***01)</td>
-                                            <td class="text-success fw-bold">₹28,500</td>
+                                            <td class="text-success fw-bold">₹28,500 <small class="text-muted">(Online/Offline)</small></td>
                                             <td class="text-end"><span class="badge bg-success">Eligible (Active Top 10k)</span></td>
                                         </tr>
                                         <tr>
                                             <td>#2</td>
                                             <td class="fw-bold text-dark">Amit Verma (TID***02)</td>
-                                            <td class="text-success fw-bold">₹32,000</td>
+                                            <td class="text-success fw-bold">₹32,000 <small class="text-muted">(Online/Offline)</small></td>
                                             <td class="text-end"><span class="badge bg-success">Eligible (Active Top 10k)</span></td>
                                         </tr>
                                         <tr>
                                             <td>#3</td>
                                             <td class="fw-bold text-dark">Priya Singh (TID***03)</td>
-                                            <td class="text-success fw-bold">₹25,400</td>
+                                            <td class="text-success fw-bold">₹25,400 <small class="text-muted">(Online/Offline)</small></td>
                                             <td class="text-end"><span class="badge bg-success">Eligible (Active Top 10k)</span></td>
                                         </tr>
                                     @endisset
@@ -261,7 +262,7 @@
 
                     <!-- Footer Note in Image -->
                     <div class="text-center my-4 p-3 bg-light rounded-3 border">
-                        <p class="mb-0 text-muted small fw-bold"><i class="fas fa-info-circle me-1"></i> (All Rights, Rules and Regulations are Reserved. Winners decided purely via transparent public lucky draw among eligible top 10k active members.)</p>
+                        <p class="mb-0 text-muted small fw-bold"><i class="fas fa-info-circle me-1"></i> (All Rights, Rules and Regulations are Reserved. Both online and offline transactions via Tidong are valid. Winners decided purely via transparent public lucky draw among eligible top 10k active members.)</p>
                     </div>
 
                     <!-- Call to Action Button -->
