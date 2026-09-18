@@ -118,6 +118,7 @@ Route::view('/privacy-policy', 'pages.privacy')->name('pages.privacy');
 Route::view('/contact-us', 'pages.contact')->name('pages.contact');
 Route::view('/affiliate-program', 'pages.affiliate')->name('pages.affiliate');
 Route::view('/royalty-program', 'pages.royalty')->name('pages.royalty');
+Route::view('/luckydrow', 'pages.luckydrow')->name('pages.luckydrow');
 /*
 |--------------------------------------------------------------------------
 | 8. Guidance Pages
