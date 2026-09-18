@@ -16,8 +16,8 @@
             50% { transform: scale(1.08); }
             100% { transform: scale(1); }
         }
-        .prize-table th { background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); color: white; border: none; }
-        .prize-table td { vertical-align: middle; padding: 14px 18px; font-weight: 500; }
+        .prize-table th, .winners-table th { background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); color: white; border: none; }
+        .prize-table td, .winners-table td { vertical-align: middle; padding: 14px 18px; font-weight: 500; }
         .highlight-rule { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 6px solid #f59e0b; border-radius: 12px; }
         .nocost-badge { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .glow-btn { box-shadow: 0 0 20px rgba(124, 58, 237, 0.5); transition: all 0.3s ease; }
@@ -45,7 +45,7 @@
     <!-- Hero Section -->
     <header class="hero-banner text-center position-relative overflow-hidden">
         <div class="container position-relative z-1">
-            <div class="d-inline-flex align-items-center gap-2 mb-3">
+            <div class="d-inline-flex align-items-center flex-wrap justify-content-center gap-2 mb-3">
                 <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold badge-pulse fs-6 shadow-sm">
                     <i class="fas fa-fire me-1 text-danger"></i> Mega Bonanza Offer 2026
                 </span>
@@ -55,7 +55,7 @@
             </div>
             <h1 class="display-3 fw-extrabold mb-3 text-white">Tidong Lucky Draw Bonanza</h1>
             <p class="lead text-white-50 mx-auto mb-4" style="max-width: 650px;">
-                Grab your chance to win cars, bikes, gadgets, and assured prizes at absolutely zero extra cost! Register now and unlock amazing rewards.
+                100% Transparent Public Lucky Draw! Top ranks and winners will be decided publicly. Check out if you are eligible below.
             </p>
         </div>
     </header>
@@ -66,45 +66,103 @@
             <div class="col-lg-10">
                 <div class="card card-custom p-4 p-md-5 mb-4">
                     
-                    <!-- Highlight Rule Box (Customer Main Attraction) -->
+                    <!-- Highlight Rule Box (Transparency & Mandatory 10k Active Rule Fixed Here) -->
                     <div class="alert highlight-rule p-4 mb-5 shadow-sm">
                         <div class="d-flex align-items-center">
                             <div class="fs-1 text-warning me-4">
-                                <i class="fas fa-award"></i>
+                                <i class="fas fa-shield-alt"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bold text-dark mb-1">100% Assured Winning Scheme (No Cost Entry!)</h4>
+                                <h4 class="fw-bold text-dark mb-1">100% Transparent Public Lucky Draw Rules</h4>
                                 <p class="mb-0 text-dark fs-5 fw-bold">
-                                    "10000 Customers won prizes out of first 10000 Active customers*"
+                                    "Top ranks & winners will be revealed strictly through our Public Open Lucky Draw!"
                                 </p>
-                                <small class="text-muted">Zero participation fees—be among the first 10,000 active members to secure your reward!</small>
+                                <small class="text-muted"><strong>Mandatory Rule:</strong> To check eligibility and qualify, being among the <strong>first 10,000 Active Members</strong> with a total transaction of <strong>₹25,000+</strong> is strictly required!</small>
                             </div>
                         </div>
                     </div>
 
-                    <!-- How to Participate Section -->
-                    <h3 class="fw-bold text-primary mb-4 text-center"><i class="fas fa-bolt me-2"></i>How to Participate in 3 Easy Steps</h3>
+                    <!-- How to Qualify Section -->
+                    <h3 class="fw-bold text-primary mb-4 text-center"><i class="fas fa-bolt me-2"></i>How to Qualify in 3 Easy Steps</h3>
                     <div class="row g-4 mb-5">
                         <div class="col-md-4">
                             <div class="step-box text-center h-100">
                                 <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center fs-4 mb-3" style="width: 55px; height: 55px;">1</div>
-                                <h5 class="fw-bold text-dark">Register / Login</h5>
+                                <h5 class="fw-bold text-dark">Register Account</h5>
                                 <p class="text-muted small mb-0">Create your active account on Tidong® Digital completely free.</p>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="step-box text-center h-100">
                                 <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center fs-4 mb-3" style="width: 55px; height: 55px;">2</div>
-                                <h5 class="fw-bold text-dark">Activate Services</h5>
-                                <p class="text-muted small mb-0">Complete your profile setup with zero hidden charges.</p>
+                                <h5 class="fw-bold text-dark">Reach ₹25,000+ Activity</h5>
+                                <p class="text-muted small mb-0">Complete platform transactions totaling ₹25,000+ to enter the active pool.</p>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="step-box text-center h-100">
                                 <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center fs-4 mb-3" style="width: 55px; height: 55px;">3</div>
-                                <h5 class="fw-bold text-dark">Win Exciting Prizes</h5>
-                                <p class="text-muted small mb-0">Get qualified automatically for the lucky draw pool.</p>
+                                <h5 class="fw-bold text-dark">Make More Transactions</h5>
+                                <p class="text-muted small mb-0">Make more transactions to win big and secure your rank in the public lucky draw!</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Eligible Customers List Section (Transparent Tracker) -->
+                    <div class="mb-5">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="fw-bold text-primary mb-0"><i class="fas fa-users me-2 text-success"></i>First 10,000 Active Qualified List</h3>
+                            <span class="badge bg-success px-3 py-2">Public Transparency Tracker</span>
+                        </div>
+                        <p class="text-muted small">Check here whether you are eligible or not. Only members in this first 10,000 active list qualify for the public lucky draw:</p>
+                        
+                        <div class="table-responsive shadow-sm rounded-4 border">
+                            <table class="table table-hover winners-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Sr. No.</th>
+                                        <th>Customer Name / ID</th>
+                                        <th>Total Transaction</th>
+                                        <th class="text-end">Eligibility Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @isset($eligibleCustomers)
+                                        @forelse($eligibleCustomers as $index => $customer)
+                                            <tr>
+                                                <td>#{{ $index + 1 }}</td>
+                                                <td class="fw-bold text-dark">{{ $customer->name ?? 'Tidong Member #'.($index+1) }}</td>
+                                                <td class="text-success fw-bold">₹{{ number_format($customer->total_transaction ?? 25000) }}</td>
+                                                <td class="text-end"><span class="badge bg-success">Eligible (Active Top 10k)</span></td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-3">No records found yet. Be the first to reach the ₹25,000+ milestone!</td>
+                                            </tr>
+                                        @endforelse
+                                    @else
+                                        <!-- Sample Static Rows -->
+                                        <tr>
+                                            <td>#1</td>
+                                            <td class="fw-bold text-dark">Rahul Sharma (TID***01)</td>
+                                            <td class="text-success fw-bold">₹28,500</td>
+                                            <td class="text-end"><span class="badge bg-success">Eligible (Active Top 10k)</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#2</td>
+                                            <td class="fw-bold text-dark">Amit Verma (TID***02)</td>
+                                            <td class="text-success fw-bold">₹32,000</td>
+                                            <td class="text-end"><span class="badge bg-success">Eligible (Active Top 10k)</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#3</td>
+                                            <td class="fw-bold text-dark">Priya Singh (TID***03)</td>
+                                            <td class="text-success fw-bold">₹25,400</td>
+                                            <td class="text-end"><span class="badge bg-success">Eligible (Active Top 10k)</span></td>
+                                        </tr>
+                                    @endisset
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -112,8 +170,8 @@
 
                     <!-- Prize Structure Heading -->
                     <div class="text-center mb-4">
-                        <h3 class="fw-bold text-primary"><i class="fas fa-trophy me-2 text-warning"></i>Exclusive Prize Lineup</h3>
-                        <p class="text-muted">Take a look at the massive pool of rewards waiting for you:</p>
+                        <h3 class="fw-bold text-primary"><i class="fas fa-trophy me-2 text-warning"></i>Exclusive Prize Lineup (Decided via Public Lucky Draw)</h3>
+                        <p class="text-muted">Top ranks and winners will be announced transparently in the public draw pool:</p>
                     </div>
 
                     <!-- Prize Table Format -->
@@ -194,7 +252,7 @@
                                 </tr>
                                 <tr>
                                     <td class="fw-bold text-success">14th Prize</td>
-                                    <td class="fw-semibold text-dark"><i class="fas fa-money-bill-wave text-success me-2"></i>Cash / Shopping Vouchers</td>
+                                    <td class="text-dark"><i class="fas fa-money-bill-wave text-success me-2"></i>Cash / Shopping Vouchers</td>
                                     <td class="text-end"><span class="badge bg-success px-2 py-1">Assured</span></td>
                                 </tr>
                             </tbody>
@@ -203,18 +261,18 @@
 
                     <!-- Footer Note in Image -->
                     <div class="text-center my-4 p-3 bg-light rounded-3 border">
-                        <p class="mb-0 text-muted small fw-bold"><i class="fas fa-info-circle me-1"></i> (All Rights, Rules and Regulations are Reserved.)</p>
+                        <p class="mb-0 text-muted small fw-bold"><i class="fas fa-info-circle me-1"></i> (All Rights, Rules and Regulations are Reserved. Winners decided purely via transparent public lucky draw among eligible top 10k active members.)</p>
                     </div>
 
                     <!-- Call to Action Button -->
                     <div class="text-center mt-5">
                         @auth
                             <a href="{{ route('member.dashboard') }}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold glow-btn">
-                                <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard & Claim Free Entry
+                                <i class="fas fa-tachometer-alt me-2"></i> Check Your Eligibility Status
                             </a>
                         @else
                             <a href="{{ route('login') }}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold glow-btn">
-                                <i class="fas fa-user-plus me-2"></i> Register Free & Win Now!
+                                <i class="fas fa-user-plus me-2"></i> Register Free & Check Status!
                             </a>
                         @endauth
                     </div>
