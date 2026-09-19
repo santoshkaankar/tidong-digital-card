@@ -8,6 +8,7 @@ use App\Http\Controllers\Member\CardController;
 use App\Http\Controllers\Vendor\CatalogController;
 use App\Http\Controllers\Customer\HubController;
 use App\Http\Middleware\DeviceIdentityMiddleware;
+use Illuminate\Support\Facades\View;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +27,14 @@ Route::get('/', function () {
     }
     return view('welcome');
 });
+
+
+Route::get('/instruction/{slug}', function ($slug) {
+    if (View::exists('instructions.' . $slug)) {
+        return view('instructions.' . $slug);
+    }
+    abort(404);
+})->name('instruction.show');
 
 /*
 |--------------------------------------------------------------------------

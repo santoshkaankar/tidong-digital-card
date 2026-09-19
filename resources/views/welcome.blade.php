@@ -3,568 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tidong® - Smart Digital Visiting Cards & Dynamic Catalogs</title>
+    <title>Tidong Digital</title>
+    
+    <!-- Bootstrap & FontAwesome Icons CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #333; overflow-x: hidden; }
-        .hero-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 70px 0; }
-        
-        .feature-card { 
-            border: 1px solid rgba(226, 232, 240, 0.8); 
-            border-radius: 16px; 
-            transition: all 0.4s ease; 
-            background: #ffffff; 
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-            position: relative;
-            overflow: hidden;
-        }
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #2563eb, #38bdf8);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-        .feature-card:hover { 
-            transform: translateY(-8px); 
-            box-shadow: 0 20px 35px -10px rgba(37, 99, 235, 0.15), 0 12px 15px -8px rgba(37, 99, 235, 0.1);
-            border-color: rgba(37, 99, 235, 0.3);
-        }
-        .feature-card:hover::before { opacity: 1; }
-
-        .btn-custom-primary { background: #2563eb; color: #fff; padding: 8px 20px; border-radius: 50px; font-weight: 600; }
-        .btn-custom-primary:hover { background: #1d4ed8; color: #fff; }
-        .navbar { background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .icon-box { width: 55px; height: 55px; display: inline-flex; align-items: center; justify-content: center; border-radius: 14px; background: rgba(37, 99, 235, 0.08); color: #2563eb; font-size: 1.5rem; margin-bottom: 20px; transition: all 0.3s ease; }
-        .feature-card:hover .icon-box { background: #2563eb; color: #fff; transform: scale(1.05); }
-        .user-avatar { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; border: 2px solid #2563eb; }
-        
-        .action-icon { transition: transform 0.2s ease; display: inline-block; }
-        .action-icon:hover { transform: scale(1.15); }
-
-        .hover-up { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .hover-up:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
-        
-        footer a.footer-link { color: #cbd5e1; text-decoration: none; transition: color 0.2s ease; }
-        footer a.footer-link:hover { color: #38bdf8; text-decoration: underline; }
-    </style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top py-3">
-        <div class="container">
-            <a class="navbar-brand fw-bold fs-4 text-primary" href="#">
-                <i class="fas fa-layer-group me-2"></i>Tidong<span class="text-dark">®</span> Digital
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav align-items-center gap-3">
-                    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#quick-services">Services</a></li>
-                    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#features">Features</a></li>
-                    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#ads-section">Sponsored Ads</a></li>
-                    
-                    @auth
-                        <li class="nav-item">
-                            @php
-                                $role = Auth::user()->role ?? 'user';
-                                $dashboardRoute = match($role) {
-                                    'admin' => route('admin.dashboard'),
-                                    'business' => route('vendor.dashboard'), 
-                                    'employee' => route('employee.dashboard'),
-                                    'customer' => route('member.dashboard'),
-                                    default => route('member.dashboard')
-                                };
-                            @endphp
-                            <a href="{{ $dashboardRoute }}" class="btn btn-dark btn-sm px-3 rounded-pill">
-                                <i class="fas fa-columns me-1"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 py-0" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                @if(Auth::user()->profile_pic ?? false)
-                                    <img src="{{ asset('storage/' . Auth::user()->profile_pic) }}" alt="Profile" class="user-avatar">
-                                @else
-                                    <div class="user-avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-6">
-                                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                                    </div>
-                                @endif
-                                <span class="fw-bold text-dark">{{ Auth::user()->name }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2">
-                                <li>
-                                    <form action="{{ route('logout') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item text-danger fw-semibold">
-                                            <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    @else
-                        <li class="nav-item">
-                            <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm px-4 rounded-pill">Login</a>
-                        </li>
-                        @if (Route::has('register'))
-                            <li class="nav-item">
-                                <a href="{{ route('register') }}" class="btn btn-custom-primary btn-sm px-4 shadow-sm">Register</a>
-                            </li>
-                        @endif
-                    @endauth
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Navbar Partial -->
+    @include('partials.welcome.navbar')
 
     <!-- Hero Section -->
-    <section class="hero-section text-center text-lg-start">
-        <div class="container">
-            <div class="row align-items-center g-5">
-                <div class="col-lg-7">
-                    <span class="badge bg-primary bg-opacity-25 text-primary mb-3 px-3 py-2 rounded-pill fw-bold">✨ Built For Everyone & Every Business</span>
-                    <h1 class="display-4 fw-bold mb-4 lh-base">Your Interactive Digital Identity & Business Catalogs, Shared in One Click</h1>
-                    <p class="lead text-muted mb-5">Create your stunning personal visiting card or business profile. Share it instantly with anyone—allowing them to chat on WhatsApp, call, or browse your product catalogs with a single tap.</p>
-                    <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start">
-                        @auth
-                            <a href="{{ $dashboardRoute ?? route('member.dashboard') }}" class="btn btn-custom-primary btn-lg shadow">Go to Dashboard</a>
-                        @else
-                            <a href="{{ route('login') }}" class="btn btn-custom-primary btn-lg shadow">Create Your Card Now</a>
-                        @endauth
-                        <a href="#features" class="btn btn-outline-light btn-lg rounded-pill px-4">Explore Features</a>
-                    </div>
-                </div>
-                <div class="col-lg-5 text-center">
-                    <div class="p-4 bg-white bg-opacity-10 rounded-4 shadow-lg backdrop-blur border border-secondary border-opacity-25">
-                        <div class="d-flex justify-content-center gap-3 mb-3">
-                            <a href="https://wa.me/919634759912" target="_blank" class="action-icon" title="Chat on WhatsApp">
-                                <span class="badge bg-success p-2 fs-5 rounded-circle shadow-sm"><i class="fab fa-whatsapp text-white"></i></span>
-                            </a>
-                            <a href="tel:9634759912" class="action-icon" title="Call Now">
-                                <span class="badge bg-primary p-2 fs-5 rounded-circle shadow-sm"><i class="fas fa-phone text-white"></i></span>
-                            </a>
-                            <a href="mailto:santoshkaankar@gmail.com" class="action-icon" title="Send Email">
-                                <span class="badge bg-danger p-2 fs-5 rounded-circle shadow-sm"><i class="fas fa-envelope text-white"></i></span>
-                            </a>
-                        </div>
-                        <h4 class="fw-bold text-white mb-2">One-Tap Direct Connection</h4>
-                        <p class="text-light small mb-0">No apps required for viewers. They click WhatsApp icon and land straight into your WhatsApp chat instantly!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    @include('partials.welcome.hero')
 
     <!-- Quick Services Menu Grid -->
-    <section id="quick-services" class="py-5 bg-light border-bottom">
-        <div class="container">
-            <div class="text-center mb-4">
-                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-uppercase" style="letter-spacing: 1px;">
-                    <i class="fas fa-th-large me-1"></i> Quick Services Menu
-                </span>
-                <h3 class="fw-bold text-dark mt-2">Explore Our Digital Ecosystem</h3>
-            </div>
+    @include('partials.welcome.services')
 
-            <div class="row g-3 justify-content-center">
-                <div class="col-6 col-md-4 col-lg-2">
-                    <a href="#features" class="text-decoration-none">
-                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
-                            <div class="icon-shape bg-primary text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                <i class="fas fa-id-card fs-5"></i>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-1 small">Digital Card</h6>
-                            <span class="text-muted" style="font-size: 0.72rem;">Visiting Card</span>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-6 col-md-4 col-lg-2">
-                    <a href="#features" class="text-decoration-none">
-                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
-                            <div class="icon-shape bg-danger text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                <i class="fas fa-utensils fs-5"></i>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-1 small">Food & Dining</h6>
-                            <span class="text-muted" style="font-size: 0.72rem;">QR Catalogs</span>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-6 col-md-4 col-lg-2">
-                    <a href="{{ route('vendor.taxi.rides') }}" class="text-decoration-none">
-                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
-                            <div class="icon-shape bg-warning text-dark rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                <i class="fas fa-taxi fs-5"></i>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-1 small">Taxi Rides</h6>
-                            <span class="text-muted" style="font-size: 0.72rem;">Book Cab</span>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-6 col-md-4 col-lg-2">
-                    <a href="{{ route('vendor.exchange.rates') }}" class="text-decoration-none">
-                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
-                            <div class="icon-shape bg-success text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                <i class="fas fa-exchange-alt fs-5"></i>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-1 small">Forex Exchange</h6>
-                            <span class="text-muted" style="font-size: 0.72rem;">Daily Rates</span>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-6 col-md-4 col-lg-2">
-                    <a href="{{ route('vendor.guide.bookings') }}" class="text-decoration-none">
-                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
-                            <div class="icon-shape bg-info text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                <i class="fas fa-map-marked-alt fs-5"></i>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-1 small">Tour Guide</h6>
-                            <span class="text-muted" style="font-size: 0.72rem;">Book Guide</span>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-6 col-md-4 col-lg-2">
-                    <a href="{{ route('customer.hub') }}" class="text-decoration-none">
-                        <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 bg-white hover-up">
-                            <div class="icon-shape bg-dark text-white rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                <i class="fas fa-qrcode fs-5"></i>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-1 small">Smart Hub</h6>
-                            <span class="text-muted" style="font-size: 0.72rem;">Scan & Connect</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Main Ad Platform Section -->
-    <div class="container my-5">
-        <div class="row">
-            <div class="col-12">
-                <div class="text-center mb-4">
-                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold"><i class="fas fa-bullhorn me-1"></i> Live Platform Advertisements</span>
-                </div>
-                <div id="homeAdCarousel" class="carousel slide shadow-sm rounded-4 overflow-hidden" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        <div class="carousel-item active text-white p-5" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); min-height: 180px;">
-                            <span class="badge bg-warning text-dark mb-2">Featured Slide Ad 1</span>
-                            <h3 class="fw-bold">Super Saver Restaurant Combo Deals!</h3>
-                            <p class="mb-3 text-white-50">Order food from verified local vendors with exciting seasonal discounts and fast home drop.</p>
-                            <a href="#" class="btn btn-light btn-sm fw-bold text-indigo px-4">Explore Stores</a>
-                        </div>
-                        <div class="carousel-item text-white p-5" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); min-height: 180px;">
-                            <span class="badge bg-warning text-dark mb-2">Featured Slide Ad 2</span>
-                            <h3 class="fw-bold">Get Your Business Digital Menu Online</h3>
-                            <p class="mb-3 text-white-50">Expand your reach instantly to thousands of local buyers in your city with custom catalog codes.</p>
-                            <a href="#" class="btn btn-light btn-sm fw-bold text-success px-4">Register Business</a>
-                        </div>
-                        <div class="carousel-item text-white p-5" style="background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); min-height: 180px;">
-                            <span class="badge bg-dark text-white mb-2">Featured Slide Ad 3</span>
-                            <h3 class="fw-bold">Fastest Local Delivery Service</h3>
-                            <p class="mb-3 text-white-50">Grocery, dairy, electronics, and clothing items delivered securely within 30 minutes.</p>
-                            <a href="#" class="btn btn-light btn-sm fw-bold text-dark px-4">Order Now</a>
-                        </div>
-                    </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#homeAdCarousel" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#homeAdCarousel" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Main Ad Platform Carousel -->
+    @include('partials.welcome.carousel-ads')
 
     <!-- Universal QR Scan Section -->
-    <section class="py-5 bg-white border-top border-bottom">
-        <div class="container">
-            <div class="row align-items-center g-4">
-                <div class="col-md-5 text-center">
-                    <div class="p-3 bg-light rounded-4 d-inline-block border shadow-sm">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode(route('customer.hub')) }}" alt="Tidong Universal QR Code" class="img-fluid rounded">
-                        <p class="mt-2 mb-0 fw-bold text-dark small"><i class="fas fa-camera text-primary me-1"></i> Scan to Access Tidong® Hub</p>
-                    </div>
-                </div>
-                <div class="col-md-7 text-center text-md-start">
-                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold mb-2">Universal Smart Access</span>
-                    <h3 class="fw-bold text-dark mb-3">Scan Any Tidong® QR Code</h3>
-                    <p class="text-muted mb-4">Users can scan this QR code using any smartphone camera to instantly open the platform, browse local store menus, request taxi rides, check live currency exchange rates, or book local tour guides without downloading any application.</p>
-                    <a href="{{ route('customer.hub') }}" class="btn btn-outline-primary rounded-pill px-4 font-weight-bold">
-                        <i class="fas fa-qrcode me-2"></i> Open Smart Hub Directly
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
+    @include('partials.welcome.qr-section')
 
     <!-- Features Section -->
-    <section id="features" class="py-5 bg-light">
-        <div class="container py-4">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold text-dark">Why Everyone Loves Tidong® Platform</h2>
-                <p class="text-muted">Designed for seamless networking, personal branding, and multi-business management</p>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-card p-4 h-100">
-                        <div class="icon-box"><i class="fas fa-id-card"></i></div>
-                        <h4 class="fw-bold h5 mb-3 text-dark">Interactive Digital Visiting Card</h4>
-                        <p class="text-muted small mb-0">Create your powerful digital identity with clickable social links, WhatsApp direct messaging, call buttons, and address links.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card p-4 h-100">
-                        <div class="icon-box"><i class="fas fa-box-open"></i></div>
-                        <h4 class="fw-bold h5 mb-3 text-dark">Smart Catalogs & Product Lists</h4>
-                        <p class="text-muted small mb-0">For shops, vendors, & restaurants: select products/items from the global master, set custom pricing (MRP/Sale), and generate QR codes.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card p-4 h-100">
-                        <div class="icon-box"><i class="fas fa-share-alt"></i></div>
-                        <h4 class="fw-bold h5 mb-3 text-dark">Instant Share & Connect</h4>
-                        <p class="text-muted small mb-0">Share your unique card or business catalog link via WhatsApp or social media with anyone, anywhere without paper hassle.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    @include('partials.welcome.features')
 
-    <!-- Sponsored Ads Section -->
-    <section id="ads-section" class="py-5 bg-white border-top">
-        <div class="container py-4">
-            <div class="text-center mb-4">
-                <h3 class="fw-bold text-dark"><i class="fas fa-ad text-warning me-2"></i> Sponsored Ads & Partner Offers</h3>
-                <p class="text-muted small">Explore featured advertisements from our trusted business partners.</p>
-            </div>
-            <div class="row g-4" id="homeRandomAdContainer">
-                <div class="col-md-4 ad-box">
-                    <div class="card border-0 shadow-sm rounded-4 p-4 text-white h-100" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);">
-                        <span class="badge bg-warning text-dark align-self-start mb-2">Sponsored Ad</span>
-                        <h5 class="fw-bold">Promote Your Business Here</h5>
-                        <p class="small text-white-50 mb-3">Reach thousands of daily active visitors and boost your brand visibility instantly.</p>
-                        <a href="#" class="btn btn-light btn-sm fw-bold w-100 text-indigo mt-auto">Book Ad Space</a>
-                    </div>
-                </div>
-                <div class="col-md-4 ad-box">
-                    <div class="card border-0 shadow-sm rounded-4 p-4 text-white h-100" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
-                        <span class="badge bg-warning text-dark align-self-start mb-2">Special Offer</span>
-                        <h5 class="fw-bold">Special Restaurant Discount</h5>
-                        <p class="small text-white-50 mb-3">Get flat 20% off on your first online digital menu food order today at participating outlets.</p>
-                        <a href="#" class="btn btn-light btn-sm fw-bold w-100 text-primary mt-auto">Order Now</a>
-                    </div>
-                </div>
-                <div class="col-md-4 ad-box">
-                    <div class="card border-0 shadow-sm rounded-4 p-4 text-white h-100" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
-                        <span class="badge bg-warning text-dark align-self-start mb-2">Partner Ad</span>
-                        <h5 class="fw-bold">Local Grocery Delivery</h5>
-                        <p class="small text-white-50 mb-3">Fresh items and daily essentials delivered directly to your doorstep within 30 minutes.</p>
-                        <a href="#" class="btn btn-light btn-sm fw-bold w-100 text-success mt-auto">Explore Store</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Instructions & Guides Cards Grid -->
+    @include('partials.welcome.instructions-grid')
 
-    <!-- Complete Modal Pages (About, Terms, Privacy, Contact) -->
-    
-    <!-- About Us Modal -->
-    <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow rounded-4">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-primary" id="aboutModalLabel"><i class="fas fa-info-circle me-2"></i>About Tidong® Digital</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="lead">Tidong® Digital is an all-in-one digital business ecosystem designed to empower local business owners, service providers, and professionals.</p>
-                    <p class="text-muted">Our mission is to simplify digital interactions by offering one-tap digital visiting cards, instant QR-based catalogs for food and retail, real-time taxi bookings, forex currency conversion updates, and tour guide services—all accessible without downloading any mobile app.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Sponsored Ads & Partner Offers Grid (Sahi naam yahan hai) -->
+    @include('partials.welcome.sponsored-ads')
 
-    <!-- Terms & Conditions Modal -->
-    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow rounded-4">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-dark" id="termsModalLabel"><i class="fas fa-file-contract me-2"></i>Terms & Conditions</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <h6 class="fw-bold">1. Service Usage</h6>
-                    <p class="text-muted small">By accessing Tidong® Digital services, users and partners agree to provide accurate information and refrain from unauthorized activity on the platform.</p>
-                    <h6 class="fw-bold">2. Partner Listings</h6>
-                    <p class="text-muted small">Vendors, driver partners, and tour guides are responsible for maintaining up-to-date catalog items, rates, and availability status.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Modals -->
+    @include('partials.welcome.modals')
 
-    <!-- Privacy Policy Modal -->
-    <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow rounded-4">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-dark" id="privacyModalLabel"><i class="fas fa-user-shield me-2"></i>Privacy Policy</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="text-muted">We value your privacy. Tidong® Marketing Pvt. Ltd. collects minimal user identity details only to facilitate direct WhatsApp connections, booking fulfillment, and account verification. Your personal data is never sold to third-party brokers.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Footer -->
+    @include('partials.welcome.footer')
 
-    <!-- Contact Us Modal -->
-    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow rounded-4">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-primary" id="contactModalLabel"><i class="fas fa-envelope-open-text me-2"></i>Contact Us</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="mb-2"><i class="fas fa-building text-primary me-2"></i> <strong>Tidong Marketing Pvt. Ltd.</strong></p>
-                    <p class="mb-2"><i class="fas fa-phone text-success me-2"></i> +91 96347 59912</p>
-                    <p class="mb-3"><i class="fas fa-envelope text-danger me-2"></i> santoshkaankar@gmail.com</p>
-                    <a href="https://wa.me/919634759912" target="_blank" class="btn btn-success w-100 rounded-pill"><i class="fab fa-whatsapp me-2"></i>Chat on WhatsApp</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer with All Category Links & Guidance Pages -->
-    <footer class="bg-dark text-white pt-5 pb-4">
-        <div class="container text-center text-md-start">
-            <div class="row g-4">
-                <!-- Column 1: Brand & Value Rule -->
-                <div class="col-md-4 col-lg-4">
-                    <h5 class="fw-bold text-primary mb-3">
-                        <i class="fas fa-layer-group me-2"></i>Tidong<span class="text-white">®</span> Digital
-                    </h5>
-                    <p class="small text-slate-300 text-muted lh-base mb-3">
-                        Interactive digital visiting cards, multi-stage affiliate rewards system, and smart digital catalogs for businesses.
-                    </p>
-                    <div class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-bold border border-success border-opacity-25">
-                        <i class="fas fa-coins text-warning me-1"></i> 1 T-Coin = ₹1 INR
-                    </div>
-                </div>
-
-                <!-- Column 2: Affiliate & Guidance Pages -->
-                <div class="col-md-4 col-lg-4">
-                    <h6 class="fw-bold text-warning text-uppercase mb-3" style="letter-spacing: 1px;">
-                        <i class="fas fa-project-diagram me-1"></i> Program & Guidance
-                    </h6>
-                    <ul class="list-unstyled small mb-0 lh-lg">
-                        <li class="mb-1">
-                            <a href="{{ route('pages.affiliate') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Affiliate Program & Stages
-                            </a>
-                        </li>
-                        <li class="mb-1">
-                            <a href="{{ route('pages.luckydrow') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Lucky Draw Bonanza Offer
-                            </a>
-                        </li>
-                        <li class="mb-1">
-                            <a href="{{ route('pages.royalty') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Royalty Program & Leadership
-                            </a>
-                        </li>
-                        <li class="mb-1">
-                            <a href="{{ route('guidance.member') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Member Guidance Guide
-                            </a>
-                        </li>
-                        <li class="mb-1">
-                            <a href="{{ route('guidance.restaurant') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Restaurant & Partner Guidance
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Column 3: Company & Legal Pages -->
-                <div class="col-md-4 col-lg-4">
-                    <h6 class="fw-bold text-warning text-uppercase mb-3" style="letter-spacing: 1px;">
-                        <i class="fas fa-shield-alt me-1"></i> Company & Legal
-                    </h6>
-                    <ul class="list-unstyled small mb-0 lh-lg">
-                        <li class="mb-1">
-                            <a href="{{ route('pages.about') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> About Us
-                            </a>
-                        </li>
-                        <li class="mb-1">
-                            <a href="{{ route('pages.terms') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Terms & Conditions
-                            </a>
-                        </li>
-                        <li class="mb-1">
-                            <a href="{{ route('pages.privacy') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Privacy Policy
-                            </a>
-                        </li>
-                        <li class="mb-1">
-                            <a href="{{ route('pages.contact') }}" class="footer-link">
-                                <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Contact Us
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <hr class="border-secondary my-4">
-
-            <div class="d-flex flex-wrap justify-content-between align-items-center small text-muted">
-                <p class="mb-0">&copy; 2023 - {{ date('Y') }} Tidong Marketing Pvt. Ltd. All rights reserved.</p>
-                <p class="mb-0">Tidong® is a registered trademark.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Page Specific Scripts -->
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var homeCarouselEl = document.getElementById('homeAdCarousel');
-            if(homeCarouselEl) {
-                var homeCarousel = new bootstrap.Carousel(homeCarouselEl, {
-                    interval: 4000,
-                    ride: 'carousel'
-                });
+    document.addEventListener("DOMContentLoaded", function() {
+        // Carousel initialization
+        var homeCarouselEl = document.getElementById('homeAdCarousel');
+        if(homeCarouselEl) {
+            var homeCarousel = new bootstrap.Carousel(homeCarouselEl, {
+                interval: 4000,
+                ride: 'carousel'
+            });
 
-                let savedSlide = localStorage.getItem('homeActiveAdSlideIndex');
-                if (savedSlide !== null) {
-                    homeCarousel.to(parseInt(savedSlide));
-                }
-
-                homeCarouselEl.addEventListener('slid.bs.carousel', function (e) {
-                    localStorage.setItem('homeActiveAdSlideIndex', e.to);
-                });
+            let savedSlide = localStorage.getItem('homeActiveAdSlideIndex');
+            if (savedSlide !== null) {
+                homeCarousel.to(parseInt(savedSlide));
             }
 
-            let container = document.getElementById('homeRandomAdContainer');
-            if(container) {
-                let boxes = Array.from(container.getElementsByClassName('ad-box'));
-                boxes.sort(() => Math.random() - 0.5);
-                boxes.forEach(box => container.appendChild(box));
-            }
-        });
+            homeCarouselEl.addEventListener('slid.bs.carousel', function (e) {
+                localStorage.setItem('homeActiveAdSlideIndex', e.to);
+            });
+        }
+
+        // Random Ad Box Shuffler
+        let container = document.getElementById('homeRandomAdContainer');
+        if(container) {
+            let boxes = Array.from(container.getElementsByClassName('ad-box'));
+            boxes.sort(() => Math.random() - 0.5);
+            boxes.forEach(box => container.appendChild(box));
+        }
+    });
     </script>
 </body>
 </html>

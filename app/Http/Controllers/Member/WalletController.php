@@ -13,14 +13,14 @@ class WalletController extends Controller
     {
         $userId = Auth::id();
 
-        // Check if wallet exists, if not create one with 4,540,000 T-Coins
+        // Check if wallet exists, if not create one with initial T-Coins
         $wallet = DB::table('wallets')->where('user_id', $userId)->first();
         if (!$wallet) {
             DB::table('wallets')->insert([
                 'user_id'                  => $userId,
                 'real_balance'             => 0.00,
-                'non_withdrawable_balance' => 0.00,
-                't_coins'                  => 4540000.00, // Initial Registration T-Coins
+                'non_withdrawable_balance' => 0.00, // Reserved Reward Wallet
+                't_coins'                  => 4540000.00,
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);

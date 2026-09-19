@@ -55,7 +55,7 @@ if (!function_exists('format_indian_currency')) {
                         <span class="badge bg-dark text-warning px-2 py-1"><i class="fas fa-hourglass-half me-1"></i> Pending Unlock</span>
                     </div>
                     <h2 class="fw-bold mb-3">₹ {{ format_indian_currency($wallet->non_withdrawable_balance ?? 0) }}</h2>
-                    <span class="small opacity-90"><i class="fas fa-shield-alt me-1"></i> Guaranteed reward balance (Unlocked upon stage completion)</span>
+                    <span class="small opacity-90"><i class="fas fa-shield-alt me-1"></i> Guaranteed reward balance (Negative balance allowed until T-Coins convert)</span>
                 </div>
             </div>
         </div>
@@ -87,21 +87,21 @@ if (!function_exists('format_indian_currency')) {
         </div>
     </div>
 
-    <!-- Rules Box (English Transformed + Transaction Criteria) -->
+    <!-- Rules Box (Updated to Reserve Reward Deduction Rule) -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 bg-light border-start border-4 border-warning">
         <div class="card-body p-4">
-            <h5 class="fw-bold text-dark mb-3"><i class="fas fa-info-circle text-warning me-2"></i> Important Rules: T-Coin Decay, TDS & Limits</h5>
+            <h5 class="fw-bold text-dark mb-3"><i class="fas fa-info-circle text-warning me-2"></i> Important Rules: Reserve Reward Deduction, TDS & Limits</h5>
             <div class="row g-4 small text-dark">
                 <div class="col-md-4">
                     <div class="p-3 bg-white rounded-3 border h-100">
-                        <h6 class="fw-bold text-primary"><i class="fas fa-fire me-1"></i> Daily T-Coin Decay Rule</h6>
-                        <p class="mb-1">The faster you complete 14 stages, the lower your daily deduction will be:</p>
+                        <h6 class="fw-bold text-primary"><i class="fas fa-fire me-1"></i> Daily Reserve Reward Deduction Rule</h6>
+                        <p class="mb-1">The faster you complete 14 stages, the lower your daily negative deduction from Reserved Wallet will be:</p>
                         <ul class="mb-0 ps-3">
-                            <li><strong>Stage 0:</strong> 14 T-Coins / day</li>
-                            <li><strong>Stage 1:</strong> 13 T-Coins / day</li>
-                            <li><strong>Stage 2:</strong> 12 T-Coins / day</li>
-                            <li><strong>Stage 10:</strong> 4 T-Coins / day</li>
-                            <li><strong>Stage 14:</strong> 0 T-Coins / day</li>
+                            <li><strong>Stage 0:</strong> ₹14 / day</li>
+                            <li><strong>Stage 1:</strong> ₹13 / day</li>
+                            <li><strong>Stage 2:</strong> ₹12 / day</li>
+                            <li><strong>Stage 10:</strong> ₹4 / day</li>
+                            <li><strong>Stage 14:</strong> ₹0 / day</li>
                         </ul>
                     </div>
                 </div>

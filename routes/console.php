@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schedule;
 use App\Models\Payment\VendorWallet;
 use App\Models\Payment\WalletTransaction;
 use App\Models\Member;
+use App\Models\Wallet;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -39,23 +40,24 @@ Schedule::call(function () {
     }
 
     // ==========================================
-    // 2. MEMBER DAILY STAGE-WISE DEDUCTIONS (14 - stages, min ₹1, T Coin only)
+    // 2. MEMBER DAILY STAGE-WISE DEDUCTIONS (Reserved Reward Wallet Negative Balance Logic)
     // ==========================================
     $members = Member::all();
     
     foreach ($members as $member) {
-        $rsWalletBalance = $member->rs_wallet_balance ?? 0;
-        if ($rsWalletBalance > 0) {
-            continue; 
-        }
-
         $stages = $member->stages ?? 0;
+        // Formula: 14 - stages (minimum ₹1 per day cutting)
         $deductRs = max(1, 14 - $stages); 
 
-        $tCoinBalance = $member->t_coin_balance ?? 0;
-        if ($tCoinBalance >= $deductRs) {
-            $member->decrement('t_coin_balance', $deductRs);
-        }
+        // Member ka wallet fetch karein ya create karein
+        $wallet = Wallet::firstOrCreate(
+            ['user_id' => $member->id],
+            ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 4540000.00]
+        );
+
+        // Reserved Reward Wallet (non_withdrawable_balance) se daily deduction hogi
+        // Yeh balance automatically negative (-ve) me jata rahega jab tak T-Coins convert hokar nahi aate
+        $wallet->decrement('non_withdrawable_balance', $deductRs);
     }
 
     // ==========================================
@@ -64,7 +66,6 @@ Schedule::call(function () {
     $royaltyEligibleMembers = Member::where('stages', '>=', 14)->get();
     
     foreach ($royaltyEligibleMembers as $member) {
-        // Agar royalty abhi tak calculate nahi hui hai toh pehle calculate karke save karein
         if (!$member->royalty_active) {
             $joiningDate = \Carbon\Carbon::parse($member->created_at);
             $baseJoinDate = \Carbon\Carbon::create(2026, 9, 1);
@@ -83,21 +84,8 @@ Schedule::call(function () {
             ]);
         }
 
-        // Har mahine ki 1 tareeq ko auto wallet mein add karne ka logic
         if (now()->day === 1 && $member->monthly_royalty_amount > 0) {
-            // Member ke RS Wallet (sales/main wallet) mein amount increment karein
             $member->increment('rs_wallet_balance', $member->monthly_royalty_amount);
-
-            // Agar member ki wallet transaction table ho toh yahan record bhi bana sakte hain
-            /*
-            MemberWalletTransaction::create([
-                'member_id' => $member->id,
-                'type' => 'credit',
-                'amount' => $member->monthly_royalty_amount,
-                'description' => 'Monthly Lifetime Royalty Credited - ' . now()->format('F Y'),
-                'status' => 'success'
-            ]);
-            */
         }
     }
 
