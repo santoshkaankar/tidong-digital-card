@@ -11,8 +11,15 @@
             <span class="fw-bold fs-6 text-dark d-lg-none">Member Portal</span>
         </div>
 
-        <!-- Right: Profile Dropdown -->
+        <!-- Right: QR Scanner Shortcut Icon & Profile Dropdown -->
         <div class="d-flex align-items-center gap-2 ms-auto">
+            
+        <!-- Header QR Scanner Modal Trigger Button -->
+<button type="button" class="btn btn-light rounded-circle p-2 d-flex align-items-center justify-content-center text-dark shadow-sm me-2 border-0" style="width: 38px; height: 38px;" data-bs-toggle="modal" data-bs-target="#qrScannerModal" title="Scan QR Code">
+    <i class="fas fa-qrcode fs-5 text-primary"></i>
+</button>
+             
+            <!-- Profile Dropdown -->
             <div class="dropdown ms-2">
                 <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-2 border-0 bg-transparent" type="button" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4f46e5&color=fff" class="rounded-circle" width="34" height="34" alt="Profile">

@@ -8,6 +8,16 @@
             <a href="{{ url('/member/dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
         </li>
 
+        <!-- 1. Tidong Super Hub Menu Link -->
+        <li class="{{ request()->is('hub') ? 'active' : '' }}">
+            <a href="{{ url('/hub') }}"><i class="fas fa-qrcode text-primary"></i> Tidong Super Hub</a>
+        </li>
+
+        <!-- 2. QR Scanner Menu Link -->
+        <li>
+            <a href="{{ url('/member/dashboard#qr-section') }}"><i class="fas fa-camera text-success"></i> QR Code Scanner</a>
+        </li>
+
         <!-- My Profile & Master Details -->
         <li class="{{ request()->is('member/profile*') ? 'active' : '' }}">
             <a href="{{ url('/member/profile') }}"><i class="fas fa-user-circle"></i> My Profile & Stats</a>
@@ -146,9 +156,9 @@
                             <i class="fab fa-x-twitter me-1"></i> Twitter
                         </a>
                     </div>
-                    <!-- Instagram (Direct copy guidance / Profile link note since IG doesn't support direct web link sharing via URL API) -->
+                    <!-- Instagram -->
                     <div class="col-4">
-                        <button type="button" onclick="copyModalReferralLink(); alert('Link copied! You can now paste it in your Instagram bio or story.');" class="btn w-100 btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center text-white" style="background: linear-num(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%,#d6249f 60%,#285AEB 90%);">
+                        <button type="button" onclick="copyModalReferralLink(); alert('Link copied! You can now paste it in your Instagram bio or story.');" class="btn w-100 btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center text-white" style="background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%,#d6249f 60%,#285AEB 90%);">
                             <i class="fab fa-instagram me-1"></i> Instagram
                         </button>
                     </div>

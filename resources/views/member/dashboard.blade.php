@@ -193,6 +193,8 @@
 
 </div>
 
+
+
 <!-- Modal for Profile Photo Update -->
 <div class="modal fade" id="updateAvatarModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
