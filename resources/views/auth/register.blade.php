@@ -101,9 +101,9 @@
                         <option value="travel_agency">Travel & Tour Operator</option>
                     </optgroup>
 
-                    <!-- Merged Retail & Shopping Option -->
-                    <optgroup label="Retail & Shopping">
-                        <option value="retail">Retail & Shopping Store (General / Fashion / Grocery / Emporium)</option>
+                    <!-- Shopping & E-Commerce Option (Retail removed) -->
+                    <optgroup label="Shopping & E-Commerce">
+                        <option value="shopping">Shopping & Mega Store (General / Fashion / Grocery / Multi-vendor)</option>
                     </optgroup>
 
                     <optgroup label="Health, Wellness & Beauty">
@@ -200,7 +200,7 @@
                 businessSelect.disabled = false;
                 businessSelect.setAttribute('required', 'required');
                 if (!businessSelect.value) {
-                    businessSelect.value = 'retail';
+                    businessSelect.value = 'shopping';
                 }
                 handleBusinessTypeChange(businessSelect.value);
             }

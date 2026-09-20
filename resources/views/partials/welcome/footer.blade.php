@@ -1,3 +1,24 @@
+<!-- Welcome Footer AI Schema & Semantic Markup -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Tidong Marketing Private Limited",
+  "url": "https://tidong.in",
+  "logo": "https://tidong.in/logo.png",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Agra",
+    "addressRegion": "Uttar Pradesh",
+    "addressCountry": "IN"
+  },
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "Customer Support",
+    "url": "https://tidong.in/contact"
+  }
+}
+</script>
 <footer class="bg-dark text-white pt-5 pb-4">
     <div class="container text-center text-md-start">
         <div class="row g-4">

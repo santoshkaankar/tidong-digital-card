@@ -13,6 +13,7 @@
         .section-title { color: #0f172a; border-left: 4px solid #2563eb; padding-left: 12px; margin-top: 30px; font-weight: 700; }
         .legal-box { background: #fffbe3; border: 1px solid #fde047; padding: 20px; border-radius: 12px; font-weight: 600; color: #713f12; }
     </style>
+    @include('partials.ai-seo-head')
 </head>
 <body>
 

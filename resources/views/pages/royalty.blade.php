@@ -14,6 +14,7 @@
         .benefit-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; height: 100%; transition: 0.3s; }
         .benefit-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
     </style>
+    @include('partials.ai-seo-head')
 </head>
 <body>
 

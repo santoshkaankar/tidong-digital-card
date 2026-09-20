@@ -169,9 +169,9 @@ class AuthController extends Controller
             return Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : view('employee.dashboard');
         }
 
-        // Strict Check for Retail Dashboard
-        if ($user->business_type === 'retail') {
-            return Route::has('retail.dashboard') ? redirect()->route('retail.dashboard') : redirect('/retail/dashboard');
+        // Strict Check for Shopping Dashboard (Retail replaced)
+        if ($user->business_type === 'shopping') {
+            return Route::has('shopping.shop-dashboard') ? redirect()->route('shopping.shop-dashboard') : view('shopping.shop-dashboard');
         }
 
         if (in_array($role, ['business', 'vendor'])) {

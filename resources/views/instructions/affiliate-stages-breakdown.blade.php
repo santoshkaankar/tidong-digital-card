@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@include('partials.seo-schema')
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">

@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             TaxSeeder::class,
             AffiliateStageSeeder::class,
             RetailProductSeeder::class,
+            ShoppingCatalogSeeder::class,
         ]);
     }
 }

@@ -1,42 +1,58 @@
-<header class="top-navbar">
-    <div class="search-bar">
-        <i class="bi bi-search"></i>
-        <input type="text" class="form-control" placeholder="Search orders, menu, or tables...">
-    </div>
+<!-- File Path: resources/views/vendor/restaurant/partials/header.blade.php -->
 
-    <div class="d-flex align-items-center gap-3">
-        <!-- Language Switcher -->
-        @include('partials.language_switcher')
-
-        <!-- Theme Switcher -->
-        @include('partials.theme_switcher')
-
-        <button class="btn btn-light rounded-circle position-relative p-2" style="width: 40px; height: 40px;">
-            <i class="bi bi-bell text-secondary"></i>
-            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-        </button>
-
-        <div class="vr mx-1" style="height: 24px;"></div>
-
-        <!-- User Profile Dropdown (FIXED TEXT COLOR) -->
-        <div class="dropdown">
-            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle gap-2" data-bs-toggle="dropdown" style="color: var(--text-main);">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4f46e5&color=fff" class="rounded-circle" width="38" height="38" alt="Profile">
-                <div class="d-none d-sm-block text-start">
-                    <span class="fw-bold d-block lh-1" style="font-size: 0.875rem; color: var(--text-main);">{{ Auth::user()->name }}</span>
-                    <small style="font-size: 0.75rem; color: var(--text-muted);">Manager</small>
-                </div>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
-                <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i> Settings</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i> Logout</button>
-                    </form>
-                </li>
-            </ul>
+<header class="navbar navbar-expand bg-white border-bottom sticky-top px-3 py-2" style="z-index: 1020;">
+    <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
+        
+        <!-- Left: Mobile Toggle Button & Title -->
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-light d-lg-none border-0 p-2" type="button" id="restaurantSidebarToggle">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <span class="fw-bold fs-6 text-dark d-lg-none">Restaurant Hub</span>
         </div>
+
+        <!-- Right: Profile Dropdown -->
+        <div class="d-flex align-items-center gap-2 ms-auto">
+            <div class="dropdown ms-2">
+                <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-2 border-0 bg-transparent" type="button" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4f46e5&color=fff" class="rounded-circle" width="34" height="34" alt="Profile">
+                    <span class="fw-semibold small text-dark d-none d-md-inline">{{ Auth::user()->name }}</span>
+                    <i class="bi bi-chevron-down text-muted small ms-1"></i>
+                </button>
+                
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" aria-labelledby="userProfileDropdown">
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            <i class="bi bi-gear me-2"></i> Settings
+                        </a>
+                    </li>
+                    
+                    <li><hr class="dropdown-divider"></li>
+
+                    <!-- 1. Language Switcher Partial -->
+                    @if(View::exists('vendor.restaurant.partials.language_switcher'))
+                        @include('vendor.restaurant.partials.language_switcher')
+                    @endif
+
+                    <li><hr class="dropdown-divider"></li>
+
+                    <!-- 2. Theme Switcher Partial -->
+                    @if(View::exists('vendor.restaurant.partials.theme_switcher'))
+                        @include('vendor.restaurant.partials.theme_switcher')
+                    @endif
+                    
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i> Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 </header>

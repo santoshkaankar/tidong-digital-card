@@ -102,6 +102,7 @@ require __DIR__ . '/tourist_guide.php';
 require __DIR__ . '/restaurant.php';
 require __DIR__ . '/taxi.php';
 require __DIR__ .'/retail.php';
+require __DIR__ .'/shopping.php';
 /*
 |--------------------------------------------------------------------------
 | 6. Public Guest Orders & Hub Routes
