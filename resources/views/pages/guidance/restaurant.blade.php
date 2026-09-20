@@ -14,7 +14,7 @@
         .step-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
     </style>
 </head>
-    @include('partials.ai-seo-head')
+    @include('partials.welcome.ai-seo-head')
 <body>
 
     <div class="guide-header">

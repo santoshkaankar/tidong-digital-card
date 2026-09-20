@@ -25,7 +25,7 @@
         .step-box { background: #f8fafc; border-radius: 14px; padding: 20px; transition: transform 0.3s ease; border: 1px solid #e2e8f0; }
         .step-box:hover { transform: translateY(-5px); border-color: #7c3aed; }
     </style>
-    @include('partials.ai-seo-head')
+    @include('partials.welcome.ai-seo-head')
 </head>
 <body>
 

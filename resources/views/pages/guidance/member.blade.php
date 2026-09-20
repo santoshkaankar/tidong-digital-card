@@ -13,7 +13,7 @@
         .section-title { color: #0f172a; border-left: 4px solid #2563eb; padding-left: 12px; margin-top: 30px; font-weight: 700; margin-bottom: 15px; }
         .step-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
     </style>
-    @include('partials.ai-seo-head')
+    @include('partials.welcome.ai-seo-head')
 </head>
 <body>
 

@@ -11,7 +11,7 @@
         .office-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 25px; transition: 0.3s; }
         .office-card:hover { border-color: #2563eb; transform: translateY(-4px); }
     </style>
-    @include('partials.ai-seo-head')
+    @include('partials.welcome.ai-seo-head')
 </head>
 <body>
 

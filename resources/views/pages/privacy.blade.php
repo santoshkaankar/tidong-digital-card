@@ -11,7 +11,7 @@
         .privacy-header { background: #0f172a; color: #fff; padding: 50px 0; border-bottom: 4px solid #10b981; }
         .privacy-card { background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 40px; }
     </style>
-    @include('partials.ai-seo-head')
+    @include('partials.welcome.ai-seo-head')
 </head>
 <body>
 

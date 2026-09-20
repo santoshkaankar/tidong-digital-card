@@ -12,7 +12,7 @@
         .feature-box { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 25px; transition: 0.3s; }
         .feature-box:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
     </style>
-    @include('partials.ai-seo-head')
+    @include('partials.welcome.ai-seo-head')
 </head>
 <body>
 
