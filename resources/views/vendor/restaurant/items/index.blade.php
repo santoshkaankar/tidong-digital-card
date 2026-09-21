@@ -62,8 +62,13 @@
                     <i class="bi bi-plus-lg"></i>
                     <span>Add New Custom Item</span>
                 </button>
+                <a href="{{ route('vendor.restaurant.weekly-menu.index') }}" class="btn btn-success rounded-3 px-3 py-2 fw-semibold d-flex align-items-center gap-2">
+    <i class="bi bi-box-seam"></i>
+    <span>Add Tiffin Item</span>
+</a>
             </div>
         </div>
+        
 
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show border-0 rounded-3 mb-4" role="alert">
@@ -185,6 +190,7 @@
                             @endforeach
                         @endif
 
+                        
                         @if($items->isEmpty() && (empty($customItems) || $customItems->isEmpty()))
                             <tr>
                                 <td colspan="8" class="text-center py-5 text-muted">
@@ -268,7 +274,7 @@
                 <h5 class="modal-title fw-bold" id="addCustomModalLabel"><i class="bi bi-plus-circle-fill text-primary me-2"></i>Add New Custom Item</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('vendor.restaurant.items.store-custom') }}" method="POST">
+            <form action="{{ route('vendor.restaurant.items.storecustom') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
                     <div class="mb-3">

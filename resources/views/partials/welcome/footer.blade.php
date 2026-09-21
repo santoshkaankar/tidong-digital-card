@@ -25,6 +25,11 @@
                             <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Affiliate Program & Stages
                         </a>
                     </li>
+                     <li class="mb-1">
+                        <a href="{{ route('pages.tabs-business') }}" class="text-light text-decoration-none opacity-75">
+                            <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> TABS Affiliate
+                        </a>
+                    </li>
                     <li class="mb-1">
                         <a href="{{ route('pages.luckydrow') }}" class="text-light text-decoration-none opacity-75">
                             <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Lucky Draw Bonanza Offer

@@ -10,7 +10,7 @@
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 p-4">
-        <form action="{{ route('vendor.restaurant.items.store_custom') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('vendor.restaurant.items.create_custom') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <div class="row g-3">

@@ -183,10 +183,20 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
-                    <i class="bi bi-book"></i> Create Catalog / Menu Card
-                </a>
-            </li>
+    <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
+        <i class="bi bi-book"></i> Create Catalog / Menu Card
+    </a>
+</li>
+<li>
+    <a href="{{ route('vendor.restaurant.weekly-menu.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.weekly-menu.*') ? 'active' : '' }}">
+        <i class="bi bi-calendar-week"></i> Create Tiffin Menu
+    </a>
+</li>
+<li>
+    <a href="{{ route('vendor.restaurant.proceed-tiffin.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.*') ? 'active' : '' }}">
+        <i class="bi bi-calendar-week"></i> Proceed Tiffin
+    </a>
+</li>
 
             <li class="menu-label mt-2">Operations & Tables</li>
             <li>

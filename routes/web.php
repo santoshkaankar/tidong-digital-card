@@ -129,6 +129,7 @@ Route::view('/contact-us', 'pages.contact')->name('pages.contact');
 Route::view('/affiliate-program', 'pages.affiliate')->name('pages.affiliate');
 Route::view('/royalty-program', 'pages.royalty')->name('pages.royalty');
 Route::view('/luckydrow', 'pages.luckydrow')->name('pages.luckydrow');
+Route::view('/tabs-business-system', 'pages.tabs-business')->name('pages.tabs-business');
 /*
 |--------------------------------------------------------------------------
 | 8. Guidance Pages

@@ -1,3 +1,33 @@
 aapko sayd yad nahi ki humari kya bat hui thi starting me aap bhatak gaye h mene btaya tha ye admin dashboard nahi h admin dashboard alag hai ye vendor dashboard h aur har tarah k vendor ka dashboard alag hai jaise restaurant ek alag vendor type hua taxi alag hua saloon alag hua emporium alag hua is tarah bahut sare tarah k vendor h ab manlijiye 10 restaurant 8 shoping store 5 saloon is tarah apni website par register h to restaurant ka apna dashboard taxi ka apna dashboard shoping ka apna dashboard ye hue vendor dashboard admin dashboard ek hi hoga jha se global website ko manage kiya jayega customer dashboard bhi ek hi hoga jisme sabhi tarah ki suvidhayen milengi customer k liye hub bnaya gya h jisme customer jis tarah k vendor se chahe khariddari kar sakta hhub se apne pasand ka work select karega usse sambandhit vendor aur item use ussi hub me mil jayenge
 dekho hum catagories subcatagoryes aur unit of mesure tax brand varirient aur products aur deivery address bagera ke liye alag alag global form bnate h jisse global me save honge admin hand par maintain honge vendor select karenge aur jarurat padne par naye item add karenge jo ki pahle global me save honge uske bad global se vendor import karega jaise abhi restaurant me hota hai
 dekho hum catagories subcatagoryes aur unit of mesure tax brand varirient aur products aur deivery address bagera ke liye alag alag global form bnate h jisse global me save honge admin hand par maintain honge vendor select karenge aur jarurat padne par naye item add karenge jo ki pahle global me save honge uske bad global se vendor import karega jaise abhi restaurant me hota hai ye restaurant ka dashboard h dusra pos esa pos shopping me bhi chahiyeesi order history bhi chahiye is tarah catagory select chahiyeis tarah custom item chahiye fied shopping k tarike se jyada chahiye is tarah select item chahiye global se select karne ko select item me create item global k liye h isse create kiya gya item global me save hoga aur pahle wala custom item vendor ka self item hoga usko vendor jo create karega usi k use me rahega use gobal tak nahi bhejna h isi tarah select sub catagory select unit of measure select brand bagera ki jarurat nahi h vo to item create me dropdown se direct global se uth jayengi jin catagory me shopping stor work karega uki catagory select karega hi usi k hisab se sub aur child catagory uth kar ayengiiske alawa shoppng cart wishlist bagera sab kuchh aap aur bnawayen pahle ye sab setup karte h admin se start karte h
+
+
+
+Meal Type Selection & Days Mapping:
+
+User pehle Meal Type (jaise Lunch ya Dinner) select/toggle karega.
+
+Uske baad us meal type ke andar ke Days (jaise Sunday, Monday, Tuesday...) khulenge aur user unhe select karega.
+
+Agar user ne Lunch select kiya hai, toh jab tak uske saare items hata nahi diye jaate (yani agar ek bhi item bacha hai), tab tak Lunch wahan rahega. Matlab items ke hone/na hone ke hisab se meal/days active rahenge.
+
+Combined Order Creation:
+
+Saare selected meals aur days ko milakar (combine karke) ek single final Order banega.
+
+Duration / Plan & Date Selection Options:
+
+Order final hone ke baad user ke paas subscription ya duration select karne ke options honge:
+
+Ek din ka chahiye (Single Day): Toh user sirf ek specific date select karega ki kis din tiffin chahiye.
+
+Full Week: Toh user start aur end date (From - To) select karega.
+
+Full Month: Usme bhi user date range (From - To) select karega.
+
+Custom Date: Ek alag option hoga lambe time ke liye jisme user apni marzi ki range (From - To) select kar sakega.
+
+
+
+

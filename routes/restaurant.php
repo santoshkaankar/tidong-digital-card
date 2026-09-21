@@ -14,24 +14,34 @@ use App\Http\Controllers\Restaurant\KitchenOrderController;
 use App\Http\Controllers\Restaurant\CompletedOrderController;
 use App\Http\Controllers\Restaurant\OrderCashController;
 use App\Http\Controllers\Restaurant\CustomItemController;
+use App\Http\Controllers\Restaurant\TiffinCatalogController;
+use App\Http\Controllers\Restaurant\ProceedTiffinController;
+
 
 /*
 |--------------------------------------------------------------------------
 | Vendor Panel Routes (Dashboard, Menu, POS, Orders)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('vendor.restaurant.')->group(function () {
+    Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('vendor.restaurant.')->group(function () {
     // Dashboard Only
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Menu Categories
     Route::resource('categories', CategoryController::class);
 
-    // Food Items
+    /* -------------------------------------------------
+     * Food Items & Custom Items (Static routes sabse upar)
+     * ------------------------------------------------- */
+    Route::get('/items/create-custom', [CustomItemController::class, 'create'])->name('items.create_custom');
+    Route::post('/items/store-custom', [CustomItemController::class, 'store'])->name('items.storecustom');
+    Route::delete('/items/custom/{id}', [CustomItemController::class, 'destroy'])->name('custom-items.destroy');
+    
     Route::post('/items/select-global', [ItemController::class, 'selectGlobalItem'])->name('items.select-global');
-    Route::post('/items/store-custom', [ItemController::class, 'storeCustomItem'])->name('items.store-custom');
-    Route::resource('items', ItemController::class);
     Route::post('/items/{id}/toggle-status', [ItemController::class, 'toggleStatus'])->name('items.toggle-status');
+    
+    // Resource route ab niche rahega taaki upar ke static URLs clash na karein
+    Route::resource('items', ItemController::class);
 
     // Menu Card / Catalog
     Route::get('/menu-card', [MenuCardController::class, 'index'])->name('menu-card.index');
@@ -39,6 +49,24 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
     Route::put('/menu-card/{id}', [MenuCardController::class, 'update'])->name('menu-card.update');
     Route::delete('/menu-card/{id}', [MenuCardController::class, 'destroy'])->name('menu-card.destroy');
     Route::post('/menu-card/{id}/copy', [MenuCardController::class, 'copy'])->name('menu-card.copy');
+
+    // Tiffin Menu Routes
+    Route::get('/weekly-menu', [TiffinCatalogController::class, 'index'])->name('weekly-menu.index');
+    Route::post('/weekly-menu', [TiffinCatalogController::class, 'store'])->name('weekly-menu.store');
+    Route::post('/weekly-menu/store', [TiffinCatalogController::class, 'store']); // <-- Yeh line extra add kar lo taaki 404 na aaye
+    Route::get('/weekly-menu/{id}', [TiffinCatalogController::class, 'show'])->name('weekly-menu.show');
+    Route::get('/weekly-menu/{id}/edit', [TiffinCatalogController::class, 'edit'])->name('weekly-menu.edit');
+    Route::put('/weekly-menu/{id}', [TiffinCatalogController::class, 'update'])->name('weekly-menu.update');
+    Route::delete('/weekly-menu/{id}', [TiffinCatalogController::class, 'destroy'])->name('weekly-menu.destroy');
+
+    // Proceed Tiffin Routes
+    Route::get('proceed-tiffin', [ProceedTiffinController::class, 'index'])->name('proceed-tiffin.index');
+    Route::post('/proceed-tiffin', [TiffinCatalogController::class, 'store'])->name('proceed-tiffin.store');
+    Route::post('/proceed-tiffin/store', [TiffinCatalogController::class, 'store']); // <-- Yeh line extra add kar lo taaki 404 na aaye
+    Route::get('/proceed-tiffin/{id}', [TiffinCatalogController::class, 'show'])->name('proceed-tiffin.show');
+    Route::get('/proceed-tiffin/{id}/edit', [TiffinCatalogController::class, 'edit'])->name('proceed-tiffin.edit');
+    Route::put('/proceed-tiffin/{id}', [TiffinCatalogController::class, 'update'])->name('proceed-tiffin.update');
+    Route::delete('/proceed-tiffin/{id}', [TiffinCatalogController::class, 'destroy'])->name('proceed-tiffin.destroy');
 
     // Dining Tables & QR Codes
     Route::resource('tables', TableController::class);
@@ -54,6 +82,7 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
     Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
     Route::put('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
     Route::get('/orders/{id}/print', [OrderController::class, 'printReceipt'])->name('orders.print');
+    Route::get('/orders/{id}/receipt', [OrderController::class, 'printReceipt'])->name('orders.receipt');
 });
 
 // Alias Route mapping for compatibility with vendor.pos.store JS fetch request
@@ -71,6 +100,7 @@ Route::prefix('menu')->name('customer.restaurant.')->group(function () {
     Route::post('/table/{token}/call-waiter', [CustomerRestaurantController::class, 'callWaiter'])->name('call_waiter');
     Route::post('/table/{token}/request-payment', [CustomerRestaurantController::class, 'requestPayment'])->name('payment.request');
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -96,21 +126,7 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
 
     // Completed Orders Log Route
     Route::get('/completed-orders', [CompletedOrderController::class, 'index'])->name('completed_orders.index');
-});
 
-// Dedicated Route for Cash Requests
-Route::middleware(['auth'])->prefix('vendor/restaurant')->name('vendor.restaurant.')->group(function () {
+    // Cash Requests
     Route::post('/cash-call/resolve/{id}', [OrderCashController::class, 'resolve'])->name('cash_call.resolve');
 });
-
-Route::get('/vendor/restaurant/orders/{id}/receipt', [App\Http\Controllers\Restaurant\OrderController::class, 'printReceipt'])
-    ->name('vendor.restaurant.orders.receipt');
-
-    Route::get('/restaurant/items/create-custom', [App\Http\Controllers\Restaurant\ItemController::class, 'createCustomItem'])->name('vendor.restaurant.items.create_custom');
-Route::post('/restaurant/items/store-custom', [App\Http\Controllers\Restaurant\ItemController::class, 'storeCustomItem'])->name('vendor.restaurant.items.store_custom');
-
-
-
-Route::get('/restaurant/items/create-custom', [CustomItemController::class, 'create'])->name('vendor.restaurant.items.create_custom');
-Route::post('/restaurant/items/store-custom', [CustomItemController::class, 'store'])->name('vendor.restaurant.items.store_custom');
-Route::delete('/restaurant/items/custom/{id}', [CustomItemController::class, 'destroy'])->name('vendor.restaurant.custom-items.destroy');
