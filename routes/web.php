@@ -9,6 +9,7 @@ use App\Http\Controllers\Vendor\CatalogController;
 use App\Http\Controllers\Customer\HubController;
 use App\Http\Middleware\DeviceIdentityMiddleware;
 use Illuminate\Support\Facades\View;
+use App\Http\Controllers\Restaurant\ProceedTiffinController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +36,9 @@ Route::get('/instruction/{slug}', function ($slug) {
     }
     abort(404);
 })->name('instruction.show');
+
+
+Route::get('/vendor/restaurant/customer-lookup', [ProceedTiffinController::class, 'customerLookup'])->name('vendor.restaurant.customer-lookup');
 
 /*
 |--------------------------------------------------------------------------

@@ -59,15 +59,13 @@ use App\Http\Controllers\Restaurant\ProceedTiffinController;
     Route::put('/weekly-menu/{id}', [TiffinCatalogController::class, 'update'])->name('weekly-menu.update');
     Route::delete('/weekly-menu/{id}', [TiffinCatalogController::class, 'destroy'])->name('weekly-menu.destroy');
 
-    // Proceed Tiffin Routes
+    // Proceed Tiffin Routes (Static routes pehle, dynamic route {id} sabse baad mein)
     Route::get('proceed-tiffin', [ProceedTiffinController::class, 'index'])->name('proceed-tiffin.index');
-    Route::post('/proceed-tiffin', [TiffinCatalogController::class, 'store'])->name('proceed-tiffin.store');
-    Route::post('/proceed-tiffin/store', [TiffinCatalogController::class, 'store']); // <-- Yeh line extra add kar lo taaki 404 na aaye
-    Route::get('/proceed-tiffin/{id}', [TiffinCatalogController::class, 'show'])->name('proceed-tiffin.show');
-    Route::get('/proceed-tiffin/{id}/edit', [TiffinCatalogController::class, 'edit'])->name('proceed-tiffin.edit');
-    Route::put('/proceed-tiffin/{id}', [TiffinCatalogController::class, 'update'])->name('proceed-tiffin.update');
-    Route::delete('/proceed-tiffin/{id}', [TiffinCatalogController::class, 'destroy'])->name('proceed-tiffin.destroy');
-
+    Route::get('proceed-tiffin/list', [ProceedTiffinController::class, 'listSaved'])->name('proceed-tiffin.list');
+    Route::get('proceed-tiffin/schedule', [ProceedTiffinController::class, 'scheduleView'])->name('proceed-tiffin.schedule');
+    Route::post('/proceed-tiffin', [ProceedTiffinController::class, 'store'])->name('proceed-tiffin.store');
+    Route::get('/proceed-tiffin/{id}', [ProceedTiffinController::class, 'show'])->name('proceed-tiffin.show');
+    
     // Dining Tables & QR Codes
     Route::resource('tables', TableController::class);
 

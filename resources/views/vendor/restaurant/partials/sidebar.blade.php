@@ -193,8 +193,13 @@
     </a>
 </li>
 <li>
-    <a href="{{ route('vendor.restaurant.proceed-tiffin.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.*') ? 'active' : '' }}">
-        <i class="bi bi-calendar-week"></i> Proceed Tiffin
+    <a href="{{ route('vendor.restaurant.proceed-tiffin.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.index') ? 'active' : '' }}">
+        <i class="bi bi-calendar-plus"></i> Proceed Tiffin Order
+    </a>
+</li>
+<li>
+    <a href="{{ route('vendor.restaurant.proceed-tiffin.schedule') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.schedule') ? 'active' : '' }}">
+        <i class="bi bi-list-check"></i> Order List
     </a>
 </li>
 
