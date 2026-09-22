@@ -16,6 +16,7 @@ use App\Http\Controllers\Restaurant\OrderCashController;
 use App\Http\Controllers\Restaurant\CustomItemController;
 use App\Http\Controllers\Restaurant\TiffinCatalogController;
 use App\Http\Controllers\Restaurant\ProceedTiffinController;
+use App\Http\Controllers\Restaurant\TiffinReportController;
 
 
 /*
@@ -66,6 +67,9 @@ use App\Http\Controllers\Restaurant\ProceedTiffinController;
     Route::post('/proceed-tiffin', [ProceedTiffinController::class, 'store'])->name('proceed-tiffin.store');
     Route::get('/proceed-tiffin/{id}', [ProceedTiffinController::class, 'show'])->name('proceed-tiffin.show');
     
+    // Isko apne vendor/restaurant group ke andar rakhein:
+    Route::get('tiffin-report/data', [TiffinReportController::class, 'getProductionReport'])->name('tiffin.report.data');
+
     // Dining Tables & QR Codes
     Route::resource('tables', TableController::class);
 
