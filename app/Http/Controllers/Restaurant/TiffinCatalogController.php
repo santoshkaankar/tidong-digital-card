@@ -48,7 +48,7 @@ class TiffinCatalogController extends Controller
             'single_day_rate' => $request->single_day_rate,
             'full_week_rate' => $request->full_week_rate,
             'full_month_rate' => $request->full_month_rate,
-            'is_active' => 1,
+            'is_active' => $request->has('is_active') ? true : false,
         ]);
 
         TiffinCatalogItem::create([
