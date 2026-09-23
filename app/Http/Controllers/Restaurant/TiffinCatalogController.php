@@ -51,15 +51,21 @@ class TiffinCatalogController extends Controller
             'is_active' => $request->has('is_active') ? true : false,
         ]);
 
+        // Input items se item IDs extract karna (keys are item IDs)
+        $itemsData = $request->input('items', []);
+        $itemIds = array_keys($itemsData);
+
         TiffinCatalogItem::create([
             'tiffin_catalog_id' => $catalog->id,
             'day' => ucfirst($request->day),
             'meal_type' => $request->meal_type,
-            'item_ids' => $request->items,
+            'item_ids' => $itemIds,
         ]);
 
         return redirect()->back()->with('success', 'Tiffin Catalog successfully create ho gaya hai!');
     }
+
+    
 
     public function show($id)
     {
@@ -133,11 +139,14 @@ class TiffinCatalogController extends Controller
         // Purane items delete karke naye update kar do
         $catalog->items()->delete();
 
+        $itemsData = $request->input('items', []);
+        $itemIds = array_keys($itemsData);
+
         TiffinCatalogItem::create([
             'tiffin_catalog_id' => $catalog->id,
             'day' => ucfirst($request->day),
             'meal_type' => $request->meal_type,
-            'item_ids' => $request->items,
+            'item_ids' => $itemIds,
         ]);
 
         return redirect()->route('vendor.restaurant.weekly-menu.index')->with('success', 'Tiffin Catalog successfully update ho gaya hai!');

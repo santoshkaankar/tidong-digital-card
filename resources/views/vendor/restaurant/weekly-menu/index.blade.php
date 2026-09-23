@@ -72,28 +72,39 @@
                                 @php $itemFound = false; @endphp
 
                                 @if(isset($categories) && count($categories) > 0)
-                                    @foreach($categories as $category)
-                                        @if(isset($category->items) && count($category->items) > 0)
-                                            @foreach($category->items as $item)
-                                                @php 
-                                                    $itemFound = true; 
-                                                    $price = $item->price ?? 0;
-                                                    $itemName = $item->globalItem->item_name ?? $item->globalItem->name ?? $item->item_name ?? $item->name ?? 'Menu Item';
-                                                @endphp
+    @foreach($categories as $category)
+        @if(isset($category->items) && count($category->items) > 0)
+            @foreach($category->items as $item)
+                @php 
+                    $itemFound = true; 
+                    $price = $item->price ?? 0;
+                    $itemName = $item->globalItem->item_name ?? $item->globalItem->name ?? $item->item_name ?? $item->name ?? 'Menu Item';
+                @endphp
 
-                                                <div class="item-card-mini shadow-sm">
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <input class="form-check-input item-checkbox" type="checkbox" name="items[]" value="{{ $item->id }}" data-price="{{ $price }}" id="chk-item-{{ $item->id }}">
-                                                        <label class="form-check-label fw-bold text-dark d-block text-truncate small mb-0 w-100" for="chk-item-{{ $item->id }}" style="cursor: pointer;">
-                                                            {{ $itemName }} <span class="text-success float-end">₹{{ number_format($price, 2) }}</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @endif
-                                    @endforeach
-                                @endif
+                <div class="item-card-mini shadow-sm p-2 mb-2 bg-white rounded border">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <!-- Left: Checkbox & Item Name -->
+                        <div class="d-flex align-items-center gap-2 flex-grow-1 text-truncate me-2">
+                            <input class="form-check-input item-checkbox m-0" type="checkbox" name="items[{{ $item->id }}][selected]" value="1" data-price="{{ $price }}" id="chk-item-{{ $item->id }}">
+                            <label class="form-check-label fw-bold text-dark text-truncate small mb-0 w-100" for="chk-item-{{ $item->id }}" style="cursor: pointer;">
+                                {{ $itemName }}
+                            </label>
+                        </div>
 
+                        <!-- Right: Qty Input & MRP Price Side-by-Side -->
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                            <!-- Qty Input Box -->
+                            <input type="number" name="items[{{ $item->id }}][qty]" value="1" min="1" class="form-control form-control-sm text-center px-1" style="width: 45px; height: 26px; font-size: 11px;">
+
+                            <!-- MRP Price -->
+                            <span class="text-success fw-bold small text-end" style="min-width: 60px;">₹{{ number_format($price, 2) }}</span>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        @endif
+    @endforeach
+@endif
                                 @if(isset($customItems) && count($customItems) > 0)
                                     @foreach($customItems as $custom)
                                         @php 
