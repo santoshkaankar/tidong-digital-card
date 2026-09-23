@@ -226,7 +226,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content text-center p-4 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold w-100 text-center ms-4">Order now</h5>
+                <h5 class="modal-title fw-bold w-100 text-center ms-4">Scan to Access</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body pt-2">

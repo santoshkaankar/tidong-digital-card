@@ -35,13 +35,16 @@ use App\Http\Controllers\Restaurant\TiffinReportController;
      * Food Items & Custom Items (Static routes sabse upar)
      * ------------------------------------------------- */
     Route::get('/items/create-custom', [CustomItemController::class, 'create'])->name('items.create_custom');
+    // Agar form POST request bhej raha hai, toh ise POST banayein:
+    Route::post('/items/create-custom', [CustomItemController::class, 'store'])->name('items.store_custom');
+    
     Route::post('/items/store-custom', [CustomItemController::class, 'store'])->name('items.storecustom');
     Route::delete('/items/custom/{id}', [CustomItemController::class, 'destroy'])->name('custom-items.destroy');
     
     Route::post('/items/select-global', [ItemController::class, 'selectGlobalItem'])->name('items.select-global');
     Route::post('/items/{id}/toggle-status', [ItemController::class, 'toggleStatus'])->name('items.toggle-status');
     
-    // Resource route ab niche rahega taaki upar ke static URLs clash na karein
+    // Resource route ko sabse niche rakhein taaki static routes block na hon
     Route::resource('items', ItemController::class);
 
     // Menu Card / Catalog
