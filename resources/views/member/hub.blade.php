@@ -55,7 +55,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="catering service">
-                <a href="javascript:void(0)" onclick="alert('Catering Service Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'catering') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem; background:#ffedd5; color:#c2410c;">
@@ -72,7 +72,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="cafe ice cream">
-                <a href="javascript:void(0)" onclick="alert('Cafe & Ice Cream Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'cafe') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem; background:#fce7f3; color:#db2777;">
@@ -89,7 +89,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="bakery cakes">
-                <a href="javascript:void(0)" onclick="alert('Bakery & Cake Shop Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'bakery') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-warning-subtle text-warning rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -106,7 +106,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="hotel resort stay">
-                <a href="javascript:void(0)" onclick="alert('Hotel / Resort Booking Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'hotel') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-success-subtle text-success rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -123,7 +123,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="homestay pg">
-                <a href="javascript:void(0)" onclick="alert('Homestay & PG Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'homestay') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem; background:#ccfbf1; color:#0f766e;">
@@ -148,7 +148,7 @@
         <div class="row g-4">
             
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="banquet marriage home">
-                <a href="javascript:void(0)" onclick="alert('Marriage Home & Banquet Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'banquet') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -165,7 +165,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="event wedding planner">
-                <a href="javascript:void(0)" onclick="alert('Event Planner Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'event-planner') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem; background:#f3e8ff; color:#7e22ce;">
@@ -182,7 +182,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="tent decoration">
-                <a href="javascript:void(0)" onclick="alert('Tent House & Decoration Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'tent') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-info-subtle text-info rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -199,7 +199,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="photography media">
-                <a href="javascript:void(0)" onclick="alert('Photography & Videography Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'photography') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem; background:#e2e8f0; color:#1e293b;">
@@ -224,7 +224,7 @@
         <div class="row g-4">
             
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="taxi cab service">
-                <a href="javascript:void(0)" onclick="alert('Taxi Service Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'taxi') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-warning-subtle text-warning rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -241,7 +241,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="bike scooter rental">
-                <a href="javascript:void(0)" onclick="alert('Bike Rental Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'bike') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem; background:#f1f5f9; color:#475569;">
@@ -258,7 +258,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="tourist guides">
-                <a href="javascript:void(0)" onclick="alert('Tourist Guides Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'tourist-guides') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -275,7 +275,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="sightseeing entry tickets">
-                <a href="javascript:void(0)" onclick="alert('Sightseeing Passes Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'sightseeing') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem; background:#f3e8ff; color:#7e22ce;">
@@ -300,7 +300,7 @@
         <div class="row g-4">
             
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="souvenirs emporium handicraft">
-                <a href="javascript:void(0)" onclick="alert('Handicraft & Emporium Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'emporium') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-danger-subtle text-danger rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -317,7 +317,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="grocery supermarket">
-                <a href="javascript:void(0)" onclick="alert('Grocery & Supermarket Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'grocery') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-success-subtle text-success rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -334,7 +334,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="salon spa wellness">
-                <a href="javascript:void(0)" onclick="alert('Salon & Spa Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'salon') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem; background:#fce7f3; color:#db2777;">
@@ -351,7 +351,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="medical pharmacy">
-                <a href="javascript:void(0)" onclick="alert('Medical Pharmacy Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'pharmacy') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-danger-subtle text-danger rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">
@@ -368,7 +368,7 @@
             </div>
 
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="money exchange forex">
-                <a href="javascript:void(0)" onclick="alert('Money Exchange Coming Soon')" class="text-decoration-none">
+                <a href="{{ route('member.service.view', 'forex') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-info-subtle text-info rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">

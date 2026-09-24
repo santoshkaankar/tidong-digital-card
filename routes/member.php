@@ -1,18 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Member\CardController;
-use App\Http\Controllers\Member\WalletController;
-use App\Http\Controllers\Member\FriendController;
-use App\Http\Controllers\Member\SearchController;
-use App\Http\Controllers\Member\ProfileController;
-use App\Http\Controllers\Member\OrderController;
-use App\Http\Controllers\Member\AffiliateController;
-use App\Http\Controllers\Member\RoyaltyController;
-use App\Http\Controllers\Member\HubController;
+    use Illuminate\Support\Facades\Route;
+    use App\Http\Controllers\Member\CardController;
+    use App\Http\Controllers\Member\WalletController;
+    use App\Http\Controllers\Member\FriendController;
+    use App\Http\Controllers\Member\SearchController;
+    use App\Http\Controllers\Member\ProfileController;
+    use App\Http\Controllers\Member\OrderController;
+    use App\Http\Controllers\Member\AffiliateController;
+    use App\Http\Controllers\Member\RoyaltyController;
+    use App\Http\Controllers\Member\HubController;
 
-// Strict Auth Middleware Group for Members
-Route::middleware(['auth'])->group(function () {
+    // Strict Auth Middleware Group for Members
+    Route::middleware(['auth'])->group(function () {
 
     // Dashboard Route
     Route::get('/dashboard', function () {
@@ -20,7 +20,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     // Member Hub Route
-    Route::get('/hub', [HubController::class, 'index'])->name('member.hub');
+    Route::get('/hub', [HubController::class, 'index'])->name('hub');
+    Route::get('/hub/service/{serviceName}', [HubController::class, 'loadService'])->name('service.view');
 
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
@@ -66,7 +67,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Royalty Program Route (Inside Auth Group)
     Route::get('/royalty-program', [RoyaltyController::class, 'index'])->name('royalty.index');
-});
+    });
 
-// Public Card View Link (No Auth Required)
-Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.public');
+    // Public Card View Link (No Auth Required)
+    Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.public');
