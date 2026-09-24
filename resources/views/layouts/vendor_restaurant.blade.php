@@ -84,6 +84,7 @@
             .restaurant-layout-wrapper.toggled > .sidebar,
             .restaurant-layout-wrapper.toggled .restaurant-sidebar {
                 transform: translateX(0) !important;
+                z-index: 99999 !important;
             }
             .restaurant-layout-wrapper.toggled .layout-overlay-backdrop {
                 display: block !important;
@@ -115,38 +116,47 @@
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle (Profile Dropdown & Controls Ke Liye Sabse Zaroori) -->
+    <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Global Mobile Sidebar Toggle Handler Script -->
-    <style>
-    /* Mobile me Sidebar sabse upar dikhe */
-    @media (max-width: 991.98px) {
-        .restaurant-sidebar, 
-        aside {
-            z-index: 99999 !important; /* Backdrop ke upar laane ke liye */
-        }
-        .restaurant-layout-wrapper.toggled .restaurant-sidebar,
-        .restaurant-layout-wrapper.toggled aside {
-            transform: translateX(0) !important;
-            display: block !important;
-        }
-    }
-</style>
+    <!-- Clean & Unified Sidebar Toggle Handler -->
+    <script>
+        (function () {
+            const toggleBtn = document.getElementById("restaurantSidebarToggle");
+            const wrapper = document.getElementById("layoutWrapper");
+            const closeBtn = document.getElementById("closeRestaurantSidebar");
+            const backdrop = document.getElementById("layoutOverlayBackdrop");
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const toggleBtn = document.getElementById("restaurantSidebarToggle");
-        const wrapper = document.querySelector(".restaurant-layout-wrapper");
+            if (toggleBtn && wrapper) {
+                toggleBtn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    wrapper.classList.toggle("toggled");
+                });
+            }
 
-        if (toggleBtn && wrapper) {
-            toggleBtn.addEventListener("click", function (e) {
-                e.preventDefault();
-                wrapper.classList.toggle("toggled");
+            if (closeBtn && wrapper) {
+                closeBtn.addEventListener("click", function () {
+                    wrapper.classList.remove("toggled");
+                });
+            }
+
+            if (backdrop && wrapper) {
+                backdrop.addEventListener("click", function () {
+                    wrapper.classList.remove("toggled");
+                });
+            }
+
+            // Bahar click karne par mobile me sidebar band ho jaye
+            document.addEventListener("click", function (event) {
+                if (window.innerWidth <= 991.98 && wrapper) {
+                    const sidebar = document.getElementById("restaurantSidebar");
+                    if (sidebar && !sidebar.contains(event.target) && toggleBtn && !toggleBtn.contains(event.target)) {
+                        wrapper.classList.remove("toggled");
+                    }
+                }
             });
-        }
-    });
-</script>
+        })();
+    </script>
     @stack('scripts')
 </body>
 </html>

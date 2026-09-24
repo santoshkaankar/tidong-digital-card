@@ -9,6 +9,7 @@ use App\Http\Controllers\Member\ProfileController;
 use App\Http\Controllers\Member\OrderController;
 use App\Http\Controllers\Member\AffiliateController;
 use App\Http\Controllers\Member\RoyaltyController;
+use App\Http\Controllers\Member\HubController;
 
 // Strict Auth Middleware Group for Members
 Route::middleware(['auth'])->group(function () {
@@ -17,6 +18,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('member.dashboard');
     })->name('dashboard');
+
+    // Member Hub Route
+    Route::get('/hub', [HubController::class, 'index'])->name('member.hub');
 
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
