@@ -29,9 +29,22 @@
         color: #dc2626;
         font-size: 0.75rem;
     }
+    .floating-order-bar {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 600px;
+        background: #ffffff;
+        border-radius: 50px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        z-index: 1050;
+        padding: 12px 24px;
+    }
 </style>
 
-<div class="container-fluid py-4 px-4">
+<div class="container-fluid py-4 px-4 pb-5">
 
     <!-- Back Button & Breadcrumb -->
     <div class="mb-3">
@@ -75,7 +88,7 @@
                     <button class="nav-link active text-start rounded-3 py-2" data-bs-toggle="pill" data-bs-target="#cat-all">
                         All Items
                     </button>
-                    @foreach($categories as $category)
+                    @foreach($categories as$category)
                         <button class="nav-link text-start rounded-3 py-2" data-bs-toggle="pill" data-bs-target="#cat-{{ $category->id }}">
                             {{ $category->name }}
                         </button>
@@ -90,7 +103,7 @@
                 <h5 class="fw-bold text-dark mb-3">Menu Items</h5>
 
                 <div class="row g-3">
-                    @forelse($items as $item)
+                    @forelse($items as$item)
                         <div class="col-md-6">
                             <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
                                 <div>
@@ -107,10 +120,14 @@
                                     </p>
                                     <span class="fw-bold text-dark">₹{{ number_format($item->price ?? 0, 2) }}</span>
                                 </div>
+                                
+                                <!-- Quantity Control Counter Buttons -->
                                 <div>
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-3 px-3 fw-medium">
-                                        <i class="fas fa-plus me-1"></i> Add
-                                    </button>
+                                    <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
+                                        <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, -1)">-</button>
+                                        <input type="text" id="qty-{{ $item->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
+                                        <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, 1)">+</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -127,4 +144,95 @@
     </div>
 
 </div>
+
+<!-- Floating Bottom Order Bar -->
+<div id="floatingOrderBar" class="floating-order-bar d-none">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold text-muted small d-block" id="selectedItemsCount">0 Items Selected</span>
+            <span class="fw-bold text-success fs-5" id="selectedTotalAmount">₹0.00</span>
+        </div>
+        <button type="button" class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm" onclick="submitLiveOrder()">
+            Send Order <i class="fas fa-arrow-right ms-1"></i>
+        </button>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+    let cartItems = {};
+
+    function updateQty(itemId, price, change) {
+        if (!cartItems[itemId]) {
+            cartItems[itemId] = { id: itemId, price: price, quantity: 0 };
+        }
+
+        cartItems[itemId].quantity += change;
+
+        if (cartItems[itemId].quantity <= 0) {
+            delete cartItems[itemId];
+            document.getElementById(`qty-${itemId}`).value = 0;
+        } else {
+            document.getElementById(`qty-${itemId}`).value = cartItems[itemId].quantity;
+        }
+
+        renderFloatingBar();
+    }
+
+    function renderFloatingBar() {
+        let totalCount = 0;
+        let totalAmount = 0;
+
+        Object.values(cartItems).forEach(item => {
+            totalCount += item.quantity;
+            totalAmount += (item.price * item.quantity);
+        });
+
+        const bar = document.getElementById('floatingOrderBar');
+        if (totalCount > 0) {
+            document.getElementById('selectedItemsCount').innerText = `${totalCount} Items Selected`;
+            document.getElementById('selectedTotalAmount').innerText = `₹${totalAmount.toFixed(2)}`;
+            bar.classList.remove('d-none');
+        } else {
+            bar.classList.add('d-none');
+        }
+    }
+
+    function submitLiveOrder() {
+        let itemsArray = Object.values(cartItems);
+
+        if (itemsArray.length === 0) return;
+
+        fetch("{{ route('hub.restaurant.order.place') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({ 
+                restaurant_id: "{{ $restaurant->id }}", 
+                items: itemsArray 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                Object.keys(cartItems).forEach(id => {
+                    document.getElementById(`qty-${id}`).value = 0;
+                });
+                cartItems = {};
+                renderFloatingBar();
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error placing order:", error);
+            alert("Something went wrong!");
+        });
+    }
+</script>
+@endpush

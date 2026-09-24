@@ -7,7 +7,7 @@ use App\Http\Controllers\Restaurant\ItemController;
 use App\Http\Controllers\Restaurant\TableController;
 use App\Http\Controllers\Restaurant\OrderController;
 use App\Http\Controllers\Restaurant\MenuCardController;
-use App\Http\Controllers\Customer\Restaurant\CustomerRestaurantController;
+use App\Http\Controllers\Member\CustomerRestaurantController;
 use App\Http\Controllers\Restaurant\KitchenDisplayController;
 use App\Http\Controllers\Restaurant\WaiterCallController;
 use App\Http\Controllers\Restaurant\KitchenOrderController;
