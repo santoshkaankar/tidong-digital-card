@@ -63,7 +63,7 @@ class AuthController extends Controller
             'email'               => ['required', 'email', 'unique:users'],
             'mobile'              => ['required', 'string', 'max:15', 'unique:users'],
             'password'            => ['required', 'min:6'],
-            'role'                => ['required', 'in:admin,employee,business,member,vendor'],
+            'role'                => ['required', 'in:admin,employee,business,member,vendor,delivery'],
             'business_type'       => ['nullable', 'string', 'max:255'],
             'sponsor_referral_id' => ['nullable', 'string', 'exists:users,referral_id'],
             'position'            => ['required_if:role,member', 'string', 'in:left,right'],
@@ -107,7 +107,8 @@ class AuthController extends Controller
             'mobile'        => $request->mobile,
             'password'      => Hash::make($request->password),
             'role'          => $request->role,
-            'business_type' => in_array($request->role, ['business', 'vendor']) ? $request->business_type : null
+            'business_type' => in_array($request->role, ['business', 'vendor']) ? $request->business_type : null,
+            'vehicle_no'    => $request->vehicle_no ?? null,
         ]);
 
         if ($request->role === 'member' && $parentId) {
@@ -169,7 +170,10 @@ class AuthController extends Controller
             return Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : view('employee.dashboard');
         }
 
-        // Strict Check for Shopping Dashboard (Retail replaced)
+        if ($role === 'delivery') {
+            return Route::has('delivery.dashboard') ? redirect()->route('delivery.dashboard') : view('delivery.dashboard');
+        }
+
         if ($user->business_type === 'shopping') {
             return Route::has('shopping.shop-dashboard') ? redirect()->route('shopping.shop-dashboard') : view('shopping.shop-dashboard');
         }

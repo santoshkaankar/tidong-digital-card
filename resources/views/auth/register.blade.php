@@ -1,4 +1,10 @@
 <x-guest-layout>
+    <!-- Back to Home Button -->
+<div class="mb-4">
+    <a href="{{ url('/') }}" class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
+        <i class="fas fa-arrow-left me-2"></i> &larr; Back to Home Page
+    </a>
+</div>
     <div class="text-center mb-6">
         <h2 class="text-2xl font-bold text-gray-900 tracking-wide">Create Account</h2>
         <p class="text-sm text-gray-600 mt-1 font-medium">Register as User, Merchant or Service Partner</p>
@@ -41,6 +47,7 @@
             <select id="role" name="role" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" required onchange="handleRoleChange(this.value)">
                 <option value="member" {{ old('role') == 'member' ? 'selected' : '' }}>Member / Customer / Tourist</option>
                 <option value="business" {{ old('role') == 'business' ? 'selected' : '' }}>Business / Service Partner</option>
+                <option value="delivery" {{ old('role') == 'delivery' ? 'selected' : '' }}>Delivery Service</option>
             </select>
             <x-input-error :messages="$errors->get('role')" class="mt-2 text-red-600" />
         </div>
@@ -76,7 +83,7 @@
                 <label for="business_type" class="block font-semibold text-sm text-gray-800">Select Your Business Service <span class="text-red-600">*</span></label>
                 <select name="business_type" id="business_type" class="form-select rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full" disabled onchange="handleBusinessTypeChange(this.value)">
                     <option value="" disabled selected>-- Select Service Type --</option>
-                    
+
                     <optgroup label="Food & Hospitality">
                         <option value="restaurant">Restaurant (Dine-in / KDS / POS / Tiffin / Street Food)</option>
                         <option value="catering">Catering Service (Event & Bulk Food)</option>
@@ -101,7 +108,6 @@
                         <option value="travel_agency">Travel & Tour Operator</option>
                     </optgroup>
 
-                    <!-- Shopping & E-Commerce Option (Retail removed) -->
                     <optgroup label="Shopping & E-Commerce">
                         <option value="shopping">Shopping & Mega Store (General / Fashion / Grocery / Multi-vendor)</option>
                     </optgroup>
@@ -205,7 +211,17 @@
                 handleBusinessTypeChange(businessSelect.value);
             }
             if (sponsorInput) sponsorInput.removeAttribute('required');
+        } else if (role === 'delivery') {
+            // Delivery ke liye dono extra boxes band rahenge
+            vendorContainer.style.display = 'none';
+            memberContainer.style.display = 'none';
+            if (businessSelect) {
+                businessSelect.removeAttribute('required');
+                businessSelect.disabled = true;
+            }
+            if (sponsorInput) sponsorInput.removeAttribute('required');
         } else {
+            // Member ke liye
             vendorContainer.style.display = 'none';
             memberContainer.style.display = 'block';
             if (businessSelect) {

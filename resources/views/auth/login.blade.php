@@ -1,4 +1,10 @@
 <x-guest-layout>
+    <!-- Back to Home Button -->
+<div class="mb-4">
+    <a href="{{ url('/') }}" class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
+        <i class="fas fa-arrow-left me-2"></i> &larr; Back to Home Page
+    </a>
+</div>
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 

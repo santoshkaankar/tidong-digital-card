@@ -107,6 +107,7 @@ require __DIR__ . '/restaurant.php';
 require __DIR__ . '/taxi.php';
 require __DIR__ .'/retail.php';
 require __DIR__ .'/shopping.php';
+require __DIR__ .'/delivery.php';
 /*
 |--------------------------------------------------------------------------
 | 6. Public Guest Orders & Hub Routes
