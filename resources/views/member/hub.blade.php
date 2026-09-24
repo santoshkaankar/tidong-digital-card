@@ -38,7 +38,7 @@
         <div class="row g-4">
             
             <div class="col-xl-3 col-lg-4 col-md-6 service-item" data-name="restaurant food menu">
-                <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="text-decoration-none">
+                <a href="{{ route('member.restaurant.index') }}" class="text-decoration-none">
                     <div class="card border-0 rounded-4 p-4 h-100 shadow-sm service-card-hover bg-white">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon-box bg-danger-subtle text-danger rounded-3 d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; font-size:1.75rem;">

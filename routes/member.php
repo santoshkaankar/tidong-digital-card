@@ -1,18 +1,19 @@
 <?php
 
-    use Illuminate\Support\Facades\Route;
-    use App\Http\Controllers\Member\CardController;
-    use App\Http\Controllers\Member\WalletController;
-    use App\Http\Controllers\Member\FriendController;
-    use App\Http\Controllers\Member\SearchController;
-    use App\Http\Controllers\Member\ProfileController;
-    use App\Http\Controllers\Member\OrderController;
-    use App\Http\Controllers\Member\AffiliateController;
-    use App\Http\Controllers\Member\RoyaltyController;
-    use App\Http\Controllers\Member\HubController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Member\CardController;
+use App\Http\Controllers\Member\WalletController;
+use App\Http\Controllers\Member\FriendController;
+use App\Http\Controllers\Member\SearchController;
+use App\Http\Controllers\Member\ProfileController;
+use App\Http\Controllers\Member\OrderController;
+use App\Http\Controllers\Member\AffiliateController;
+use App\Http\Controllers\Member\RoyaltyController;
+use App\Http\Controllers\Member\HubController;
+use App\Http\Controllers\Member\RestaurantController;
 
-    // Strict Auth Middleware Group for Members
-    Route::middleware(['auth'])->group(function () {
+// Strict Auth Middleware Group for Members
+Route::middleware(['auth'])->group(function () {
 
     // Dashboard Route
     Route::get('/dashboard', function () {
@@ -65,9 +66,14 @@
     // Pincode & Area Live Search Route
     Route::get('/pincode-search', [ProfileController::class, 'searchPincode'])->name('pincode.search');
 
-    // Royalty Program Route (Inside Auth Group)
+    // Royalty Program Route
     Route::get('/royalty-program', [RoyaltyController::class, 'index'])->name('royalty.index');
-    });
 
-    // Public Card View Link (No Auth Required)
-    Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.public');
+    // Dedicated Member Restaurant Routes
+    Route::get('/restaurant', [RestaurantController::class, 'index'])->name('restaurant.index');
+    Route::get('/restaurant/{id}', [RestaurantController::class, 'show'])->name('restaurant.show');
+
+});
+
+// Public Card View Link (No Auth Required)
+Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.public');

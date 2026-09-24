@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use App\Models\Member\VisitingCard;
 use App\Models\User;
+use Carbon\Carbon;
 
 class ProfileController extends Controller
 {
@@ -36,14 +37,24 @@ class ProfileController extends Controller
 
     public function update(Request $request)
     {
-        $user = User::find(Auth::id());
-        $card = VisitingCard::where('user_id', $user->id)->first();
+        $user = User::findOrFail(Auth::id());
+        $card = VisitingCard::firstOrCreate(['user_id' => $user->id]);
 
-        if (!$card) {
-            $card = new VisitingCard();
-            $card->user_id = $user->id;
-        }
+        // 1. Form Validation Rules
+        $request->validate([
+            'dob'                  => 'nullable|date',
+            'mobile'               => 'nullable|string|max:15',
+            'pan_number'           => 'nullable|string|max:10',
+            'aadhaar_number'       => 'nullable|string|max:12',
+            'ifsc_code'            => 'nullable|string|max:11',
+            'pan_image'            => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'aadhaar_front_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'aadhaar_back_image'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'profile_photo'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'banner_image'         => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
 
+        // 2. Profile & Banner Photo Upload
         if ($request->hasFile('profile_photo')) {
             if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
                 Storage::disk('public')->delete($user->profile_photo);
@@ -60,6 +71,7 @@ class ProfileController extends Controller
             $card->banner_image = $request->file('banner_image')->store('banners', 'public');
         }
 
+        // 3. KYC Files Upload
         $kycUploaded = false;
         if ($request->hasFile('pan_image')) {
             $user->pan_image = $request->file('pan_image')->store('kyc', 'public');
@@ -78,6 +90,7 @@ class ProfileController extends Controller
             $user->kyc_status = 'pending';
         }
 
+        // 4. Update User Data
         $userFields = [
             'name', 'mobile', 'gender', 'dob', 'pan_number', 'aadhaar_number',
             'account_holder_name', 'bank_name', 'account_number', 'ifsc_code', 'upi_id',
@@ -93,9 +106,32 @@ class ProfileController extends Controller
                 }
             }
         }
-        $user->save();
 
-        $card->fill($request->except(['profile_photo', 'banner_image']));
+        // 5. Age Check Logic (Under 18 Block & Forced Logout)
+        if ($request->filled('dob')) {
+            $age = Carbon::parse($request->dob)->age;
+
+            if ($age < 18) {
+                // Block User Account
+                if (\Schema::hasColumn('users', 'status')) {
+                    $user->status = 'blocked';
+                } elseif (\Schema::hasColumn('users', 'is_active')) {
+                    $user->is_active = 0;
+                }
+
+                $user->save();
+                $card->save();
+
+                // Direct Logout
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->with('error', 'Your age is under 18 years. Your account has been blocked.');
+            }
+        }
+
+        $user->save();
         $card->save();
 
         return redirect()->back()->with('success', 'Profile, KYC and Address updated successfully!');

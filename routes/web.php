@@ -72,11 +72,6 @@ require __DIR__ . '/auth.php';
 Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.public');
 Route::get('/card/{slug}', [CardController::class, 'showPublic'])->name('card.show');
 Route::get('/search-locations', [CardController::class, 'searchLocations'])->name('search.locations');
-Route::get('/menu/{slug}', [MenuController::class, 'showPublicMenu'])->name('menu.public');
-
-Route::get('/m/{slug}', [MenuController::class, 'showPublicMenu'])->name('public.menu');
-Route::post('/m/{slug}/order', [MenuController::class, 'placeOrder'])->name('public.order.place');
-Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'])->name('public.order.complete');
 
 /*
 |--------------------------------------------------------------------------
@@ -108,6 +103,7 @@ require __DIR__ . '/taxi.php';
 require __DIR__ .'/retail.php';
 require __DIR__ .'/shopping.php';
 require __DIR__ .'/delivery.php';
+require __DIR__ .'/hub.php';
 /*
 |--------------------------------------------------------------------------
 | 6. Public Guest Orders & Hub Routes
