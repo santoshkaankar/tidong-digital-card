@@ -90,7 +90,7 @@ class RestaurantController extends Controller
 
     // 3. Fetch custom items / Thalis
     $customItems = RestaurantCustomItem::where('user_id', $id)
-        ->where('is_available', 1)
+        ->where('is_available', true)
         ->get();
 
     // 4. Same-Day Tiffin Auto Render (Today's Tiffin Menu)
