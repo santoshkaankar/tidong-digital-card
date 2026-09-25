@@ -86,7 +86,7 @@ class RestaurantController extends Controller
     } elseif (Schema::hasColumn('restaurant_items', 'restaurant_id')) {
         $itemsQuery->where('restaurant_id', $id);
     }
-    $globalItems = $itemsQuery->where('status', 1)->get(); // <--- Updated variable name
+    $globalItems = $itemsQuery->where('status', true)->get(); // <--- Updated variable name
 
     // 3. Fetch custom items / Thalis
     $customItems = RestaurantCustomItem::where('user_id', $id)
