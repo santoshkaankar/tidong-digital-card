@@ -8,7 +8,29 @@ $(document).ready(function () {
         }
     });
 
-    // 1. Category Filter
+    // Hidden iframe direct silent print trigger
+    function triggerDirectPrint(printUrl) {
+        let frame = document.getElementById('silentPrintFrame');
+        if (!frame) {
+            frame = document.createElement('iframe');
+            frame.id = 'silentPrintFrame';
+            frame.style.display = 'none';
+            document.body.appendChild(frame);
+        }
+
+        frame.src = printUrl;
+        frame.onload = function () {
+            try {
+                frame.contentWindow.focus();
+                frame.contentWindow.print();
+            } catch (e) {
+                console.error("Direct print error:", e);
+                window.open(printUrl, '_blank');
+            }
+        };
+    }
+
+    // Category Filter Handler
     $('#category-filters').on('click', '.filter-btn', function () {
         $('#category-filters .filter-btn').removeClass('active');
         $(this).addClass('active');
@@ -29,28 +51,33 @@ $(document).ready(function () {
         }
     });
 
-    // 2. Hide / Show Table Option
+    // Dine In Table Toggle
     $('#order_type').on('change', function () {
-        if ($(this).val() === 'dine_in') {
-            $('#table-wrapper').slideDown(200);
+        if ($(this).val() === 'dine_in') {$('#table-wrapper').slideDown(200);
         } else {
             $('#table-wrapper').slideUp(200);
             $('#table_id').val('');
         }
     });
 
-    // 3. Add to Cart Click (Handling Integer IDs & Custom Flags Separately)
+    // Add to Cart
     $(document).on('click', '.add-to-cart-btn', function (e) {
         e.preventDefault();
 
         const id = parseInt($(this).data('id'));
         const isCustom = parseInt($(this).data('is-custom')) || 0;
+        const isTiffin = parseInt($(this).data('is-tiffin')) || 0;
         const name = $(this).data('name');
         const price = parseFloat($(this).data('price'));
 
         if (!id) return;
 
-        const cartKey = (isCustom ? 'c_' : 'i_') + id;
+        let cartKey = 'i_' + id;
+        if (isTiffin) {
+            cartKey = 't_' + id;
+        } else if (isCustom) {
+            cartKey = 'c_' + id;
+        }
 
         if (posCart[cartKey]) {
             posCart[cartKey].quantity += 1;
@@ -58,6 +85,7 @@ $(document).ready(function () {
             posCart[cartKey] = { 
                 id: id, 
                 is_custom: isCustom, 
+                is_tiffin: isTiffin,
                 name: name, 
                 price: price, 
                 quantity: 1 
@@ -96,7 +124,7 @@ $(document).ready(function () {
 
     // Render Cart HTML
     function renderCart() {
-        const $cartBody = $('#cart-body');
+        const $cartBody =$('#cart-body');
         $cartBody.empty();
 
         const keys = Object.keys(posCart);
@@ -118,10 +146,17 @@ $(document).ready(function () {
             const itemTotal = item.price * item.quantity;
             grandTotal += itemTotal;
 
+            let badgeHtml = '';
+            if (item.is_tiffin) {
+                badgeHtml = '<span class="badge bg-info text-dark" style="font-size:0.55rem;">Tiffin</span>';
+            } else if (item.is_custom) {
+                badgeHtml = '<span class="badge bg-warning text-dark" style="font-size:0.55rem;">Custom / Thali</span>';
+            }
+
             const row = `
                 <tr>
                     <td class="text-start fw-semibold small text-truncate" style="max-width: 120px;">
-                        ${item.name} ${item.is_custom ? '<span class="badge bg-warning text-dark" style="font-size:0.55rem;">Custom</span>' : ''}
+                        ${item.name} ${badgeHtml}
                     </td>
                     <td class="small">₹${item.price.toFixed(2)}</td>
                     <td>
@@ -149,7 +184,7 @@ $(document).ready(function () {
         $('#grand-total').text(grandTotal.toFixed(2));
     }
 
-    // 4. Place Order AJAX Submit
+    // Place Order AJAX Submit
     $('#place-order-btn').on('click', function () {
         const orderType = $('#order_type').val();
         const tableId = $('#table_id').val();
@@ -167,8 +202,7 @@ $(document).ready(function () {
             return;
         }
 
-        const $btn = $(this);
-        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Processing...');
+        const $btn = $(this);$btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Processing...');
 
         const payload = {
             order_type: orderType,
@@ -186,11 +220,9 @@ $(document).ready(function () {
             dataType: "json",
             success: function (response) {
                 if (response.success) {
-                    // Auto open print window right after successful order placement
-                    if (response.print_url) {
-                        window.open(response.print_url, '_blank');
-                    } else if (response.order_id) {
-                        window.open("/vendor/restaurant/orders/" + response.order_id + "/print", '_blank');
+                    let printUrl = response.print_url || (response.order_id ? "/vendor/restaurant/orders/" + response.order_id + "/print" : null);
+                    if (printUrl) {
+                        triggerDirectPrint(printUrl);
                     }
 
                     if (response.whatsapp_url) {
@@ -214,7 +246,7 @@ $(document).ready(function () {
                 alert(msg);
             },
             complete: function () {
-                $btn.prop('disabled', false).html('<i class="bi bi-printer me-2"></i> Place Order & Print KOT');
+                $btn.prop('disabled', false).html('<i class="bi bi-printer me-2"></i> Place Order & Direct Print');
             }
         });
     });

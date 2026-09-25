@@ -37,6 +37,9 @@ class OrderController extends Controller
     /**
      * Display POS / Counter Billing Page
      */
+    /**
+     * Display POS / Counter Billing Page
+     */
     public function posIndex()
     {
         $vendorId = Auth::id();
@@ -57,9 +60,63 @@ class OrderController extends Controller
 
         $tables = RestaurantTable::where('user_id', $vendorId)->get();
 
-        return view('vendor.restaurant.pos.index', compact('categories', 'items', 'customItems', 'tables'));
-    }
+        // -------------------------------------------------------------
+        // Today's Tiffin Filter Logic (Kewal Aaj ka Tiffin)
+        // -------------------------------------------------------------
+        $todayTiffins = collect();
+        $tiffinTables = ['tiffin_menus', 'tiffin_catalogs', 'tiffins', 'tiffin_items', 'custom_tiffins'];
+        $todayDay = now()->format('l'); // e.g. "Friday", "Monday" etc.
 
+        foreach ($tiffinTables as $tableName) {
+            if (\Schema::hasTable($tableName)) {
+                $query = DB::table($tableName);
+                
+                // User/Vendor Filter
+                if (\Schema::hasColumn($tableName, 'user_id')) {
+                    $query->where('user_id', $vendorId);
+                } elseif (\Schema::hasColumn($tableName, 'vendor_id')) {
+                    $query->where('vendor_id', $vendorId);
+                }
+
+                // Filter for TODAY ONLY
+                if (\Schema::hasColumn($tableName, 'day_of_week')) {
+                    $query->whereRaw('LOWER(day_of_week) = ?', [strtolower($todayDay)]);
+                } elseif (\Schema::hasColumn($tableName, 'day')) {
+                    $query->whereRaw('LOWER(day) = ?', [strtolower($todayDay)]);
+                } elseif (\Schema::hasColumn($tableName, 'days')) {
+                    $query->where('days', 'LIKE', "%{$todayDay}%");
+                } elseif (\Schema::hasColumn($tableName, 'date')) {
+                    $query->whereDate('date', now()->toDateString());
+                }
+
+                $fetched = $query->get();
+
+                // Extra safety PHP filter if title/name has day name
+                if ($fetched->count() > 0 && !\Schema::hasColumn($tableName, 'day_of_week') && !\Schema::hasColumn($tableName, 'day') && !\Schema::hasColumn($tableName, 'date')) {
+                    $filtered = $fetched->filter(function($item) use ($todayDay) {
+                        $title = $item->title ?? $item->name ?? $item->day_name ?? '';
+                        return stripos($title, $todayDay) !== false;
+                    });
+                    if ($filtered->count() > 0) {
+                        $fetched = $filtered;
+                    }
+                }
+
+                if ($fetched->count() > 0) {
+                    $todayTiffins = $fetched;
+                    break;
+                }
+            }
+        }
+
+        return view('vendor.restaurant.pos.index', compact(
+            'categories', 
+            'items', 
+            'customItems', 
+            'tables', 
+            'todayTiffins'
+        ));
+    }
     /**
      * Store POS Order via AJAX (Includes Inclusive Tax Breakdown & Auto Popup Print URL)
      */
@@ -114,7 +171,7 @@ class OrderController extends Controller
                     $restaurantItem = DB::table('restaurant_custom_items')->where('id', $item['id'])->first();
                 }
                 
-                if ($restaurantItem && $restaurantItem->tax_id) {
+                if ($restaurantItem && isset($restaurantItem->tax_id) && $restaurantItem->tax_id) {
                     $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
                     if ($taxData) {
                         $taxPercentage = $taxData->tax_percentage;
@@ -165,7 +222,8 @@ class OrderController extends Controller
                 'payment_status'  => 'unpaid',
                 'payment_method'  => 'cash',
             ]);
-// ==========================================
+
+            // ==========================================
             // 3. 1% PER ORDER (MINIMUM ₹1) COMMISSION LOGIC
             // ==========================================
             $wallet = VendorWallet::firstOrCreate(
@@ -313,7 +371,7 @@ class OrderController extends Controller
                     $restaurantItem = DB::table('restaurant_custom_items')->where('id', $itemData['item_id'])->first();
                 }
 
-                if ($restaurantItem && $restaurantItem->tax_id) {
+                if ($restaurantItem && isset($restaurantItem->tax_id) && $restaurantItem->tax_id) {
                     $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
                     if ($taxData) {
                         $taxPercentage = $taxData->tax_percentage;
@@ -424,7 +482,7 @@ class OrderController extends Controller
                     $restaurantItem = DB::table('restaurant_custom_items')->where('id', $orderItem->item_id)->first();
                 }
 
-                if ($restaurantItem && $restaurantItem->tax_id) {
+                if ($restaurantItem && isset($restaurantItem->tax_id) && $restaurantItem->tax_id) {
                     $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
                     if ($taxData) {
                         $taxPercentage = $taxData->tax_percentage;

@@ -47,19 +47,33 @@
         <div class="content-card p-3 mb-4">
             <div class="d-flex flex-wrap gap-2" id="category-filters">
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filter-btn active" data-category="all">All Items</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filter-btn" data-category="tiffin">
+                    <i class="bi bi-box me-1"></i> Today's Tiffin
+                </button>
+                
+                {{-- DB Categories (Filtering out extra Thalis/Tiffin category buttons) --}}
                 @foreach($categories as $category)
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filter-btn" data-category="{{ $category->id }}">{{ $category->name }}</button>
+                    @php 
+                        $catNameLower = strtolower(trim($category->name));
+                    @endphp
+                    @if(!in_array($catNameLower, ['thali', 'thalis', 'tiffin', 'tiffins']))
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filter-btn" data-category="{{ $category->id }}">{{ $category->name }}</button>
+                    @endif
                 @endforeach
-                @if(isset($customItems) && count($customItems) > 0)
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filter-btn" data-category="custom">Custom Items</button>
-                @endif
+
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filter-btn" data-category="custom">
+                    <i class="bi bi-star me-1"></i> Custom Items / Thali
+                </button>
             </div>
         </div>
 
         <div class="row g-3" id="items-grid">
-            @php $hasAnyItem = false; @endphp
+            @php 
+                $hasAnyItem = false; 
+                $tiffinList = $todayTiffins ?? $tiffins ?? $tiffinItems ?? $todayTiffin ?? [];
+            @endphp
 
-            <!-- Regular Inventory Items -->
+            <!-- 1. Regular Inventory Items (Pehle Dikhenge) -->
             @if(isset($items))
                 @foreach($items as $item)
                     @php
@@ -76,6 +90,7 @@
                                     class="btn btn-sm btn-outline-primary w-100 rounded-3 fw-semibold add-to-cart-btn" 
                                     data-id="{{ $item->id }}" 
                                     data-is-custom="0"
+                                    data-is-tiffin="0"
                                     data-name="{{ addslashes($itemName) }}" 
                                     data-price="{{ $item->price }}">
                                 <i class="bi bi-plus-lg me-1"></i> Add
@@ -85,18 +100,18 @@
                 @endforeach
             @endif
 
-            <!-- Custom Items -->
+            <!-- 2. Custom Items / Thali (Beech me Dikhenge) -->
             @if(isset($customItems))
                 @foreach($customItems as $custom)
                     @php
                         $hasAnyItem = true;
-                        $customName = $custom->name ?? $custom->item_name ?? 'Custom Item';
+                        $customName = $custom->name ?? $custom->item_name ?? 'Custom Item / Thali';
                         $customPrice = $custom->price ?? 0;
                     @endphp
                     <div class="col-md-4 col-sm-6 item-card-wrapper" data-category-id="custom">
                         <div class="item-card p-3 text-center h-100 d-flex flex-column justify-content-between border-warning">
                             <div>
-                                <div class="mb-1"><span class="badge bg-warning text-dark" style="font-size: 0.6rem;">Custom</span></div>
+                                <div class="mb-1"><span class="badge bg-warning text-dark" style="font-size: 0.6rem;">Custom / Thali</span></div>
                                 <h6 class="fw-bold text-dark mb-2" style="min-height: 38px;">{{ $customName }}</h6>
                                 <p class="text-success fw-bold fs-6 mb-3">₹{{ number_format($customPrice, 2) }}</p>
                             </div>
@@ -104,12 +119,108 @@
                                     class="btn btn-sm btn-outline-warning text-dark w-100 rounded-3 fw-semibold add-to-cart-btn" 
                                     data-id="{{ $custom->id }}" 
                                     data-is-custom="1"
+                                    data-is-tiffin="0"
                                     data-name="{{ addslashes($customName) }}" 
                                     data-price="{{ $customPrice }}">
                                 <i class="bi bi-plus-lg me-1"></i> Add
                             </button>
                         </div>
                     </div>
+                @endforeach
+            @endif
+
+            <!-- 3. Today's Tiffin Items (Fixed with single_day_rate) -->
+            @if(!empty($tiffinList) && count($tiffinList) > 0)
+                @foreach($tiffinList as $tData)
+                    @php
+                        // Function to extract Tiffin Rate using actual column names
+                        $getTiffinPrice = function($obj) {
+                            if (!$obj) return 0;
+                            $data = is_object($obj) ? get_object_vars($obj) : (is_array($obj) ? $obj : []);
+                            
+                            // Check exact database column names for Tiffins
+                            $keys = [
+                                'single_day_rate', // Exact column name from catalog schema
+                                'price', 
+                                'mrp', 
+                                'rate', 
+                                'full_week_rate', 
+                                'full_month_rate', 
+                                'amount', 
+                                'cost', 
+                                'selling_price'
+                            ];
+
+                            foreach ($keys as $k) {
+                                if (array_key_exists($k, $data) && $data[$k] !== null && (float)$data[$k] > 0) {
+                                    return (float)$data[$k];
+                                }
+                            }
+                            return 0;
+                        };
+
+                        // Sub-items handling (JSON / Array)
+                        $subItems = [];
+                        if (isset($tData->items)) {
+                            if (is_string($tData->items)) {
+                                $decoded = json_decode($tData->items);
+                                $subItems = is_array($decoded) ? $decoded : [];
+                            } elseif (is_array($tData->items) || is_object($tData->items)) {
+                                $subItems = (array)$tData->items;
+                            }
+                        }
+                        if (empty($subItems)) {
+                            $subItems = [$tData];
+                        }
+                    @endphp
+
+                    @foreach($subItems as $tItem)
+                        @php
+                            $hasAnyItem = true;
+                            
+                            // Title Clean-up
+                            $tiffinTitle = $tData->title ?? $tData->name ?? '';
+                            $itemNameOnly = is_object($tItem) ? ($tItem->item_name ?? $tItem->name ?? $tItem->title ?? '') : (is_array($tItem) ? ($tItem['item_name'] ?? $tItem['name'] ?? $tItem['title'] ?? '') : '');
+                            
+                            if (!empty($tiffinTitle) && !empty($itemNameOnly) && trim(strtolower($tiffinTitle)) !== trim(strtolower($itemNameOnly))) {
+                                $fullTiffinName = $tiffinTitle . ' - ' . $itemNameOnly;
+                            } else {
+                                $fullTiffinName = $tiffinTitle ?: ($itemNameOnly ?: 'Today\'s Tiffin');
+                            }
+
+                            $mealType = ucfirst(is_object($tItem) ? ($tItem->meal_type ?? $tData->meal_type ?? 'Tiffin') : ($tData->meal_type ?? 'Tiffin'));
+                            
+                            // Extract Price (Checks sub-item level then parent catalog level)
+                            $tiffinPrice = $getTiffinPrice($tItem);
+                            if ($tiffinPrice <= 0) {
+                                $tiffinPrice = $getTiffinPrice($tData);
+                            }
+
+                            $tiffinId = is_object($tItem) ? ($tItem->id ?? $tData->id ?? rand(100, 999)) : ($tData->id ?? rand(100, 999));
+                        @endphp
+                        <div class="col-md-4 col-sm-6 item-card-wrapper" data-category-id="tiffin">
+                            <div class="item-card p-3 text-center h-100 d-flex flex-column justify-content-between border-info">
+                                <div>
+                                    <div class="mb-1">
+                                        <span class="badge bg-info text-dark" style="font-size: 0.6rem;">
+                                            <i class="bi bi-box me-1"></i> TIFFIN ({{ strtoupper($mealType) }})
+                                        </span>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-2" style="min-height: 38px;">{{ $fullTiffinName }}</h6>
+                                    <p class="text-success fw-bold fs-6 mb-3">₹{{ number_format((float)$tiffinPrice, 2) }}</p>
+                                </div>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-info text-dark w-100 rounded-3 fw-semibold add-to-cart-btn" 
+                                        data-id="{{ $tiffinId }}" 
+                                        data-is-custom="0"
+                                        data-is-tiffin="1"
+                                        data-name="{{ addslashes($fullTiffinName) }}" 
+                                        data-price="{{ $tiffinPrice }}">
+                                    <i class="bi bi-plus-lg me-1"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
                 @endforeach
             @endif
 
@@ -120,7 +231,7 @@
                 </div>
             @endif
         </div>
-    </div>
+        </div>
 
     <!-- Right Column: Cart & Billing Area -->
     <div class="col-lg-5">
@@ -181,16 +292,18 @@
                 </div>
 
                 <button class="btn btn-primary w-100 py-2.5 fw-bold rounded-3 shadow-sm" id="place-order-btn">
-                    <i class="bi bi-printer me-2"></i> Place Order & Print KOT
+                    <i class="bi bi-printer me-2"></i> Place Order & Direct Print
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Hidden iframe for background silent print -->
+<iframe id="silentPrintFrame" style="display:none; visibility:hidden; width:0; height:0;"></iframe>
 @endsection
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<!-- Externalized Script File Inclusion -->
 @include('vendor.restaurant.pos.pos_script')
 @endpush
