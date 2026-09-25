@@ -97,6 +97,9 @@
         </div>
     </div>
     
+    <!-- Tidong Super Hub Strip Include -->
+    @include('member.partials.tidong-hub')
+
     <!-- 3. Include Advertising Component -->
     @include('member.partials.advertising')
 

@@ -16,16 +16,16 @@
         <ul class="list-unstyled components px-2 py-3 mb-0" style="overflow-y: auto; flex-grow: 1;">
             <!-- General Dashboard -->
             <li class="{{ request()->is('member/dashboard') ? 'active' : '' }} mb-1">
-                <a href="{{ url('/member/dashboard') }}" class="text-decoration-name text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
+                <a href="{{ url('/member/dashboard') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-home text-info"></i> Dashboard
                 </a>
             </li>
 
-            <li class="{{ request()->is('member/hub') ? 'active' : '' }} mb-1">
-    <a href="{{ url('/member/hub') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
-        <i class="fas fa-qrcode text-primary"></i> Tidong Super Hub
-    </a>
-</li>
+            <li class="{{ request()->is('member/hub*') ? 'active' : '' }} mb-1">
+                <a href="{{ url('/member/hub') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
+                    <i class="fas fa-qrcode text-primary"></i> Tidong Super Hub
+                </a>
+            </li>
 
             <li class="mb-1">
                 <a href="{{ url('/member/dashboard#qr-section') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
@@ -39,36 +39,36 @@
             </li>
 
             <!-- 1. Food & Restaurant -->
-            <li class="{{ request()->is('member/food*') ? 'active' : '' }} mb-1">
-                <a href="#" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
+            <li class="{{ request()->is('member/restaurant*') || request()->is('member/food*') ? 'active' : '' }} mb-1">
+                <a href="{{ url('/member/restaurant') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-utensils text-warning"></i> Food & Restaurants
                 </a>
             </li>
 
             <!-- 2. Grocery & Emporium -->
             <li class="{{ request()->is('member/grocery*') ? 'active' : '' }} mb-1">
-                <a href="#" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
+                <a href="{{ url('/member/grocery') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-shopping-basket text-success"></i> Grocery & Emporium
                 </a>
             </li>
 
             <!-- 3. Cab & Taxi Booking -->
             <li class="{{ request()->is('member/taxi*') ? 'active' : '' }} mb-1">
-                <a href="#" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
+                <a href="{{ url('/member/taxi') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-taxi text-danger"></i> Taxi & Cab Rides
                 </a>
             </li>
 
             <!-- 4. Hotel Bookings -->
-            <li class="{{ request()->is('member/hotels*') ? 'active' : '' }} mb-1">
-                <a href="#" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
+            <li class="{{ request()->is('member/hotel*') || request()->is('member/hotels*') ? 'active' : '' }} mb-1">
+                <a href="{{ url('/member/hotel') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-hotel text-info"></i> Hotel Stays & Rooms
                 </a>
             </li>
 
             <!-- 5. Money Exchange -->
-            <li class="{{ request()->is('member/exchange*') ? 'active' : '' }} mb-1">
-                <a href="#" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
+            <li class="{{ request()->is('member/money-exchange*') || request()->is('member/exchange*') ? 'active' : '' }} mb-1">
+                <a href="{{ url('/member/money-exchange') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-exchange-alt text-primary"></i> Money Exchange & Pay
                 </a>
             </li>
@@ -102,6 +102,8 @@
                 </a>
             </li>
 
+            <!-- Refer & Earn Fixed to Working Referral Link -->
+            <!-- Refer & Earn Modal Trigger -->
             <li class="mb-1">
                 <a href="#" data-bs-toggle="modal" data-bs-target="#referEarnModal" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-gift text-success"></i> Refer & Earn
@@ -139,6 +141,7 @@
         </form>
     </div>
 </nav>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const toggleBtn = document.getElementById('memberSidebarToggle');
@@ -161,7 +164,6 @@
             });
         }
 
-        // Bahar click karne par bhi close ho jaye
         document.addEventListener('click', function (e) {
             if (sidebar && sidebar.classList.contains('active') && !sidebar.contains(e.target) && toggleBtn && !toggleBtn.contains(e.target)) {
                 sidebar.classList.remove('active');

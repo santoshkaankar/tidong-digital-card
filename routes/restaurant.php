@@ -17,6 +17,7 @@ use App\Http\Controllers\Restaurant\CustomItemController;
 use App\Http\Controllers\Restaurant\TiffinCatalogController;
 use App\Http\Controllers\Restaurant\ProceedTiffinController;
 use App\Http\Controllers\Restaurant\TiffinReportController;
+use App\Http\Controllers\Restaurant\SettingController;
 
 
 /*
@@ -134,4 +135,9 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
 
     // Cash Requests
     Route::post('/cash-call/resolve/{id}', [OrderCashController::class, 'resolve'])->name('cash_call.resolve');
+
+    //Setting
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings');
+    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::get('/location-search', [SettingController::class, 'searchLocation'])->name('location.search');
 });

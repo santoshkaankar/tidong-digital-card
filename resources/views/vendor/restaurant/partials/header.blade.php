@@ -22,21 +22,22 @@
                 
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" aria-labelledby="userProfileDropdown">
                     <li>
-                        <a class="dropdown-item" href="#">
+                        <!-- Fixed Route Name -->
+                        <a class="dropdown-item" href="{{ route('vendor.restaurant.settings') }}">
                             <i class="bi bi-gear me-2"></i> Settings
                         </a>
                     </li>
                     
                     <li><hr class="dropdown-divider"></li>
 
-                    <!-- 1. Language Switcher Partial -->
+                    <!-- Language Switcher Partial -->
                     @if(View::exists('vendor.restaurant.partials.language_switcher'))
                         @include('vendor.restaurant.partials.language_switcher')
                     @endif
 
                     <li><hr class="dropdown-divider"></li>
 
-                    <!-- 2. Theme Switcher Partial -->
+                    <!-- Theme Switcher Partial -->
                     @if(View::exists('vendor.restaurant.partials.theme_switcher'))
                         @include('vendor.restaurant.partials.theme_switcher')
                     @endif

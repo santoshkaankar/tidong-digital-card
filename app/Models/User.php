@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory; // ✅ Sahi Import
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -17,6 +17,7 @@ class User extends Authenticatable
         'role', 
         'status', 
         'business_type', 
+        'food_type',       // Veg / Non-Veg / Both
         'username', 
         'mobile', 
         'google_id', 
@@ -27,18 +28,19 @@ class User extends Authenticatable
         'vehicle_no',
         'license_no',
         'categories',
-        'referral_id', // MLM Referral ID
-        'sponsor_id',  // MLM Sponsor ID
-        'parent_id',   // MLM Binary Parent ID
-        'position',    // MLM Binary Position (left/right)
-        'slug',        // URL slug
-        // KYC Fields
+        'referral_id',
+        'sponsor_id',
+        'parent_id',
+        'position',
+        'slug',
+        // KYC & Business Fields
         'pan_number',
         'pan_image',
         'aadhaar_number',
         'aadhaar_front_image',
         'aadhaar_back_image',
         'kyc_status',
+        'gstin',           // GST Registration Number (Optional)
         // Bank Details
         'account_holder_name',
         'bank_name',
@@ -47,6 +49,7 @@ class User extends Authenticatable
         'upi_id',
         // Address Details
         'address',
+        'area',            // Local Area
         'city',
         'state',
         'pincode',

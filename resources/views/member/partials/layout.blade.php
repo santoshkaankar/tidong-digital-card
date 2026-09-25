@@ -65,6 +65,8 @@
             &copy; {{ date('Y') }} Tidong® Portal. All rights reserved. Built for Global Reach.
         </footer>
     </div>
+    <!-- Member Refer & Earn Modal Partial -->
+    @include('member.partials.refer_modal')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>

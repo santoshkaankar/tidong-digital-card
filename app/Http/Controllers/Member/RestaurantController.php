@@ -14,46 +14,63 @@ use App\Models\Restaurant\RestaurantOrder;
 use App\Models\Restaurant\RestaurantOrderItem;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class RestaurantController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $type = $request->input('type');
+        $search = $request->input('q') ?? $request->input('search');
+        $type   = $request->input('type');
+        $lat    = $request->input('lat');
+        $lng    = $request->input('lng');
+        $pincode = $request->input('pincode');
+
+        // Pincode se Lat/Lng autodetect (Pincodes table lookup)
+        if (!empty($pincode) && (empty($lat) || empty($lng))) {
+            $pinData = DB::table('pincodes')->where('pincode', $pincode)->first();
+            if ($pinData && !empty($pinData->latitude) && !empty($pinData->longitude)) {
+                $lat = $pinData->latitude;
+                $lng = $pinData->longitude;
+            }
+        }
 
         $query = User::query();
 
-        // STRICT FILTER: Sirf Restaurant Business Type ya Restaurant Role vale users hi aayenge
+        // 1. STRICT ROLE / BUSINESS FILTER
         $query->where(function($q) {
             $q->where('business_type', 'restaurant')
               ->orWhere('role', 'restaurant');
         });
 
-        // Search Filter (Name, City, State, Business Name)
-        if (!empty($search)) {
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('username', 'LIKE', "%{$search}%");
+        // DYNAMIC MULTI-SEARCH
+if (!empty($search)) {
+    $query->where(function($q) use ($search) {
+        // 1. Users table ke fields
+        $q->where('name', 'LIKE', "%{$search}%")
+          ->orWhere('username', 'LIKE', "%{$search}%")
+          ->orWhere('city', 'LIKE', "%{$search}%")
+          ->orWhere('state', 'LIKE', "%{$search}%")
+          ->orWhere('pincode', 'LIKE', "%{$search}%")
+          ->orWhere('area', 'LIKE', "%{$search}%")
+          ->orWhere('address', 'LIKE', "%{$search}%");
 
-                if (Schema::hasColumn('users', 'business_name')) {
-                    $q->orWhere('business_name', 'LIKE', "%{$search}%");
-                }
-                if (Schema::hasColumn('users', 'city')) {
-                    $q->orWhere('city', 'LIKE', "%{$search}%");
-                }
-                if (Schema::hasColumn('users', 'state')) {
-                    $q->orWhere('state', 'LIKE', "%{$search}%");
-                }
-            });
-        }
+        // 2. Agar pincodes table se match karana hai (pincodes table ki columns)
+        $q->orWhereIn('pincode', function($subQuery) use ($search) {
+            $subQuery->select('pincode')
+                     ->from('pincodes')
+                     ->where('office_name', 'LIKE', "%{$search}%")
+                     ->orWhere('district', 'LIKE', "%{$search}%")
+                     ->orWhere('state_name', 'LIKE', "%{$search}%");
+        });
+    });
+}
+        
 
-        // Food Type Filter (Veg / Non-Veg)
+        // 3. VEG / NON-VEG FILTER
         if (!empty($type) && $type !== 'all') {
             if (Schema::hasColumn('users', 'food_type')) {
-                if ($type === 'pureveg' || $type === 'veg') {
+                if (in_array($type, ['pureveg', 'veg'])) {
                     $query->whereIn('food_type', ['pure_veg', 'veg', 'pureveg']);
                 } elseif ($type === 'nonveg') {
                     $query->whereIn('food_type', ['non_veg', 'nonveg']);
@@ -61,89 +78,101 @@ class RestaurantController extends Controller
             }
         }
 
-        $restaurants = $query->latest()->paginate(12)->withQueryString();
+        // 4. NEARBY DISTANCE SORTING (PostgreSQL Compatible Haversine Formula)
+        if (!empty($lat) && !empty($lng)) {
+            $query->selectRaw("*, ( 6371 * acos( cos( radians(?) ) * cos( radians( COALESCE(latitude, 0) ) ) * cos( radians( COALESCE(longitude, 0) ) - radians(?) ) + sin( radians(?) ) * sin( radians( COALESCE(latitude, 0) ) ) ) ) AS distance", [$lat, $lng, $lat])
+                  ->orderBy('distance', 'asc');
+        } else {
+            $query->latest();
+        }
 
-        return view('member.restaurant.index', compact('restaurants', 'search', 'type'));
+        $restaurants = $query->paginate(12)->appends($request->all());
+
+        return view('member.restaurant.index', compact('restaurants', 'search', 'type', 'lat', 'lng', 'pincode'));
     }
 
     public function show($id)
-{
-    $restaurant = User::findOrFail($id);
+    {
+        $restaurant = User::findOrFail($id);
 
-    // 1. Fetch categories
-    $categories = RestaurantCategory::query();
-    if (Schema::hasColumn('restaurant_categories', 'user_id')) {
-        $categories->where('user_id', $id);
-    } elseif (Schema::hasColumn('restaurant_categories', 'restaurant_id')) {
-        $categories->where('restaurant_id', $id);
+        // 1. Fetch categories
+        $categories = RestaurantCategory::query();
+        if (Schema::hasColumn('restaurant_categories', 'user_id')) {
+            $categories->where('user_id', $id);
+        } elseif (Schema::hasColumn('restaurant_categories', 'restaurant_id')) {
+            $categories->where('restaurant_id', $id);
+        }
+        $categories = $categories->get();
+
+        // 2. Fetch standard items (Supabase Fix: status = true)
+        $itemsQuery = RestaurantItem::query();
+        if (Schema::hasColumn('restaurant_items', 'user_id')) {
+            $itemsQuery->where('user_id', $id);
+        } elseif (Schema::hasColumn('restaurant_items', 'restaurant_id')) {
+            $itemsQuery->where('restaurant_id', $id);
+        }
+        $globalItems = $itemsQuery->where('status', true)->get();
+
+        // 3. Fetch custom items / Thalis (Supabase Fix: is_available = true)
+        $customItems = RestaurantCustomItem::where('user_id', $id)
+            ->where('is_available', true)
+            ->get();
+
+        // 4. Today's Tiffin Schedule
+        $todayDay = Carbon::now()->format('l');
+        $todayTiffins = TiffinCatalog::with(['items' => function($q) use ($todayDay) {
+            $q->where('day', $todayDay);
+        }])
+        ->where('vendor_id', $id)
+        ->get()
+        ->filter(function($catalog) {
+            return $catalog->items->count() > 0;
+        });
+
+        return view('member.restaurant.show', compact('restaurant', 'categories', 'globalItems', 'customItems', 'todayTiffins', 'todayDay'));
     }
-    $categories = $categories->get();
 
-    // 2. Fetch standard/global food items ($items ki jagah $globalItems karein)
-    $itemsQuery = RestaurantItem::query();
-    if (Schema::hasColumn('restaurant_items', 'user_id')) {
-        $itemsQuery->where('user_id', $id);
-    } elseif (Schema::hasColumn('restaurant_items', 'restaurant_id')) {
-        $itemsQuery->where('restaurant_id', $id);
-    }
-    $globalItems = $itemsQuery->where('status', true)->get(); // <--- Updated variable name
-
-    // 3. Fetch custom items / Thalis
-    $customItems = RestaurantCustomItem::where('user_id', $id)
-        ->where('is_available', true)
-        ->get();
-
-    // 4. Same-Day Tiffin Auto Render (Today's Tiffin Menu)
-    $todayDay = Carbon::now()->format('l');
-    $todayTiffins = TiffinCatalog::with(['items' => function($q) use ($todayDay) {
-        $q->where('day', $todayDay);
-    }])
-    ->where('vendor_id', $id)
-    ->get()
-    ->filter(function($catalog) {
-        return $catalog->items->count() > 0;
-    });
-
-    // compact me 'globalItems' pass karein
-    return view('member.restaurant.show', compact('restaurant', 'categories', 'globalItems', 'customItems', 'todayTiffins', 'todayDay'));
-}
-
-    // Dashboard Live Order Placement Method
+    // Live Delivery & Dining Order Placement
     public function placeOrder(Request $request)
     {
         try {
             $request->validate([
-                'restaurant_id' => 'required|exists:users,id',
-                'items'         => 'required|array|min:1',
-                'items.*.id'    => 'required|exists:restaurant_items,id',
-                'items.*.quantity' => 'required|integer|min:1',
+                'restaurant_id'    => 'required|exists:users,id',
+                'order_type'       => 'required|in:delivery,dine_in,takeaway',
+                'delivery_address' => 'required_if:order_type,delivery|nullable|string',
+                'pincode'          => 'nullable|string',
+                'items'            => 'required|array|min:1',
             ]);
 
-            $order = \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            $order = DB::transaction(function () use ($request) {
                 $subTotal = 0;
 
-                $order = \App\Models\Restaurant\RestaurantOrder::create([
-                    'user_id'       => auth()->id(),                     // Customer User ID
-                    'vendor_id'     => $request->restaurant_id,          // Restaurant / Vendor User ID
-                    'order_number'  => 'ORD-' . strtoupper(\Illuminate\Support\Str::random(6)),
-                    'order_type'    => 'online',                          // Online / Dashboard Order
-                    'sub_total'     => 0,
-                    'total_amount'  => 0,
-                    'status'        => 'pending',                         // Vendor KDS me WAITING dikhayega
-                    'payment_status'=> 'unpaid',
+                $order = RestaurantOrder::create([
+                    'user_id'          => auth()->id(),
+                    'vendor_id'        => $request->restaurant_id,
+                    'order_number'     => 'ORD-' . strtoupper(Str::random(6)),
+                    'order_type'       => $request->order_type,
+                    'delivery_address' => $request->delivery_address,
+                    'pincode'          => $request->pincode,
+                    'sub_total'        => 0,
+                    'total_amount'     => 0,
+                    'status'           => 'pending',
+                    'payment_status'   => 'unpaid',
+                    'delivery_status'  => $request->order_type === 'delivery' ? 'assigning_delivery_boy' : 'not_applicable'
                 ]);
 
                 foreach ($request->items as $itemData) {
-                    $item = \App\Models\Restaurant\RestaurantItem::findOrFail($itemData['id']);
-                    $itemSubtotal = $item->price * $itemData['quantity'];
-                    $itemName = $item->name ?? 'Food Item';
+                    $item = RestaurantItem::find($itemData['id']);
+                    $price = $item ? $item->price : ($itemData['price'] ?? 0);
+                    $itemSubtotal = $price * $itemData['quantity'];
+                    $itemName = $item ? ($item->name ?? 'Food Item') : ($itemData['name'] ?? 'Custom Dish');
 
-                    \App\Models\Restaurant\RestaurantOrderItem::create([
+                    RestaurantOrderItem::create([
                         'order_id'       => $order->id,
-                        'item_id'        => $item->id,
+                        'item_id'        => $itemData['id'] ?? null,
                         'item_name'      => $itemName,
                         'quantity'       => $itemData['quantity'],
-                        'price'          => $item->price,
+                        'price'          => $price,
                         'subtotal'       => $itemSubtotal,
                         'kitchen_status' => 'cooking'
                     ]);
@@ -160,7 +189,7 @@ class RestaurantController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order successfully kitchen me bhej diya gaya hai!',
+                'message' => 'Order successfully place ho gaya hai!',
                 'order_id' => $order->id,
                 'total_amount' => $order->total_amount
             ]);
@@ -173,7 +202,7 @@ class RestaurantController extends Controller
         }
     }
 
-    // Customer Side Tiffin Booking (1D, 1W, 1M, Custom)
+    // Tiffin Pre-Booking Method
     public function bookTiffin(Request $request, $id)
     {
         try {
@@ -210,7 +239,7 @@ class RestaurantController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tiffin Booking successfully submitted!',
+                'message' => 'Tiffin Booking request submit ho gayi hai!',
                 'order_id' => $order->id
             ]);
         } catch (\Exception $e) {
