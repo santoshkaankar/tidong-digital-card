@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('member.partials.layout')
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/card-materials.css') }}">

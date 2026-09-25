@@ -109,6 +109,8 @@ require __DIR__ .'/retail.php';
 require __DIR__ .'/shopping.php';
 require __DIR__ .'/delivery.php';
 require __DIR__ .'/hub.php';
+require __DIR__ .'/vendor.php';
+
 /*
 |--------------------------------------------------------------------------
 | 6. Public Guest Orders & Hub Routes
