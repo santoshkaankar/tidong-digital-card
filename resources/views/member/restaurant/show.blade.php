@@ -42,6 +42,11 @@
         z-index: 1050;
         padding: 12px 24px;
     }
+    .category-btn.active {
+        background-color: #0d6efd !important;
+        color: #ffffff !important;
+        font-weight: 600;
+    }
 </style>
 
 <div class="container-fluid py-4 px-4 pb-5">
@@ -84,12 +89,12 @@
         <div class="col-lg-3 mb-4">
             <div class="card border border-light-subtle rounded-3 p-3 shadow-sm bg-white">
                 <h6 class="fw-bold text-dark mb-3">Categories</h6>
-                <div class="nav flex-column nav-pills gap-1">
-                    <button class="nav-link active text-start rounded-3 py-2" data-bs-toggle="pill" data-bs-target="#cat-all">
-                        All Items
+                <div class="nav flex-column nav-pills gap-1" id="v-pills-tab" role="tablist">
+                    <button class="nav-link category-btn active text-start rounded-3 py-2" id="cat-all-tab" data-bs-toggle="pill" data-bs-target="#cat-all" type="button" role="tab">
+                        <i class="fas fa-utensils me-2"></i> All Items
                     </button>
-                    @foreach($categories as$category)
-                        <button class="nav-link text-start rounded-3 py-2" data-bs-toggle="pill" data-bs-target="#cat-{{ $category->id }}">
+                    @foreach($categories as $category)
+                        <button class="nav-link category-btn text-start rounded-3 py-2" id="cat-{{ $category->id }}-tab" data-bs-toggle="pill" data-bs-target="#cat-{{ $category->id }}" type="button" role="tab">
                             {{ $category->name }}
                         </button>
                     @endforeach
@@ -97,46 +102,94 @@
             </div>
         </div>
 
-        <!-- Menu Items List -->
+        <!-- Menu Items Tab Content -->
         <div class="col-lg-9">
             <div class="card border border-light-subtle rounded-3 p-3 shadow-sm bg-white">
                 <h5 class="fw-bold text-dark mb-3">Menu Items</h5>
 
-                <div class="row g-3">
-                    @forelse($items as$item)
-                        <div class="col-md-6">
-                            <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        @if(isset($item->item_type) && in_array($item->item_type, ['veg', 'pure_veg']))
-                                            <span class="badge badge-veg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> VEG</span>
-                                        @else
-                                            <span class="badge badge-nonveg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> NON-VEG</span>
-                                        @endif
-                                        <h6 class="fw-bold text-dark mb-0">{{ $item->name }}</h6>
+                <div class="tab-content" id="v-pills-tabContent">
+                    
+                    <!-- TAB 1: ALL ITEMS -->
+                    <div class="tab-pane fade show active" id="cat-all" role="tabpanel">
+                        <div class="row g-3">
+                            @forelse($items as $item)
+                                <div class="col-md-6">
+                                    <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                @if(isset($item->item_type) && in_array($item->item_type, ['veg', 'pure_veg']))
+                                                    <span class="badge badge-veg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> VEG</span>
+                                                @else
+                                                    <span class="badge badge-nonveg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> NON-VEG</span>
+                                                @endif
+                                                <h6 class="fw-bold text-dark mb-0">{{ $item->name }}</h6>
+                                            </div>
+                                            <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;">
+                                                {{ $item->description ?? 'Freshly prepared food item.' }}
+                                            </p>
+                                            <span class="fw-bold text-dark">₹{{ number_format($item->price ?? 0, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
+                                                <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, -1)">-</button>
+                                                <input type="text" id="qty-{{ $item->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
+                                                <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, 1)">+</button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;">
-                                        {{ $item->description ?? 'Freshly prepared food item.' }}
-                                    </p>
-                                    <span class="fw-bold text-dark">₹{{ number_format($item->price ?? 0, 2) }}</span>
                                 </div>
-                                
-                                <!-- Quantity Control Counter Buttons -->
-                                <div>
-                                    <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
-                                        <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, -1)">-</button>
-                                        <input type="text" id="qty-{{ $item->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
-                                        <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, 1)">+</button>
+                            @empty
+                                <div class="col-12 py-5 text-center text-muted">
+                                    <i class="fas fa-utensils fa-2x mb-2 opacity-50"></i>
+                                    <p class="mb-0">No active food items added yet for this restaurant.</p>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: CATEGORY WISE FILTERED ITEMS -->
+                    @foreach($categories as $category)
+                        @php
+                            $catItems = $items->where('category_id',$category->id);
+                        @endphp
+                        <div class="tab-pane fade" id="cat-{{ $category->id }}" role="tabpanel">
+                            <div class="row g-3">
+                                @forelse($catItems as $item)
+                                    <div class="col-md-6">
+                                        <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    @if(isset($item->item_type) && in_array($item->item_type, ['veg', 'pure_veg']))
+                                                        <span class="badge badge-veg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> VEG</span>
+                                                    @else
+                                                        <span class="badge badge-nonveg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> NON-VEG</span>
+                                                    @endif
+                                                    <h6 class="fw-bold text-dark mb-0">{{ $item->name }}</h6>
+                                                </div>
+                                                <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;">
+                                                    {{ $item->description ?? 'Freshly prepared food item.' }}
+                                                </p>
+                                                <span class="fw-bold text-dark">₹{{ number_format($item->price ?? 0, 2) }}</span>
+                                            </div>
+                                            <div>
+                                                <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
+                                                    <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, -1)">-</button>
+                                                    <input type="text" id="qty-cat-{{ $category->id }}-{{$item->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
+                                                    <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, 1)">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                @empty
+                                    <div class="col-12 py-5 text-center text-muted">
+                                        <i class="fas fa-folder-open fa-2x mb-2 opacity-50"></i>
+                                        <p class="mb-0">No items available in {{ $category->name }}.</p>
+                                    </div>
+                                @endforelse
                             </div>
                         </div>
-                    @empty
-                        <div class="col-12 py-5 text-center text-muted">
-                            <i class="fas fa-utensils fa-2x mb-2 opacity-50"></i>
-                            <p class="mb-0">No food items added yet for this restaurant.</p>
-                        </div>
-                    @endforelse
+                    @endforeach
+
                 </div>
 
             </div>
@@ -158,6 +211,25 @@
     </div>
 </div>
 
+<!-- Order Confirmation Modal with Order Tracking -->
+<div class="modal fade" id="orderSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4 rounded-4 border-0 shadow">
+            <div class="mb-3 text-success fs-1">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-2">Order Sent to Kitchen!</h4>
+            <p class="text-muted small mb-4">Your order has been transmitted directly to the vendor KDS display.</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url('/member/orders') }}" class="btn btn-primary rounded-pill px-4">
+                    <i class="fas fa-tasks me-1"></i> Track Order
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -173,12 +245,18 @@
 
         if (cartItems[itemId].quantity <= 0) {
             delete cartItems[itemId];
-            document.getElementById(`qty-${itemId}`).value = 0;
+            syncQtyInputs(itemId, 0);
         } else {
-            document.getElementById(`qty-${itemId}`).value = cartItems[itemId].quantity;
+            syncQtyInputs(itemId, cartItems[itemId].quantity);
         }
 
         renderFloatingBar();
+    }
+
+    function syncQtyInputs(itemId, val) {
+        document.querySelectorAll(`[id^="qty-"][id$="-${itemId}"], #qty-${itemId}`).forEach(el => {
+            el.value = val;
+        });
     }
 
     function renderFloatingBar() {
@@ -219,12 +297,14 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
-                Object.keys(cartItems).forEach(id => {
-                    document.getElementById(`qty-${id}`).value = 0;
-                });
+                // Reset cart
+                Object.keys(cartItems).forEach(id => syncQtyInputs(id, 0));
                 cartItems = {};
                 renderFloatingBar();
+
+                // Open Order Success & Tracking Modal
+                let modal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
+                modal.show();
             } else {
                 alert("Error: " + data.message);
             }
