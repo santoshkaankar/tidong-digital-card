@@ -4,58 +4,25 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-    .restaurant-header {
-        background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-    }
-    .menu-item-card {
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        transition: all 0.2s ease;
-        background: #ffffff;
-    }
-    .menu-item-card:hover {
-        border-color: #cbd5e1;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    .badge-veg {
-        border: 1px solid #16a34a;
-        color: #16a34a;
-        font-size: 0.75rem;
-    }
-    .badge-nonveg {
-        border: 1px solid #dc2626;
-        color: #dc2626;
-        font-size: 0.75rem;
-    }
-    .floating-order-bar {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 600px;
-        background: #ffffff;
-        border-radius: 50px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        z-index: 1050;
-        padding: 12px 24px;
-    }
-    .category-btn.active {
-        background-color: #0d6efd !important;
-        color: #ffffff !important;
-        font-weight: 600;
-    }
+    .restaurant-header { background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border: 1px solid #e2e8f0; border-radius: 16px; }
+    .menu-item-card { border: 1px solid #e2e8f0; border-radius: 12px; transition: all 0.2s ease; background: #ffffff; }
+    .menu-item-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .badge-veg { border: 1px solid #16a34a; color: #16a34a; font-size: 0.75rem; }
+    .badge-nonveg { border: 1px solid #dc2626; color: #dc2626; font-size: 0.75rem; }
+    .badge-thali { background: #fef3c7; color: #d97706; font-weight: bold; font-size: 0.75rem; border: 1px solid #f59e0b; }
+    .badge-tiffin { background: #e0e7ff; color: #4338ca; font-weight: bold; font-size: 0.75rem; border: 1px solid #6366f1; }
+    .floating-order-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; background: #ffffff; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1050; padding: 12px 24px; }
 </style>
 
 <div class="container-fluid py-4 px-4 pb-5">
 
-    <!-- Back Button & Breadcrumb -->
-    <div class="mb-3">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
         <a href="{{ route('member.restaurant.index') }}" class="btn btn-sm btn-light border text-muted rounded-3">
             <i class="fas fa-arrow-left me-1"></i> Back to Restaurants
         </a>
+        <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#tiffinBookingModal">
+            <i class="fas fa-calendar-alt me-1"></i> Pre-Book Tiffin (1D / 1W / 1M)
+        </button>
     </div>
 
     <!-- Restaurant Info Header -->
@@ -83,18 +50,21 @@
         </div>
     </div>
 
-    <!-- Menu Section -->
+    <!-- Main Content Grid -->
     <div class="row">
-        <!-- Categories Sidebar / Filter -->
+        <!-- Categories Sidebar -->
         <div class="col-lg-3 mb-4">
             <div class="card border border-light-subtle rounded-3 p-3 shadow-sm bg-white">
                 <h6 class="fw-bold text-dark mb-3">Categories</h6>
-                <div class="nav flex-column nav-pills gap-1" id="v-pills-tab" role="tablist">
-                    <button class="nav-link category-btn active text-start rounded-3 py-2" id="cat-all-tab" data-bs-toggle="pill" data-bs-target="#cat-all" type="button" role="tab">
-                        <i class="fas fa-utensils me-2"></i> All Items
+                <div class="nav flex-column nav-pills gap-1" id="v-pills-tab">
+                    <button class="nav-link active text-start rounded-3 py-2" data-bs-toggle="pill" data-bs-target="#cat-all">
+                        <i class="fas fa-utensils me-2"></i> All Items & Thalis
+                    </button>
+                    <button class="nav-link text-start rounded-3 py-2" data-bs-toggle="pill" data-bs-target="#cat-tiffin">
+                        <i class="fas fa-box me-2"></i> Today's Tiffin ({{ $todayDay }})
                     </button>
                     @foreach($categories as $category)
-                        <button class="nav-link category-btn text-start rounded-3 py-2" id="cat-{{ $category->id }}-tab" data-bs-toggle="pill" data-bs-target="#cat-{{ $category->id }}" type="button" role="tab">
+                        <button class="nav-link text-start rounded-3 py-2" data-bs-toggle="pill" data-bs-target="#cat-{{ $category->id }}">
                             {{ $category->name }}
                         </button>
                     @endforeach
@@ -102,90 +72,207 @@
             </div>
         </div>
 
-        <!-- Menu Items Tab Content -->
+        <!-- Menu Items List -->
         <div class="col-lg-9">
             <div class="card border border-light-subtle rounded-3 p-3 shadow-sm bg-white">
-                <h5 class="fw-bold text-dark mb-3">Menu Items</h5>
-
-                <div class="tab-content" id="v-pills-tabContent">
+                
+                <div class="tab-content">
                     
-                    <!-- TAB 1: ALL ITEMS -->
-                    <div class="tab-pane fade show active" id="cat-all" role="tabpanel">
+                    <!-- TAB 1: ALL ITEMS + THALI (CUSTOM ITEMS) -->
+                    <div class="tab-pane fade show active" id="cat-all">
+                        <h5 class="fw-bold text-dark mb-3">Menu & Special Thalis</h5>
                         <div class="row g-3">
-                            @forelse($items as $item)
+                            
+                            <!-- 1. Custom Items / Thalis -->
+                            @foreach($customItems as $cItem)
                                 <div class="col-md-6">
                                     <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
                                         <div>
                                             <div class="d-flex align-items-center gap-2 mb-1">
-                                                @if(isset($item->item_type) && in_array($item->item_type, ['veg', 'pure_veg']))
-                                                    <span class="badge badge-veg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> VEG</span>
-                                                @else
-                                                    <span class="badge badge-nonveg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> NON-VEG</span>
-                                                @endif
-                                                <h6 class="fw-bold text-dark mb-0">{{ $item->name }}</h6>
+                                                <span class="badge badge-thali rounded-1 px-2 py-0.5"><i class="fas fa-concierge-bell me-1"></i> THALI / SPECIAL</span>
+                                                <h6 class="fw-bold text-dark mb-0">{{ $cItem->name }}</h6>
                                             </div>
                                             <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;">
-                                                {{ $item->description ?? 'Freshly prepared food item.' }}
+                                                {{ $cItem->description ?? 'Special Restaurant Dish / Thali' }}
                                             </p>
-                                            <span class="fw-bold text-dark">₹{{ number_format($item->price ?? 0, 2) }}</span>
+                                            <span class="fw-bold text-dark">₹{{ number_format($cItem->price ?? 0, 2) }}</span>
                                         </div>
                                         <div>
                                             <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
-                                                <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, -1)">-</button>
-                                                <input type="text" id="qty-{{ $item->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
-                                                <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, 1)">+</button>
+                                                <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty('custom_{{ $cItem->id }}', {{$cItem->price }}, -1)">-</button>
+                                                <input type="text" id="qty-custom_{{ $cItem->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
+                                                <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty('custom_{{ $cItem->id }}', {{$cItem->price }}, 1)">+</button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            @endforeach
+
+                            <!-- 2. Global Items -->
+                            @foreach($globalItems as $gItem)
+                                @php
+                                    $itemName = $gItem->globalItem->item_name ?? $gItem->name ?? 'Food Item';
+                                @endphp
+                                <div class="col-md-6">
+                                    <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <span class="badge badge-veg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> VEG</span>
+                                                <h6 class="fw-bold text-dark mb-0">{{ $itemName }}</h6>
+                                            </div>
+                                            <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;">Freshly prepared food item.</p>
+                                            <span class="fw-bold text-dark">₹{{ number_format($gItem->price ?? 0, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
+                                                <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty('global_{{ $gItem->id }}', {{$gItem->price }}, -1)">-</button>
+                                                <input type="text" id="qty-global_{{ $gItem->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
+                                                <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty('global_{{ $gItem->id }}', {{$gItem->price }}, 1)">+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: SAME-DAY TIFFIN AUTO RENDER -->
+                    <div class="tab-pane fade" id="cat-tiffin">
+                        <h5 class="fw-bold text-dark mb-3">Today's Tiffin Menu ({{ $todayDay }})</h5>
+                        <div class="row g-3">
+                            @forelse($todayTiffins as $tiffin)
+                                @foreach($tiffin->items as $tItem)
+                                    <div class="col-md-6">
+                                        <div class="menu-item-card p-3 d-flex justify-content-between align-items-center border-primary-subtle">
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <span class="badge badge-tiffin rounded-1 px-2 py-0.5"><i class="fas fa-box me-1"></i> {{ strtoupper($tItem->meal_type) }}</span>
+                                                    <h6 class="fw-bold text-dark mb-0">{{ $tiffin->title ?? 'Daily Tiffin' }}</h6>
+                                                </div>
+                                                <p class="text-muted small mb-1">{{ $tItem->item_name ?? 'Full Meals' }}</p>
+                                                <span class="fw-bold text-success">₹{{ number_format($tItem->price ?? 100, 2) }}</span>
+                                            </div>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#tiffinBookingModal">Book Now</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
                             @empty
                                 <div class="col-12 py-5 text-center text-muted">
-                                    <i class="fas fa-utensils fa-2x mb-2 opacity-50"></i>
-                                    <p class="mb-0">No active food items added yet for this restaurant.</p>
+                                    <i class="fas fa-box-open fa-2x mb-2 opacity-50"></i>
+                                    <p class="mb-0">No tiffin schedule configured for today ({{ $todayDay }}).</p>
                                 </div>
                             @endforelse
                         </div>
                     </div>
 
-                    <!-- TAB 2: CATEGORY WISE FILTERED ITEMS -->
+                    <!-- TAB 3: DYNAMIC CATEGORIES -->
                     @foreach($categories as $category)
-                        @php
-                            $catItems = $items->where('category_id',$category->id);
-                        @endphp
-                        <div class="tab-pane fade" id="cat-{{ $category->id }}" role="tabpanel">
+                        <div class="tab-pane fade" id="cat-{{ $category->id }}">
+                            <h5 class="fw-bold text-dark mb-3">{{ $category->name }}</h5>
                             <div class="row g-3">
-                                @forelse($catItems as $item)
-                                    <div class="col-md-6">
-                                        <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="d-flex align-items-center gap-2 mb-1">
-                                                    @if(isset($item->item_type) && in_array($item->item_type, ['veg', 'pure_veg']))
-                                                        <span class="badge badge-veg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> VEG</span>
-                                                    @else
-                                                        <span class="badge badge-nonveg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> NON-VEG</span>
-                                                    @endif
-                                                    <h6 class="fw-bold text-dark mb-0">{{ $item->name }}</h6>
+                                @php
+                                    $catLower = strtolower(trim($category->name));
+                                @endphp
+
+                                @if(str_contains($catLower, 'thali'))
+                                    {{-- Render Thalis (Custom Items) --}}
+                                    @forelse($customItems as $cItem)
+                                        <div class="col-md-6">
+                                            <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                        <span class="badge badge-thali rounded-1 px-2 py-0.5"><i class="fas fa-concierge-bell me-1"></i> THALI / SPECIAL</span>
+                                                        <h6 class="fw-bold text-dark mb-0">{{ $cItem->name }}</h6>
+                                                    </div>
+                                                    <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;">
+                                                        {{ $cItem->description ?? 'Special Restaurant Dish / Thali' }}
+                                                    </p>
+                                                    <span class="fw-bold text-dark">₹{{ number_format($cItem->price ?? 0, 2) }}</span>
                                                 </div>
-                                                <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;">
-                                                    {{ $item->description ?? 'Freshly prepared food item.' }}
-                                                </p>
-                                                <span class="fw-bold text-dark">₹{{ number_format($item->price ?? 0, 2) }}</span>
-                                            </div>
-                                            <div>
-                                                <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
-                                                    <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, -1)">-</button>
-                                                    <input type="text" id="qty-cat-{{ $category->id }}-{{$item->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
-                                                    <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty({{ $item->id }}, {{$item->price }}, 1)">+</button>
+                                                <div>
+                                                    <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
+                                                        <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty('custom_{{ $cItem->id }}', {{$cItem->price }}, -1)">-</button>
+                                                        <input type="text" id="qty-custom_{{ $cItem->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
+                                                        <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty('custom_{{ $cItem->id }}', {{$cItem->price }}, 1)">+</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                @empty
-                                    <div class="col-12 py-5 text-center text-muted">
-                                        <i class="fas fa-folder-open fa-2x mb-2 opacity-50"></i>
-                                        <p class="mb-0">No items available in {{ $category->name }}.</p>
-                                    </div>
-                                @endforelse
+                                    @empty
+                                        <div class="col-12 py-5 text-center text-muted">
+                                            <i class="fas fa-concierge-bell fa-2x mb-2 opacity-50"></i>
+                                            <p class="mb-0">Is category me abhi koi Thali available nahi hai.</p>
+                                        </div>
+                                    @endforelse
+
+                                @elseif(str_contains($catLower, 'tiffin'))
+                                    {{-- Render Tiffins --}}
+                                    @forelse($todayTiffins as $tiffin)
+                                        @foreach($tiffin->items as $tItem)
+                                            <div class="col-md-6">
+                                                <div class="menu-item-card p-3 d-flex justify-content-between align-items-center border-primary-subtle">
+                                                    <div>
+                                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                                            <span class="badge badge-tiffin rounded-1 px-2 py-0.5"><i class="fas fa-box me-1"></i> {{ strtoupper($tItem->meal_type) }}</span>
+                                                            <h6 class="fw-bold text-dark mb-0">{{ $tiffin->title ?? 'Daily Tiffin' }}</h6>
+                                                        </div>
+                                                        <p class="text-muted small mb-1">{{ $tItem->item_name ?? 'Full Meals' }}</p>
+                                                        <span class="fw-bold text-success">₹{{ number_format($tItem->price ?? 100, 2) }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#tiffinBookingModal">Book Now</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @empty
+                                        <div class="col-12 py-5 text-center text-muted">
+                                            <i class="fas fa-box-open fa-2x mb-2 opacity-50"></i>
+                                            <p class="mb-0">No tiffin schedule configured for today ({{ $todayDay }}).</p>
+                                        </div>
+                                    @endforelse
+
+                                @else
+                                    {{-- Standard Global Items --}}
+                                    @php
+                                        $catItems =$globalItems->filter(function($item) use ($category) {
+                                            return ($item->category_id ==$category->id) || ($item->restaurant_category_id ==$category->id);
+                                        });
+                                    @endphp
+
+                                    @forelse($catItems as $gItem)
+                                        @php
+                                            $itemName = $gItem->globalItem->item_name ?? $gItem->name ?? 'Food Item';
+                                        @endphp
+                                        <div class="col-md-6">
+                                            <div class="menu-item-card p-3 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                        <span class="badge badge-veg rounded-1 px-1.5 py-0.5"><i class="fas fa-circle" style="font-size: 8px;"></i> VEG</span>
+                                                        <h6 class="fw-bold text-dark mb-0">{{ $itemName }}</h6>
+                                                    </div>
+                                                    <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;">Freshly prepared food item.</p>
+                                                    <span class="fw-bold text-dark">₹{{ number_format($gItem->price ?? 0, 2) }}</span>
+                                                </div>
+                                                <div>
+                                                    <div class="input-group input-group-sm rounded-pill border overflow-hidden" style="width: 100px;">
+                                                        <button class="btn btn-light text-danger fw-bold px-2 py-1" onclick="updateQty('global_{{ $gItem->id }}', {{$gItem->price }}, -1)">-</button>
+                                                        <input type="text" id="qty-global_{{ $gItem->id }}" class="form-control text-center border-0 fw-bold px-0 bg-white" value="0" readonly>
+                                                        <button class="btn btn-light text-success fw-bold px-2 py-1" onclick="updateQty('global_{{ $gItem->id }}', {{$gItem->price }}, 1)">+</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="col-12 py-5 text-center text-muted">
+                                            <i class="fas fa-utensils fa-2x mb-2 opacity-50"></i>
+                                            <p class="mb-0">Is category me abhi koi item available nahi hai.</p>
+                                        </div>
+                                    @endforelse
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -211,20 +298,72 @@
     </div>
 </div>
 
-<!-- Order Confirmation Modal with Order Tracking -->
-<div class="modal fade" id="orderSuccessModal" tabindex="-1" aria-hidden="true">
+<!-- Modal: Tiffin Pre-Booking (1D, 1W, 1M, Custom Date) -->
+<div class="modal fade" id="tiffinBookingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-center p-4 rounded-4 border-0 shadow">
-            <div class="mb-3 text-success fs-1">
-                <i class="fas fa-check-circle"></i>
+        <div class="modal-content rounded-4 border-0 shadow p-3">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold modal-title"><i class="fas fa-calendar-alt text-primary me-2"></i> Book Tiffin Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <h4 class="fw-bold text-dark mb-2">Order Sent to Kitchen!</h4>
-            <p class="text-muted small mb-4">Your order has been transmitted directly to the vendor KDS display.</p>
-            <div class="d-flex gap-2 justify-content-center">
-                <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-                <a href="{{ url('/member/orders') }}" class="btn btn-primary rounded-pill px-4">
-                    <i class="fas fa-tasks me-1"></i> Track Order
-                </a>
+            <div class="modal-body">
+                <form id="tiffinBookingForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Select Duration</label>
+                        <select id="tiffinDuration" class="form-select rounded-3" onchange="toggleCustomDates(this.value)">
+                            <option value="1d">1 Day (1D)</option>
+                            <option value="1w">1 Week (1W)</option>
+                            <option value="1m">1 Month (1M)</option>
+                            <option value="custom">Custom Date Range</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Start Date</label>
+                            <input type="date" id="tiffinFromDate" class="form-control rounded-3" value="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="col-6" id="toDateContainer" style="display: none;">
+                            <label class="form-label small fw-bold">End Date</label>
+                            <input type="date" id="tiffinToDate" class="form-control rounded-3" value="{{ date('Y-m-d', strtotime('+7 days')) }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Select Meal Types</label>
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="meal_types[]" value="breakfast" id="meal_breakfast" checked>
+                                <label class="form-check-label small" for="meal_breakfast">Breakfast</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="meal_types[]" value="lunch" id="meal_lunch" checked>
+                                <label class="form-check-label small" for="meal_lunch">Lunch</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="meal_types[]" value="snacks" id="meal_snacks" checked>
+                                <label class="form-check-label small" for="meal_snacks">Snacks</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="meal_types[]" value="dinner" id="meal_dinner" checked>
+                                <label class="form-check-label small" for="meal_dinner">Dinner</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Select Tiffin Package</label>
+                        <select id="tiffinCatalogId" class="form-select rounded-3">
+                            @foreach($todayTiffins as $tCat)
+                                <option value="{{ $tCat->id }}">{{ $tCat->title }} (₹{{$tCat->price ?? 100 }}/meal)</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-100 rounded-3 py-2 fw-bold" onclick="submitTiffinBooking()">
+                        Confirm Tiffin Booking
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -240,29 +379,20 @@
         if (!cartItems[itemId]) {
             cartItems[itemId] = { id: itemId, price: price, quantity: 0 };
         }
-
         cartItems[itemId].quantity += change;
 
         if (cartItems[itemId].quantity <= 0) {
             delete cartItems[itemId];
-            syncQtyInputs(itemId, 0);
+            document.getElementById(`qty-${itemId}`).value = 0;
         } else {
-            syncQtyInputs(itemId, cartItems[itemId].quantity);
+            document.getElementById(`qty-${itemId}`).value = cartItems[itemId].quantity;
         }
-
         renderFloatingBar();
-    }
-
-    function syncQtyInputs(itemId, val) {
-        document.querySelectorAll(`[id^="qty-"][id$="-${itemId}"], #qty-${itemId}`).forEach(el => {
-            el.value = val;
-        });
     }
 
     function renderFloatingBar() {
         let totalCount = 0;
         let totalAmount = 0;
-
         Object.values(cartItems).forEach(item => {
             totalCount += item.quantity;
             totalAmount += (item.price * item.quantity);
@@ -278,40 +408,48 @@
         }
     }
 
-    function submitLiveOrder() {
-        let itemsArray = Object.values(cartItems);
+    function toggleCustomDates(val) {
+        document.getElementById('toDateContainer').style.display = (val === 'custom') ? 'block' : 'none';
+    }
 
-        if (itemsArray.length === 0) return;
+    function submitTiffinBooking() {
+        let duration = document.getElementById('tiffinDuration').value;
+        let fromDate = document.getElementById('tiffinFromDate').value;
+        let toDate = document.getElementById('tiffinToDate').value;
+        let catalogId = document.getElementById('tiffinCatalogId').value;
 
-        fetch("{{ route('hub.restaurant.order.place') }}", {
+        let meals = [];
+        document.querySelectorAll('input[name="meal_types[]"]:checked').forEach(cb => {
+            meals.push(cb.value);
+        });
+
+        if (!catalogId) {
+            alert("Kripya Tiffin Package choose karein!");
+            return;
+        }
+
+        fetch("{{ route('hub.restaurant.bookTiffin', $restaurant->id) }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
-            body: JSON.stringify({ 
-                restaurant_id: "{{ $restaurant->id }}", 
-                items: itemsArray 
+            body: JSON.stringify({
+                duration: duration,
+                from_date: fromDate,
+                to_date: toDate,
+                meal_types: meals,
+                catalog_id: catalogId
             })
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Reset cart
-                Object.keys(cartItems).forEach(id => syncQtyInputs(id, 0));
-                cartItems = {};
-                renderFloatingBar();
-
-                // Open Order Success & Tracking Modal
-                let modal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
-                modal.show();
+                alert(data.message);
+                location.reload();
             } else {
                 alert("Error: " + data.message);
             }
-        })
-        .catch(error => {
-            console.error("Error placing order:", error);
-            alert("Something went wrong!");
         });
     }
 </script>
