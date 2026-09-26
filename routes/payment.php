@@ -10,11 +10,6 @@ Route::middleware(['web'])->prefix('payment')->name('payment.')->group(function 
     Route::post('/callback', [GlobalPaymentController::class, 'paymentCallback'])->name('callback');
 });
 
-
-
-
-
-
 Route::middleware(['web', 'auth'])->prefix('vendor')->name('vendor.')->group(function () {
     Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
     Route::post('/wallet/withdraw', [WalletController::class, 'withdraw'])->name('wallet.withdraw');

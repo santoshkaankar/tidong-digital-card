@@ -9,6 +9,7 @@ use App\Models\Restaurant\RestaurantOrder;
 use App\Models\Restaurant\RestaurantOrderItem;
 use App\Models\Restaurant\RestaurantItem;
 use App\Models\Restaurant\WaiterCall;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,6 +21,9 @@ class CustomerRestaurantController extends Controller
     {
         $table = RestaurantTable::where('qr_code_token', $token)->firstOrFail();
         
+        // Fetch restaurant details for QR & UPI payment
+        $restaurant = User::find($table->user_id);
+
         $selectedItemIds = is_array($table->selected_items) 
             ? $table->selected_items 
             : json_decode($table->selected_items ?? '[]', true);
@@ -54,7 +58,7 @@ class CustomerRestaurantController extends Controller
             ->latest()
             ->first();
 
-        return view('customer.restaurant.menu', compact('table', 'categories', 'activeOrder'));
+        return view('customer.restaurant.menu', compact('table', 'categories', 'activeOrder', 'restaurant'));
     }
 
     // 2. Customer Order Placement / Running Order Append
