@@ -38,6 +38,9 @@ class RestaurantOrder extends Model
         'payment_proof',
         'notes',
         'completed_at',
+        'delivery_boy_id',
+        'status',
+        'delivered_at',
     ];
 
     public function table()
