@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // ✅ Sahi Import
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -33,6 +33,7 @@ class User extends Authenticatable
         'parent_id',
         'position',
         'slug',
+        
         // KYC & Business Fields
         'pan_number',
         'pan_image',
@@ -40,13 +41,22 @@ class User extends Authenticatable
         'aadhaar_front_image',
         'aadhaar_back_image',
         'kyc_status',
-        'gstin',           // GST Registration Number (Optional)
+        'gstin',           // GST Registration Number
+
+        // Naye Fields (FSSAI, MCA, Certificates & UPI QR)
+        'fssai_number',
+        'fssai_certificate',
+        'gst_certificate',
+        'mca_certificate',
+        'upi_qr_code',
+
         // Bank Details
         'account_holder_name',
         'bank_name',
         'account_number',
         'ifsc_code',
         'upi_id',
+
         // Address Details
         'address',
         'area',            // Local Area

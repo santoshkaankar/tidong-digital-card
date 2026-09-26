@@ -8,8 +8,22 @@
         </div>
         <div class="card-body">
 
+            {{-- Success Message --}}
             @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- Validation Errors --}}
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             @endif
 
             <form action="{{ route('vendor.restaurant.settings.update') }}" method="POST" enctype="multipart/form-data">
@@ -59,7 +73,7 @@
                 <div class="row mb-3">
                     <div class="col-md-12 position-relative">
                         <label class="form-label font-weight-bold text-success">Search Location (Type Pincode, Area or City)</label>
-                        <input type="text" id="location_search_box" class="form-control form-control-lg border-success" placeholder="Pincode, Area ya City type karke select karein..." autocomplete="off">
+                        <input type="text" id="location_search_box" class="form-control form-control-lg border-success" placeholder="Type Pincode, Area or City and select for address" autocomplete="off">
                         <div id="location_suggestions" class="list-group position-absolute w-100 shadow-lg" style="z-index: 1050; display:none;"></div>
                     </div>
                 </div>
@@ -100,6 +114,26 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
+                        <label class="form-label">GST Certificate Upload</label>
+                        <input type="file" name="gst_certificate" class="form-control" accept="image/*,.pdf">
+                        @if($restaurant->gst_certificate)
+                            <small class="text-success d-block mt-1">
+                                <a href="{{ asset('storage/' . $restaurant->gst_certificate) }}" target="_blank">📄 Uploaded GST Certificate Dekhein</a>
+                            </small>
+                        @endif
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">MCA Certificate Upload</label>
+                        <input type="file" name="mca_certificate" class="form-control" accept="image/*,.pdf">
+                        @if($restaurant->mca_certificate)
+                            <small class="text-success d-block mt-1">
+                                <a href="{{ asset('storage/' . $restaurant->mca_certificate) }}" target="_blank">📄 Uploaded MCA Certificate Dekhein</a>
+                            </small>
+                        @endif
+                    </div>
+
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">Account Holder Name</label>
                         <input type="text" name="account_holder_name" class="form-control" value="{{ old('account_holder_name', $restaurant->account_holder_name) }}">
                     </div>
@@ -114,20 +148,51 @@
                         <input type="text" name="account_number" class="form-control" value="{{ old('account_number', $restaurant->account_number) }}">
                     </div>
 
-                    <div class="col-md-2 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">IFSC Code</label>
                         <input type="text" name="ifsc_code" class="form-control" value="{{ old('ifsc_code', $restaurant->ifsc_code) }}">
                     </div>
 
-                    <div class="col-md-2 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">UPI ID</label>
                         <input type="text" name="upi_id" class="form-control" placeholder="example@upi" value="{{ old('upi_id', $restaurant->upi_id) }}">
                     </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Payment UPI QR Code Image</label>
+                        <input type="file" name="upi_qr_code" class="form-control" accept="image/*">
+                        @if($restaurant->upi_qr_code)
+                            <div class="mt-2">
+                                <img src="{{ asset('storage/' . $restaurant->upi_qr_code) }}" alt="UPI QR" width="100" class="img-thumbnail rounded">
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
+                <!-- 4. FSSAI & BUSINESS VERIFICATION -->
+                <h5 class="text-primary border-bottom pb-2 mb-3 mt-4">4. Business Documents & FSSAI Details</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">FSSAI License Number</label>
+                        <input type="text" name="fssai_number" class="form-control" value="{{ old('fssai_number', $restaurant->fssai_number) }}" placeholder="14-digit FSSAI Number">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">FSSAI Certificate Image/PDF</label>
+                        <input type="file" name="fssai_certificate" class="form-control" accept="image/*,.pdf">
+                        @if($restaurant->fssai_certificate)
+                            <small class="text-success d-block mt-1">
+                                <a href="{{ asset('storage/' . $restaurant->fssai_certificate) }}" target="_blank">📄 Uploaded FSSAI Certificate Dekhein</a>
+                            </small>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- SAVE BUTTON (Inside Form) -->
                 <div class="text-end mt-4">
                     <button type="submit" class="btn btn-success btn-lg px-5">Save Settings</button>
                 </div>
+
             </form>
         </div>
     </div>
@@ -144,7 +209,9 @@ $(document).ready(function() {
         reader.onload = (e) => {
             $('#photo_preview').attr('src', e.target.result).removeClass('d-none');
         }
-        reader.readAsDataURL(this.files[0]);
+        if (this.files[0]) {
+            reader.readAsDataURL(this.files[0]);
+        }
     });
 
     // 2. Dynamic Location Search
