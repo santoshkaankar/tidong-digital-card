@@ -10,13 +10,13 @@
         }
         @page {
             size: 80mm auto;
-            margin: 3mm; /* Yahan margin badha diya hai taaki upar jagah rahe */
+            margin: 3mm;
         }
         body { 
             font-family: 'Courier New', Courier, monospace; 
             width: 72mm; 
             margin: 0 auto; 
-            padding: 4mm 2mm; /* Upar-neeche thodi padding aur de di hai */
+            padding: 4mm 2mm; 
             font-size: 12px;
             color: #000000;
             background: #fff;
@@ -48,7 +48,19 @@
 <body>
 
     <div class="text-center border-bottom">
-        <h3 style="margin: 0 0 5px 0; font-size: 15px;">{{ __('KOT / RECEIPT') }}</h3>
+        <!-- Restaurant Name Section -->
+        <h2 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold; text-transform: uppercase;">
+    {{ 
+        $order->vendor->name 
+        ?? $order->restaurant->name 
+        ?? $order->seller->name 
+        ?? $order->user->name 
+        ?? auth()->user()->name 
+        ?? 'RESTAURANT NAME' 
+    }}
+</h2>
+
+        <h3 style="margin: 0 0 5px 0; font-size: 14px;">{{ __('KOT / RECEIPT') }}</h3>
         <p style="margin: 3px 0;">{{ __('Order #:') }} <strong>{{ $order->order_number ?? '-' }}</strong></p>
         <p style="margin: 0;">
             {{ __('Type:') }} <strong>{{ isset($order->order_type) ? __(strtoupper(str_replace('_', ' ', $order->order_type))) : '-' }}</strong> | 

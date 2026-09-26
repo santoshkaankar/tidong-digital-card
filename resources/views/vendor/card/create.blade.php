@@ -1,233 +1,277 @@
 @extends('vendor.card.layout')
 
-@section('title', 'Configure Digital Card')
+@section('title', 'Configure Digital Card Studio')
 
 @section('content')
 <div class="container-fluid py-4">
     <div class="row">
-        <!-- Form Section -->
+        <!-- Left Column: Master Form & View Designer Tabs -->
         <div class="col-lg-7">
-            <!-- Tabs Navigation -->
-            <ul class="nav nav-pills mb-3" id="cardTab" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active fw-bold" id="master-tab" data-bs-toggle="tab" data-bs-target="#master-pane">1. Master Profile Config</button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" id="design-tab" data-bs-toggle="tab" data-bs-target="#design-pane">2. Card View Designer</button>
-                </li>
-            </ul>
-
-            <div class="tab-content" id="cardTabContent">
-                <!-- TAB 1: Master Profile Form -->
-                <div class="tab-pane fade show active bg-white p-4 rounded shadow-sm" id="master-pane">
-                    <h5 class="mb-3 text-primary"><i class="fa-solid fa-address-card me-2"></i>Master Business Profile</h5>
-                    <form action="{{ route('vendor.card.master.save') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Full Name</label>
-                                <input type="text" name="name" class="form-control" value="{{ $masterCard->name ?? '' }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Nickname</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_nickname" class="form-check-input mt-0" {{ ($masterCard->show_nickname ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" name="nickname" class="form-control" value="{{ $masterCard->nickname ?? '' }}">
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Business Name</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_business_name" class="form-check-input mt-0" {{ ($masterCard->show_business_name ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" name="business_name" class="form-control" value="{{ $masterCard->business_name ?? '' }}">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Designation</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_designation" class="form-check-input mt-0" {{ ($masterCard->show_designation ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" name="designation" class="form-control" value="{{ $masterCard->designation ?? '' }}">
-                                </div>
-                            </div>
-
-                            <div class="col-md-12">
-                                <label class="form-label fw-semibold">Tagline / Motto</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_tagline" class="form-check-input mt-0" {{ ($masterCard->show_tagline ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" name="tagline" class="form-control" value="{{ $masterCard->tagline ?? '' }}">
-                                </div>
-                            </div>
-
-                            <!-- Phone / Whatsapp -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Primary Phone</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_phone" class="form-check-input mt-0" {{ ($masterCard->show_phone ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" name="phone" class="form-control" value="{{ $masterCard->phone ?? '' }}">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">WhatsApp Number</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_whatsapp" class="form-check-input mt-0" {{ ($masterCard->show_whatsapp ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" name="whatsapp" class="form-control" value="{{ $masterCard->whatsapp ?? '' }}">
-                                </div>
-                            </div>
-
-                            <!-- Address & Pincode Lookup Section -->
-                            <hr class="my-3">
-                            <h6 class="text-secondary fw-bold"><i class="fa-solid fa-map-location-dot me-2"></i>Address & Location</h6>
-
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Pincode</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_pincode" class="form-check-input mt-0" {{ ($masterCard->show_pincode ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" id="pincodeInput" name="pincode" class="form-control" value="{{ $masterCard->pincode ?? '' }}" placeholder="Enter 6-digit Pincode">
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Area / Post Office</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_area" class="form-check-input mt-0" {{ ($masterCard->show_area ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <select id="areaSelect" name="area" class="form-select">
-                                        <option value="{{ $masterCard->area ?? '' }}">{{ $masterCard->area ?? 'Select Area' }}</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">City</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_city" class="form-check-input mt-0" {{ ($masterCard->show_city ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" id="cityInput" name="city" class="form-control" value="{{ $masterCard->city ?? '' }}" readonly>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">State</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_state" class="form-check-input mt-0" {{ ($masterCard->show_state ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" id="stateInput" name="state" class="form-control" value="{{ $masterCard->state ?? '' }}" readonly>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Street Address</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <input type="checkbox" name="show_address" class="form-check-input mt-0" {{ ($masterCard->show_address ?? 1) ? 'checked' : '' }}>
-                                    </div>
-                                    <input type="text" name="address" class="form-control" value="{{ $masterCard->address ?? '' }}">
-                                </div>
-                            </div>
-
-                            <div class="col-md-12 text-end mt-4">
-                                <button type="submit" class="btn btn-primary px-4 fw-bold"><i class="fa-solid fa-floppy-disk me-2"></i>Save Master Config</button>
-                            </div>
-                        </div>
-                    </form>
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-3">
+                    <ul class="nav nav-pills card-header-pills" id="cardTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold" id="master-tab" data-bs-toggle="tab" data-bs-target="#master-panel" type="button" role="tab">
+                                <i class="fa-solid fa-sliders me-1"></i> 1. Master Profile Config
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="designer-tab" data-bs-toggle="tab" data-bs-target="#designer-panel" type="button" role="tab">
+                                <i class="fa-solid fa-paint-brush me-1"></i> 2. Card View Designer
+                            </button>
+                        </li>
+                    </ul>
                 </div>
 
-                <!-- TAB 2: Card View Design Engine Form -->
-                <div class="tab-pane fade bg-white p-4 rounded shadow-sm" id="design-pane">
-                    <h5 class="mb-3 text-success"><i class="fa-solid fa-palette me-2"></i>Create Custom Card Design</h5>
-                    <form id="cardViewDesignForm">
-                        @csrf
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Theme Preset / Pattern</label>
-                                <select name="theme_style" id="themeStyleSelect" class="form-select">
-                                    <option value="default">Default Dark Slate</option>
-                                    <option value="classic-white">Classic Clean White</option>
-                                    <option value="classic-dark">Classic Obsidian</option>
-                                    <option value="metal-gold">Royal Metallic Gold</option>
-                                    <option value="cyber-neon">Cyber Neon Indigo</option>
-                                    <option value="emerald-mesh">Emerald Deep Gradient</option>
-                                    <option value="seed-1024">Custom Mesh Seed #1024</option>
-                                    <option value="seed-5088">Custom Mesh Seed #5088</option>
-                                </select>
-                            </div>
+                <div class="card-body">
+                    <div class="tab-content" id="cardTabContent">
+                        
+                        <!-- TAB 1: MASTER CONFIG FORM (Pure Input Fields) -->
+                        <div class="tab-pane fade show active" id="master-panel" role="tabpanel">
+                            <form action="{{ route('vendor.card.master.save') }}" method="POST">
+                                @csrf
+                                
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-building me-2"></i>Business & Personal Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Business Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="business_name" id="input_business_name" class="form-control live-text-input" value="{{ $masterCard->business_name ?? 'Business Name' }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Full Name</label>
+                                        <input type="text" name="full_name" id="input_full_name" class="form-control live-text-input" value="{{ $masterCard->full_name ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Nickname</label>
+                                        <input type="text" name="nickname" id="input_nickname" class="form-control live-text-input" value="{{ $masterCard->nickname ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Designation</label>
+                                        <input type="text" name="designation" id="input_designation" class="form-control live-text-input" value="{{ $masterCard->designation ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Company Name</label>
+                                        <input type="text" name="company_name" id="input_company_name" class="form-control live-text-input" value="{{ $masterCard->company_name ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Tagline / Motto</label>
+                                        <input type="text" name="tagline" id="input_tagline" class="form-control live-text-input" value="{{ $masterCard->tagline ?? '' }}">
+                                    </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Font Family</label>
-                                <select name="font_family" id="fontFamilySelect" class="form-select">
-                                    <option value="'Poppins', sans-serif">Poppins</option>
-                                    <option value="'Inter', sans-serif">Inter</option>
-                                    <option value="'Montserrat', sans-serif">Montserrat</option>
-                                    <option value="'Playfair Display', serif">Playfair Display</option>
-                                    <option value="'Cinzel', serif">Cinzel Luxury</option>
-                                </select>
-                            </div>
+                                <hr class="my-4">
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Icon Style</label>
-                                <select name="icon_style" id="iconStyleSelect" class="form-select">
-                                    <option value="solid">Transparent / Solid</option>
-                                    <option value="regular">Bordered Outline</option>
-                                    <option value="square">White Square Box</option>
-                                    <option value="circle">White Circle Badge</option>
-                                </select>
-                            </div>
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-address-book me-2"></i>Contact Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Primary Phone</label>
+                                        <input type="text" name="primary_phone" id="input_primary_phone" class="form-control live-text-input" value="{{ $masterCard->primary_phone ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Secondary Phone</label>
+                                        <input type="text" name="secondary_phone" id="input_secondary_phone" class="form-control live-text-input" value="{{ $masterCard->secondary_phone ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">WhatsApp Number</label>
+                                        <input type="text" name="whatsapp_no" id="input_whatsapp_no" class="form-control live-text-input" value="{{ $masterCard->whatsapp_no ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Email Address</label>
+                                        <input type="email" name="email" id="input_email" class="form-control live-text-input" value="{{ $masterCard->email ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Website URL</label>
+                                        <input type="url" name="website_url" id="input_website_url" class="form-control live-text-input" value="{{ $masterCard->website_url ?? '' }}">
+                                    </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Icon Display Mode</label>
-                                <select name="icon_display_mode" id="iconModeSelect" class="form-select">
-                                    <option value="icon_text">Icon + Text Label</option>
-                                    <option value="only_icons">Only Action Icons</option>
-                                </select>
-                            </div>
+                                <hr class="my-4">
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Text Color Override</label>
-                                <input type="color" name="custom_text_color" id="textColorPicker" class="form-control form-control-color w-100" value="#ffffff">
-                            </div>
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-location-dot me-2"></i>Address Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Pincode</label>
+                                        <input type="text" name="pincode" id="input_pincode" class="form-control live-text-input" value="{{ $masterCard->pincode ?? '' }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">City</label>
+                                        <input type="text" name="city" id="input_city" class="form-control live-text-input" value="{{ $masterCard->city ?? '' }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">State</label>
+                                        <input type="text" name="state" id="input_state" class="form-control live-text-input" value="{{ $masterCard->state ?? '' }}">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold">Street Address</label>
+                                        <input type="text" name="street_address" id="input_street_address" class="form-control live-text-input" value="{{ $masterCard->street_address ?? '' }}">
+                                    </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Icon Color Override</label>
-                                <input type="color" name="custom_icon_color" id="iconColorPicker" class="form-control form-control-color w-100" value="#f59e0b">
-                            </div>
+                                <hr class="my-4">
 
-                            <div class="col-md-12 text-end mt-4">
-                                <button type="button" id="saveCardViewBtn" class="btn btn-success px-4 fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Generate & Save View</button>
-                            </div>
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-share-nodes me-2"></i>Social & Payment</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Facebook Link</label>
+                                        <input type="url" name="facebook" id="input_facebook" class="form-control live-text-input" value="{{ $masterCard->facebook ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Instagram Link</label>
+                                        <input type="url" name="instagram" id="input_instagram" class="form-control live-text-input" value="{{ $masterCard->instagram ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">LinkedIn Link</label>
+                                        <input type="url" name="linkedin" id="input_linkedin" class="form-control live-text-input" value="{{ $masterCard->linkedin ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">YouTube Link</label>
+                                        <input type="url" name="youtube" id="input_youtube" class="form-control live-text-input" value="{{ $masterCard->youtube ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Telegram Link</label>
+                                        <input type="url" name="telegram" id="input_telegram" class="form-control live-text-input" value="{{ $masterCard->telegram ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Twitter / X Link</label>
+                                        <input type="url" name="twitter" id="input_twitter" class="form-control live-text-input" value="{{ $masterCard->twitter ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">UPI ID</label>
+                                        <input type="text" name="upi_id" id="input_upi_id" class="form-control live-text-input" value="{{ $masterCard->upi_id ?? '' }}">
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 text-end">
+                                    <button type="submit" class="btn btn-primary px-4 py-2"><i class="fa-solid fa-floppy-disk me-2"></i>Save Master Config</button>
+                                </div>
+                            </form>
                         </div>
-                    </form>
+
+                        <!-- TAB 2: CARD VIEW DESIGNER (Toggles, Display Mode & Styling) -->
+                        <div class="tab-pane fade" id="designer-panel" role="tabpanel">
+                            <form action="{{ route('vendor.card.view.save') }}" method="POST" id="cardViewForm">
+                                @csrf
+                                
+                                <!-- Display Mode Option -->
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-border-all me-2"></i>Button Display Mode</h6>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-12">
+                                        <select name="display_mode" id="display_mode" class="form-select form-select-lg fw-bold border-primary live-style-control">
+                                            <option value="icon_text" selected>Icon + Text (Default)</option>
+                                            <option value="icon_only">Icon Only (Compact Buttons)</option>
+                                            <option value="text_only">Text Only (No Icons)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-toggle-on me-2"></i>Field Visibility Switches</h6>
+                                
+                                <div class="row g-2 mb-4">
+                                    <!-- Business Name: ALWAYS ON & DISABLED -->
+                                    <div class="col-md-6">
+                                        <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-between">
+                                            <span class="fw-bold text-dark">Business Name</span>
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" checked disabled>
+                                                <input type="hidden" name="field_toggles[business_name]" value="1">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @php
+                                        $toggleFields = [
+                                            'full_name' => 'Full Name',
+                                            'nickname' => 'Nickname',
+                                            'designation' => 'Designation',
+                                            'tagline' => 'Tagline / Motto',
+                                            'primary_phone' => 'Primary Phone',
+                                            'secondary_phone' => 'Secondary Phone',
+                                            'whatsapp_no' => 'WhatsApp Number',
+                                            'email' => 'Email Address',
+                                            'website_url' => 'Website URL',
+                                            'address' => 'Full Address',
+                                            'facebook' => 'Facebook',
+                                            'instagram' => 'Instagram',
+                                            'linkedin' => 'LinkedIn',
+                                            'youtube' => 'YouTube',
+                                            'telegram' => 'Telegram',
+                                            'twitter' => 'Twitter / X',
+                                            'upi_id' => 'UPI Payment'
+                                        ];
+                                    @endphp
+
+                                    @foreach($toggleFields as $key => $label)
+                                        <div class="col-md-6">
+                                            <div class="p-2 border rounded d-flex align-items-center justify-content-between">
+                                                <span class="fw-semibold text-secondary">{{ $label }}</span>
+                                                <div class="form-check form-switch mb-0">
+                                                    <input class="form-check-input live-toggle-control" type="checkbox" name="field_toggles[{{ $key }}]" value="1" id="toggle_{{ $key }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-palette me-2"></i>Font, Colors & Theme</h6>
+                                
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Font Family</label>
+                                        <select name="font_family" id="font_family" class="form-select live-style-control">
+                                            <option value="'Poppins', sans-serif">Poppins (Modern)</option>
+                                            <option value="'Inter', sans-serif">Inter (Clean)</option>
+                                            <option value="'Roboto', sans-serif">Roboto (Classic)</option>
+                                            <option value="'Montserrat', sans-serif">Montserrat (Bold)</option>
+                                            <option value="'Outfit', sans-serif">Outfit (Stylish)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Card Theme Background</label>
+                                        <select name="theme_style" id="theme_style" class="form-select live-style-control">
+                                            <option value="dark">Dark Obsidian (#0f172a)</option>
+                                            <option value="royal">Royal Blue & Purple</option>
+                                            <option value="emerald">Emerald Gradient</option>
+                                            <option value="midnight">Midnight Black (#000000)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Text Color</label>
+                                        <input type="color" name="custom_text_color" id="custom_text_color" class="form-control form-control-color w-100 live-style-control" value="#ffffff">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Icon & Accent Color</label>
+                                        <input type="color" name="custom_icon_color" id="custom_icon_color" class="form-control form-control-color w-100 live-style-control" value="#a3e635">
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 text-end">
+                                    <button type="submit" class="btn btn-success px-4 py-2"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Generate Card View</button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Live Preview Panel -->
+        <!-- Right Column: Live Render Preview -->
         <div class="col-lg-5">
-            <div class="sticky-top" style="top: 20px;">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                        <span><i class="fa-solid fa-eye me-2"></i>Live Render Preview</span>
-                        <span class="badge bg-warning text-dark">Realtime</span>
-                    </div>
-                    <div class="card-body d-flex justify-content-center align-items-center bg-light p-3">
-                        @include('vendor.card.render_engine', ['masterCard' => $masterCard ?? (object)[]])
+            <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                    <span class="fw-bold"><i class="fa-solid fa-eye me-2"></i>Live Render Preview</span>
+                    <span class="badge bg-success">Realtime Sync</span>
+                </div>
+                <div class="card-body p-3 bg-secondary bg-opacity-10 d-flex justify-content-center align-items-start" style="max-height: 85vh; overflow-y: auto;">
+                    <div id="liveCardPreview" class="w-100">
+                        @include('vendor.card.render_engine')
                     </div>
                 </div>
             </div>
@@ -235,77 +279,116 @@
     </div>
 </div>
 
-<!-- Dedicated JavaScript Script (PINCODE + LIVE PREVIEW SYNC) -->
+<!-- REALTIME JAVASCRIPT LIVE ENGINE -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. PINCODE AUTO-FETCH SCRIPT (Querying pincodes table)
-    const pincodeInput = document.getElementById('pincodeInput');
-    const areaSelect    = document.getElementById('areaSelect');
-    const cityInput    = document.getElementById('cityInput');
-    const stateInput   = document.getElementById('stateInput');
+document.addEventListener('DOMContentLoaded', function () {
 
-    if (pincodeInput) {
-        pincodeInput.addEventListener('input', function() {
-            let pin = this.value.trim();
-            if (pin.length === 6) {
-                fetch(`{{ route('vendor.card.pincode.lookup') }}?pincode=${pin}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            cityInput.value = data.city || '';
-                            stateInput.value = data.state || '';
-                            
-                            areaSelect.innerHTML = '<option value="">Select Area</option>';
-                            data.areas.forEach(a => {
-                                areaSelect.innerHTML += `<option value="${a}">${a}</option>`;
-                            });
-                        }
-                    })
-                    .catch(err => console.error("Pincode Fetch Error:", err));
+    // 1. Live Toggles Handler (Show / Hide Elements)
+    const toggleSwitches = document.querySelectorAll('.live-toggle-control');
+    toggleSwitches.forEach(function (sw) {
+        sw.addEventListener('change', function () {
+            const fieldKey = this.id.replace('toggle_', '');
+            const previewTargets = document.querySelectorAll('.preview-field-' + fieldKey);
+            
+            previewTargets.forEach(function(el) {
+                if (sw.checked) {
+                    el.classList.remove('d-none');
+                } else {
+                    el.classList.add('d-none');
+                }
+            });
+        });
+    });
+
+    // 2. Display Mode Handler (Icon Only / Icon + Text / Text Only)
+    const displayModeSelect = document.getElementById('display_mode');
+    if (displayModeSelect) {
+        displayModeSelect.addEventListener('change', function () {
+            const mode = this.value;
+            const container = document.querySelector('.digital-card-container');
+            if (container) {
+                container.setAttribute('data-display-mode', mode);
             }
+            
+            const pillIcons = document.querySelectorAll('.pill-icon');
+            const pillTexts = document.querySelectorAll('.pill-text');
+
+            pillIcons.forEach(el => {
+                if (mode === 'text_only') {
+                    el.classList.add('d-none');
+                } else {
+                    el.classList.remove('d-none');
+                }
+            });
+
+            pillTexts.forEach(el => {
+                if (mode === 'icon_only') {
+                    el.classList.add('d-none');
+                } else {
+                    el.classList.remove('d-none');
+                }
+            });
         });
     }
 
-    // 2. LIVE CARD VIEW PREVIEW SYNC
-    const wrapper = document.querySelector('.vendor-card-box');
-    
-    document.getElementById('themeStyleSelect')?.addEventListener('change', function() {
-        if (wrapper) {
-            wrapper.dataset.theme = this.value;
-            if (typeof syncVendorCard === 'function') syncVendorCard();
+    // 3. Live Text Inputs Sync
+    const textInputs = document.querySelectorAll('.live-text-input');
+    textInputs.forEach(function (input) {
+        input.addEventListener('input', function () {
+            const fieldName = this.name;
+            const targetEl = document.getElementById('preview_text_' + fieldName);
+            if (targetEl) {
+                targetEl.textContent = this.value;
+            }
+        });
+    });
+
+    // 4. Live Style Sync (CSS Variables for Colors, Fonts & Theme)
+    const textColorInput = document.getElementById('custom_text_color');
+    const iconColorInput = document.getElementById('custom_icon_color');
+    const fontFamilySelect = document.getElementById('font_family');
+    const themeStyleSelect = document.getElementById('theme_style');
+
+    function updateLiveStyles() {
+        const cardBox = document.querySelector('.digital-card-container');
+        if (!cardBox) return;
+
+        if (textColorInput) {
+            cardBox.style.setProperty('--card-text-color', textColorInput.value);
+        }
+
+        if (iconColorInput) {
+            cardBox.style.setProperty('--card-icon-color', iconColorInput.value);
+        }
+
+        if (fontFamilySelect) {
+            cardBox.style.setProperty('--card-font-family', fontFamilySelect.value);
+        }
+
+        if (themeStyleSelect) {
+            const theme = themeStyleSelect.value;
+            if (theme === 'dark') {
+                cardBox.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)';
+            } else if (theme === 'royal') {
+                cardBox.style.background = 'linear-gradient(135deg, #31103f 0%, #0b0726 100%)';
+            } else if (theme === 'emerald') {
+                cardBox.style.background = 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)';
+            } else if (theme === 'midnight') {
+                cardBox.style.background = '#000000';
+            }
+        }
+    }
+
+    [textColorInput, iconColorInput, fontFamilySelect, themeStyleSelect].forEach(item => {
+        if (item) {
+            item.addEventListener('input', updateLiveStyles);
+            item.addEventListener('change', updateLiveStyles);
         }
     });
 
-    document.getElementById('fontFamilySelect')?.addEventListener('change', function() {
-        if (wrapper) wrapper.style.fontFamily = this.value;
-    });
+    // Run initial update
+    updateLiveStyles();
 
-    document.getElementById('textColorPicker')?.addEventListener('input', function() {
-        if (wrapper) wrapper.style.color = this.value;
-    });
-
-    // 3. AJAX SAVE CARD VIEW
-    document.getElementById('saveCardViewBtn')?.addEventListener('click', function() {
-        let formData = new FormData(document.getElementById('cardViewDesignForm'));
-
-        fetch("{{ route('vendor.card.view.save') }}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                window.location.href = "{{ route('vendor.card.index') }}";
-            } else {
-                alert(data.message || "Error occurred");
-            }
-        })
-        .catch(err => alert("Server error occurred!"));
-    });
 });
 </script>
 @endsection

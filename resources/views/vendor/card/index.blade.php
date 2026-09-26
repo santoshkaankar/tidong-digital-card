@@ -5,13 +5,11 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold"><i class="fa-solid fa-id-card me-2"></i>Vendor Cards Dashboard</h3>
-        <a href="{{ route('vendor.cards.create') }}" class="btn btn-success fw-bold"><i class="fa-solid fa-plus me-2"></i>Create New View / Config</a>
+        <h4 class="fw-bold"><i class="fa-solid fa-id-card me-2"></i>My Digital Cards</h4>
+        <a href="{{ route('vendor.card.create') }}" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> Create New Card
+        </a>
     </div>
-
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
 
     <div class="row">
         @forelse($cardViews as $view)
@@ -19,25 +17,32 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-primary">{{ strtoupper($view->theme_style) }}</span>
+                            <span class="badge bg-primary">{{ strtoupper($view->theme_style ?? 'Default') }}</span>
                             <small class="text-muted">{{ $view->full_card_no }}</small>
                         </div>
-                        <p class="mb-1 text-truncate"><strong>Slug:</strong> {{ $view->card_slug }}</p>
+                        <p class="mb-3 text-truncate"><strong>Slug:</strong> {{ $view->card_slug }}</p>
                         
-                        <div class="mt-3 d-flex gap-2">
-                            <a href="{{ route('vendor.card.public', $view->card_slug) }}" target="_blank" class="btn btn-sm btn-outline-primary flex-fill"><i class="fa-solid fa-eye me-1"></i>View</a>
-                            <form action="{{ route('vendor.cards.view.delete', $view->id) }}" method="POST" onsubmit="return confirm('Delete karein?');">
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('vendor.card.public', $view->card_slug) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-eye me-1"></i> View
+                            </a>
+                            <form action="{{ route('vendor.card.view.delete', $view->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this card view?');">
                                 @csrf
                                 @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </form>
                         </div>
                     </div>
                 </div>
             </div>
         @empty
-            <div class="col-12 text-center py-5">
-                <p class="text-muted">Koi custom card view nahi mila. Naya card view generate karein!</p>
+            <div class="col-12">
+                <div class="alert alert-info text-center py-4">
+                    <p class="mb-2">No digital cards found!</p>
+                    <a href="{{ route('vendor.card.create') }}" class="btn btn-sm btn-primary">Create Your First Card</a>
+                </div>
             </div>
         @endforelse
     </div>

@@ -1,417 +1,208 @@
 @php
-    // Card Data Resolution (Vendor Scope)
-    $cardObj = $cardView ?? $card ?? $item ?? $vendorCard ?? null;
-
-    $instanceId       = $instanceId ?? ($cardObj->id ?? rand(10000, 99999));
-    $wrapperId        = "vendorCardRender_" . $instanceId;
-
-    $themeStyle       = $cardObj->theme_style ?? $cardObj->theme ?? 'default';
-    $fullCardNo       =$fullCardNo ?? ($cardObj->full_card_no ?? ($masterCard->card_no ?? '12091-080000001-V1'));
+    $textColor = $cardView->custom_text_color ?? request('custom_text_color') ?? '#ffffff';
+    $iconColor = $cardView->custom_icon_color ?? request('custom_icon_color') ?? '#a3e635';
+    $fontFamily = $cardView->font_family ?? request('font_family') ?? "'Poppins', sans-serif";
+    $displayMode = $cardView->display_mode ?? request('display_mode') ?? 'icon_text';
     
-    $customTextColor   = $cardObj->custom_text_color ?? $cardObj->text_color ?? null;
-    $customIconColor   = $cardObj->custom_icon_color ?? $cardObj->icon_color ?? null;
-    $customIconStyle   = $cardObj->icon_style ?? $cardObj->custom_icon_style ?? 'solid';
-    $customFont        = $cardObj->font_family ?? $cardObj->font ?? "'Poppins', sans-serif";
-    $iconDisplayMode   = $cardObj->icon_display_mode ?? $cardObj->display_mode ?? 'icon_text';
-
-    // Field Visibility Parsing
-    $fieldToggles = $cardObj->field_toggles ?? $cardObj->field_visibility ?? [];
-    if (is_string($fieldToggles)) {
-        $fieldToggles = json_decode($fieldToggles, true) ?? [];
-    }
-
-    $isFieldActive = function($key) use ($fieldToggles) {
-        if (empty($fieldToggles)) return true;
-
-        $aliases = [
-            'nickname'       => ['show_nickname', 'nickname'],
-            'business_name'  => ['show_business_name', 'business_name'],
-            'designation'    => ['show_designation', 'designation'],
-            'tagline'        => ['show_tagline', 'tagline'],
-            'qr_code'        => ['show_qr_code', 'qr_code'],
-            'photo'          => ['show_photo', 'photo'],
-            'phone'          => ['show_phone', 'phone'],
-            'alt_phone'      => ['show_alt_phone', 'alt_phone'],
-            'whatsapp'       => ['show_whatsapp', 'whatsapp'],
-            'telegram'       => ['show_telegram', 'telegram'],
-            'email'          => ['show_email', 'show_gmail', 'email'],
-            'website'        => ['show_website', 'website'],
-            'facebook'       => ['show_facebook', 'facebook'],
-            'instagram'      => ['show_instagram', 'instagram'],
-            'linkedin'       => ['show_linkedin', 'linkedin'],
-            'youtube'        => ['show_youtube', 'youtube'],
-            'upi'            => ['show_upi_id', 'upi'],
-            'street_address' => ['show_address', 'street_address'],
-            'area'           => ['show_area', 'area'],
-            'city'           => ['show_city', 'city'],
-            'state'          => ['show_state', 'state'],
-            'pincode'        => ['show_pincode', 'pincode'],
-            'google_maps'    => ['show_location_url', 'google_maps']
-        ];
-
-        $keysToTest = $aliases[$key] ?? [$key, 'show_' .$key];
-        foreach ($keysToTest as$k) {
-            if (array_key_exists($k,$fieldToggles)) {
-                return filter_var($fieldToggles[$k], FILTER_VALIDATE_BOOLEAN);
-            }
-        }
-        return false;
-    };
-
-    $rawWa = $masterCard->whatsapp ?? $masterCard->phone ?? '9876543210';
-    $cleanWaNumber = preg_replace('/[^0-9]/', '',$rawWa);
-
-    $formatUrl = function($url) {
-        if (empty($url) \vert{}\vert{} trim($url) === '#') return '#';
-        $url = trim($url);
-        return \Illuminate\Support\Str::startsWith($url, ['http://', 'https://']) ? $url : 'https://' .$url;
-    };
+    $toggles = isset($cardView->field_toggles) 
+        ? (is_array($cardView->field_toggles) ? $cardView->field_toggles : json_decode($cardView->field_toggles, true)) 
+        : [];
 @endphp
 
-<!-- External Fonts & Icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&family=Montserrat:wght@500;700&family=Playfair+Display:wght@600;700&family=Poppins:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Outfit:wght@400;600;700&family=Poppins:wght@400;600;700&family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
-    /* Scoped Field Visibility Engine */
-    #{{ $wrapperId }} .v-field { display: none !important; }
-    #{{ $wrapperId }} .v-field.v-active { display: inline-flex !important; }
-    #{{ $wrapperId }} div.v-field.v-active,
-    #{{ $wrapperId }} p.v-field.v-active,
-    #{{ $wrapperId }} span.v-field.v-active { display: block !important; }
+    .digital-card-container {
+        --card-text-color: {{ $textColor }};
+        --card-icon-color: {{ $iconColor }};
+        --card-font-family: {!! $fontFamily !!};
 
-    /* Card Layout Dimensions */
-    .vendor-card-box {
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        font-family: var(--card-font-family);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: var(--card-text-color) !important;
         width: 100%;
-        max-width: 420px;
-        min-height: 245px;
-        aspect-ratio: 1.58 / 1;
         box-sizing: border-box;
-        position: relative;
-        overflow: hidden;
-        border-radius: 16px;
-        transition: background 0.4s ease, border 0.3s ease, color 0.3s ease;
     }
 
-    /* Pattern Overlay Layer */
-    .vendor-card-box .v-pattern-layer {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        z-index: 1;
-        opacity: 0.18;
+    .digital-card-container h1, 
+    .digital-card-container h2, 
+    .digital-card-container h3, 
+    .digital-card-container h4, 
+    .digital-card-container h5, 
+    .digital-card-container h6,
+    .digital-card-container p, 
+    .digital-card-container span, 
+    .digital-card-container div {
+        color: var(--card-text-color) !important;
     }
 
-    /* Content Layer */
-    .vendor-card-box .v-content-layer {
-        position: relative;
-        z-index: 2;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+    .card-icon-accent {
+        color: var(--card-icon-color) !important;
+        fill: var(--card-icon-color) !important;
     }
 
-    /* Action Chips */
-    .vendor-card-box .v-chip {
-        font-size: 0.72rem;
-        line-height: 1.2;
-        color: inherit !important;
-        text-decoration: none !important;
-        background: rgba(255, 255, 255, 0.16);
-        padding: 4px 9px 4px 6px;
+    .action-pill-btn {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 30px;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        max-width: 100%;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        backdrop-filter: blur(5px);
         transition: all 0.2s ease;
     }
 
-    .vendor-card-box .v-chip:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-1px);
-    }
-
-    .vendor-card-box .v-icon-box {
-        width: 24px;
-        height: 24px;
+    .social-icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.22);
+        text-decoration: none;
+        border: 1px solid rgba(255,255,255,0.15);
     }
-
-    .vendor-card-box .v-icon-box i { font-size: 0.75rem; color: inherit; }
-
-    /* Display Modes */
-    .vendor-card-box.v-mode-only_icons .v-chip {
-        background: transparent !important;
-        border: none !important;
-        backdrop-filter: none !important;
-        padding: 0 !important;
-    }
-    .vendor-card-box.v-mode-only_icons .v-chip-label { display: none !important; }
-
-    /* Icon Badge Styles */
-    .vendor-card-box.v-style-square .v-icon-box { background: #ffffff !important; border-radius: 6px !important; color: #0f172a !important; }
-    .vendor-card-box.v-style-circle .v-icon-box { background: #ffffff !important; border-radius: 50% !important; color: #0f172a !important; }
-    .vendor-card-box.v-style-regular .v-icon-box { background: transparent !important; border: 1.5px solid currentColor !important; border-radius: 50% !important; }
-    .vendor-card-box.v-style-solid .v-icon-box { background: transparent !important; border: none !important; }
 </style>
 
-<div id="{{ $wrapperId }}" 
-     class="vendor-card-box v-mode-{{ str_replace(' ', '_', strtolower($iconDisplayMode)) }} v-style-{{$customIconStyle }} p-3 shadow-lg"
-     data-theme="{{ $themeStyle }}"
-     style="font-family: {{ $customFont }}; @if($customTextColor) color: {{$customTextColor }} !important; @endif">
-
-    <!-- Theme Overlays -->
-    <div class="v-pattern-layer" id="vPatternLayer_{{ $instanceId }}"></div>
-
-    <div class="v-content-layer">
-        <!-- Top Section -->
-        <div class="d-flex justify-content-between align-items-start w-100">
-            <div>
-                <div class="d-flex align-items-baseline gap-1 mb-1">
-                    <span class="fw-bold text-truncate" style="font-size: 1.08rem; line-height: 1.2;">
-                        {{ $masterCard->name ?? 'Santosh Sharma' }}
-                    </span>
-                    <span class="v-field field-nickname fst-italic {{ $isFieldActive('nickname') ? 'v-active' : '' }}" style="font-size: 0.75rem; opacity: 0.85;">
-                        ({{ $masterCard->nickname ?? 'Santosh' }})
-                    </span>
-                </div>
-
-                <p class="v-field field-business_name mb-0 fw-semibold {{ $isFieldActive('business_name') ? 'v-active' : '' }}" style="font-size: 0.78rem; line-height: 1.15;">
-                    {{ $masterCard->business_name ?? 'Tidong Marketing Pvt. Ltd.' }}
-                </p>
-
-                <p class="v-field field-designation mb-0 opacity-75 {{ $isFieldActive('designation') ? 'v-active' : '' }}" style="font-size: 0.7rem; line-height: 1.1;">
-                    {{ $masterCard->designation ?? 'Director' }}
-                </p>
-
-                <p class="v-field field-tagline mb-0 opacity-60 {{ $isFieldActive('tagline') ? 'v-active' : '' }}" style="font-size: 0.65rem; line-height: 1.1;">
-                    {{ $masterCard->tagline ?? $masterCard->motto ?? 'Hindustan ka apna shopping App' }}
-                </p>
-            </div>
-
-            <!-- Profile Media / QR Code -->
-            <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                <div class="v-field field-qr_code {{ $isFieldActive('qr_code') ? 'v-active' : '' }}">
-                    @if(!empty($masterCard->qr_code))
-                        <img src="{{ asset($masterCard->qr_code) }}" alt="QR" style="width: 42px; height: 42px; object-fit: cover;" class="rounded-3 bg-white p-1 shadow-sm">
-                    @else
-                        <div class="bg-white rounded-3 p-1 text-dark d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
-                            <i class="fa-solid fa-qrcode" style="font-size: 22px; color: #0f172a;"></i>
-                        </div>
-                    @endif
-                </div>
-
-                <div class="v-field field-photo {{ $isFieldActive('photo') ? 'v-active' : '' }}">
-                    @if(!empty($masterCard->photo))
-                        <img src="{{ asset($masterCard->photo) }}" alt="Photo" class="rounded-circle border border-2 border-white shadow-sm" style="width: 42px; height: 42px; object-fit: cover;">
-                    @else
-                        <div class="rounded-circle bg-dark d-flex align-items-center justify-content-center text-white fw-bold border border-2 border-white shadow-sm" style="width: 42px; height: 42px; font-size: 0.95rem;">
-                            {{ strtoupper(substr($masterCard->name ?? 'S', 0, 1)) }}
-                        </div>
-                    @endif
-                </div>
-            </div>
+<div class="digital-card-container" data-display-mode="{{ $displayMode }}">
+    
+    <!-- Header Top Row -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="preview-field-nickname {{ empty($toggles['nickname']) ? 'd-none' : '' }}">
+            <span class="badge bg-white bg-opacity-10 rounded-pill px-3 py-1 text-lowercase" style="font-size: 11px;">
+                (<span id="preview_text_nickname">{{ $masterCard->nickname ?? '' }}</span>)
+            </span>
         </div>
-
-        <!-- Interactive Contact Chips -->
-        <div class="d-flex flex-wrap gap-1.5 align-items-center my-1" style="max-height: 98px; overflow: hidden;">
-            <div class="v-field field-phone {{ $isFieldActive('phone') ? 'v-active' : '' }}">
-                <a href="tel:{{ $masterCard->phone ?? '9876543210' }}" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-solid fa-phone"></i></span>
-                    <span class="v-chip-label">{{ $masterCard->phone ?? '9876543210' }}</span>
-                </a>
-            </div>
-
-            <div class="v-field field-alt_phone {{ $isFieldActive('alt_phone') ? 'v-active' : '' }}">
-                <a href="tel:{{ $masterCard->alt_phone ?? '9876543211' }}" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-solid fa-mobile-screen"></i></span>
-                    <span class="v-chip-label">{{ $masterCard->alt_phone ?? '9876543211' }}</span>
-                </a>
-            </div>
-
-            <div class="v-field field-whatsapp {{ $isFieldActive('whatsapp') ? 'v-active' : '' }}">
-                <a href="https://wa.me/{{ $cleanWaNumber }}" target="_blank" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-brands fa-whatsapp"></i></span>
-                    <span class="v-chip-label">{{ $masterCard->whatsapp ?? 'WhatsApp' }}</span>
-                </a>
-            </div>
-
-            <div class="v-field field-telegram {{ $isFieldActive('telegram') ? 'v-active' : '' }}">
-                <a href="https://t.me/{{ $masterCard->telegram ?? '#' }}" target="_blank" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-brands fa-telegram"></i></span>
-                    <span class="v-chip-label">Telegram</span>
-                </a>
-            </div>
-
-            <div class="v-field field-email {{ $isFieldActive('email') ? 'v-active' : '' }}">
-                <a href="mailto:{{ $masterCard->gmail ?? 'info@tidong.in' }}" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-solid fa-envelope"></i></span>
-                    <span class="v-chip-label">{{ $masterCard->gmail ?? 'Email' }}</span>
-                </a>
-            </div>
-
-            <div class="v-field field-website {{ $isFieldActive('website') ? 'v-active' : '' }}">
-                <a href="{{ $formatUrl($masterCard->website ?? '#') }}" target="_blank" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-solid fa-globe"></i></span>
-                    <span class="v-chip-label">Website</span>
-                </a>
-            </div>
-
-            <div class="v-field field-facebook {{ $isFieldActive('facebook') ? 'v-active' : '' }}">
-                <a href="{{ $formatUrl($masterCard->facebook ?? '#') }}" target="_blank" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-brands fa-facebook-f"></i></span>
-                    <span class="v-chip-label">Facebook</span>
-                </a>
-            </div>
-
-            <div class="v-field field-instagram {{ $isFieldActive('instagram') ? 'v-active' : '' }}">
-                <a href="{{ $formatUrl($masterCard->instagram ?? '#') }}" target="_blank" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-brands fa-instagram"></i></span>
-                    <span class="v-chip-label">Instagram</span>
-                </a>
-            </div>
-
-            <div class="v-field field-linkedin {{ $isFieldActive('linkedin') ? 'v-active' : '' }}">
-                <a href="{{ $formatUrl($masterCard->linkedin ?? '#') }}" target="_blank" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-brands fa-linkedin-in"></i></span>
-                    <span class="v-chip-label">LinkedIn</span>
-                </a>
-            </div>
-
-            <div class="v-field field-youtube {{ $isFieldActive('youtube') ? 'v-active' : '' }}">
-                <a href="{{ $formatUrl($masterCard->youtube ?? '#') }}" target="_blank" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-brands fa-youtube"></i></span>
-                    <span class="v-chip-label">YouTube</span>
-                </a>
-            </div>
-
-            <div class="v-field field-upi {{ $isFieldActive('upi') ? 'v-active' : '' }}">
-                <a href="#" class="v-chip d-inline-flex align-items-center gap-1">
-                    <span class="v-icon-box" style="@if($customIconColor) color: {{$customIconColor }} !important; @endif"><i class="fa-solid fa-wallet"></i></span>
-                    <span class="v-chip-label">UPI</span>
-                </a>
-            </div>
-        </div>
-
-        <!-- Footer Section -->
-        <div>
-            <div class="opacity-80 mb-1 d-flex align-items-start" style="font-size: 0.65rem; line-height: 1.25;">
-                <div class="v-field field-google_maps {{ $isFieldActive('google_maps') ? 'v-active' : '' }} me-1">
-                    <a href="{{ $formatUrl($masterCard->location_url ?? '#') }}" target="_blank" class="text-warning text-decoration-none">
-                        <i class="fa-solid fa-location-dot" style="font-size: 0.75rem;"></i>
-                    </a>
-                </div>
-                <div>
-                    <span class="v-field field-street_address {{ $isFieldActive('street_address') ? 'v-active' : '' }}">{{ $masterCard->address ?? '9A, Shakti Vihar' }}</span>
-                    <span class="v-field field-area {{ $isFieldActive('area') ? 'v-active' : '' }}">{{ !empty($masterCard->area) ? ', ' .$masterCard->area : '' }}</span>
-                    <span class="v-field field-city {{ $isFieldActive('city') ? 'v-active' : '' }}">{{ !empty($masterCard->city) ? ', ' .$masterCard->city : '' }}</span>
-                    <span class="v-field field-state {{ $isFieldActive('state') ? 'v-active' : '' }}">{{ !empty($masterCard->state) ? ', ' .$masterCard->state : '' }}</span>
-                    <span class="v-field field-pincode {{ $isFieldActive('pincode') ? 'v-active' : '' }}">{{ !empty($masterCard->pincode) ? ' - ' .$masterCard->pincode : '' }}</span>
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-end border-top pt-1" style="border-color: rgba(255,255,255,0.2) !important;">
-                <span class="font-monospace" style="font-size: 0.72rem; opacity: 0.85;">{{ $fullCardNo }}</span>
-                <span class="fst-italic fw-semibold" style="font-size: 0.72rem; opacity: 0.9;">Powered by Tidong®</span>
-            </div>
+        <div class="d-flex gap-2 ms-auto">
+            <span class="social-icon-btn"><i class="fa-solid fa-qrcode card-icon-accent"></i></span>
+            <span class="social-icon-btn"><i class="fa-solid fa-share-nodes card-icon-accent"></i></span>
         </div>
     </div>
+
+    <!-- Main Profile Info -->
+    <div class="mb-3">
+        <!-- Business Name: Always Visible -->
+        <h3 class="fw-bold mb-1" style="font-size: 20px; letter-spacing: -0.5px;" id="preview_text_business_name">
+            {{ $masterCard->business_name ?? 'Business Name' }}
+        </h3>
+
+        <!-- Tagline -->
+        <div class="preview-field-tagline {{ empty($toggles['tagline']) ? 'd-none' : '' }}">
+            <p class="small mb-2 opacity-75" style="font-size: 12px;" id="preview_text_tagline">{{ $masterCard->tagline ?? '' }}</p>
+        </div>
+
+        <!-- Full Name -->
+        <div class="preview-field-full_name {{ empty($toggles['full_name']) ? 'd-none' : '' }}">
+            <div class="fw-semibold mt-2" style="font-size: 14px;" id="preview_text_full_name">{{ $masterCard->full_name ?? '' }}</div>
+        </div>
+
+        <!-- Designation -->
+        <div class="preview-field-designation {{ empty($toggles['designation']) ? 'd-none' : '' }}">
+            <div class="small opacity-75" style="font-size: 12px;" id="preview_text_designation">{{ $masterCard->designation ?? '' }}</div>
+        </div>
+    </div>
+
+    <!-- Contact Pills -->
+    <div class="d-flex flex-wrap gap-2 my-3">
+        
+        <!-- Primary Phone -->
+        <div class="action-pill-btn preview-field-primary_phone {{ empty($toggles['primary_phone']) ? 'd-none' : '' }}">
+            <i class="fa-solid fa-phone card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}" id="preview_text_primary_phone">{{ $masterCard->primary_phone ?? 'Phone' }}</span>
+        </div>
+
+        <!-- Secondary Phone -->
+        <div class="action-pill-btn preview-field-secondary_phone {{ empty($toggles['secondary_phone']) ? 'd-none' : '' }}">
+            <i class="fa-solid fa-mobile-screen card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}" id="preview_text_secondary_phone">{{ $masterCard->secondary_phone ?? 'Phone 2' }}</span>
+        </div>
+
+        <!-- WhatsApp -->
+        <div class="action-pill-btn preview-field-whatsapp_no {{ empty($toggles['whatsapp_no']) ? 'd-none' : '' }}">
+            <i class="fa-brands fa-whatsapp card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}" id="preview_text_whatsapp_no">WhatsApp</span>
+        </div>
+
+        <!-- Email -->
+        <div class="action-pill-btn preview-field-email {{ empty($toggles['email']) ? 'd-none' : '' }}">
+            <i class="fa-solid fa-envelope card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}" id="preview_text_email">Email</span>
+        </div>
+
+        <!-- Website -->
+        <div class="action-pill-btn preview-field-website_url {{ empty($toggles['website_url']) ? 'd-none' : '' }}">
+            <i class="fa-solid fa-globe card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}" id="preview_text_website_url">Website</span>
+        </div>
+
+    </div>
+
+    <!-- Social Media Buttons -->
+    <div class="d-flex flex-wrap gap-2 my-3">
+        <div class="action-pill-btn preview-field-facebook {{ empty($toggles['facebook']) ? 'd-none' : '' }}">
+            <i class="fa-brands fa-facebook-f card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}">Facebook</span>
+        </div>
+
+        <div class="action-pill-btn preview-field-instagram {{ empty($toggles['instagram']) ? 'd-none' : '' }}">
+            <i class="fa-brands fa-instagram card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}">Instagram</span>
+        </div>
+
+        <div class="action-pill-btn preview-field-linkedin {{ empty($toggles['linkedin']) ? 'd-none' : '' }}">
+            <i class="fa-brands fa-linkedin-in card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}">LinkedIn</span>
+        </div>
+
+        <div class="action-pill-btn preview-field-youtube {{ empty($toggles['youtube']) ? 'd-none' : '' }}">
+            <i class="fa-brands fa-youtube card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}">YouTube</span>
+        </div>
+
+        <div class="action-pill-btn preview-field-telegram {{ empty($toggles['telegram']) ? 'd-none' : '' }}">
+            <i class="fa-brands fa-telegram card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}">Telegram</span>
+        </div>
+
+        <div class="action-pill-btn preview-field-twitter {{ empty($toggles['twitter']) ? 'd-none' : '' }}">
+            <i class="fa-brands fa-x-twitter card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}">Twitter</span>
+        </div>
+    </div>
+
+    <!-- Full Address Section -->
+    <div class="preview-field-address {{ empty($toggles['address']) ? 'd-none' : '' }}">
+        <div class="pt-2 mt-2 border-top border-white border-opacity-10 small opacity-75" style="font-size: 11px;">
+            <i class="fa-solid fa-location-dot card-icon-accent me-1"></i>
+            <span id="preview_text_street_address">{{ $masterCard->street_address ?? '' }}</span> 
+            <span id="preview_text_city">{{ $masterCard->city ?? '' }}</span> 
+            <span id="preview_text_state">{{ $masterCard->state ?? '' }}</span> 
+            <span id="preview_text_pincode">{{ $masterCard->pincode ?? '' }}</span>
+        </div>
+    </div>
+
+    <!-- UPI Details Section -->
+    <div class="preview-field-upi_id {{ empty($toggles['upi_id']) ? 'd-none' : '' }}">
+        <div class="action-pill-btn mt-2">
+            <i class="fa-solid fa-qrcode card-icon-accent pill-icon {{ $displayMode === 'text_only' ? 'd-none' : '' }}"></i>
+            <span class="pill-text {{ $displayMode === 'icon_only' ? 'd-none' : '' }}">UPI: <span id="preview_text_upi_id">{{ $masterCard->upi_id ?? '' }}</span></span>
+        </div>
+    </div>
+
+    <!-- Card Footer -->
+    <div class="mt-3 pt-2 d-flex justify-content-between align-items-center border-top border-white border-opacity-10" style="font-size: 10px;">
+        <span class="opacity-50">12891-888000001-V1</span>
+        <span class="fw-bold opacity-75">Powered by Tidong*</span>
+    </div>
 </div>
-
-<script>
-(function() {
-    const wrapperId = "{{ $wrapperId }}";
-    const instanceId = "{{ $instanceId }}";
-
-    // Presets Table
-    const vendorStaticThemes = {
-        'default': 'radial-gradient(circle at 10% 20%, #0f172a 0%, #1e293b 100%)',
-        'classic-white': 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        'classic-dark': 'linear-gradient(135deg, #090d16 0%, #1a2332 100%)',
-        'metal-gold': 'linear-gradient(135deg, #111827 0%, #1f2937 50%), linear-gradient(135deg, #bf953f, #fcf6ba, #aa771c)',
-        'cyber-neon': 'radial-gradient(circle at 20% 20%, #4f46e5 0%, #0f172a 60%, #000000 100%)',
-        'emerald-mesh': 'linear-gradient(135deg, #064e3b 0%, #022c22 50%, #0f172a 100%)'
-    };
-
-    // Dynamic Seed Pattern Engine
-    function generateVendorPattern(seed) {
-        let num = parseInt(seed) || 1;
-        let h1 = (num * 137) % 360;
-        let h2 = (h1 + 50) % 360;
-        let h3 = (h1 + 120) % 360;
-        let type = num % 4;
-
-        if (type === 0) {
-            return `radial-gradient(at 0% 0%, hsl(${h1}, 80%, 28%) 0px, transparent 50%), 
-                    radial-gradient(at 100% 100%, hsl(${h2}, 75%, 22%) 0px, transparent 50%), #0f172a`;
-        } else if (type === 1) {
-            return `conic-gradient(from 180deg at 50% 50%, hsl(${h1}, 70%, 25%) 0deg, hsl(${h2}, 80%, 35%) 180deg, hsl(${h1}, 70%, 25%) 360deg)`;
-        } else if (type === 2) {
-            return `linear-gradient(135deg, hsl(${h1}, 75%, 25%) 0%, hsl(${h2}, 70%, 35%) 50%, hsl(${h3}, 80%, 20%) 100%)`;
-        } else {
-            return `radial-gradient(circle at 50% 0%, hsl(${h1}, 85%, 35%) 0%, hsl(${h2}, 70%, 15%) 70%, #0f172a 100%)`;
-        }
-    }
-
-    function syncVendorCard() {
-        const wrapper = document.getElementById(wrapperId);
-        const patternLayer = document.getElementById("vPatternLayer_" + instanceId);
-        if (!wrapper) return;
-
-        // Theme Background
-        let currentTheme = (wrapper.dataset.theme || 'default').toLowerCase();
-        let bgStyle = vendorStaticThemes[currentTheme];
-
-        if (!bgStyle) {
-            let numMatch = currentTheme.match(/\d+/);
-            let seed = numMatch ? numMatch[0] : 1;
-            bgStyle = generateVendorPattern(seed);
-        }
-
-        wrapper.style.setProperty('background', bgStyle, 'important');
-        if (currentTheme.includes('white')) {
-            wrapper.style.setProperty('border', '1px solid #cbd5e1', 'important');
-        } else {
-            wrapper.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.15)', 'important');
-        }
-
-        // Overlay Patterns
-        if (patternLayer) {
-            patternLayer.style.backgroundImage = 'radial-gradient(circle at 100% 100%, rgba(255,255,255,0.12) 0%, transparent 60%)';
-        }
-
-        // Checkbox Field Visibility Binds
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-            let key = (cb.name || cb.id || '').toLowerCase().replace('show_', '').replace('chk_', '');
-            if (!key) return;
-
-            let targetField = wrapper.querySelector('.field-' + key);
-            if (targetField) {
-                if (cb.checked) {
-                    targetField.classList.add('v-active');
-                } else {
-                    targetField.classList.remove('v-active');
-                }
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', syncVendorCard);
-    document.body.addEventListener('input', syncVendorCard);
-    document.body.addEventListener('change', syncVendorCard);
-    syncVendorCard();
-})();
-</script>
