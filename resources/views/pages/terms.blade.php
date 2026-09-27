@@ -81,6 +81,6 @@
             <p class="small mb-0 text-muted">&copy; {{ date('Y') }} Tidong Marketing Pvt. Ltd. | Registered Office: Agra, UP, India.</p>
         </div>
     </footer>
-
+@include('partials.welcome.footer')
 </body>
 </html>

@@ -148,6 +148,6 @@
             <p class="small mb-0 text-muted">&copy; {{ date('Y') }} Tidong Marketing Pvt. Ltd. Tidong® is a Registered Trademark. All rights reserved.</p>
         </div>
     </footer>
-
+@include('partials.welcome.footer')
 </body>
 </html>

@@ -39,7 +39,7 @@
         </a>
 
         <a href="{{ route('delivery.orders.index') }}" 
-           class="flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all {{ request()->routeIs('delivery.orders.*') ? 'text-blue-600 bg-blue-50/80 shadow-xs' : 'text-slate-600 hover:bg-slate-50' }}">
+           class="flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all {{ request()->routeIs('delivery.orders.*') && !request()->has('business_type') ? 'text-blue-600 bg-blue-50/80 shadow-xs' : 'text-slate-600 hover:bg-slate-50' }}">
             <i class="fas fa-box-open mr-3 w-5 text-center text-base"></i> Live Pickups
         </a>
 
@@ -57,19 +57,28 @@
 
         <div class="pt-4 pb-2 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Finance & Logs</div>
 
-        <a href="{{ route('delivery.earnings.index') }}" class="flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all {{ request()->routeIs('delivery.earnings.*') ? 'text-blue-600 bg-blue-50/80' : 'text-slate-600 hover:bg-slate-50' }}">
-            <i class="fas fa-wallet mr-3 w-5 text-center text-base"></i> Earnings & Payouts
+        <!-- Dedicated My Wallet Link -->
+        <a href="{{ route('delivery.wallet.index') }}" 
+           class="flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all {{ request()->routeIs('delivery.wallet.*') ? 'text-blue-600 bg-blue-50/80 shadow-xs' : 'text-slate-600 hover:bg-slate-50' }}">
+            <i class="fas fa-wallet mr-3 w-5 text-center text-base"></i> My Wallet
         </a>
-        <a href="{{ route('delivery.orders.history') }}" class="flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all {{ request()->routeIs('delivery.orders.history') ? 'text-blue-600 bg-blue-50/80' : 'text-slate-600 hover:bg-slate-50' }}">
+
+        <a href="{{ route('delivery.earnings.index') }}" 
+           class="flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all {{ request()->routeIs('delivery.earnings.*') ? 'text-blue-600 bg-blue-50/80 shadow-xs' : 'text-slate-600 hover:bg-slate-50' }}">
+            <i class="fas fa-chart-line mr-3 w-5 text-center text-base"></i> Earnings & Payouts
+        </a>
+        
+        <a href="{{ route('delivery.orders.history') }}" 
+           class="flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all {{ request()->routeIs('delivery.orders.history') ? 'text-blue-600 bg-blue-50/80 shadow-xs' : 'text-slate-600 hover:bg-slate-50' }}">
             <i class="fas fa-clock-rotate-left mr-3 w-5 text-center text-base"></i> Delivery History
         </a>
 
         <div class="pt-4 pb-2 px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Account Settings</div>
 
-        <a href="{{ route('delivery.profile.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 font-medium transition text-sm">
-    <i class="fas fa-user text-slate-500"></i>
-    <span>Profile</span>
-</a>
+        <a href="{{ route('delivery.profile.index') }}" 
+           class="flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all {{ request()->routeIs('delivery.profile.*') ? 'text-blue-600 bg-blue-50/80 shadow-xs' : 'text-slate-600 hover:bg-slate-50' }}">
+            <i class="fas fa-user-gear mr-3 w-5 text-center text-base"></i> Profile
+        </a>
 
         <form method="POST" action="{{ route('logout') }}" class="pt-3">
             @csrf

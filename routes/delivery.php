@@ -5,6 +5,7 @@ use App\Http\Controllers\Delivery\DeliveryDashboardController;
 use App\Http\Controllers\Delivery\DeliveryOrderController;
 use App\Http\Controllers\Delivery\DeliveryEarningsController;
 use App\Http\Controllers\Delivery\DeliveryProfileController;
+use App\Http\Controllers\Delivery\DeliveryWalletController;
 
 Route::middleware(['auth'])->prefix('delivery')->name('delivery.')->group(function () {
     
@@ -31,4 +32,14 @@ Route::middleware(['auth'])->prefix('delivery')->name('delivery.')->group(functi
     Route::get('/pincode-lookup/{pincode}', [DeliveryProfileController::class, 'lookupPincode'])->name('pincode.lookup');
     Route::get('/area-search', [DeliveryProfileController::class, 'searchArea'])->name('area.search');
 
+
+    // OTP Verification Routes
+    Route::post('/order/{id}/verify-pickup-otp', [DeliveryOrderController::class, 'verifyPickupOtp'])->name('order.verify-pickup');
+    Route::post('/order/{id}/verify-delivery-otp', [DeliveryOrderController::class, 'verifyDeliveryOtp'])->name('order.verify-delivery');
+
+    // Dedicated Wallet Routes
+    Route::get('/wallet', [DeliveryWalletController::class, 'index'])->name('wallet.index');
+    Route::post('/wallet/deposit', [DeliveryWalletController::class, 'depositCash'])->name('wallet.deposit');
+    Route::post('/wallet/deposit', [DeliveryWalletController::class, 'depositCash'])->name('wallet.deposit');
+    Route::post('/wallet/payout', [DeliveryWalletController::class, 'requestPayout'])->name('wallet.payout');
 });

@@ -138,6 +138,9 @@ Route::view('/affiliate-program', 'pages.affiliate')->name('pages.affiliate');
 Route::view('/royalty-program', 'pages.royalty')->name('pages.royalty');
 Route::view('/luckydrow', 'pages.luckydrow')->name('pages.luckydrow');
 Route::view('/tabs-business-system', 'pages.tabs-business')->name('pages.tabs-business');
+Route::view('/cancellation-policy', 'pages.cancellation-policy')->name('pages.cancellation');
+Route::view('/return-policy', 'pages.return-policy')->name('pages.return');
+Route::view('/refund-policy', 'pages.refund-policy')->name('pages.refund');
 /*
 |--------------------------------------------------------------------------
 | 8. Guidance Pages

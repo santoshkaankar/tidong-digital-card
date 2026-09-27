@@ -25,7 +25,7 @@
                             <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Affiliate Program & Stages
                         </a>
                     </li>
-                     <li class="mb-1">
+                    <li class="mb-1">
                         <a href="{{ route('pages.tabs-business') }}" class="text-light text-decoration-none opacity-75">
                             <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> TABS Affiliate
                         </a>
@@ -53,7 +53,7 @@
                 </ul>
             </div>
 
-            <!-- Column 3: Company & Legal Pages -->
+            <!-- Column 3: Company & Legal Pages (Updated with 3 New Policy Links) -->
             <div class="col-md-4 col-lg-4">
                 <h6 class="fw-bold text-warning text-uppercase mb-3" style="letter-spacing: 1px;">
                     <i class="fas fa-shield-alt me-1"></i> Company & Legal
@@ -72,6 +72,21 @@
                     <li class="mb-1">
                         <a href="{{ route('pages.privacy') }}" class="text-light text-decoration-none opacity-75">
                             <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Privacy Policy
+                        </a>
+                    </li>
+                    <li class="mb-1">
+                        <a href="{{ route('pages.cancellation') }}" class="text-light text-decoration-none opacity-75">
+                            <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Cancellation Policy
+                        </a>
+                    </li>
+                    <li class="mb-1">
+                        <a href="{{ route('pages.return') }}" class="text-light text-decoration-none opacity-75">
+                            <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Return Policy
+                        </a>
+                    </li>
+                    <li class="mb-1">
+                        <a href="{{ route('pages.refund') }}" class="text-light text-decoration-none opacity-75">
+                            <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Refund Policy
                         </a>
                     </li>
                     <li class="mb-1">
