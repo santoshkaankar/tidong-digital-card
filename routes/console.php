@@ -7,14 +7,16 @@ use App\Models\Payment\VendorWallet;
 use App\Models\Payment\WalletTransaction;
 use App\Models\Member;
 use App\Models\Wallet;
+use Carbon\Carbon;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
 Schedule::call(function () {
+
     // ==========================================
-    // 1. RESTAURANT DAILY DEDUCTIONS (₹1/day)
+    // 1. RESTAURANT / VENDOR DAILY DEDUCTIONS (₹1/day)
     // ==========================================
     $wallets = VendorWallet::all();
     
@@ -40,39 +42,50 @@ Schedule::call(function () {
     }
 
     // ==========================================
-    // 2. MEMBER DAILY STAGE-WISE DEDUCTIONS (Reserved Reward Wallet Negative Balance Logic)
+    // 2. MEMBER DAILY STAGE-WISE DEDUCTIONS
+    // Formula: (14 - Completed Stages) * ₹5 / day
     // ==========================================
     $members = Member::all();
     
     foreach ($members as $member) {
-        $stages = $member->stages ?? 0;
-        // Formula: 14 - stages (minimum ₹1 per day cutting)
-        $deductRs = max(1, 14 - $stages); 
+        $stages = min(14, max(0, (int) ($member->stages ?? 0)));
+        $incompleteStages = 14 - $stages;
+        $deductRs = $incompleteStages * 5; 
 
-        // Member ka wallet fetch karein ya create karein
-        $wallet = Wallet::firstOrCreate(
-            ['user_id' => $member->id],
-            ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 4540000.00]
-        );
+        if ($deductRs > 0) {
+            $wallet = Wallet::firstOrCreate(
+                ['user_id' => $member->id],
+                [
+                    'real_balance'             => 0.00, 
+                    'non_withdrawable_balance' => 0.00, 
+                    't_coins'                  => 4540000.00
+                ]
+            );
 
-        // Reserved Reward Wallet (non_withdrawable_balance) se daily deduction hogi
-        // Yeh balance automatically negative (-ve) me jata rahega jab tak T-Coins convert hokar nahi aate
-        $wallet->decrement('non_withdrawable_balance', $deductRs);
+            // Continuous deduction into negative balance
+            $wallet->decrement('non_withdrawable_balance', $deductRs);
+        }
     }
 
     // ==========================================
-    // 3. MONTHLY ROYALTY FORMULA CALCULATION & WALLET AUTO-CREDIT
+    // 3. MONTHLY ROYALTY FORMULA CALCULATION
     // ==========================================
     $royaltyEligibleMembers = Member::where('stages', '>=', 14)->get();
     
     foreach ($royaltyEligibleMembers as $member) {
         if (!$member->royalty_active) {
-            $joiningDate = \Carbon\Carbon::parse($member->created_at);
-            $baseJoinDate = \Carbon\Carbon::create(2026, 9, 1);
-            $joiningDelayMonths = max(0, $baseJoinDate->diffInMonths($joiningDate));
+            $joiningDate = Carbon::parse($member->created_at);
+            $baseJoinDate = Carbon::create(2026, 9, 1);
+            
+            // FIX 1: Check if joining was AFTER base join date before applying penalty
+            $joiningDelayMonths = $joiningDate->greaterThan($baseJoinDate) 
+                ? $baseJoinDate->diffInMonths($joiningDate) 
+                : 0;
 
-            $completionDate = \Carbon\Carbon::parse($member->stage_14_completed_at ?? now());
-            $achievementDelayMonths = max(0, $joiningDate->diffInMonths($completionDate));
+            $completionDate = Carbon::parse($member->stage_14_completed_at ?? now());
+            $achievementDelayMonths = $joiningDate->lessThan($completionDate)
+                ? $joiningDate->diffInMonths($completionDate)
+                : 0;
 
             $maxRoyalty = 200000;
             $totalReduction = ($joiningDelayMonths * 1000) + ($achievementDelayMonths * 1000);
@@ -80,12 +93,14 @@ Schedule::call(function () {
 
             $member->update([
                 'monthly_royalty_amount' => $finalRoyalty,
-                'royalty_active' => true
+                'royalty_active'         => true
             ]);
         }
 
+        // FIX 2: Credit directly to Wallet model instead of Member model
         if (now()->day === 1 && $member->monthly_royalty_amount > 0) {
-            $member->increment('rs_wallet_balance', $member->monthly_royalty_amount);
+            $wallet = Wallet::firstOrCreate(['user_id' => $member->id]);
+            $wallet->increment('real_balance', $member->monthly_royalty_amount);
         }
     }
 

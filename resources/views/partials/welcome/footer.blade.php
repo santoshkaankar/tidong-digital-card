@@ -14,7 +14,7 @@
                 </div>
             </div>
 
-            <!-- Column 2: Affiliate & Guidance Pages -->
+            <!-- Column 2: Affiliate & Guidance Pages (Updated with Deduction Pages) -->
             <div class="col-md-4 col-lg-4">
                 <h6 class="fw-bold text-warning text-uppercase mb-3" style="letter-spacing: 1px;">
                     <i class="fas fa-project-diagram me-1"></i> Program & Guidance
@@ -50,10 +50,21 @@
                             <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Restaurant & Partner Guidance
                         </a>
                     </li>
+                    <!-- Dono Deduction Links Yahan Add Kiye Gaye Hain 
+                    <li class="mb-1">
+                        <a href="{{ route('guidance.deductions') }}" class="text-light text-decoration-none opacity-75">
+                            <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Member Stage Deductions
+                        </a>
+                    </li> -->
+                    <li class="mb-1">
+                        <a href="{{ route('guidance.vendor-deductions') }}" class="text-light text-decoration-none opacity-75">
+                            <i class="fas fa-chevron-right fs-6 me-1 text-primary"></i> Vendor Order Deductions
+                        </a>
+                    </li>
                 </ul>
             </div>
 
-            <!-- Column 3: Company & Legal Pages (Updated with 3 New Policy Links) -->
+            <!-- Column 3: Company & Legal Pages -->
             <div class="col-md-4 col-lg-4">
                 <h6 class="fw-bold text-warning text-uppercase mb-3" style="letter-spacing: 1px;">
                     <i class="fas fa-shield-alt me-1"></i> Company & Legal

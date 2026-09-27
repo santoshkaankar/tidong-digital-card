@@ -29,14 +29,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
 Route::get('/instruction/{slug}', function ($slug) {
     if (View::exists('instructions.' . $slug)) {
         return view('instructions.' . $slug);
     }
     abort(404);
 })->name('instruction.show');
-
 
 Route::get('/vendor/restaurant/customer-lookup', [ProceedTiffinController::class, 'customerLookup'])->name('vendor.restaurant.customer-lookup');
 
@@ -105,11 +103,11 @@ require __DIR__ . '/money_exchange.php';
 require __DIR__ . '/tourist_guide.php';
 require __DIR__ . '/restaurant.php';
 require __DIR__ . '/taxi.php';
-require __DIR__ .'/retail.php';
-require __DIR__ .'/shopping.php';
-require __DIR__ .'/delivery.php';
-require __DIR__ .'/hub.php';
-require __DIR__ .'/vendor.php';
+require __DIR__ . '/retail.php';
+require __DIR__ . '/shopping.php';
+require __DIR__ . '/delivery.php';
+require __DIR__ . '/hub.php';
+require __DIR__ . '/vendor.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -127,7 +125,7 @@ Route::middleware([DeviceIdentityMiddleware::class])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 7. Public Content & Policy Pages
+| 7. Public Content & Policy Pages (FULL RESTORED)
 |--------------------------------------------------------------------------
 */
 Route::view('/about-us', 'pages.about')->name('pages.about');
@@ -141,6 +139,7 @@ Route::view('/tabs-business-system', 'pages.tabs-business')->name('pages.tabs-bu
 Route::view('/cancellation-policy', 'pages.cancellation-policy')->name('pages.cancellation');
 Route::view('/return-policy', 'pages.return-policy')->name('pages.return');
 Route::view('/refund-policy', 'pages.refund-policy')->name('pages.refund');
+
 /*
 |--------------------------------------------------------------------------
 | 8. Guidance Pages
@@ -149,6 +148,8 @@ Route::view('/refund-policy', 'pages.refund-policy')->name('pages.refund');
 Route::prefix('guidance')->group(function () {
     Route::get('/member', function () { return view('pages.guidance.member'); })->name('guidance.member');
     Route::get('/restaurant', function () { return view('pages.guidance.restaurant'); })->name('guidance.restaurant');
+    Route::get('/vendor-deductions', function () { return view('pages.guidance.vendor-deductions'); })->name('guidance.vendor-deductions');
+    Route::get('/deductions', function () { return view('pages.guidance.deductions'); })->name('guidance.deductions');
 });
 
 /*

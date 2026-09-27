@@ -20,7 +20,35 @@
         .info-card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: none; height: 100%; display: flex; flex-direction: column; }
         .mobile-card-action-btn { transition: all 0.2s ease; border-radius: 12px; }
         .mobile-card-action-btn:hover { transform: translateY(-2px); }
-        @media (max-width: 992px) { #sidebar { margin-left: -260px; } #sidebar.active { margin-left: 0; } #content { margin-left: 0; width: 100%; } }
+        
+        /* Mobile Floating QR Button Styling */
+        .mobile-qr-fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4);
+            border: 2px solid #ffffff;
+            transition: all 0.3s ease;
+        }
+        .mobile-qr-fab:active {
+            transform: scale(0.92);
+        }
+        .extra-small { font-size: 0.8rem; }
+
+        @media (max-width: 992px) { 
+            #sidebar { margin-left: -260px; } 
+            #sidebar.active { margin-left: 0; } 
+            #content { margin-left: 0; width: 100%; } 
+        }
     </style>
     @stack('styles')
 </head>
@@ -28,6 +56,11 @@
 
     <!-- Include Sidebar Component -->
     @include('member.partials.sidebar')
+
+    <!-- Mobile Quick QR Scanner Floating Action Button (Only Visible on Mobile/Tablet) -->
+    <button type="button" class="mobile-qr-fab d-lg-none" onclick="openGlobalQrScanner()" title="Scan QR Code">
+        <i class="fas fa-qrcode fs-4"></i>
+    </button>
 
     <!-- Page Content Holder -->
     <div id="content">
@@ -65,10 +98,14 @@
             &copy; {{ date('Y') }} Tidong® Portal. All rights reserved. Built for Global Reach.
         </footer>
     </div>
-    <!-- Member Refer & Earn Modal Partial -->
-    @include('member.partials.refer_modal')
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Modals -->
+    @include('member.partials.refer_modal')
+    @include('member.qr-scanner-modal')
+
+    <!-- Global Scripts -->
+    @include('member.partials.scripts')
+    
     <script>
         document.getElementById('sidebarCollapse')?.addEventListener('click', function () {
             document.getElementById('sidebar')?.classList.toggle('active');

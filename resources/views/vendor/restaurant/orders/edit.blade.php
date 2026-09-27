@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold mb-1">Edit Order: #{{ $order->order_number }}</h3>
-            <p class="text-muted small mb-0">Modify customer info, change order items, status, and payment details.</p>
+            <p class="text-muted small mb-0">Modify customer info, change order items, status, and delivery charges.</p>
         </div>
         <a href="{{ route('vendor.restaurant.orders.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i> Back to Orders List
@@ -45,24 +45,28 @@
                                 <label class="form-label small text-muted fw-bold">Customer Mobile</label>
                                 <input type="text" name="customer_phone" class="form-control" value="{{ old('customer_phone', $order->customer_phone) }}" placeholder="10 Digit Mobile Number">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label small text-muted fw-bold">Order Type</label>
-                                <select name="order_type" id="orderTypeSelect" class="form-select">
+                                <select name="order_type" id="orderTypeSelect" class="form-select" onchange="toggleDeliveryField()">
                                     <option value="dine_in" {{ $order->order_type === 'dine_in' ? 'selected' : '' }}>Dine In</option>
                                     <option value="takeaway" {{ $order->order_type === 'takeaway' ? 'selected' : '' }}>Takeaway</option>
                                     <option value="delivery" {{ $order->order_type === 'delivery' ? 'selected' : '' }}>Delivery</option>
                                 </select>
                             </div>
-                            <div class="col-md-6" id="tableSelectWrapper">
+                            <div class="col-md-4" id="tableSelectWrapper">
                                 <label class="form-label small text-muted fw-bold">Table</label>
                                 <select name="table_id" class="form-select">
                                     <option value="">Select Table</option>
-                                    @foreach($tables as $table)
-                                        <option value="{{ $table->id }}" {{ $order->table_id == $table->id ? 'selected' : '' }}>
+                                    @foreach($tables as$table)
+                                        <option value="{{ $table->id }}" {{ $order->table_id ==$table->id ? 'selected' : '' }}>
                                             {{ $table->table_number }}
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="col-md-4" id="deliveryChargeWrapper">
+                                <label class="form-label small text-muted fw-bold">Delivery Charge (₹)</label>
+                                <input type="number" step="0.01" min="0" name="delivery_charge" id="deliveryChargeInput" class="form-control" value="{{ old('delivery_charge', $order->delivery_charge ?? 0) }}" onchange="recalculateTotals()">
                             </div>
                         </div>
                     </div>
@@ -79,11 +83,11 @@
                                 <i class="bi bi-plus-lg me-1"></i> Add Food Item
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow" style="max-height: 250px; overflow-y: auto;">
-                                @foreach($availableItems as $item)
+                                @foreach($availableItems as$item)
                                     <li>
                                         <a class="dropdown-menu-item dropdown-item d-flex justify-content-between align-items-center cursor-pointer" 
                                            href="#" 
-                                           onclick="addItemToTable('{{ $item->id }}', '{{ addslashes($item->globalItem->item_name ?? $item->name) }}', '{{ $item->price }}'); return false;">
+                                           onclick="addItemToTable('{{ $item->id }}', '{{ addslashes($item->globalItem->item_name ?? $item->name) }}', '{{$item->price }}'); return false;">
                                             <span>{{ $item->globalItem->item_name ?? $item->name }}</span>
                                             <span class="badge bg-light text-dark ms-2">₹{{ number_format($item->price, 2) }}</span>
                                         </a>
@@ -105,7 +109,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($order->items as $index => $item)
+                                    @foreach($order->items as $index =>$item)
                                         <tr data-item-id="{{ $item->item_id }}">
                                             <td>
                                                 <input type="hidden" name="items[{{ $index }}][item_id]" value="{{ $item->item_id }}">
@@ -140,7 +144,7 @@
                 <div class="card border-0 shadow-sm rounded-3 mb-4 sticky-top" style="top: 20px;">
                     <div class="card-header bg-white py-3 border-0">
                         <h5 class="fw-bold mb-0 text-primary">
-                            <i class="bi bi-sliders me-2"></i>Order Status
+                            <i class="bi bi-sliders me-2"></i>Order Status & Payout
                         </h5>
                     </div>
                     <div class="card-body">
@@ -167,9 +171,27 @@
 
                         <hr class="my-3">
 
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="fw-bold text-muted">Total Amount</span>
-                            <span class="fs-4 fw-bold text-success" id="displayGrandTotal">₹{{ number_format($order->total_amount, 2) }}</span>
+                        <!-- Breakdown Summary -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small text-muted">Subtotal</span>
+                            <span class="fw-bold" id="displaySubtotal">₹0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small text-muted">Delivery Charge (+)</span>
+                            <span class="fw-bold text-success" id="displayDelivery">₹0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-muted">Customer Total</span>
+                            <span class="fs-5 fw-bold text-primary" id="displayGrandTotal">₹{{ number_format($order->total_amount, 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3 text-danger small">
+                            <span>Est. Deductions (-)</span>
+                            <span id="displayDeductions">- ₹0.00</span>
+                        </div>
+
+                        <div class="p-2 bg-success bg-opacity-10 rounded text-center mb-3">
+                            <small class="text-success fw-bold d-block">Estimated Net Vendor Payout</small>
+                            <h4 class="fw-bold text-success mb-0" id="displayNetPayout">₹0.00</h4>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
@@ -185,20 +207,51 @@
 <script>
     let itemIndex = {{ count($order->items) }};
 
+    function toggleDeliveryField() {
+        const orderType = document.getElementById('orderTypeSelect').value;
+        const deliveryWrapper = document.getElementById('deliveryChargeWrapper');
+        const tableWrapper = document.getElementById('tableSelectWrapper');
+
+        if (orderType === 'delivery') {
+            deliveryWrapper.style.display = 'block';
+            tableWrapper.style.display = 'none';
+        } else {
+            deliveryWrapper.style.display = 'none';
+            document.getElementById('deliveryChargeInput').value = 0;
+            tableWrapper.style.display = 'block';
+        }
+        recalculateTotals();
+    }
+
     function recalculateTotals() {
-        let total = 0;
+        let subtotal = 0;
         const rows = document.querySelectorAll('#orderItemsTable tbody tr');
 
         rows.forEach(row => {
             const price = parseFloat(row.querySelector('.item-price').value) || 0;
             const qty = parseInt(row.querySelector('.item-qty').value) || 0;
-            const subtotal = price * qty;
+            const itemSubtotal = price * qty;
             
-            row.querySelector('.item-subtotal').innerText = '₹' + subtotal.toFixed(2);
-            total += subtotal;
+            row.querySelector('.item-subtotal').innerText = '₹' + itemSubtotal.toFixed(2);
+            subtotal += itemSubtotal;
         });
 
-        document.getElementById('displayGrandTotal').innerText = '₹' + total.toFixed(2);
+        const deliveryCharge = parseFloat(document.getElementById('deliveryChargeInput').value) || 0;
+        const grandTotal = subtotal + deliveryCharge;
+
+        // Deductions Logic
+        const commission = Math.max(5.00, subtotal * 0.05);
+        const commissionGst = commission * 0.18;
+        const pgFee = grandTotal * 0.02;
+        const pgGst = pgFee * 0.18;
+        const totalDeductions = commission + commissionGst + pgFee + pgGst;
+        const netPayout = grandTotal - totalDeductions;
+
+        document.getElementById('displaySubtotal').innerText = '₹' + subtotal.toFixed(2);
+        document.getElementById('displayDelivery').innerText = '+ ₹' + deliveryCharge.toFixed(2);
+        document.getElementById('displayGrandTotal').innerText = '₹' + grandTotal.toFixed(2);
+        document.getElementById('displayDeductions').innerText = '- ₹' + totalDeductions.toFixed(2);
+        document.getElementById('displayNetPayout').innerText = '₹' + netPayout.toFixed(2);
     }
 
     function addItemToTable(id, name, price) {
@@ -240,7 +293,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        recalculateTotals();
+        toggleDeliveryField();
     });
 </script>
 @endsection

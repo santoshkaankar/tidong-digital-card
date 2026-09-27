@@ -1,6 +1,9 @@
 <!-- Bootstrap 5 Bundle (Includes Popper JS for Dropdowns) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- HTML5 QR Code CDN -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
 <script>
     function setTheme(theme) {
         if (theme === 'system') {
@@ -27,7 +30,6 @@
         }
     }
 
-    // Ensures DOM & Bootstrap are fully loaded before execution
     document.addEventListener('DOMContentLoaded', function () {
         const savedTheme = localStorage.getItem('app_theme') || 'light';
         setTheme(savedTheme);
@@ -99,4 +101,88 @@
         })
         .catch(function(err) { console.log('Polling Error:', err); });
     }, 4000);
+</script>
+
+<!-- QR Code Scanner Engine Script -->
+<script>
+    let globalHtml5QrCode = null;
+
+    function openGlobalQrScanner() {
+        let modalEl = document.getElementById('qrScannerModal');
+        if (!modalEl) return;
+        let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const modalEl = document.getElementById('qrScannerModal');
+        if (!modalEl) return;
+
+        modalEl.addEventListener('shown.bs.modal', function () {
+            startCameraScanner();
+        });
+
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            stopCameraScanner();
+        });
+    });
+
+    function startCameraScanner() {
+        const resultDiv = document.getElementById('scan-result');
+        if (resultDiv) resultDiv.innerHTML = '';
+
+        if (!globalHtml5QrCode) {
+            globalHtml5QrCode = new Html5Qrcode("qr-reader");
+        }
+
+        const config = { 
+            fps: 15, 
+            qrbox: { width: 200, height: 200 } 
+        };
+
+        globalHtml5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            console.error("Camera Error: ", err);
+            if (resultDiv) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger py-2 small mb-0">
+                        <i class="fas fa-exclamation-circle me-1"></i> Camera access error. Settings check karein.
+                    </div>
+                `;
+            }
+        });
+    }
+
+    function stopCameraScanner() {
+        if (globalHtml5QrCode && globalHtml5QrCode.isScanning) {
+            globalHtml5QrCode.stop().then(() => {
+                console.log("Scanner stopped.");
+            }).catch(err => console.error("Scanner stop fail", err));
+        }
+    }
+
+    function onScanSuccess(decodedText) {
+        stopCameraScanner();
+
+        const resultDiv = document.getElementById('scan-result');
+        if (resultDiv) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success py-2 small fw-bold mb-0">
+                    <i class="fas fa-spinner fa-spin me-1"></i> Scanned! Redirecting...
+                </div>
+            `;
+        }
+
+        setTimeout(() => {
+            window.location.href = decodedText;
+        }, 400);
+    }
+
+    function onScanFailure(error) {
+        // Silent scanning
+    }
 </script>

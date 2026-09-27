@@ -28,55 +28,15 @@
             </li>
 
             <li class="mb-1">
-                <a href="{{ url('/member/dashboard#qr-section') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
-                    <i class="fas fa-camera text-success"></i> QR Code Scanner
-                </a>
-            </li>
+    <a href="javascript:void(0)" onclick="openGlobalQrScanner()" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
+        <i class="fas fa-camera text-success"></i> QR Code Scanner
+    </a>
+</li>
 
-            <!-- Divider Heading: Multi-Business Services -->
-            <li class="px-2 pt-3 pb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                Multi-Business Services
-            </li>
-
-            <!-- 1. Food & Restaurant -->
-            <li class="{{ request()->is('member/restaurant*') || request()->is('member/food*') ? 'active' : '' }} mb-1">
-                <a href="{{ url('/member/restaurant') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
-                    <i class="fas fa-utensils text-warning"></i> Food & Restaurants
-                </a>
-            </li>
-
-            <!-- 2. Grocery & Emporium -->
-            <li class="{{ request()->is('member/grocery*') ? 'active' : '' }} mb-1">
-                <a href="{{ url('/member/grocery') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
-                    <i class="fas fa-shopping-basket text-success"></i> Grocery & Emporium
-                </a>
-            </li>
-
-            <!-- 3. Cab & Taxi Booking -->
-            <li class="{{ request()->is('member/taxi*') ? 'active' : '' }} mb-1">
-                <a href="{{ url('/member/taxi') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
-                    <i class="fas fa-taxi text-danger"></i> Taxi & Cab Rides
-                </a>
-            </li>
-
-            <!-- 4. Hotel Bookings -->
-            <li class="{{ request()->is('member/hotel*') || request()->is('member/hotels*') ? 'active' : '' }} mb-1">
-                <a href="{{ url('/member/hotel') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
-                    <i class="fas fa-hotel text-info"></i> Hotel Stays & Rooms
-                </a>
-            </li>
-
-            <!-- 5. Money Exchange -->
-            <li class="{{ request()->is('member/money-exchange*') || request()->is('member/exchange*') ? 'active' : '' }} mb-1">
-                <a href="{{ url('/member/money-exchange') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">
-                    <i class="fas fa-exchange-alt text-primary"></i> Money Exchange & Pay
-                </a>
-            </li>
-
-            <!-- Divider Heading: User & Account Hub -->
+            <!-- Divider Heading: User & Account Hub 
             <li class="px-2 pt-3 pb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
                 Account & Management
-            </li>
+            </li>-->
 
             <li class="{{ request()->is('member/orders*') ? 'active' : '' }} mb-1">
                 <a href="{{ url('/member/orders') }}" class="text-decoration-none text-secondary d-flex align-items-center gap-2 p-2 rounded-2">

@@ -97,10 +97,10 @@ if (!function_exists('format_indian_currency')) {
                         <h6 class="fw-bold text-primary"><i class="fas fa-fire me-1"></i> Daily Reserve Reward Deduction Rule</h6>
                         <p class="mb-1">The faster you complete 14 stages, the lower your daily negative deduction from Reserved Wallet will be:</p>
                         <ul class="mb-0 ps-3">
-                            <li><strong>Stage 0:</strong> ₹14 / day</li>
-                            <li><strong>Stage 1:</strong> ₹13 / day</li>
-                            <li><strong>Stage 2:</strong> ₹12 / day</li>
-                            <li><strong>Stage 10:</strong> ₹4 / day</li>
+                            <li><strong>Stage 0:</strong> ₹70 / day</li>
+                            <li><strong>Stage 1:</strong> ₹65 / day</li>
+                            <li><strong>Stage 2:</strong> ₹50 / day</li>
+                            <li><strong>Stage 10:</strong> ₹20 / day</li>
                             <li><strong>Stage 14:</strong> ₹0 / day</li>
                         </ul>
                     </div>

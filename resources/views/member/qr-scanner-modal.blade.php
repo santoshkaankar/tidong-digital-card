@@ -1,56 +1,27 @@
-<!-- QR Scanner Component File -->
-<div class="card shadow-sm border-0 rounded-4 mb-4">
-    <div class="card-body p-4 text-center">
-        <h5 class="fw-bold text-dark mb-2">
-            <i class="fas fa-qrcode me-2 text-primary"></i> Fast QR Code Scanner
-        </h5>
-        <p class="text-muted small mb-4">Kisi bhi QR code ko camera ke samne layein, yeh automatic scan karke URL open kar dega.</p>
-        
-        <!-- QR Scanner Viewport Container -->
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div id="reader" class="rounded overflow-hidden border shadow-sm"></div>
+<!-- Clean QR Scanner Modal -->
+<div class="modal fade" id="qrScannerModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm-custom">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            
+            <div class="modal-header border-0 pb-0">
+                <h6 class="fw-bold modal-title text-dark">
+                    <i class="fas fa-qrcode text-primary me-2"></i> Fast QR Code Scanner
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
 
-        <!-- Result Status -->
-        <div id="scan-result" class="mt-3"></div>
+            <div class="modal-body text-center p-3">
+                <p class="text-muted extra-small mb-3">Place the QR code in front of the camera to scan automatically.</p>
+
+                <!-- Camera Viewport Box -->
+                <div class="position-relative mx-auto overflow-hidden rounded-3 border bg-black" style="max-width: 280px; min-height: 250px;">
+                    <div id="qr-reader" style="width: 100%;"></div>
+                </div>
+
+                <!-- Live Status Output -->
+                <div id="scan-result" class="mt-3"></div>
+            </div>
+
+        </div>
     </div>
 </div>
-
-<!-- Include html5-qrcode Library via CDN (Agar aapne layout me pehle se nahi joda hai) -->
-@push('scripts')
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        function onScanSuccess(decodedText, decodedResult) {
-            console.log(`Code matched = ${decodedText}`, decodedResult);
-            
-            document.getElementById('scan-result').innerHTML = `
-                <div class="alert alert-success py-2 small">
-                    <i class="fas fa-check-circle me-1"></i> Successfully Scanned: 
-                    <a href="${decodedText}" class="fw-bold text-dark text-decoration-underline" target="_blank">${decodedText}</a>
-                </div>
-            `;
-
-            if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
-                window.location.href = decodedText;
-            }
-        }
-
-        function onScanFailure(error) {
-            // Silent for scan misses
-        }
-
-        let html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 } 
-            }, 
-            false
-        );
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-    });
-</script>
-@endpush

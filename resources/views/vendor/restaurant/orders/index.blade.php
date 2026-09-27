@@ -66,7 +66,6 @@
                         $orderTypeLabel = strtoupper(str_replace('_', ' ', $order->order_type));
                         $tableLabel = $order->table ? 'Table #'.$order->table->table_number : 'N/A';
 
-                        // Prepare items list for JS
                         $itemsList = [];
                         foreach($order->items as $orderItem) {
                             $itemName = $orderItem->item->name ?? $orderItem->item_name ?? 'Item';
@@ -115,7 +114,7 @@
                                     <i class="bi bi-printer"></i> Prt
                                 </button>
                                 
-                                <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewModal{{ $order->id }}" title="View Order">
+                                <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewModal{{ $order->id }}" title="View Order Details & Deductions">
                                     <i class="bi bi-eye"></i> View
                                 </button>
 
@@ -134,20 +133,88 @@
                         </td>
                     </tr>
 
-                    <!-- Modal Details & QR -->
+                    <!-- View Order Modal (Updated with Delivery Charges & Deductions Breakdown) -->
                     <div class="modal fade" id="viewModal{{ $order->id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content border-0 shadow rounded-4">
-                                <div class="modal-header border-bottom-0">
-                                    <h5 class="modal-title fw-bold">Order Details #{{ $order->order_number }}</h5>
+                                <div class="modal-header border-bottom-0 pb-0">
+                                    <h5 class="modal-title fw-bold">Order Details & Breakdown #{{ $order->order_number }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="modal-body p-4 text-center">
-                                    <h6 class="fw-bold">Total Amount: ₹{{ number_format($order->total_amount, 2) }}</h6>
-                                    
-                                    <div class="my-3 p-3 bg-light rounded-3">
+                                <div class="modal-body p-4">
+                                    @php
+                                        $subtotal = $order->sub_total ?? $order->items->sum(fn($i) => ($i->price ?? 0) * ($i->quantity ?? 1));
+                                        $deliveryCharge = $order->delivery_charge ?? 0;
+                                        $customerTotal = $order->total_amount;
+
+                                        // Deductions Logic
+                                        $commission = max(5.00, $subtotal * 0.05);
+                                        $commissionGst = $commission * 0.18;
+                                        $pgFee = $customerTotal * 0.02;
+                                        $pgGst = $pgFee * 0.18;
+                                        $deliveryDeduction = ($order->delivery_by ?? 'vendor') === 'platform' ? $deliveryCharge : 0.00;
+
+                                        $totalDeductions = $commission + $commissionGst + $pgFee + $pgGst + $deliveryDeduction;
+                                        $netPayout = $customerTotal - $totalDeductions;
+                                    @endphp
+
+                                    <div class="table-responsive mb-4">
+                                        <table class="table table-bordered align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Particulars</th>
+                                                    <th class="text-end">Type</th>
+                                                    <th class="text-end">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Items Subtotal</td>
+                                                    <td class="text-end text-muted">Base Amount</td>
+                                                    <td class="text-end fw-bold">₹{{ number_format($subtotal, 2) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Delivery Charge</td>
+                                                    <td class="text-end text-success"><i class="bi bi-plus-circle me-1"></i>Addition</td>
+                                                    <td class="text-end text-success fw-bold">+ ₹{{ number_format($deliveryCharge, 2) }}</td>
+                                                </tr>
+                                                <tr class="table-info fw-bold">
+                                                    <td colspan="2">Customer Total Paid</td>
+                                                    <td class="text-end">₹{{ number_format($customerTotal, 2) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Platform Commission (5%)</td>
+                                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
+                                                    <td class="text-end text-danger">- ₹{{ number_format($commission, 2) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>GST on Commission (18%)</td>
+                                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
+                                                    <td class="text-end text-danger">- ₹{{ number_format($commissionGst, 2) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Payment Gateway Charge (2% + GST)</td>
+                                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
+                                                    <td class="text-end text-danger">- ₹{{ number_format($pgFee + $pgGst, 2) }}</td>
+                                                </tr>
+                                                @if($deliveryDeduction > 0)
+                                                <tr>
+                                                    <td>Platform Delivery Fee</td>
+                                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
+                                                    <td class="text-end text-danger">- ₹{{ number_format($deliveryDeduction, 2) }}</td>
+                                                </tr>
+                                                @endif
+                                                <tr class="table-success fw-bold fs-6">
+                                                    <td colspan="2">Net Vendor Payout</td>
+                                                    <td class="text-end text-success">₹{{ number_format($netPayout, 2) }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="p-3 bg-light rounded-3 text-center">
                                         <p class="small text-muted mb-2">Scan & Pay via any UPI App</p>
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode($upiPayUrl) }}" alt="UPI QR" class="img-fluid border p-2 bg-white rounded-3">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($upiPayUrl) }}" alt="UPI QR" class="img-fluid border p-2 bg-white rounded-3">
                                     </div>
                                 </div>
                             </div>
@@ -221,30 +288,12 @@
             <head>
                 <title>Receipt - #${orderNumber}</title>
                 <style>
-                    body { 
-                        font-family: 'Courier New', Courier, monospace; 
-                        width: 280px; 
-                        margin: 0 auto; 
-                        padding: 10px; 
-                        font-size: 12px;
-                        color: #000000;
-                    }
+                    body { font-family: 'Courier New', Courier, monospace; width: 280px; margin: 0 auto; padding: 10px; font-size: 12px; color: #000000; }
                     .text-center { text-align: center; }
                     .text-right { text-align: right; }
-                    .border-bottom { 
-                        border-bottom: 1px dashed #000; 
-                        margin-bottom: 8px; 
-                        padding-bottom: 8px; 
-                    }
-                    table { 
-                        width: 100%; 
-                        border-collapse: collapse; 
-                    }
-                    td { 
-                        text-align: left; 
-                        padding: 4px 0; 
-                        vertical-align: top;
-                    }
+                    .border-bottom { border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 8px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    td { text-align: left; padding: 4px 0; vertical-align: top; }
                 </style>
             </head>
             <body>
@@ -255,9 +304,7 @@
                     <p style="margin: 4px 0;">Date: ${date}</p>
                 </div>
                 <div class="border-bottom">
-                    <table>
-                        ${itemsHtml}
-                    </table>
+                    <table>${itemsHtml}</table>
                 </div>
                 <div class="border-bottom">
                     <table>
