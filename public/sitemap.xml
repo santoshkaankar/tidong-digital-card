@@ -73,6 +73,12 @@
         <priority>0.7</priority>
     </url>
     <url>
+        <loc>https://tidong.in/guidance/vendor-deductions</loc>
+        <lastmod>2026-09-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+     <url>
         <loc>https://tidong.in/guidance/restaurant</loc>
         <lastmod>2026-09-27</lastmod>
         <changefreq>weekly</changefreq>
