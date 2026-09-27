@@ -10,6 +10,7 @@ use App\Http\Controllers\Customer\HubController;
 use App\Http\Middleware\DeviceIdentityMiddleware;
 use Illuminate\Support\Facades\View;
 use App\Http\Controllers\Restaurant\ProceedTiffinController;
+use App\Http\Controllers\Auth\MobilePasswordResetController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,14 @@ Route::get('/instruction/{slug}', function ($slug) {
 })->name('instruction.show');
 
 Route::get('/vendor/restaurant/customer-lookup', [ProceedTiffinController::class, 'customerLookup'])->name('vendor.restaurant.customer-lookup');
+
+// 1. Mobile Number फॉर्म दिखाने और OTP भेजने के लिए
+Route::get('/forgot-password-mobile', [MobilePasswordResetController::class, 'showMobileForm'])->name('password.mobile.form');
+Route::post('/send-otp', [MobilePasswordResetController::class, 'sendOtp'])->name('password.send.otp');
+
+// 2. OTP और नया Password एंटर करने के लिए
+Route::get('/verify-otp/{mobile}', [MobilePasswordResetController::class, 'showVerifyForm'])->name('password.verify.form');
+Route::post('/reset-password-mobile', [MobilePasswordResetController::class, 'resetPassword'])->name('password.reset.mobile');
 
 /*
 |--------------------------------------------------------------------------

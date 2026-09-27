@@ -37,17 +37,24 @@
             <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-600" />
         </div>
 
-        <!-- Remember Me & Forgot Password Link -->
-        <div class="flex items-center justify-between mt-4">
-            <label for="remember_me" class="inline-flex items-center cursor-pointer">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="remember">
-                <span class="ms-2 text-sm text-gray-700 font-medium">{{ __('Remember me') }}</span>
-            </label>
+        <!-- Remember Me & Forgot Password Links -->
+<div class="flex items-center justify-between mt-4">
+    <label for="remember_me" class="inline-flex items-center cursor-pointer">
+        <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="remember">
+        <span class="ms-2 text-sm text-gray-700 font-medium">{{ __('Remember me') }}</span>
+    </label>
 
-            <a class="text-sm text-blue-600 hover:text-blue-800 font-bold transition" href="{{ route('password.request') }}">
-                Forgot Password?
-            </a>
-        </div>
+    <div class="text-xs text-end">
+        <span class="text-gray-500 font-medium block">Forgot Password?</span>
+        <a class="text-blue-600 hover:text-blue-800 font-bold transition me-1" href="{{ route('password.request') }}">
+            Email
+        </a>
+        <span class="text-gray-400">|</span>
+        <a class="text-blue-600 hover:text-blue-800 font-bold transition ms-1" href="{{ route('password.mobile.form') }}">
+            Mobile
+        </a>
+    </div>
+</div>
 
         <!-- Login Button -->
         <div class="mt-6">
