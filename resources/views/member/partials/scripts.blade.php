@@ -150,7 +150,7 @@
             if (resultDiv) {
                 resultDiv.innerHTML = `
                     <div class="alert alert-danger py-2 small mb-0">
-                        <i class="fas fa-exclamation-circle me-1"></i> Camera access error. Settings check karein.
+                        <i class="fas fa-exclamation-circle me-1"></i> Camera access error. check Settings.
                     </div>
                 `;
             }
