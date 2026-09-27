@@ -7,11 +7,13 @@ use App\Http\Controllers\Delivery\DeliveryEarningsController;
 use App\Http\Controllers\Delivery\DeliveryProfileController;
 use App\Http\Controllers\Delivery\DeliveryWalletController;
 
-Route::middleware(['auth'])->prefix('delivery')->name('delivery.')->group(function () {
+// Old Line 9: Route::middleware(['auth'])->prefix('delivery')->name('delivery.')->group(function () {
+// New Line 9:
+Route::middleware(['auth', 'role:delivery'])->prefix('delivery')->name('delivery.')->group(function () {
     
     // 1. Dashboard
     Route::get('/dashboard', [DeliveryDashboardController::class, 'index'])->name('dashboard');
-
+    
     // 2. Orders Workflow
     Route::get('/orders', [DeliveryOrderController::class, 'index'])->name('orders.index');
     Route::post('/orders/{id}/accept', [DeliveryOrderController::class, 'accept'])->name('orders.accept');

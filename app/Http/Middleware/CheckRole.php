@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
@@ -17,25 +18,36 @@ class CheckRole
         }
 
         $user = Auth::user();
-        $userRole = $user->role;
+        $userRole = $user->role ?? 'customer';
 
-        // 2. Agar user ka role allowed roles me se hai -> Page kholne do
-        if (in_array($userRole, $roles)) {
+        // Role Normalization (Aliases ko standardise karne ke liye)
+        $normalizedRole = match ($userRole) {
+            'user', 'customer' => 'member',
+            'business' => 'vendor',
+            default => $userRole,
+        };
+
+        // 2. Agar user ka role allowed roles list me hai -> Next request par jaane do
+        if (in_array($userRole, $roles) || in_array($normalizedRole, $roles)) {
             return $next($request);
         }
 
-        // 3. Prevent Infinite Loop: Agar vendor pehle se hi sahi route par access kar raha hai
+        // 3. Safe Bypass: Agar vendor pehle se hi vendor URL par hai toh loop na bane
         if (($userRole === 'business' || $userRole === 'vendor') && $request->is('vendor/*')) {
             return $next($request);
         }
 
-        // 4. Agar wrong user galat URL kholta hai -> Unke apne dedicated dashboard par bhejo
+        // 4. STRICT LOCK: Agar wrong user kisi aur ka URL khole, usko USKE KHUD KE DASHBOARD par kheinch laao
         if ($userRole === 'admin') {
             return redirect()->route('admin.dashboard');
         }
 
-        if ($userRole === 'user' || $userRole === 'member') {
+        if (in_array($userRole, ['user', 'member', 'customer'])) {
             return redirect()->route('member.dashboard');
+        }
+
+        if ($userRole === 'delivery') {
+            return redirect()->route('delivery.dashboard');
         }
 
         if ($userRole === 'employee') {
@@ -43,7 +55,7 @@ class CheckRole
         }
 
         if ($userRole === 'business' || $userRole === 'vendor') {
-            $targetRoute = match ($user->business_type) {
+            $targetRoute = match ($user->business_type ?? null) {
                 'taxi' => 'vendor.taxi.dashboard',
                 'hotel' => 'vendor.hotel.dashboard',
                 'emporium' => 'vendor.emporium.dashboard',
@@ -53,12 +65,14 @@ class CheckRole
                 default => 'vendor.dashboard',
             };
 
-            // Safeguard: Check if the user is already on the target route to prevent infinite loop
-            if ($request->routeIs($targetRoute)) {
-                return $next($request);
+            if (Route::has($targetRoute)) {
+                if ($request->routeIs($targetRoute)) {
+                    return $next($request);
+                }
+                return redirect()->route($targetRoute);
             }
 
-            return redirect()->route($targetRoute);
+            return redirect()->route('vendor.dashboard');
         }
 
         return redirect('/');

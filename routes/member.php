@@ -12,8 +12,9 @@ use App\Http\Controllers\Member\RoyaltyController;
 use App\Http\Controllers\Member\HubController;
 use App\Http\Controllers\Member\RestaurantController;
 
-// Strict Auth Middleware Group for Members
-Route::middleware(['auth'])->group(function () {
+// Old Line 16: Route::middleware(['auth'])->group(function () {
+// New Line 16:
+Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
 
     // Dashboard Route
     Route::get('/dashboard', function () {

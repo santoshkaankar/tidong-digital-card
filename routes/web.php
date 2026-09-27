@@ -85,11 +85,11 @@ Route::post('/order/{orderId}/complete', [MenuController::class, 'completeOrder'
 */
 require __DIR__ . '/admin.php';
 
-Route::prefix('member')->name('member.')->group(function () {
+Route::prefix('member')->name('member.')->middleware(['auth', 'role:member,user,customer'])->group(function () {
     require __DIR__ . '/member.php';
 });
 
-Route::prefix('employee')->name('employee.')->group(function () {
+Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee'])->group(function () {
     require __DIR__ . '/employee.php';
 });
 
