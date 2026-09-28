@@ -2,7 +2,6 @@
 
 @section('content')
 
-
 <!-- Cash Request Wrapper -->
 <div id="cash-requests-container">
     @include('vendor.restaurant.kitchen.cash_requests')
@@ -31,8 +30,6 @@
 <!-- Order Detail Popup Modal Partial -->
 @include('vendor.restaurant.kitchen.order_detail_modal')
 
-<!-- Order Detail Popup Modal Partial -->
-@include('vendor.restaurant.kitchen.tiffin')
 @endsection
 
 @push('scripts')

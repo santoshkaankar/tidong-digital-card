@@ -1,16 +1,15 @@
 <script>
     var currentDoneOrderId = null;
     
-    // Tracking variables & Initial Load Flag
     var lastProcessedWaiterCount = 0;
     var lastProcessedCashCount = 0;
     var lastProcessedOrderCount = 0;
-    var isInitialFetch = true; // Page load par sound bajne se rokne ke liye
+    var lastProcessedOrderId = null; 
+    var isInitialFetch = true;
     
     var lastWaiterCallId = null;
     var lastCashCallId = null;
 
-    // Helper: CSRF Token Fetcher
     function getCsrfToken() {
         var tokenMeta = document.querySelector('meta[name="csrf-token"]');
         if (tokenMeta) return tokenMeta.getAttribute('content');
@@ -19,12 +18,10 @@
         return '';
     }
 
-    // Helper: Refresh KDS Orders UI Across Systems
     function refreshKDSOrders() {
         syncLiveCalls();
     }
 
-    // Status Update Request Handler
     function updateOrderStatus(orderId, newStatus) {
         if (!orderId || !newStatus) return;
 
@@ -43,9 +40,9 @@
         .then(function(response) { return response.json(); })
         .then(function(data) {
             if (data.success) {
-                syncLiveCalls(); // Action ke baad instant update bina reload ke
+                syncLiveCalls();
             } else {
-                alert(data.message || 'Status update nahi ho paya.');
+                alert(data.message || 'Status update failed.');
             }
         })
         .catch(function(err) {
@@ -53,7 +50,6 @@
         });
     }
 
-    // Done Button Click Workflow
     function handleOrderDone(orderId, isOnlinePaid, orderNumber) {
         if (isOnlinePaid) {
             completeOrderProcess(orderId, 'paid');
@@ -72,7 +68,6 @@
         }
     }
 
-    // Payment Modal Event Listeners & Auto-sync Timer Start
     document.addEventListener("DOMContentLoaded", function () {
         var yesBtn = document.getElementById('btnPaymentYes');
         var noBtn = document.getElementById('btnPaymentNo');
@@ -93,13 +88,11 @@
             };
         }
 
-        // --- AUTO SYNC TIMER START (Har 5 Second Me) ---
         setInterval(function() {
             syncLiveCalls();
         }, 5000);
     });
 
-    // Final Complete Order Handler
     function completeOrderProcess(orderId, paymentStatus) {
         var modalEl = document.getElementById('paymentVerifyModal');
         if (modalEl) {
@@ -127,7 +120,7 @@
             if (data.success) {
                 syncLiveCalls();
             } else {
-                alert(data.message || 'Order complete nahi ho saka.');
+                alert(data.message || 'Order could not be completed.');
             }
         })
         .catch(function(err) {
@@ -135,9 +128,6 @@
         });
     }
 
-    // -------------------------------------------------------------
-    // PURE JS LIVE SYNC & DYNAMIC HTML BUILDER
-    // -------------------------------------------------------------
     function syncLiveCalls() {
         fetch('/vendor/restaurant/kitchen-screen/live-orders', {
             method: 'GET',
@@ -146,13 +136,10 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(function(res) { 
-            return res.json(); 
-        })
+        .then(function(res) { return res.json(); })
         .then(function(data) {
             if (!data.success) return;
 
-            // 1. Render Cash Requests Dynamically via JS
             var cashBox = document.getElementById('cash-requests-container');
             if (cashBox && data.cash_requests) {
                 if (data.cash_requests.length > 0) {
@@ -179,7 +166,6 @@
                 }
             }
 
-            // 2. Render Waiter Calls Dynamically via JS
             var waiterBox = document.getElementById('waiter-calls-container');
             if (waiterBox && data.waiter_calls) {
                 if (data.waiter_calls.length > 0) {
@@ -206,35 +192,53 @@
                 }
             }
 
-            // 3. Render Running Orders Dynamically
             var runningBox = document.getElementById('running-orders-container');
             if (runningBox && data.running_orders_html !== undefined) {
                 runningBox.innerHTML = data.running_orders_html;
             }
 
-            // Update Active Orders Count Badge
             var countBadge = document.querySelector('.badge.bg-secondary.rounded-pill');
             if (countBadge && data.activeOrdersCount !== undefined) {
                 countBadge.innerText = data.activeOrdersCount + ' Active Orders';
             }
 
-            // 4. Smart Sound Notifier (Calls & Orders Sound with Initial Load Check)
             if (window.KDS_NOTIFIER) {
                 var orderCount = data.activeOrdersCount ? parseInt(data.activeOrdersCount) : 0;
-                
-                // Pehli baar fetch hone par sound nahi bajega, sirf count save hoga
+
                 if (!isInitialFetch) {
                     if (orderCount > lastProcessedOrderCount) {
-                        if (typeof window.KDS_NOTIFIER.updateOrders === 'function') {
-                            window.KDS_NOTIFIER.updateOrders(orderCount);
+                        var tableNum = '1';
+                        var itemsStr = 'New items';
+
+                        if (data.running_orders && data.running_orders.length > 0) {
+                            var latestOrder = data.running_orders[0];
+                            if (latestOrder.table && latestOrder.table.table_number) {
+                                tableNum = 'Table ' + latestOrder.table.table_number;
+                            } else if (latestOrder.table_id) {
+                                tableNum = 'Table ' + latestOrder.table_id;
+                            }
+
+                            var itemsArr = [];
+                            if (latestOrder.items && latestOrder.items.length > 0) {
+                                latestOrder.items.forEach(function(it) {
+                                    var q = it.quantity || 1;
+                                    var n = it.item_name || it.name || 'Item';
+                                    itemsArr.push(q + ' ' + n);
+                                });
+                                itemsStr = itemsArr.join(', ');
+                            }
+                        }
+
+                        if (typeof window.KDS_NOTIFIER.playNewOrderAlert === 'function') {
+                            window.KDS_NOTIFIER.playNewOrderAlert(tableNum, itemsStr);
                         }
                     }
                 } else {
-                    isInitialFetch = false; // Pehli fetch complete hone ke baad flag false kar do
+                    isInitialFetch = false;
                 }
+                
                 lastProcessedOrderCount = orderCount;
 
-                // Cash Requests Sound
                 var cashCount = data.cash_requests ? data.cash_requests.length : 0;
                 var latestCashId = (cashCount > 0 && data.cash_requests[0]) ? data.cash_requests[0].id : null;
                 
@@ -247,7 +251,6 @@
                 }
                 lastProcessedCashCount = cashCount;
 
-                // Waiter Calls Sound
                 var waiterCount = data.waiter_calls ? data.waiter_calls.length : 0;
                 var latestWaiterId = (waiterCount > 0 && data.waiter_calls[0]) ? data.waiter_calls[0].id : null;
 
@@ -266,16 +269,11 @@
         });
     }
 
-    // -------------------------------------------------------------
-    // WAITER CALL & CASH REQUEST RESOLVE HANDLERS
-    // -------------------------------------------------------------
     function resolveWaiterCall(id) {
         if (!id) return;
 
         var card = document.getElementById('waiter-call-card-' + id);
-        if (card) {
-            card.remove();
-        }
+        if (card) { card.remove(); }
 
         fetch('/vendor/restaurant/waiter-calls/' + id + '/resolve', {
             method: 'POST',
@@ -288,7 +286,6 @@
         .then(function(res) { return res.json(); })
         .then(function(data) {
             if (!data.success) {
-                console.error('Waiter Call Resolve Failed:', data.message);
                 location.reload();
             } else {
                 lastProcessedWaiterCount = 0; 
@@ -296,18 +293,14 @@
                 syncLiveCalls();
             }
         })
-        .catch(function(err) {
-            console.error('Waiter Call Network Error:', err);
-        });
+        .catch(function(err) { console.error('Error:', err); });
     }
 
     function resolveCashRequest(id) {
         if (!id) return;
 
         var card = document.getElementById('cash-card-' + id);
-        if (card) {
-            card.remove();
-        }
+        if (card) { card.remove(); }
 
         fetch('/vendor/restaurant/cash-call/resolve/' + id, {
             method: 'POST',
@@ -320,7 +313,6 @@
         .then(function(res) { return res.json(); })
         .then(function(data) {
             if (!data.success) {
-                console.error('Cash Request Resolve Failed:', data.message);
                 location.reload();
             } else {
                 lastProcessedCashCount = 0;
@@ -328,8 +320,6 @@
                 syncLiveCalls();
             }
         })
-        .catch(function(err) {
-            console.error('Cash Request Network Error:', err);
-        });
+        .catch(function(err) { console.error('Error:', err); });
     }
 </script>

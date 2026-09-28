@@ -3,7 +3,6 @@
     $firstCall = ($activeCallCount > 0 && isset($waiterCalls[0])) ? $waiterCalls[0] : null;
     $tableNum = $firstCall ? ($firstCall->table->table_number ?? '1') : '1';
 
-    // DEDICATED CASH REQUEST VARIABLES
     $activeCashCount = isset($cashRequests) ? count($cashRequests) : 0;
     $firstCash = ($activeCashCount > 0 && isset($cashRequests[0])) ? $cashRequests[0] : null;
     $cashTableNum = $firstCash ? ($firstCash->table->table_number ?? '1') : '1';
@@ -12,28 +11,21 @@
 <script>
 (function () {
     const BEEP_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
-    const REPEAT_INTERVAL = 120000; // 2 Minutes
+    const REPEAT_INTERVAL = 120000;
 
     let audioInstance = new Audio(BEEP_URL);
     
-    // Timers
     let waiterCallTimer = null;
     let cashCallTimer = null;
 
-    // Waiter Call State
     let currentCallCount = {{ $activeCallCount }};
     let currentTableNumber = "{{ $tableNum }}";
 
-    // Cash Request State
     let currentCashCount = {{ $activeCashCount }};
     let currentCashTableNumber = "{{ $cashTableNum }}";
 
-    // Saved Language (Default: Hindi)
     let currentLang = localStorage.getItem('kds_voice_lang') || 'hi-IN';
 
-    // -------------------------------------------------------------------
-    // 1. COMPLETE HINDI NUMBERS MAP
-    // -------------------------------------------------------------------
     const HINDI_NUMS = {
         0:'शून्य', 1:'एक', 2:'दो', 3:'तीन', 4:'चार', 5:'पांच', 6:'छह', 7:'सात', 8:'आठ', 9:'नौ', 10:'दस',
         11:'ग्यारह', 12:'बारह', 13:'तेरह', 14:'चौदह', 15:'पंद्रह', 16:'सोलह', 17:'सत्रह', 18:'अठारह', 19:'उन्नीस', 20:'बीस',
@@ -61,9 +53,6 @@
         });
     }
 
-    // -------------------------------------------------------------------
-    // 2. SHORTFORM SANITIZER
-    // -------------------------------------------------------------------
     function sanitizeTextForSpeech(text, lang) {
         if (!text) return '';
         let str = text.toString();
@@ -87,9 +76,6 @@
         return convertNumbers(str, lang);
     }
 
-    // -------------------------------------------------------------------
-    // 3. TRANSLATIONS (Includes Cash Payment Voice Commands)
-    // -------------------------------------------------------------------
     const TRANSLATIONS = {
         'hi-IN': { 
             waiterCall: "ध्यान दें! {table} पर वेटर की आवश्यकता है", 
@@ -117,7 +103,7 @@
             cashPayment: "ધ્યાન આપો! {table} થી રોકડ ચુકવણી મેળવો",
             newOrder: "નવો ઓર્ડર આવ્યો છે {table} થી. {items}. આભાર!", 
             updated: "ભાષા ગુજરાતી સેટ થઈ છે", 
-            test: "કિચન ડિસ્પ્લે સિસ્ટમ ટેસ્ટ વૉઇસ" 
+            test: "કિચન ડિસ્प्ले સિસ્ટમ ટેસ્ટ વૉઇસ" 
         }
     };
 
@@ -154,9 +140,6 @@
         window.speechSynthesis.speak(utterance);
     }
 
-    // -------------------------------------------------------------------
-    // WAITER CALL FUNCTIONS
-    // -------------------------------------------------------------------
     function triggerWaiterAlert() {
         if (currentCallCount <= 0) {
             stopWaiterLoop();
@@ -189,9 +172,6 @@
         }
     }
 
-    // -------------------------------------------------------------------
-    // CASH REQUEST FUNCTIONS
-    // -------------------------------------------------------------------
     function triggerCashAlert() {
         if (currentCashCount <= 0) {
             stopCashLoop();
@@ -234,7 +214,6 @@
         }
     }
 
-    // Auto Sync Dropdown Selection on Load
     document.addEventListener("DOMContentLoaded", () => {
         let topSelect = document.getElementById('kdsTopLangSelect');
         if (topSelect) {
@@ -248,7 +227,6 @@
         startCashLoop();
     }
 
-    // Global Notifier Object
     window.KDS_NOTIFIER = {
         changeLanguage: function(langCode) {
             currentLang = langCode;
@@ -278,8 +256,8 @@
         },
 
         playNewOrderAlert: function(locationNo, itemsText = '') {
-            audioInstance.currentTime = 0;
-            audioInstance.play().catch(e => console.log('Audio play blocked'));
+            let freshAudio = new Audio(BEEP_URL);
+            freshAudio.play().catch(e => console.log('Audio play blocked', e));
 
             setTimeout(() => {
                 let msg = getNativeNewOrderText(locationNo, itemsText);

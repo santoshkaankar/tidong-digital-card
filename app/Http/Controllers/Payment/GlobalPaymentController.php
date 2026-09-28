@@ -42,21 +42,27 @@ class GlobalPaymentController extends Controller
 
             $order = RestaurantOrder::find($request->order_id);
             if (!$order) {
-                return response()->json(['status' => 'error', 'message' => 'Order nahi mila.'], 404);
+                return response()->json(['status' => 'error', 'message' => 'Order not found.'], 404);
             }
 
-            $selectedGateway = $request->gateway ?? 'qr';
+            $selectedGateway = $request->gateway ?? $request->payment_method ?? 'qr';
 
-            // 1. Direct UPI QR / Manual Confirmation
-            if ($selectedGateway === 'qr' || $selectedGateway === 'manual') {
-                $order->update([
-                    'payment_status' => 'pending_verification',
-                    'status'         => 'kitchen'
-                ]);
+            // 1. Direct UPI QR / Manual Confirmation / Cash
+            if ($selectedGateway === 'qr' || $selectedGateway === 'manual' || $selectedGateway === 'qr_code' || $selectedGateway === 'cash') {
+                
+                try {
+                    $order->update([
+                        'payment_status' => 'unpaid',
+                        'status'         => 'sent_to_kitchen'
+                    ]);
+                } catch (\Throwable $e) {
+                    $order->payment_status = 'unpaid';
+                    $order->save();
+                }
 
                 return response()->json([
                     'status'  => 'success',
-                    'message' => 'Payment confirm ho gaya hai! Aapka order kitchen me bhej diya gaya hai.'
+                    'message' => 'Payment request submitted successfully! Your order has been sent to the kitchen.'
                 ]);
             }
 
@@ -81,7 +87,7 @@ class GlobalPaymentController extends Controller
                 } else {
                     return response()->json([
                         'status'  => 'error',
-                        'message' => 'PhonePe Gateway class available nahi hai.'
+                        'message' => 'PhonePe Gateway class is not available.'
                     ], 400);
                 }
             }
@@ -107,7 +113,7 @@ class GlobalPaymentController extends Controller
 
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Gateway filhaal inactive hai. Kripya QR Code se payment karein.'
+                'message' => 'Payment gateway is currently inactive. Please pay using the UPI QR Code.'
             ], 400);
 
         } catch (\Throwable $e) {
@@ -135,7 +141,7 @@ class GlobalPaymentController extends Controller
                 'transaction_id'   => $request->transaction_id ?? $request->razorpay_payment_id ?? ('TXN_' . time()),
                 'admin_commission' => $adminCommission,
                 'vendor_payout'     => $vendorPayout,
-                'status'           => 'kitchen'
+                'status'           => 'sent_to_kitchen'
             ]);
 
             return response()->json(['status' => 'success', 'message' => 'Payment Successful!']);
