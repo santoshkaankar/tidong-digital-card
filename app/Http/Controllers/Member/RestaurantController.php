@@ -136,7 +136,7 @@ class RestaurantController extends Controller
         return view('member.restaurant.show', compact('restaurant', 'categories', 'globalItems', 'customItems', 'todayTiffins', 'todayDay', 'savedAddresses'));
     }
 
-    // Smart Typo-Tolerant Area / City / Pincode Search Endpoint
+    // Smart Cross-Database (MySQL + Supabase PostgreSQL) Compatible Search
     public function searchPincodes(Request $request)
     {
         try {
@@ -146,6 +146,8 @@ class RestaurantController extends Controller
                 return response()->json([]);
             }
 
+            $searchTerm = '%' . strtolower($search) . '%';
+
             $pincodes = DB::table('pincodes')
                 ->select(
                     'office_name',
@@ -153,12 +155,11 @@ class RestaurantController extends Controller
                     DB::raw("COALESCE(state_name, 'Odisha') as state"),
                     'pincode'
                 )
-                ->where(function($q) use ($search) {
-                    $q->where('office_name', 'LIKE', "%{$search}%")
-                      ->orWhere('district', 'LIKE', "%{$search}%")
-                      ->orWhere('pincode', 'LIKE', "%{$search}%")
-                      ->orWhereRaw("SOUNDEX(office_name) = SOUNDEX(?)", [$search])
-                      ->orWhereRaw("SOUNDEX(district) = SOUNDEX(?)", [$search]);
+                ->where(function($q) use ($searchTerm) {
+                    $q->whereRaw("CAST(pincode AS TEXT) LIKE ?", [$searchTerm])
+                      ->orWhereRaw("LOWER(office_name) LIKE ?", [$searchTerm])
+                      ->orWhereRaw("LOWER(district) LIKE ?", [$searchTerm])
+                      ->orWhereRaw("LOWER(state_name) LIKE ?", [$searchTerm]);
                 })
                 ->limit(15)
                 ->get();
