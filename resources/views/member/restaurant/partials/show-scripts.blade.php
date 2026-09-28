@@ -183,76 +183,88 @@
         let debounceTimer;
 
         if (searchInput && searchResults) {
-            // Mobile Keyboard Input Events
-            ['input', 'keyup', 'paste'].forEach(eventType => {
-                searchInput.addEventListener(eventType, function () {
-                    clearTimeout(debounceTimer);
-                    let query = this.value.trim();
+            const performSearch = function () {
+                clearTimeout(debounceTimer);
+                // Mobile auto-space clean up
+                let rawVal = searchInput.value || '';
+                let query = rawVal.replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000]/g, " ").trim();
 
-                    if (query.length < 2) {
-                        searchResults.style.display = 'none';
-                        searchResults.innerHTML = '';
-                        return;
-                    }
+                if (query.length < 2) {
+                    searchResults.style.display = 'none';
+                    searchResults.innerHTML = '';
+                    return;
+                }
 
-                    debounceTimer = setTimeout(() => {
-                        fetch("{{ route('member.pincodes.search') }}?q=" + encodeURIComponent(query))
-                            .then(res => res.json())
-                            .then(data => {
-                                searchResults.innerHTML = '';
-                                if (!data || data.length === 0) {
-                                    searchResults.innerHTML = '<div class="pincode-result-item text-muted">No matching area or pincode found</div>';
-                                } else {
-                                    data.forEach(item => {
-                                        let area = item.office_name || '';
-                                        let district = item.district || '';
-                                        let state = item.state || 'Odisha';
-                                        let pincode = item.pincode || '';
-                                        let label = `${area}${district ? ', ' + district : ''} (${pincode})`;
+                debounceTimer = setTimeout(() => {
+                    // Relative Path for Mobile Local Network Testing Compatibility
+                    let searchUrl = "{{ url('/member/pincodes/search') }}?q=" + encodeURIComponent(query);
 
-                                        let btn = document.createElement('div');
-                                        btn.className = 'pincode-result-item';
-                                        btn.innerHTML = `<i class="fas fa-map-marker-alt text-danger me-2"></i><b>${area}</b> - ${district} <span class="badge bg-secondary ms-1">${pincode}</span>`;
+                    fetch(searchUrl)
+                        .then(res => res.json())
+                        .then(data => {
+                            searchResults.innerHTML = '';
+                            if (!data || data.length === 0) {
+                                searchResults.innerHTML = '<div class="pincode-result-item text-muted">No matching area or pincode found</div>';
+                            } else {
+                                data.forEach(item => {
+                                    let area = item.office_name || item.area || '';
+                                    let district = item.district || item.city || '';
+                                    let state = item.state || '';
+                                    let pincode = item.pincode || '';
+                                    let label = `${area}${district ? ', ' + district : ''} (${pincode})`;
 
-                                        // Mobile Touch and Mouse Click Event Fix
-                                        const selectAddressItem = function (e) {
-                                            if (e) e.preventDefault();
-                                            
-                                            if (document.getElementById('deliveryAreaInput')) document.getElementById('deliveryAreaInput').value = area;
-                                            if (document.getElementById('deliveryCityInput')) document.getElementById('deliveryCityInput').value = district;
-                                            if (document.getElementById('deliveryStateInput')) document.getElementById('deliveryStateInput').value = state;
-                                            if (document.getElementById('deliveryPincodeInput')) document.getElementById('deliveryPincodeInput').value = pincode;
+                                    let btn = document.createElement('div');
+                                    btn.className = 'pincode-result-item';
+                                    btn.innerHTML = `<i class="fas fa-map-marker-alt text-danger me-2"></i><b>${area}</b> - ${district} <span class="badge bg-secondary ms-1">${pincode}</span>`;
 
-                                            searchInput.value = label;
-                                            searchResults.style.display = 'none';
-
-                                            let savedDropdown = document.getElementById('savedAddressDropdown');
-                                            if (savedDropdown) savedDropdown.value = 'new';
-
-                                            let streetInput = document.getElementById('deliveryStreetInput');
-                                            if (streetInput) streetInput.focus();
-                                        };
-
-                                        btn.addEventListener('touchstart', selectAddressItem, { passive: false });
-                                        btn.addEventListener('mousedown', selectAddressItem);
+                                    // Touch and Mouse Click Event Fix
+                                    const selectAddressItem = function (e) {
+                                        if (e) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }
                                         
-                                        searchResults.appendChild(btn);
-                                    });
-                                }
-                                searchResults.style.display = 'block';
-                            })
-                            .catch(err => console.error("Search Error:", err));
-                    }, 300);
-                });
+                                        if (document.getElementById('deliveryAreaInput')) document.getElementById('deliveryAreaInput').value = area;
+                                        if (document.getElementById('deliveryCityInput')) document.getElementById('deliveryCityInput').value = district;
+                                        if (document.getElementById('deliveryStateInput')) document.getElementById('deliveryStateInput').value = state;
+                                        if (document.getElementById('deliveryPincodeInput')) document.getElementById('deliveryPincodeInput').value = pincode;
+
+                                        searchInput.value = label;
+                                        searchResults.style.display = 'none';
+
+                                        let savedDropdown = document.getElementById('savedAddressDropdown');
+                                        if (savedDropdown) savedDropdown.value = 'new';
+
+                                        let streetInput = document.getElementById('deliveryStreetInput');
+                                        if (streetInput) streetInput.focus();
+                                    };
+
+                                    btn.addEventListener('pointerdown', selectAddressItem);
+                                    btn.addEventListener('touchstart', selectAddressItem, { passive: false });
+                                    btn.addEventListener('click', selectAddressItem);
+                                    
+                                    searchResults.appendChild(btn);
+                                });
+                            }
+                            searchResults.style.display = 'block';
+                        })
+                        .catch(err => {
+                            console.error("Search Error:", err);
+                            searchResults.innerHTML = '<div class="pincode-result-item text-danger">Search error, try again</div>';
+                            searchResults.style.display = 'block';
+                        });
+                }, 250);
+            };
+
+            ['input', 'keyup', 'paste', 'change'].forEach(eventType => {
+                searchInput.addEventListener(eventType, performSearch);
             });
 
             // Outside Click/Touch to hide results box
-            ['click', 'touchstart'].forEach(eventType => {
-                document.addEventListener(eventType, function (e) {
-                    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                        searchResults.style.display = 'none';
-                    }
-                });
+            document.addEventListener('pointerdown', function (e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
             });
         }
     });
