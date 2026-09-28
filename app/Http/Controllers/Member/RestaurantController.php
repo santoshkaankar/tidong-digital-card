@@ -14,6 +14,7 @@ use App\Models\Restaurant\RestaurantOrder;
 use App\Models\Restaurant\RestaurantOrderItem;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class RestaurantController extends Controller
@@ -26,7 +27,7 @@ class RestaurantController extends Controller
         $lng    = $request->input('lng');
         $pincode = $request->input('pincode');
 
-        // Pincode se Lat/Lng autodetect (Pincodes table lookup)
+        // Pincode lookup for Lat/Lng
         if (!empty($pincode) && (empty($lat) || empty($lng))) {
             $pinData = DB::table('pincodes')->where('pincode', $pincode)->first();
             if ($pinData && !empty($pinData->latitude) && !empty($pinData->longitude)) {
@@ -37,37 +38,31 @@ class RestaurantController extends Controller
 
         $query = User::query();
 
-        // 1. STRICT ROLE / BUSINESS FILTER
         $query->where(function($q) {
             $q->where('business_type', 'restaurant')
               ->orWhere('role', 'restaurant');
         });
 
-        // DYNAMIC MULTI-SEARCH
-if (!empty($search)) {
-    $query->where(function($q) use ($search) {
-        // 1. Users table ke fields
-        $q->where('name', 'LIKE', "%{$search}%")
-          ->orWhere('username', 'LIKE', "%{$search}%")
-          ->orWhere('city', 'LIKE', "%{$search}%")
-          ->orWhere('state', 'LIKE', "%{$search}%")
-          ->orWhere('pincode', 'LIKE', "%{$search}%")
-          ->orWhere('area', 'LIKE', "%{$search}%")
-          ->orWhere('address', 'LIKE', "%{$search}%");
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('username', 'LIKE', "%{$search}%")
+                  ->orWhere('city', 'LIKE', "%{$search}%")
+                  ->orWhere('state', 'LIKE', "%{$search}%")
+                  ->orWhere('pincode', 'LIKE', "%{$search}%")
+                  ->orWhere('area', 'LIKE', "%{$search}%")
+                  ->orWhere('address', 'LIKE', "%{$search}%");
 
-        // 2. Agar pincodes table se match karana hai (pincodes table ki columns)
-        $q->orWhereIn('pincode', function($subQuery) use ($search) {
-            $subQuery->select('pincode')
-                     ->from('pincodes')
-                     ->where('office_name', 'LIKE', "%{$search}%")
-                     ->orWhere('district', 'LIKE', "%{$search}%")
-                     ->orWhere('state_name', 'LIKE', "%{$search}%");
-        });
-    });
-}
-        
+                $q->orWhereIn('pincode', function($subQuery) use ($search) {
+                    $subQuery->select('pincode')
+                             ->from('pincodes')
+                             ->where('office_name', 'LIKE', "%{$search}%")
+                             ->orWhere('district', 'LIKE', "%{$search}%")
+                             ->orWhere('state_name', 'LIKE', "%{$search}%");
+                });
+            });
+        }
 
-        // 3. VEG / NON-VEG FILTER
         if (!empty($type) && $type !== 'all') {
             if (Schema::hasColumn('users', 'food_type')) {
                 if (in_array($type, ['pureveg', 'veg'])) {
@@ -78,7 +73,6 @@ if (!empty($search)) {
             }
         }
 
-        // 4. NEARBY DISTANCE SORTING (PostgreSQL Compatible Haversine Formula)
         if (!empty($lat) && !empty($lng)) {
             $query->selectRaw("*, ( 6371 * acos( cos( radians(?) ) * cos( radians( COALESCE(latitude, 0) ) ) * cos( radians( COALESCE(longitude, 0) ) - radians(?) ) + sin( radians(?) ) * sin( radians( COALESCE(latitude, 0) ) ) ) ) AS distance", [$lat, $lng, $lat])
                   ->orderBy('distance', 'asc');
@@ -104,7 +98,7 @@ if (!empty($search)) {
         }
         $categories = $categories->get();
 
-        // 2. Fetch standard items (Supabase Fix: status = true)
+        // 2. Fetch standard items
         $itemsQuery = RestaurantItem::query();
         if (Schema::hasColumn('restaurant_items', 'user_id')) {
             $itemsQuery->where('user_id', $id);
@@ -113,7 +107,7 @@ if (!empty($search)) {
         }
         $globalItems = $itemsQuery->where('status', true)->get();
 
-        // 3. Fetch custom items / Thalis (Supabase Fix: is_available = true)
+        // 3. Fetch custom items / Thalis
         $customItems = RestaurantCustomItem::where('user_id', $id)
             ->where('is_available', true)
             ->get();
@@ -129,7 +123,51 @@ if (!empty($search)) {
             return $catalog->items->count() > 0;
         });
 
-        return view('member.restaurant.show', compact('restaurant', 'categories', 'globalItems', 'customItems', 'todayTiffins', 'todayDay'));
+        // 5. Fetch saved addresses of logged in user
+        $savedAddresses = [];
+        if (auth()->check()) {
+            if (Schema::hasTable('user_addresses')) {
+                $savedAddresses = DB::table('user_addresses')->where('user_id', auth()->id())->get();
+            } elseif (Schema::hasTable('addresses')) {
+                $savedAddresses = DB::table('addresses')->where('user_id', auth()->id())->get();
+            }
+        }
+
+        return view('member.restaurant.show', compact('restaurant', 'categories', 'globalItems', 'customItems', 'todayTiffins', 'todayDay', 'savedAddresses'));
+    }
+
+    // Smart Typo-Tolerant Area / City / Pincode Search Endpoint
+    public function searchPincodes(Request $request)
+    {
+        try {
+            $search = trim($request->get('q') ?? $request->get('query') ?? '');
+
+            if (empty($search) || strlen($search) < 2) {
+                return response()->json([]);
+            }
+
+            $pincodes = DB::table('pincodes')
+                ->select(
+                    'office_name',
+                    'district',
+                    DB::raw("COALESCE(state_name, 'Odisha') as state"),
+                    'pincode'
+                )
+                ->where(function($q) use ($search) {
+                    $q->where('office_name', 'LIKE', "%{$search}%")
+                      ->orWhere('district', 'LIKE', "%{$search}%")
+                      ->orWhere('pincode', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("SOUNDEX(office_name) = SOUNDEX(?)", [$search])
+                      ->orWhereRaw("SOUNDEX(district) = SOUNDEX(?)", [$search]);
+                })
+                ->limit(15)
+                ->get();
+
+            return response()->json($pincodes);
+
+        } catch (\Exception $e) {
+            return response()->json([], 500);
+        }
     }
 
     // Live Delivery & Dining Order Placement
@@ -189,15 +227,15 @@ if (!empty($search)) {
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order successfully place ho gaya hai!',
+                'message' => 'Order placed successfully!',
                 'order_id' => $order->id,
                 'total_amount' => $order->total_amount
-            ]);
+            ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Failed to place order: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -239,13 +277,13 @@ if (!empty($search)) {
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tiffin Booking request submit ho gayi hai!',
+                'message' => 'Tiffin booking request submitted successfully!',
                 'order_id' => $order->id
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Failed to book tiffin: ' . $e->getMessage()
             ], 500);
         }
     }

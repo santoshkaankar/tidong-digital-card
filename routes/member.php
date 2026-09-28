@@ -78,3 +78,5 @@ Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
 
 // Public Card View Link (No Auth Required)
 Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.public');
+
+Route::get('/search-pincodes', [RestaurantController::class, 'searchPincodes'])->name('pincodes.search');
