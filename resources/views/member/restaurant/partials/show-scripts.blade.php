@@ -305,7 +305,7 @@
         let deliveryCharge = (orderType === 'delivery') ? DEFAULT_DELIVERY_CHARGE : 0.00;
         let totalAmount = subtotal + deliveryCharge;
 
-        fetch("{{ route('member.restaurant.placeOrder') }}", {
+        fetch("{{ route('hub.restaurant.placeOrder') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -358,7 +358,7 @@
             return;
         }
 
-        fetch("{{ route('member.restaurant.bookTiffin', $restaurant->id) }}", {
+        fetch("{{ route('hub.restaurant.bookTiffin', $restaurant->id) }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
