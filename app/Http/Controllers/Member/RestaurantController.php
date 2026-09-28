@@ -138,39 +138,37 @@ class RestaurantController extends Controller
 
     // Smart Cross-Database (MySQL + Supabase PostgreSQL) Compatible Search
     public function searchPincodes(Request $request)
-    {
-        try {
-            $search = trim($request->get('q') ?? $request->get('query') ?? '');
+{
+    try {
+        $search = trim($request->get('q') ?? $request->get('query') ?? '');
 
-            if (empty($search) || strlen($search) < 2) {
-                return response()->json([]);
-            }
-
-            $searchTerm = '%' . strtolower($search) . '%';
-
-            $pincodes = DB::table('pincodes')
-                ->select(
-                    'office_name',
-                    'district',
-                    DB::raw("COALESCE(state_name, 'Odisha') as state"),
-                    'pincode'
-                )
-                ->where(function($q) use ($searchTerm) {
-                    $q->whereRaw("CAST(pincode AS TEXT) LIKE ?", [$searchTerm])
-                      ->orWhereRaw("LOWER(office_name) LIKE ?", [$searchTerm])
-                      ->orWhereRaw("LOWER(district) LIKE ?", [$searchTerm])
-                      ->orWhereRaw("LOWER(state_name) LIKE ?", [$searchTerm]);
-                })
-                ->limit(15)
-                ->get();
-
-            return response()->json($pincodes);
-
-        } catch (\Exception $e) {
-            return response()->json([], 500);
+        if (strlen($search) < 2) {
+            return response()->json([]);
         }
-    }
 
+        $searchTerm = '%' . strtolower($search) . '%';
+
+        $pincodes = DB::table('pincodes')
+            ->select(
+                'office_name',
+                'district',
+                DB::raw("COALESCE(state_name, 'Rajasthan') as state"),
+                'pincode'
+            )
+            ->where(function($q) use ($searchTerm) {
+                $q->whereRaw("CAST(pincode AS TEXT) LIKE ?", [$searchTerm])
+                  ->orWhereRaw("LOWER(office_name) LIKE ?", [$searchTerm])
+                  ->orWhereRaw("LOWER(district) LIKE ?", [$searchTerm]);
+            })
+            ->limit(15)
+            ->get();
+
+        return response()->json($pincodes);
+
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
     // Live Delivery & Dining Order Placement
     public function placeOrder(Request $request)
     {
