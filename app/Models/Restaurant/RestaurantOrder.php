@@ -4,6 +4,7 @@ namespace App\Models\Restaurant;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class RestaurantOrder extends Model
 {
@@ -11,37 +12,8 @@ class RestaurantOrder extends Model
 
     protected $table = 'restaurant_orders';
 
-    protected $fillable = [
-        'user_id',
-        'customer_id',
-        'table_id',
-        'order_number',
-        'order_type',
-        'is_guest',
-        'guest_session_id',
-        'device_ip',
-        'customer_name',
-        'customer_phone',
-        'sub_total',
-        'discount_amount',
-        'tax_amount',
-        'tip_amount',
-        'total_amount',
-        'currency_code',
-        'exchange_rate',
-        'converted_amount',
-        'status',
-        'payment_status',
-        'payment_method',
-        'payment_request_status',
-        'transaction_id',
-        'payment_proof',
-        'notes',
-        'completed_at',
-        'delivery_boy_id',
-        'status',
-        'delivered_at',
-    ];
+    // Allow all columns safely without fillable restrictions
+    protected $guarded = [];
 
     public function table()
     {
@@ -51,5 +23,15 @@ class RestaurantOrder extends Model
     public function items()
     {
         return $this->hasMany(RestaurantOrderItem::class, 'order_id');
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id');
     }
 }

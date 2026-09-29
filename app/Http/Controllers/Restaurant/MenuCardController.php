@@ -17,7 +17,6 @@ class MenuCardController extends Controller
         $userId = auth()->id();
         $user = auth()->user();
 
-        // Active Categories and Items fetch with globalItem relationship
         $categories = RestaurantCategory::where('user_id', $userId)
             ->with(['items' => function ($query) use ($userId) {
                 $query->where('user_id', $userId)
@@ -26,21 +25,16 @@ class MenuCardController extends Controller
             }])
             ->get();
 
-        // Fetch custom items so they appear in catalogs / menu cards
         $customItems = RestaurantCustomItem::where('user_id', $userId)
             ->where('is_available', true)
             ->with(['category'])
             ->get();
 
-        // Dynamic Tables/Catalogs fetch
         $tables = RestaurantTable::where('user_id', $userId)->latest()->get();
 
         return view('vendor.restaurant.menu-card.index', compact('categories', 'customItems', 'user', 'tables'));
     }
 
-    /**
-     * Create New Catalog
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -58,9 +52,6 @@ class MenuCardController extends Controller
         return redirect()->back()->with('success', 'Catalog successfully created!');
     }
 
-    /**
-     * Delete Catalog
-     */
     public function destroy($id)
     {
         $table = RestaurantTable::where('user_id', auth()->id())->findOrFail($id);
@@ -69,9 +60,6 @@ class MenuCardController extends Controller
         return redirect()->back()->with('success', 'Catalog successfully deleted!');
     }
 
-    /**
-     * Copy / Duplicate Catalog
-     */
     public function copy($id)
     {
         $userId = auth()->id();
@@ -96,9 +84,6 @@ class MenuCardController extends Controller
         return redirect()->back()->with('success', 'Catalog copy ho gaya! Ab aap ise Edit kar sakte hain.');
     }
 
-    /**
-     * Update Existing Catalog
-     */
     public function update(Request $request, $id)
     {
         $request->validate([

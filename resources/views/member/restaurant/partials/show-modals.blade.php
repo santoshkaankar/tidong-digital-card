@@ -102,12 +102,6 @@
                             $profileAddress = $authUser->address ?? '';
                             $profilePincode = $authUser->pincode ?? '';
                             $userAddresses = $savedAddresses ?? ($authUser && $authUser->addresses ? $authUser->addresses : []);
-
-                            // Fetch Dynamic Pincodes & Areas from DB Table 'pincodes'
-                            $dbPincodes = \Illuminate\Support\Facades\DB::table('pincodes')
-                                            ->select('office_name', 'pincode', 'district')
-                                            ->orderBy('office_name', 'asc')
-                                            ->get();
                         @endphp
 
                         <!-- 1. Saved Address Dropdown -->
@@ -127,7 +121,7 @@
                                             $pinText = $addr->pincode ?? '';
                                         @endphp
                                         @if($addText !== $profileAddress)
-                                            <option value="{{ $addr->id ?? $loop->index }}" data-address="{{ $addText }}" data-pincode="{{ $pinText }}" {{ empty($profileAddress) && $loop->first ? 'selected' : '' }}>
+                                            <option value="{{ $addr->id ?? $loop->index }}" data-address="{{ $addText }}" data-pincode="{{ $pinText }}">
                                                 {{ $addr->title ?? 'Saved' }}: {{ Str::limit($addText, 35) }} ({{ $pinText }})
                                             </option>
                                         @endif
@@ -135,39 +129,36 @@
                                 @endif
 
                                 <option value="new" data-address="" data-pincode="" {{ empty($profileAddress) && (!is_iterable($userAddresses) || count($userAddresses) == 0) ? 'selected' : '' }}>
-                                    + Select Area / Pincode (New Address)
+                                    + Add / Search New Area & Pincode
                                 </option>
                             </select>
                         </div>
 
                         <div class="p-3 bg-light border rounded-3 mb-3">
-                            <!-- 2. Dynamic City / Area / Pincode Dropdown from DB -->
-                            <div class="mb-3">
+                            <!-- Live Search Box Group -->
+                            <div class="mb-3 position-relative {{ !empty($profileAddress) ? 'd-none' : '' }}" id="addressSearchGroup">
                                 <label class="form-label small fw-bold text-primary">
-                                    <i class="fas fa-map-marker-alt me-1"></i> Select Area / Pincode (From Database)
+                                    <i class="fas fa-search-location me-1"></i> Search Area / Pincode (Supabase Live)
                                 </label>
-                                <select id="areaPincodeDropdown" class="form-select rounded-3" onchange="handleAreaPincodeSelect(this)">
-                                    <option value="">-- Choose Area or Pincode --</option>
-                                    @foreach($dbPincodes as $pinItem)
-                                        <option value="{{ $pinItem->pincode }}" 
-                                                data-area="{{ $pinItem->office_name }}{{ $pinItem->district ? ', ' . $pinItem->district : '' }}" 
-                                                {{ $profilePincode == $pinItem->pincode ? 'selected' : '' }}>
-                                            {{ $pinItem->district ? $pinItem->district . ' - ' : '' }}{{ $pinItem->office_name }} ({{ $pinItem->pincode }})
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <input type="text" id="addressSearchInput" class="form-control rounded-3" placeholder="Type area or pincode (e.g. Kota, 324005)..." autocomplete="off">
+                                <div id="pincodeSearchResults" style="display: none;"></div>
                             </div>
 
-                            <!-- 3. Manual House / Flat / Street Address Box -->
+                            <!-- Hidden Form Values -->
+                            <input type="hidden" id="deliveryAreaInput">
+                            <input type="hidden" id="deliveryCityInput">
+                            <input type="hidden" id="deliveryStateInput">
+
+                            <!-- Street Address Box -->
                             <div class="mb-2">
                                 <label class="form-label small fw-bold mb-1">House No. / Flat / Building / Street Address</label>
-                                <textarea id="deliveryAddressInput" class="form-control rounded-3" rows="2" placeholder="e.g. House No. 9A, Shakti Vihar">{{ $profileAddress }}</textarea>
+                                <textarea id="deliveryStreetInput" class="form-control rounded-3" rows="2" placeholder="e.g. House No. 9A, Shakti Vihar">{{ $profileAddress }}</textarea>
                             </div>
 
-                            <!-- 4. Pincode Auto-filled Box -->
+                            <!-- Pincode Box -->
                             <div>
-                                <label class="form-label small fw-bold mb-1">Pincode (Auto-filled)</label>
-                                <input type="text" id="deliveryPincodeInput" class="form-control rounded-3 bg-white" placeholder="Auto-selected from area" maxlength="6" value="{{ $profilePincode }}" readonly>
+                                <label class="form-label small fw-bold mb-1">Pincode</label>
+                                <input type="text" id="deliveryPincodeInput" class="form-control rounded-3 bg-white" placeholder="Pincode" maxlength="6" value="{{ $profilePincode }}" readonly>
                             </div>
                         </div>
                     </div>

@@ -9,7 +9,6 @@ use App\Models\Restaurant\RestaurantCustomItem;
 use App\Models\Restaurant\RestaurantOrder;
 use App\Models\Restaurant\RestaurantOrderItem;
 use App\Models\Restaurant\RestaurantTable;
-// Wallet Models Added
 use App\Models\Payment\VendorWallet;
 use App\Models\Payment\WalletTransaction;
 use Illuminate\Http\Request;
@@ -19,9 +18,6 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    /**
-     * Display Orders List
-     */
     public function index()
     {
         $vendorId = Auth::id();
@@ -34,12 +30,6 @@ class OrderController extends Controller
         return view('vendor.restaurant.orders.index', compact('orders'));
     }
 
-    /**
-     * Display POS / Counter Billing Page
-     */
-    /**
-     * Display POS / Counter Billing Page
-     */
     public function posIndex()
     {
         $vendorId = Auth::id();
@@ -60,25 +50,20 @@ class OrderController extends Controller
 
         $tables = RestaurantTable::where('user_id', $vendorId)->get();
 
-        // -------------------------------------------------------------
-        // Today's Tiffin Filter Logic (Kewal Aaj ka Tiffin)
-        // -------------------------------------------------------------
         $todayTiffins = collect();
         $tiffinTables = ['tiffin_menus', 'tiffin_catalogs', 'tiffins', 'tiffin_items', 'custom_tiffins'];
-        $todayDay = now()->format('l'); // e.g. "Friday", "Monday" etc.
+        $todayDay = now()->format('l');
 
         foreach ($tiffinTables as $tableName) {
             if (\Schema::hasTable($tableName)) {
                 $query = DB::table($tableName);
                 
-                // User/Vendor Filter
                 if (\Schema::hasColumn($tableName, 'user_id')) {
                     $query->where('user_id', $vendorId);
                 } elseif (\Schema::hasColumn($tableName, 'vendor_id')) {
                     $query->where('vendor_id', $vendorId);
                 }
 
-                // Filter for TODAY ONLY
                 if (\Schema::hasColumn($tableName, 'day_of_week')) {
                     $query->whereRaw('LOWER(day_of_week) = ?', [strtolower($todayDay)]);
                 } elseif (\Schema::hasColumn($tableName, 'day')) {
@@ -91,7 +76,6 @@ class OrderController extends Controller
 
                 $fetched = $query->get();
 
-                // Extra safety PHP filter if title/name has day name
                 if ($fetched->count() > 0 && !\Schema::hasColumn($tableName, 'day_of_week') && !\Schema::hasColumn($tableName, 'day') && !\Schema::hasColumn($tableName, 'date')) {
                     $filtered = $fetched->filter(function($item) use ($todayDay) {
                         $title = $item->title ?? $item->name ?? $item->day_name ?? '';
@@ -117,9 +101,7 @@ class OrderController extends Controller
             'todayTiffins'
         ));
     }
-    /**
-     * Store POS Order via AJAX (Includes Inclusive Tax Breakdown & Auto Popup Print URL)
-     */
+
     public function storePosOrder(Request $request)
     {
         $request->validate([
@@ -136,7 +118,6 @@ class OrderController extends Controller
 
         $vendorId = Auth::id();
 
-        // Check if Table has active running order before placing a new one
         if ($request->order_type === 'dine_in' && $request->table_id) {
             $activeOrderExists = RestaurantOrder::where('table_id', $request->table_id)
                 ->where('user_id', $vendorId)
@@ -161,9 +142,8 @@ class OrderController extends Controller
             $totalTax = 0;
             $processedCart = [];
 
-            // 1. Inclusive Tax & Subtotal Breakdown Calculation
             foreach ($cart as $item) {
-                $itemTotal = $item['price'] * $item['quantity']; // Inclusive total amount
+                $itemTotal = $item['price'] * $item['quantity'];
                 
                 $taxPercentage = 0;
                 $restaurantItem = DB::table('restaurant_items')->where('id', $item['id'])->first();
@@ -202,7 +182,6 @@ class OrderController extends Controller
             $totalAmount = $subTotal + $totalTax;
             $orderNumber = 'ORD-' . strtoupper(Str::random(6)) . '-' . time();
 
-            // 2. Create Order
             $order = RestaurantOrder::create([
                 'user_id'         => $vendorId,
                 'customer_id'     => null,
@@ -223,17 +202,13 @@ class OrderController extends Controller
                 'payment_method'  => 'cash',
             ]);
 
-            // ==========================================
-            // 3. 1% PER ORDER (MINIMUM ₹1) COMMISSION LOGIC
-            // ==========================================
+            // 1% Commission Logic (Min ₹1)
             $wallet = VendorWallet::firstOrCreate(
                 ['vendor_id' => $vendorId],
                 ['bonus_balance' => 200.00, 'sales_balance' => 0.00]
             );
 
-            // Total amount ka 1% nikalenge, aur agar wo ₹1 se kam hai toh kam se kam ₹1 katega
-            $commissionFee = max(1.00, $totalAmount * 0.01);
-            $commissionFee = round($commissionFee, 2);
+            $commissionFee = max(1.00, round($totalAmount * 0.01, 2));
 
             if ($wallet->bonus_balance >= $commissionFee) {
                 $wallet->decrement('bonus_balance', $commissionFee);
@@ -252,7 +227,6 @@ class OrderController extends Controller
                 'status'      => 'success'
             ]);
 
-            // 4. Insert Order Items
             foreach ($processedCart as $item) {
                 RestaurantOrderItem::create([
                     'order_id'       => $order->id,
@@ -277,7 +251,6 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // 5. Payment Link & WhatsApp Generation
             $upiId = Auth::user()->upi_id ?? 'merchant@upi';
             $restaurantName = Auth::user()->restaurant_name ?? Auth::user()->name ?? __('Restaurant');
             
@@ -313,9 +286,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * Edit Order Page
-     */
     public function edit($id)
     {
         $vendorId = Auth::id();
@@ -333,9 +303,6 @@ class OrderController extends Controller
         return view('vendor.restaurant.orders.edit', compact('order', 'tables', 'availableItems', 'availableCustomItems'));
     }
 
-    /**
-     * Update Order Data & Recalculate Totals Properly (Inclusive Tax)
-     */
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -361,7 +328,6 @@ class OrderController extends Controller
             $totalTax = 0;
             $processedItems = [];
 
-            // 1. Recalculate Inclusive Tax & Subtotal per item
             foreach ($request->items as $itemData) {
                 $itemTotal = $itemData['price'] * $itemData['qty'];
                 
@@ -388,8 +354,7 @@ class OrderController extends Controller
                 
                 $subTotal += $basePrice;
                 $totalTax += $itemTax;
-                
-                // Fallback for Name
+
                 $itemObj = RestaurantItem::with('globalItem')->find($itemData['item_id']);
                 if (!$itemObj) {
                     $itemObj = RestaurantCustomItem::find($itemData['item_id']);
@@ -408,7 +373,6 @@ class OrderController extends Controller
 
             $totalAmount = $subTotal + $totalTax + ($order->tip_amount ?? 0) - ($order->discount_amount ?? 0);
 
-            // 2. Clear old items and recreate updated order list
             RestaurantOrderItem::where('order_id', $order->id)->delete();
 
             foreach ($processedItems as $itemData) {
@@ -425,7 +389,6 @@ class OrderController extends Controller
                 ]);
             }
 
-            // 3. Update main order table details
             $order->update([
                 'order_type'     => $request->order_type,
                 'table_id'       => $request->order_type === 'dine_in' ? $request->table_id : null,
@@ -438,7 +401,6 @@ class OrderController extends Controller
                 'total_amount'   => round($totalAmount, 2),
             ]);
 
-            // 4. Free or occupy table based on state
             if ($order->table_id) {
                 if ($request->status === 'completed' || $request->status === 'cancelled' || $request->payment_status === 'paid') {
                     RestaurantTable::where('id', $order->table_id)->update([
@@ -464,9 +426,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * Print Receipt (Calculates CGST/SGST safely for Blade)
-     */
     public function printReceipt($id)
     {
         $order = RestaurantOrder::with(['items', 'table'])

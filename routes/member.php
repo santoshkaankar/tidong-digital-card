@@ -11,9 +11,8 @@ use App\Http\Controllers\Member\AffiliateController;
 use App\Http\Controllers\Member\RoyaltyController;
 use App\Http\Controllers\Member\HubController;
 use App\Http\Controllers\Member\RestaurantController;
+use App\Http\Controllers\PincodeController;
 
-// Old Line 16: Route::middleware(['auth'])->group(function () {
-// New Line 16:
 Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
 
     // Dashboard Route
@@ -73,11 +72,13 @@ Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
     // Dedicated Member Restaurant Routes
     Route::get('/restaurant', [RestaurantController::class, 'index'])->name('restaurant.index');
     Route::get('/restaurant/{id}', [RestaurantController::class, 'show'])->name('restaurant.show');
+    Route::post('/restaurant/place-order', [RestaurantController::class, 'placeOrder'])->name('restaurant.placeOrder');
+    Route::post('/restaurant/book-tiffin/{id}', [RestaurantController::class, 'bookTiffin'])->name('restaurant.bookTiffin');
+
+    // Live AJAX Pincodes Search Route
+    Route::get('/pincodes/search', [PincodeController::class, 'search'])->name('pincodes.search');
 
 });
 
 // Public Card View Link (No Auth Required)
 Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.public');
-
-// Dedicated Member / Public Pincode Search Route
-Route::get('/pincodes/search', [RestaurantController::class, 'searchPincodes'])->name('pincodes.search');

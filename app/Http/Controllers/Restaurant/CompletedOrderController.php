@@ -13,7 +13,7 @@ class CompletedOrderController extends Controller
      */
     public function index()
     {
-        $completedOrders = RestaurantOrder::with(['items.item', 'table'])
+        $completedOrders = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
             ->where('user_id', Auth::id())
             ->whereIn('status', ['served', 'completed'])
             ->orderBy('updated_at', 'desc')

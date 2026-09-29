@@ -12,9 +12,6 @@ use Illuminate\Support\Facades\Log;
 
 class KitchenDisplayController extends Controller
 {
-    /**
-     * Display Main KDS View Screen
-     */
     public function index()
     {
         $userId = Auth::id();
@@ -29,7 +26,6 @@ class KitchenDisplayController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 1. Fetch Normal Waiter Calls (Read Only for Screen)
         $waiterCalls = WaiterCall::with('table')
             ->where('user_id', $userId)
             ->where(function($query) {
@@ -40,7 +36,6 @@ class KitchenDisplayController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 2. Fetch Cash Payment Requests (Read Only for Screen)
         $cashRequests = WaiterCall::with('table')
             ->where('user_id', $userId)
             ->where(function($query) {
@@ -56,9 +51,6 @@ class KitchenDisplayController extends Controller
         return view('vendor.restaurant.kitchen_screen', compact('activeOrders', 'waiterCalls', 'cashRequests', 'activeOrdersCount'));
     }
 
-    /**
-     * Fetch Detailed Order Data for Modal View
-     */
     public function getOrderDetails($id)
     {
         $order = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
@@ -83,59 +75,50 @@ class KitchenDisplayController extends Controller
         ]);
     }
 
-    /**
-     * Live Polling Endpoint (Data Feed for UI Sync)
-     */
     public function liveOrders(Request $request)
-{
-    $userId = Auth::id();
+    {
+        $userId = Auth::id();
 
-    // 1. Active Waiter Calls
-    $waiterCalls = WaiterCall::with('table')
-        ->where('user_id', $userId)
-        ->whereIn('call_type', ['waiter', 'call_waiter'])
-        ->where(function($q) {
-            $q->where('status', 'pending')->orWhereNull('status');
-        })
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $waiterCalls = WaiterCall::with('table')
+            ->where('user_id', $userId)
+            ->whereIn('call_type', ['waiter', 'call_waiter'])
+            ->where(function($q) {
+                $q->where('status', 'pending')->orWhereNull('status');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    // 2. Cash Requests
-    $cashRequests = WaiterCall::with('table')
-        ->where('user_id', $userId)
-        ->whereIn('call_type', ['pay_bill_cash', 'bill_cash', 'cash_payment', 'cash_requested'])
-        ->where(function($q) {
-            $q->where('status', 'pending')->orWhereNull('status');
-        })
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $cashRequests = WaiterCall::with('table')
+            ->where('user_id', $userId)
+            ->whereIn('call_type', ['pay_bill_cash', 'bill_cash', 'cash_payment', 'cash_requested'])
+            ->where(function($q) {
+                $q->where('status', 'pending')->orWhereNull('status');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    // 3. Running Orders (Sahi Model: RestaurantOrder)
-    $runningOrders = \App\Models\Restaurant\RestaurantOrder::with(['items.item', 'table'])
-        ->where('user_id', $userId)
-        ->whereIn('status', ['pending', 'cooking', 'preparing', 'waiting', 'accepted'])
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $runningOrders = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
+            ->where('user_id', $userId)
+            ->whereIn('status', ['pending', 'cooking', 'preparing', 'waiting', 'accepted'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    $activeOrdersCount = $runningOrders->count();
+        $activeOrdersCount = $runningOrders->count();
 
-    return response()->json([
-        'success' => true,
-        'activeOrdersCount' => $activeOrdersCount,
-        'waiter_calls' => $waiterCalls,
-        'cash_requests' => $cashRequests,
-        'cash_requests_html' => view('vendor.restaurant.kitchen.cash_requests', compact('cashRequests'))->render(),
-        'waiter_calls_html' => view('vendor.restaurant.kitchen.waiter_calls', compact('waiterCalls'))->render(),
-        'running_orders_html' => view('vendor.restaurant.kitchen.running_orders', [
-            'activeOrders' => $runningOrders, 
-            'activeOrdersCount' => $activeOrdersCount
-        ])->render(),
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'activeOrdersCount' => $activeOrdersCount,
+            'waiter_calls' => $waiterCalls,
+            'cash_requests' => $cashRequests,
+            'cash_requests_html' => view('vendor.restaurant.kitchen.cash_requests', compact('cashRequests'))->render(),
+            'waiter_calls_html' => view('vendor.restaurant.kitchen.waiter_calls', compact('waiterCalls'))->render(),
+            'running_orders_html' => view('vendor.restaurant.kitchen.running_orders', [
+                'activeOrders' => $runningOrders, 
+                'activeOrdersCount' => $activeOrdersCount
+            ])->render(),
+        ]);
+    }
 
-    /**
-     * Update Kitchen Order Status & Release Table on Completion
-     */
     public function updateOrderStatus(Request $request, $id)
     {
         try {
@@ -162,12 +145,13 @@ class KitchenDisplayController extends Controller
 
             $order->save();
 
-            // Table Release Logic: Order Complete hote hi Table Free karein
+            // Table Release Logic
             if ($request->status === 'completed' && $order->table_id) {
                 RestaurantTable::where('id', $order->table_id)
                     ->where('user_id', $userId)
                     ->update([
-                        'status' => 'available'
+                        'status' => 'available',
+                        'current_order_id' => null
                     ]);
             }
 
@@ -186,17 +170,11 @@ class KitchenDisplayController extends Controller
         }
     }
 
-    /**
-     * Alias for updateOrderStatus
-     */
     public function updateStatus(Request $request, $id)
     {
         return $this->updateOrderStatus($request, $id);
     }
 
-    /**
-     * Mark Payment Received and Release Table
-     */
     public function markPaymentReceived($id)
     {
         $userId = Auth::id();
@@ -210,7 +188,8 @@ class KitchenDisplayController extends Controller
             RestaurantTable::where('id', $order->table_id)
                 ->where('user_id', $userId)
                 ->update([
-                    'status' => 'available'
+                    'status' => 'available',
+                    'current_order_id' => null
                 ]);
         }
 

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Storage;
 
 class CustomItemController extends Controller
 {
-    // Show Form for Creating Custom Item / Thali
     public function create()
     {
         $userId = auth()->id();
@@ -26,7 +25,6 @@ class CustomItemController extends Controller
         return view('vendor.restaurant.items.create_custom', compact('categories', 'taxes'));
     }
 
-    // Store Custom Item / Thali in 'restaurant_custom_items' table with image
     public function store(Request $request)
     {
         $userId = auth()->id();
@@ -70,7 +68,6 @@ class CustomItemController extends Controller
                          ->with('success', 'Custom Thali/Item with image successfully created and saved!');
     }
 
-    // Delete Custom Item / Thali and its image
     public function destroy($id)
     {
         $item = RestaurantCustomItem::where('user_id', auth()->id())->findOrFail($id);

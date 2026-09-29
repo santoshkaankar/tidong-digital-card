@@ -18,6 +18,8 @@ use App\Http\Controllers\Restaurant\TiffinCatalogController;
 use App\Http\Controllers\Restaurant\ProceedTiffinController;
 use App\Http\Controllers\Restaurant\TiffinReportController;
 use App\Http\Controllers\Restaurant\SettingController;
+use App\Http\Controllers\Restaurant\PincodeController;
+use App\Http\Controllers\Restaurant\RestaurantController;
 
 
 /*
@@ -141,3 +143,10 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
     Route::get('/location-search', [SettingController::class, 'searchLocation'])->name('location.search');
 });
+
+// Pincodes Live Search Route
+Route::get('/pincodes/search', [PincodeController::class, 'search'])->name('pincodes.search');
+
+
+// Place Order Route
+Route::post('/place-order', [RestaurantController::class, 'placeOrder'])->name('placeOrder');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Restaurant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Restaurant\RestaurantOrder;
+use App\Models\Restaurant\RestaurantTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,7 +15,6 @@ class KitchenOrderController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        // Added 'cooking' to validation list
         $request->validate([
             'status' => 'required|in:pending,cooking,preparing,ready,served,cancelled,completed'
         ]);
@@ -26,6 +26,16 @@ class KitchenOrderController extends Controller
         if ($order) {
             $order->status = $request->status;
             $order->save();
+
+            // Release Table if Order Completed or Cancelled
+            if (in_array($request->status, ['completed', 'cancelled']) && $order->table_id) {
+                RestaurantTable::where('id', $order->table_id)
+                    ->where('user_id', Auth::id())
+                    ->update([
+                        'status' => 'available',
+                        'current_order_id' => null
+                    ]);
+            }
 
             return response()->json([
                 'success' => true,

@@ -19,15 +19,15 @@ use Carbon\Carbon;
 
 class RestaurantController extends Controller
 {
+    // 1. Restaurant Listing Page
     public function index(Request $request)
     {
-        $search = $request->input('q') ?? $request->input('search');
-        $type   = $request->input('type');
-        $lat    = $request->input('lat');
-        $lng    = $request->input('lng');
+        $search  = $request->input('q') ?? $request->input('search');
+        $type    = $request->input('type');
+        $lat     = $request->input('lat');
+        $lng     = $request->input('lng');
         $pincode = $request->input('pincode');
 
-        // Pincode lookup for Lat/Lng
         if (!empty($pincode) && (empty($lat) || empty($lng))) {
             $pinData = DB::table('pincodes')->where('pincode', $pincode)->first();
             if ($pinData && !empty($pinData->latitude) && !empty($pinData->longitude)) {
@@ -85,11 +85,11 @@ class RestaurantController extends Controller
         return view('member.restaurant.index', compact('restaurants', 'search', 'type', 'lat', 'lng', 'pincode'));
     }
 
+    // 2. Restaurant Detail Page / Menu
     public function show($id)
     {
         $restaurant = User::findOrFail($id);
 
-        // 1. Fetch categories
         $categories = RestaurantCategory::query();
         if (Schema::hasColumn('restaurant_categories', 'user_id')) {
             $categories->where('user_id', $id);
@@ -98,7 +98,6 @@ class RestaurantController extends Controller
         }
         $categories = $categories->get();
 
-        // 2. Fetch standard items
         $itemsQuery = RestaurantItem::query();
         if (Schema::hasColumn('restaurant_items', 'user_id')) {
             $itemsQuery->where('user_id', $id);
@@ -107,12 +106,10 @@ class RestaurantController extends Controller
         }
         $globalItems = $itemsQuery->where('status', true)->get();
 
-        // 3. Fetch custom items / Thalis
         $customItems = RestaurantCustomItem::where('user_id', $id)
             ->where('is_available', true)
             ->get();
 
-        // 4. Today's Tiffin Schedule
         $todayDay = Carbon::now()->format('l');
         $todayTiffins = TiffinCatalog::with(['items' => function($q) use ($todayDay) {
             $q->where('day', $todayDay);
@@ -123,7 +120,6 @@ class RestaurantController extends Controller
             return $catalog->items->count() > 0;
         });
 
-        // 5. Fetch saved addresses of logged in user
         $savedAddresses = [];
         if (auth()->check()) {
             if (Schema::hasTable('user_addresses')) {
@@ -136,40 +132,41 @@ class RestaurantController extends Controller
         return view('member.restaurant.show', compact('restaurant', 'categories', 'globalItems', 'customItems', 'todayTiffins', 'todayDay', 'savedAddresses'));
     }
 
-    // Smart Cross-Database (MySQL + Supabase PostgreSQL) Compatible Search
+    // 3. Pincode Search Endpoint
     public function searchPincodes(Request $request)
-{
-    try {
-        $search = trim($request->get('q') ?? $request->get('query') ?? '');
+    {
+        try {
+            $search = trim($request->get('q') ?? $request->get('query') ?? '');
 
-        if (strlen($search) < 2) {
-            return response()->json([]);
+            if (strlen($search) < 2) {
+                return response()->json([]);
+            }
+
+            $searchTerm = '%' . strtolower($search) . '%';
+
+            $pincodes = DB::table('pincodes')
+                ->select(
+                    'office_name',
+                    'district',
+                    DB::raw("COALESCE(state_name, 'Rajasthan') as state"),
+                    'pincode'
+                )
+                ->where(function($q) use ($searchTerm) {
+                    $q->where('pincode', 'LIKE', $searchTerm)
+                      ->orWhereRaw("LOWER(office_name) LIKE ?", [$searchTerm])
+                      ->orWhereRaw("LOWER(district) LIKE ?", [$searchTerm]);
+                })
+                ->limit(15)
+                ->get();
+
+            return response()->json($pincodes);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        $searchTerm = '%' . strtolower($search) . '%';
-
-        $pincodes = DB::table('pincodes')
-            ->select(
-                'office_name',
-                'district',
-                DB::raw("COALESCE(state_name, 'Rajasthan') as state"),
-                'pincode'
-            )
-            ->where(function($q) use ($searchTerm) {
-                $q->whereRaw("CAST(pincode AS TEXT) LIKE ?", [$searchTerm])
-                  ->orWhereRaw("LOWER(office_name) LIKE ?", [$searchTerm])
-                  ->orWhereRaw("LOWER(district) LIKE ?", [$searchTerm]);
-            })
-            ->limit(15)
-            ->get();
-
-        return response()->json($pincodes);
-
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
     }
-}
-    // Live Delivery & Dining Order Placement
+
+    // 4. Place Order Function (Handles COD and Online Payment Methods)
     public function placeOrder(Request $request)
     {
         try {
@@ -178,37 +175,92 @@ class RestaurantController extends Controller
                 'order_type'       => 'required|in:delivery,dine_in,takeaway',
                 'delivery_address' => 'required_if:order_type,delivery|nullable|string',
                 'pincode'          => 'nullable|string',
+                'payment_method'   => 'nullable|string',
                 'items'            => 'required|array|min:1',
             ]);
 
             $order = DB::transaction(function () use ($request) {
                 $subTotal = 0;
 
-                $order = RestaurantOrder::create([
-                    'user_id'          => auth()->id(),
-                    'vendor_id'        => $request->restaurant_id,
+                // Delivery Charge Standard ₹30 for delivery orders
+                $deliveryCharge = ($request->order_type === 'delivery') ? 30.00 : 0.00;
+                if ($request->has('delivery_charge') && is_numeric($request->delivery_charge)) {
+                    $deliveryCharge = floatval($request->delivery_charge);
+                }
+
+                $paymentMethod = strtolower($request->input('payment_method', 'cod'));
+
+                // Format Address
+                $formattedAddress = '';
+                if ($request->order_type === 'delivery' && !empty($request->delivery_address)) {
+                    $formattedAddress = $request->delivery_address;
+                    if (!empty($request->pincode)) {
+                        $formattedAddress .= " (Pincode: " . $request->pincode . ")";
+                    }
+                }
+
+                $orderData = [
+                    'user_id'          => $request->restaurant_id, 
+                    'customer_id'      => auth()->id(),            
+                    'customer_name'    => auth()->user()->name ?? 'Customer',
+                    'customer_phone'   => auth()->user()->mobile ?? auth()->user()->phone ?? null,
                     'order_number'     => 'ORD-' . strtoupper(Str::random(6)),
                     'order_type'       => $request->order_type,
-                    'delivery_address' => $request->delivery_address,
-                    'pincode'          => $request->pincode,
                     'sub_total'        => 0,
                     'total_amount'     => 0,
                     'status'           => 'pending',
-                    'payment_status'   => 'unpaid',
-                    'delivery_status'  => $request->order_type === 'delivery' ? 'assigning_delivery_boy' : 'not_applicable'
-                ]);
+                    'payment_status'   => in_array($paymentMethod, ['online', 'upi', 'razorpay', 'phonepe']) ? 'pending' : 'unpaid',
+                ];
+
+                if (Schema::hasColumn('restaurant_orders', 'payment_method')) {
+                    $orderData['payment_method'] = $paymentMethod;
+                }
+                if (Schema::hasColumn('restaurant_orders', 'delivery_charge')) {
+                    $orderData['delivery_charge'] = $deliveryCharge;
+                }
+                if (Schema::hasColumn('restaurant_orders', 'delivery_fee')) {
+                    $orderData['delivery_fee'] = $deliveryCharge;
+                }
+                if (Schema::hasColumn('restaurant_orders', 'delivery_address')) {
+                    $orderData['delivery_address'] = $formattedAddress;
+                }
+                if (Schema::hasColumn('restaurant_orders', 'pincode')) {
+                    $orderData['pincode'] = $request->pincode;
+                }
+                if (Schema::hasColumn('restaurant_orders', 'notes')) {
+                    $orderData['notes'] = $formattedAddress ? "Delivery Address: " . $formattedAddress : ($request->notes ?? '');
+                }
+                if (Schema::hasColumn('restaurant_orders', 'address')) {
+                    $orderData['address'] = $formattedAddress;
+                }
+                if (Schema::hasColumn('restaurant_orders', 'delivery_status')) {
+                    $orderData['delivery_status'] = $request->order_type === 'delivery' ? 'assigning_delivery_boy' : 'not_applicable';
+                }
+
+                $order = RestaurantOrder::create($orderData);
 
                 foreach ($request->items as $itemData) {
-                    $item = RestaurantItem::find($itemData['id']);
-                    $price = $item ? $item->price : ($itemData['price'] ?? 0);
-                    $itemSubtotal = $price * $itemData['quantity'];
-                    $itemName = $item ? ($item->name ?? 'Food Item') : ($itemData['name'] ?? 'Custom Dish');
+                    $item = RestaurantItem::find($itemData['id'] ?? 0);
+                    
+                    // Priority order for item name: Frontend Request Name > DB Item Name > Fallback
+                    $itemName = $itemData['name'] 
+                             ?? $itemData['item_name'] 
+                             ?? $itemData['title'] 
+                             ?? ($item ? ($item->name ?? $item->title ?? $item->item_name) : null) 
+                             ?? 'Food Item';
+
+                    $price = isset($itemData['price']) && is_numeric($itemData['price']) 
+                        ? floatval($itemData['price']) 
+                        : ($item ? floatval($item->price) : 0);
+
+                    $quantity = intval($itemData['quantity'] ?? 1);
+                    $itemSubtotal = $price * $quantity;
 
                     RestaurantOrderItem::create([
                         'order_id'       => $order->id,
                         'item_id'        => $itemData['id'] ?? null,
                         'item_name'      => $itemName,
-                        'quantity'       => $itemData['quantity'],
+                        'quantity'       => $quantity,
                         'price'          => $price,
                         'subtotal'       => $itemSubtotal,
                         'kitchen_status' => 'cooking'
@@ -218,17 +270,25 @@ class RestaurantController extends Controller
                 }
 
                 $order->sub_total = $subTotal;
-                $order->total_amount = $subTotal;
+                $order->total_amount = $subTotal + $deliveryCharge;
                 $order->save();
 
                 return $order;
             });
 
+            $paymentMethod = strtolower($request->input('payment_method', 'cod'));
+            $isOnline = in_array($paymentMethod, ['online', 'upi', 'razorpay', 'phonepe']);
+
             return response()->json([
-                'success' => true,
-                'message' => 'Order placed successfully!',
-                'order_id' => $order->id,
-                'total_amount' => $order->total_amount
+                'success'        => true,
+                'message'        => $isOnline ? 'Order created! Initiating payment...' : 'Order placed successfully!',
+                'order_id'       => $order->id,
+                'total_amount'   => $order->total_amount,
+                'payment_method' => $paymentMethod,
+                'is_online'      => $isOnline,
+                'redirect_url'   => $isOnline 
+                                    ? url('/payment/process/' . $order->id) 
+                                    : url('/member/orders/' . $order->id)
             ], 200);
 
         } catch (\Exception $e) {
@@ -239,7 +299,7 @@ class RestaurantController extends Controller
         }
     }
 
-    // Tiffin Pre-Booking Method
+    // 5. Book Tiffin Request
     public function bookTiffin(Request $request, $id)
     {
         try {

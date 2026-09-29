@@ -21,12 +21,11 @@ class CustomerRestaurantController extends Controller
     {
         $table = RestaurantTable::where('qr_code_token', $token)->firstOrFail();
         
-        // Fetch restaurant details for QR & UPI payment
         $restaurant = User::find($table->user_id);
 
         $selectedItemIds = is_array($table->selected_items) 
             ? $table->selected_items 
-            : json_decode($table->selected_items ?? '[]', true);
+            : (array) json_decode($table->selected_items ?? '[]', true);
 
         $categories = RestaurantCategory::where('user_id', $table->user_id)
             ->where('status', true)
@@ -61,7 +60,7 @@ class CustomerRestaurantController extends Controller
         return view('customer.restaurant.menu', compact('table', 'categories', 'activeOrder', 'restaurant'));
     }
 
-    // 2. Customer Order Placement / Running Order Append
+    // 2. Customer Order Placement
     public function placeOrder(Request $request, $token)
     {
         try {
@@ -88,15 +87,18 @@ class CustomerRestaurantController extends Controller
                     $order->status = 'cooking';
                 } else {
                     $order = RestaurantOrder::create([
-                        'user_id' => $table->user_id,
-                        'table_id' => $table->id,
-                        'order_number' => 'ORD-' . strtoupper(Str::random(6)),
-                        'order_type' => 'dine_in',
-                        'sub_total' => 0,
-                        'total_amount' => 0,
-                        'status' => 'pending',
-                        'payment_status' => 'unpaid',
-                        'notes' => $request->notes
+                        'user_id'         => $table->user_id,     // Vendor ID
+                        'customer_id'     => auth()->id(),         // Logged-in Customer ID
+                        'customer_name'   => auth()->user()->name ?? $request->name ?? 'Guest',
+                        'customer_phone'  => auth()->user()->mobile ?? $request->phone ?? null,
+                        'table_id'        => $table->id,
+                        'order_number'    => 'ORD-' . strtoupper(Str::random(6)),
+                        'order_type'      => 'dine_in',
+                        'sub_total'       => 0,
+                        'total_amount'    => 0,
+                        'status'          => 'pending',
+                        'payment_status'  => 'unpaid',
+                        'notes'           => $request->notes
                     ]);
 
                     $table->update([
@@ -123,13 +125,13 @@ class CustomerRestaurantController extends Controller
                         $existingItem->save();
                     } else {
                         RestaurantOrderItem::create([
-                            'order_id' => $order->id,
-                            'item_id' => $item->id,
-                            'item_name' => $itemName,
-                            'quantity' => $itemData['quantity'],
-                            'price' => $item->price,
-                            'subtotal' => $itemSubtotal,
-                            'batch_number' => $batchNumber,
+                            'order_id'       => $order->id,
+                            'item_id'        => $item->id,
+                            'item_name'      => $itemName,
+                            'quantity'       => $itemData['quantity'],
+                            'price'          => $item->price,
+                            'subtotal'       => $itemSubtotal,
+                            'batch_number'   => $batchNumber,
                             'kitchen_status' => 'cooking'
                         ]);
                     }
@@ -229,7 +231,6 @@ class CustomerRestaurantController extends Controller
     {
         $table = RestaurantTable::where('qr_code_token', $token)->firstOrFail();
 
-        // Check if request already exists for this table
         $existingCall = WaiterCall::where('table_id', $table->id)
             ->where('call_type', 'pay_bill_cash')
             ->where('status', 'pending')
@@ -242,7 +243,6 @@ class CustomerRestaurantController extends Controller
             ]);
         }
 
-        // Insert only if NOT exists
         WaiterCall::create([
             'user_id'   => $table->user_id,
             'table_id'  => $table->id,
