@@ -259,7 +259,7 @@
         }
     });
 
-    // 8. Process Final Order Submission
+    // 8. Process Final Order Submission (WITH PAYMENT METHOD REDIRECT FIXED)
     function processFinalOrder() {
         let orderTypeSelect = document.getElementById('orderTypeSelect');
         let orderType = orderTypeSelect ? orderTypeSelect.value : 'delivery';
@@ -291,6 +291,9 @@
             finalFullAddress = `${street}${area ? ', ' + area : ''}${city ? ', ' + city : ''}${state ? ', ' + state : ''} - ${finalPincode}`;
         }
 
+        // Get selected payment method ('cod' or 'online')
+        let selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'cod';
+
         let itemsPayload = [];
         let subtotal = 0;
         Object.values(cartItems).forEach(item => {
@@ -307,17 +310,26 @@
         let deliveryCharge = (orderType === 'delivery') ? DEFAULT_DELIVERY_CHARGE : 0.00;
         let totalAmount = subtotal + deliveryCharge;
 
+        // Button Loading State
+        let confirmBtn = document.querySelector('#deliveryAddressModal button[onclick="processFinalOrder()"]');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
+        }
+
         fetch("{{ route('member.restaurant.placeOrder') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                "Accept": "application/json"
             },
             body: JSON.stringify({
                 restaurant_id: "{{ $restaurant->id }}",
                 order_type: orderType,
                 delivery_address: finalFullAddress,
                 pincode: finalPincode,
+                payment_method: selectedPaymentMethod,
                 delivery_charge: deliveryCharge,
                 total_amount: totalAmount,
                 items: itemsPayload
@@ -326,13 +338,42 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
-                window.location.reload();
+                // ONLINE PAYMENT REDIRECT LOGIC
+                if (selectedPaymentMethod === 'online' || data.is_online) {
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    } else if (data.order_id) {
+                        window.location.href = "/payment/checkout/" + data.order_id;
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    // COD SUCCESS LOGIC
+                    alert(data.message || "Order placed successfully!");
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    } else if (data.order_id) {
+                        window.location.href = "/member/orders/" + data.order_id;
+                    } else {
+                        window.location.reload();
+                    }
+                }
             } else {
-                alert("Error: " + data.message);
+                alert("Error: " + (data.message || "Order process nahi ho saka."));
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `Confirm & Place Order (<span id="btnTotalText">₹${totalAmount.toFixed(2)}</span>)`;
+                }
             }
         })
-        .catch(err => alert("Order process karne me error aaya: " + err));
+        .catch(err => {
+            console.error(err);
+            alert("Order process karne me error aaya.");
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = `Confirm & Place Order (<span id="btnTotalText">₹${totalAmount.toFixed(2)}</span>)`;
+            }
+        });
     }
 
     // 9. Tiffin Custom Dates Toggle

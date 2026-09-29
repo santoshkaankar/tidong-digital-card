@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Payment;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Restaurant\RestaurantOrder;
+use Illuminate\Support\Facades\Route;
 
 class GlobalPaymentController extends Controller
 {
@@ -30,97 +31,111 @@ class GlobalPaymentController extends Controller
     }
 
     /**
-     * Process Payment Request (AJAX)
+     * Process Payment Request (AJAX & Standard)
      */
     public function processPayment(Request $request)
     {
         try {
-            $request->validate([
-                'order_id' => 'required',
-                'gateway'  => 'nullable|string'
-            ]);
+            $orderId = $request->input('order_id') ?? $request->query('order_id') ?? $request->route('order_id');
 
-            $order = RestaurantOrder::find($request->order_id);
+            if (!$orderId) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['status' => 'error', 'message' => 'Order ID is required.'], 400);
+                }
+                return redirect()->back()->with('error', 'Order ID is required.');
+            }
+
+            $order = RestaurantOrder::find($orderId);
             if (!$order) {
-                return response()->json(['status' => 'error', 'message' => 'Order not found.'], 404);
-            }
-
-            $selectedGateway = $request->gateway ?? $request->payment_method ?? 'qr';
-
-            // 1. Direct UPI QR / Manual Confirmation / Cash
-            if ($selectedGateway === 'qr' || $selectedGateway === 'manual' || $selectedGateway === 'qr_code' || $selectedGateway === 'cash') {
-                
-                try {
-                    $order->update([
-                        'payment_status' => 'unpaid',
-                        'status'         => 'sent_to_kitchen'
-                    ]);
-                } catch (\Throwable $e) {
-                    $order->payment_status = 'unpaid';
-                    $order->save();
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['status' => 'error', 'message' => 'Order not found.'], 404);
                 }
-
-                return response()->json([
-                    'status'  => 'success',
-                    'message' => 'Payment request submitted successfully! Your order has been sent to the kitchen.'
-                ]);
+                return redirect()->back()->with('error', 'Order not found.');
             }
 
-            // 2. PhonePe Gateway Request
-            if ($selectedGateway === 'phonepe') {
-                if (class_exists('App\Gateways\PhonePeGateway')) {
-                    $phonepeClass = 'App\Gateways\PhonePeGateway';
-                    $phonepe = new $phonepeClass();
-                    $res = $phonepe->createOrder($order->id, $order->total_amount);
+            $selectedGateway = strtolower($request->gateway ?? $request->payment_method ?? 'online');
 
-                    if (isset($res['data']['instrumentResponse']['redirectInfo']['url'])) {
-                        return response()->json([
-                            'status' => 'redirect',
-                            'url'    => $res['data']['instrumentResponse']['redirectInfo']['url']
-                        ]);
-                    } elseif (isset($res['message'])) {
-                        return response()->json([
-                            'status'  => 'error',
-                            'message' => 'PhonePe Error: ' . $res['message']
-                        ], 400);
-                    }
-                } else {
+            // 1. CASH / COD -> Send to kitchen and redirect to Order Details page
+            if (in_array($selectedGateway, ['cash', 'cod', 'manual'])) {
+                $order->update([
+                    'payment_status' => 'unpaid',
+                    'payment_method' => 'cash',
+                    'status'         => 'sent_to_kitchen'
+                ]);
+
+                $msg = 'Order placed successfully with Cash on Delivery!';
+
+                if ($request->expectsJson() || $request->ajax()) {
                     return response()->json([
-                        'status'  => 'error',
-                        'message' => 'PhonePe Gateway class is not available.'
-                    ], 400);
+                        'status' => 'success', 
+                        'message' => $msg, 
+                        'order_id' => $order->id,
+                        'redirect_url' => $this->getRedirectUrl($order->id)
+                    ]);
+                }
+
+                return $this->redirectToOrderPage($order->id, $msg);
+            }
+
+            // 2. RAZORPAY / NET BANKING / CARD INTEGRATION FIX
+            if (in_array($selectedGateway, ['razorpay', 'card', 'netbanking'])) {
+                $razorpayKey = config('services.razorpay.key', 'rzp_test_sample_key');
+
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'status'            => 'modal',
+                        'key'               => $razorpayKey,
+                        'amount'            => (float)$order->total_amount * 100, // Amount in paise
+                        'razorpay_order_id' => 'order_' . $order->id . '_' . time(),
+                        'order_id'          => $order->id
+                    ]);
                 }
             }
 
-            // 3. Razorpay Gateway Request (Fallback)
-            $razorpayKey = env('RAZORPAY_KEY');
-            if ($razorpayKey && $razorpayKey !== 'your_key_here' && class_exists('Razorpay\Api\Api')) {
-                $razorpayClass = 'App\Gateways\RazorpayGateway';
-                $razorpay = new $razorpayClass();
-                $razorpayOrder = $razorpay->createOrder($order->id, $order->total_amount);
+            // 3. PhonePe Gateway Integration
+            if ($selectedGateway === 'phonepe' && class_exists('App\Gateways\PhonePeGateway')) {
+                $phonepe = new \App\Gateways\PhonePeGateway();
+                $res = $phonepe->createOrder($order->id, $order->total_amount);
 
-                $order->gateway_order_id = $razorpayOrder['id'] ?? null;
-                $order->save();
+                if (isset($res['data']['instrumentResponse']['redirectInfo']['url'])) {
+                    $url = $res['data']['instrumentResponse']['redirectInfo']['url'];
 
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json(['status' => 'redirect', 'url' => $url]);
+                    }
+                    return redirect()->away($url);
+                }
+            }
+
+            // 4. ONLINE / UPI / QR -> Redirect directly to Checkout Page
+            if (in_array($selectedGateway, ['qr', 'qr_code', 'online', 'upi'])) {
+                $checkoutUrl = route('payment.checkout', $order->id);
+
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'status'   => 'redirect',
+                        'url'      => $checkoutUrl,
+                        'order_id' => $order->id
+                    ]);
+                }
+                return redirect()->to($checkoutUrl);
+            }
+
+            // Default Fallback
+            if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
-                    'status'            => 'modal',
-                    'razorpay_order_id' => $razorpayOrder['id'] ?? null,
-                    'amount'            => $order->total_amount * 100,
-                    'key'               => $razorpayKey,
-                    'order_id'          => $order->id
+                    'status' => 'redirect',
+                    'url'    => route('payment.checkout', $order->id)
                 ]);
             }
 
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Payment gateway is currently inactive. Please pay using the UPI QR Code.'
-            ], 400);
+            return redirect()->route('payment.checkout', $order->id);
 
         } catch (\Throwable $e) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => $e->getMessage()
-            ], 500);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -130,9 +145,10 @@ class GlobalPaymentController extends Controller
     public function paymentCallback(Request $request)
     {
         try {
-            $order = RestaurantOrder::findOrFail($request->order_id ?? $request->merchantTransactionId);
+            $orderId = $request->order_id ?? $request->merchantTransactionId;
+            $order = RestaurantOrder::findOrFail($orderId);
 
-            $commissionRate = 0.05;
+            $commissionRate = 0.05; // 5% Commission
             $adminCommission = $order->total_amount * $commissionRate;
             $vendorPayout = $order->total_amount - $adminCommission;
 
@@ -144,9 +160,54 @@ class GlobalPaymentController extends Controller
                 'status'           => 'sent_to_kitchen'
             ]);
 
-            return response()->json(['status' => 'success', 'message' => 'Payment Successful!']);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'status' => 'success', 
+                    'message' => 'Payment Successful!',
+                    'redirect_url' => $this->getRedirectUrl($order->id)
+                ]);
+            }
+
+            return $this->redirectToOrderPage($order->id, 'Payment Successful! Your order has been sent to the kitchen.');
+
         } catch (\Throwable $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 400);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 400);
+            }
+            return redirect()->back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * REAL AUTO-TRIGGER: Polling API to check payment status
+     */
+    public function checkStatus($orderId)
+    {
+        $order = RestaurantOrder::find($orderId);
+        return response()->json([
+            'status'       => $order ? $order->payment_status : 'pending',
+            'redirect_url' => $order ? $this->getRedirectUrl($order->id) : null
+        ]);
+    }
+
+    /**
+     * Redirect Route Resolver Helper
+     */
+    private function getRedirectUrl($orderId)
+    {
+        if (Route::has('member.orders.show')) {
+            return route('member.orders.show', $orderId);
+        } elseif (Route::has('orders.show')) {
+            return route('orders.show', $orderId);
+        }
+        return url('/member/orders/' . $orderId);
+    }
+
+    /**
+     * Redirect Helper Function
+     */
+    private function redirectToOrderPage($orderId, $message)
+    {
+        return redirect()->to($this->getRedirectUrl($orderId))->with('success', $message);
     }
 }

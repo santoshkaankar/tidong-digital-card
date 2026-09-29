@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Models\User;
 
 class OrderController extends Controller
 {
@@ -177,6 +178,19 @@ class OrderController extends Controller
             abort(404, 'Order nahi mila ya aapke account se linked nahi hai.');
         }
 
-        return view('member.orders.show', compact('order', 'orderItems'));
+        // Fetch Restaurant details for safe fallback
+        $restaurant = null;
+        if (!empty($order->user_id)) {
+            $restaurant = User::find($order->user_id);
+        }
+        if (!$restaurant) {
+            $restaurant = (object)[
+                'name' => $order->customer_name ?? 'Restaurant',
+                'address' => $order->delivery_address ?? 'N/A',
+                'phone' => $order->customer_phone ?? ''
+            ];
+        }
+
+        return view('member.orders.show', compact('order', 'orderItems', 'restaurant'));
     }
 }

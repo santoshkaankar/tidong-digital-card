@@ -14,6 +14,7 @@ use App\Models\Restaurant\RestaurantOrder;
 use App\Models\Restaurant\RestaurantOrderItem;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -166,7 +167,7 @@ class RestaurantController extends Controller
         }
     }
 
-    // 4. Place Order Function (Handles COD and Online Payment Methods)
+    // 4. Place Order Function (Handles COD and Online Payment Gateway Triggers)
     public function placeOrder(Request $request)
     {
         try {
@@ -209,7 +210,7 @@ class RestaurantController extends Controller
                     'sub_total'        => 0,
                     'total_amount'     => 0,
                     'status'           => 'pending',
-                    'payment_status'   => in_array($paymentMethod, ['online', 'upi', 'razorpay', 'phonepe']) ? 'pending' : 'unpaid',
+                    'payment_status'   => 'unpaid', // Fixed SQL Data Truncation Error
                 ];
 
                 if (Schema::hasColumn('restaurant_orders', 'payment_method')) {
@@ -242,7 +243,6 @@ class RestaurantController extends Controller
                 foreach ($request->items as $itemData) {
                     $item = RestaurantItem::find($itemData['id'] ?? 0);
                     
-                    // Priority order for item name: Frontend Request Name > DB Item Name > Fallback
                     $itemName = $itemData['name'] 
                              ?? $itemData['item_name'] 
                              ?? $itemData['title'] 
@@ -277,18 +277,33 @@ class RestaurantController extends Controller
             });
 
             $paymentMethod = strtolower($request->input('payment_method', 'cod'));
-            $isOnline = in_array($paymentMethod, ['online', 'upi', 'razorpay', 'phonepe']);
+            $isOnline = in_array($paymentMethod, ['online', 'upi', 'razorpay', 'phonepe', 'paytm']);
+
+            // Direct route setup for payment or order details
+            if ($isOnline) {
+                if (Route::has('payment.process')) {
+                    $paymentUrl = route('payment.process', ['order_id' => $order->id]);
+                } elseif (Route::has('payment.index')) {
+                    $paymentUrl = route('payment.index', ['order_id' => $order->id]);
+                } else {
+                    $paymentUrl = url('/payment/process/' . $order->id);
+                }
+            } else {
+                if (Route::has('member.orders.show')) {
+                    $paymentUrl = route('member.orders.show', $order->id);
+                } else {
+                    $paymentUrl = url('/member/orders/' . $order->id);
+                }
+            }
 
             return response()->json([
                 'success'        => true,
-                'message'        => $isOnline ? 'Order created! Initiating payment...' : 'Order placed successfully!',
+                'message'        => $isOnline ? 'Order created! Redirecting to payment...' : 'Order placed successfully!',
                 'order_id'       => $order->id,
                 'total_amount'   => $order->total_amount,
                 'payment_method' => $paymentMethod,
                 'is_online'      => $isOnline,
-                'redirect_url'   => $isOnline 
-                                    ? url('/payment/process/' . $order->id) 
-                                    : url('/member/orders/' . $order->id)
+                'redirect_url'   => $paymentUrl
             ], 200);
 
         } catch (\Exception $e) {

@@ -181,6 +181,33 @@
                         </div>
                     </div>
 
+                    <!-- Payment Method Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small mb-2">Payment Method Select Karein:</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="payment_method" id="pay_cod" value="cod" checked>
+                                <label class="btn btn-outline-dark w-100 py-2 rounded-3 text-start d-flex align-items-center gap-2" for="pay_cod">
+                                    <span class="fs-5">💵</span>
+                                    <div>
+                                        <div class="fw-bold small">Cash on Delivery</div>
+                                        <div class="text-muted" style="font-size: 10px;">Pay upon delivery</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="payment_method" id="pay_online" value="online">
+                                <label class="btn btn-outline-primary w-100 py-2 rounded-3 text-start d-flex align-items-center gap-2" for="pay_online">
+                                    <span class="fs-5">💳</span>
+                                    <div>
+                                        <div class="fw-bold small">Online Payment</div>
+                                        <div class="text-muted" style="font-size: 10px;">UPI / Cards / NetBanking</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <button type="button" class="btn btn-danger w-100 rounded-3 py-2 fw-bold" onclick="processFinalOrder()">
                         Confirm & Place Order (<span id="btnTotalText">₹0.00</span>)
                     </button>
