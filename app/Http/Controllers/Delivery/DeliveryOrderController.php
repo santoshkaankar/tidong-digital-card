@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Delivery;
 
 use App\Http\Controllers\Controller;
 use App\Models\Restaurant\RestaurantOrder;
+use App\Models\Restaurant\RestaurantOrderItem;
+use App\Models\Restaurant\RestaurantTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +17,7 @@ class DeliveryOrderController extends Controller
         $deliveryBoyId = auth()->id();
 
         // 1. Available restaurant orders for pickup
-        $availableOrders = RestaurantOrder::where('status', 'ready_for_pickup')
+        $availableOrders = RestaurantOrder::whereIn('status', ['ready', 'ready_for_pickup'])
             ->whereNull('delivery_boy_id')
             ->latest()
             ->get();
@@ -34,7 +36,7 @@ class DeliveryOrderController extends Controller
     {
         $order = RestaurantOrder::findOrFail($id);
 
-        if ($order->status !== 'ready_for_pickup') {
+        if (!in_array($order->status, ['ready', 'ready_for_pickup'])) {
             return back()->with('error', 'Order is no longer available for pickup.');
         }
 
@@ -68,6 +70,9 @@ class DeliveryOrderController extends Controller
             $order->status = 'out_for_delivery';
             $order->save();
 
+            RestaurantOrderItem::where('order_id', $order->id)
+                ->update(['kitchen_status' => 'served']);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Pickup OTP matched! Order picked up successfully.'
@@ -96,7 +101,16 @@ class DeliveryOrderController extends Controller
             // A. Mark Order Delivered
             $order->status = 'delivered';
             $order->delivered_at = now();
+            $order->payment_status = 'paid';
             $order->save();
+
+            // Release table if associated
+            if ($order->table_id) {
+                RestaurantTable::where('id', $order->table_id)->update([
+                    'status'           => 'available',
+                    'current_order_id' => null
+                ]);
+            }
 
             // B. Get or Create Dedicated Delivery Wallet
             $userId = auth()->id();
@@ -114,7 +128,7 @@ class DeliveryOrderController extends Controller
             }
 
             // C. Add Delivery Earning Commission
-            $deliveryFee = $order->delivery_charge ?? 40.00;
+            $deliveryFee = $order->delivery_charge ?? $order->delivery_fee ?? 40.00;
 
             DB::table('delivery_wallets')
                 ->where('user_id', $userId)
@@ -131,8 +145,8 @@ class DeliveryOrderController extends Controller
             ]);
 
             // D. Check COD and Track Cash in Hand
-            $paymentType = strtolower($order->payment_type ?? $order->payment_mode ?? '');
-            if ($paymentType === 'cod') {
+            $paymentType = strtolower($order->payment_type ?? $order->payment_mode ?? $order->payment_method ?? '');
+            if (in_array($paymentType, ['cod', 'cash'])) {
                 $codAmount = $order->total_amount ?? $order->grand_total ?? 0.00;
 
                 DB::table('delivery_wallets')
@@ -167,7 +181,15 @@ class DeliveryOrderController extends Controller
         $order->update([
             'status' => 'delivered',
             'delivered_at' => now(),
+            'payment_status' => 'paid',
         ]);
+
+        if ($order->table_id) {
+            RestaurantTable::where('id', $order->table_id)->update([
+                'status'           => 'available',
+                'current_order_id' => null
+            ]);
+        }
 
         return redirect()->route('delivery.orders.history')
             ->with('success', 'Order delivered successfully!');

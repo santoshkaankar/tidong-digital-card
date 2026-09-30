@@ -1,3 +1,6 @@
+<!-- Razorpay Checkout SDK Script (Mandatory for Payment Gateway) -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 <!-- 1. Tiffin Pre-Booking Modal -->
 <div class="modal fade" id="tiffinBookingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -163,7 +166,7 @@
                         </div>
                     </div>
 
-                    <!-- TIP SELECTION SECTION (ADDED BACK) -->
+                    <!-- TIP SELECTION SECTION -->
                     <div class="mb-3">
                         <label class="form-label small fw-bold d-flex justify-content-between align-items-center">
                             <span><i class="fas fa-hand-holding-usd text-warning me-1"></i> Add Tip for Delivery Partner</span>
@@ -211,7 +214,7 @@
 
                     <!-- Payment Method Selection -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark small mb-2">Payment Method Select Karein:</label>
+                        <label class="form-label fw-bold text-dark small mb-2">Select Payment Method:</label>
                         <div class="row g-2">
                             <div class="col-6">
                                 <input type="radio" class="btn-check" name="payment_method" id="pay_cod" value="cod" checked>

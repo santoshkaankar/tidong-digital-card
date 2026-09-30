@@ -167,7 +167,7 @@ class RestaurantController extends Controller
         }
     }
 
-    // 4. Customer Place Order (Inclusive Tax Calculation Fixed)
+    // 4. Customer Place Order (STRICT BLOCKING FOR UNPAID ONLINE ORDERS)
     public function placeOrder(Request $request)
     {
         try {
@@ -177,15 +177,26 @@ class RestaurantController extends Controller
                 'delivery_address' => 'required_if:order_type,delivery|nullable|string',
                 'pincode'          => 'nullable|string',
                 'payment_method'   => 'nullable|string',
+                'payment_status'   => 'nullable|string',
                 'items'            => 'required|array|min:1',
                 'tip_amount'       => 'nullable|numeric|min:0',
             ]);
 
-            $order = DB::transaction(function () use ($request) {
+            $paymentMethod = strtolower($request->input('payment_method', 'cod'));
+            $paymentStatus = strtolower($request->input('payment_status', 'unpaid'));
+
+            // STRICT CHECK: Agar Online Payment hai aur status 'paid' nahi hai, toh order DB me nahi jayega
+            if (!in_array($paymentMethod, ['cash', 'cod']) && $paymentStatus !== 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Online payment confirm nahi hui hai. Order create nahi kiya ja sakta.'
+                ], 400);
+            }
+
+            $order = DB::transaction(function () use ($request, $paymentMethod, $paymentStatus) {
                 $subTotal = 0;
                 $totalTax = 0;
 
-                // Loop 1: Calculate Total Bill with Inclusive Tax Extraction
                 foreach ($request->items as $itemData) {
                     $cleanId = preg_replace('/[^0-9]/', '', $itemData['id'] ?? 0);
                     $item = RestaurantItem::find($cleanId) ?? RestaurantCustomItem::find($cleanId);
@@ -195,7 +206,7 @@ class RestaurantController extends Controller
                         : ($item ? floatval($item->price) : 0);
 
                     $quantity = intval($itemData['quantity'] ?? 1);
-                    $itemSubtotal = $price * $quantity; // This amount already includes tax
+                    $itemSubtotal = $price * $quantity;
 
                     $taxPercent = 0;
                     if ($item) {
@@ -217,10 +228,9 @@ class RestaurantController extends Controller
                     }
 
                     if ($taxPercent <= 0) {
-                        $taxPercent = 5.00; // Default 5% inclusive tax rate
+                        $taxPercent = 5.00;
                     }
 
-                    // Extract tax from inclusive item subtotal
                     $itemBasePrice = $itemSubtotal / (1 + ($taxPercent / 100));
                     $itemTax = $itemSubtotal - $itemBasePrice;
 
@@ -228,7 +238,6 @@ class RestaurantController extends Controller
                     $totalTax += $itemTax;
                 }
 
-                // Delivery Fee Logic: Free if order >= 999
                 $deliveryCharge = 0.00;
                 if ($request->order_type === 'delivery') {
                     $deliveryCharge = ($subTotal >= 999.00) ? 0.00 : 30.00;
@@ -238,10 +247,7 @@ class RestaurantController extends Controller
                 $cgst = round($totalTax / 2, 2);
                 $sgst = round($totalTax / 2, 2);
                 
-                // Grand Total = SubTotal (inclusive) + Delivery Charge + Tip Amount (Tax is NOT added again)
                 $grandTotal = round($subTotal + $deliveryCharge + $tipAmount, 2);
-
-                $paymentMethod = strtolower($request->input('payment_method', 'cod'));
 
                 $formattedAddress = '';
                 if ($request->order_type === 'delivery' && !empty($request->delivery_address)) {
@@ -251,7 +257,8 @@ class RestaurantController extends Controller
                     }
                 }
 
-                // Base fields that exist across all standard schemas
+                $finalPaymentStatus = in_array($paymentMethod, ['cash', 'cod']) ? 'unpaid' : 'paid';
+
                 $orderData = [
                     'user_id'          => $request->restaurant_id, 
                     'customer_id'      => auth()->id(),            
@@ -264,10 +271,9 @@ class RestaurantController extends Controller
                     'tip_amount'       => $tipAmount,
                     'total_amount'     => $grandTotal,
                     'status'           => 'pending',
-                    'payment_status'   => 'unpaid',
+                    'payment_status'   => $finalPaymentStatus,
                 ];
 
-                // Safely add optional/variable columns dynamically based on DB table schema
                 if (Schema::hasColumn('restaurant_orders', 'cgst')) {
                     $orderData['cgst'] = $cgst;
                 }
@@ -299,15 +305,12 @@ class RestaurantController extends Controller
                     $orderData['delivery_status'] = $request->order_type === 'delivery' ? 'pending' : 'not_applicable';
                 }
 
-                // 1. CREATE ORDER FIRST
                 $order = RestaurantOrder::create($orderData);
 
-                // Check if Order ID generated successfully
                 if (!$order || !$order->id) {
                     throw new \Exception("Failed to generate Order ID.");
                 }
 
-                // 2. NOW LOOP AND INSERT ITEMS WITH ORDER ID
                 foreach ($request->items as $itemData) {
                     $cleanId = preg_replace('/[^0-9]/', '', $itemData['id'] ?? 0);
                     $item = RestaurantItem::find($cleanId) ?? RestaurantCustomItem::find($cleanId);
@@ -367,33 +370,19 @@ class RestaurantController extends Controller
                 return $order;
             });
 
-            $paymentMethod = strtolower($request->input('payment_method', 'cod'));
-            $isOnline = in_array($paymentMethod, ['online', 'upi', 'razorpay', 'phonepe', 'paytm']);
-
-            if ($isOnline) {
-                if (Route::has('payment.process')) {
-                    $paymentUrl = route('payment.process', ['order_id' => $order->id]);
-                } elseif (Route::has('payment.index')) {
-                    $paymentUrl = route('payment.index', ['order_id' => $order->id]);
-                } else {
-                    $paymentUrl = url('/payment/process/' . $order->id);
-                }
+            if (Route::has('member.orders.show')) {
+                $redirectUrl = route('member.orders.show', $order->id);
             } else {
-                if (Route::has('member.orders.show')) {
-                    $paymentUrl = route('member.orders.show', $order->id);
-                } else {
-                    $paymentUrl = url('/member/orders/' . $order->id);
-                }
+                $redirectUrl = url('/member/orders/' . $order->id);
             }
 
             return response()->json([
                 'success'        => true,
-                'message'        => $isOnline ? 'Order created! Redirecting to payment...' : 'Order placed successfully!',
+                'message'        => 'Order placed successfully!',
                 'order_id'       => $order->id,
                 'total_amount'   => $order->total_amount,
                 'payment_method' => $paymentMethod,
-                'is_online'      => $isOnline,
-                'redirect_url'   => $paymentUrl
+                'redirect_url'   => $redirectUrl
             ], 200);
 
         } catch (\Exception $e) {
@@ -404,7 +393,24 @@ class RestaurantController extends Controller
         }
     }
 
-    // 5. Book Tiffin Request
+    // 5. Customer Order History / List Page
+    public function orderHistory(Request $request)
+    {
+        $orders = RestaurantOrder::where('customer_id', auth()->id())
+            ->where(function($query) {
+                $query->whereIn('payment_method', ['cash', 'cod'])
+                      ->orWhere(function($q) {
+                          $q->whereNotIn('payment_method', ['cash', 'cod'])
+                            ->where('payment_status', 'paid');
+                      });
+            })
+            ->latest()
+            ->paginate(10);
+
+        return view('member.orders.index', compact('orders'));
+    }
+
+    // 6. Book Tiffin Request
     public function bookTiffin(Request $request, $id)
     {
         try {

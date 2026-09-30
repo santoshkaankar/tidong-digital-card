@@ -70,17 +70,28 @@ class CustomerRestaurantController extends Controller
                 'items.*.id'     => 'required|exists:restaurant_items,id',
                 'items.*.quantity' => 'required|integer|min:1',
                 'notes'          => 'nullable|string',
-                'payment_method' => 'nullable|string'
+                'payment_method' => 'nullable|string',
+                'payment_status' => 'nullable|string',
             ]);
 
-            $order = DB::transaction(function () use ($request, $table) {
+            $paymentMethod = strtolower($request->input('payment_method', 'cash'));
+            $paymentStatus = strtolower($request->input('payment_status', 'unpaid'));
+
+            // STRICT CHECK: Unpaid online dine-in orders block hongi
+            if (!in_array($paymentMethod, ['cash', 'cod', 'dine_in']) && $paymentStatus !== 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Online payment complete kiye bina order place nahi ho sakta.'
+                ], 400);
+            }
+
+            $order = DB::transaction(function () use ($request, $table, $paymentMethod, $paymentStatus) {
                 $order = RestaurantOrder::where('table_id', $table->id)
                     ->whereNotIn('status', ['completed', 'cancelled', 'delivered'])
                     ->where('payment_status', 'unpaid')
                     ->first();
 
                 $batchNumber = 1;
-                $paymentMethod = strtolower($request->input('payment_method', 'cash'));
 
                 if ($order) {
                     $lastBatch = $order->items()->max('batch_number');
@@ -97,7 +108,7 @@ class CustomerRestaurantController extends Controller
                         'sub_total'       => 0,
                         'total_amount'    => 0,
                         'status'          => 'pending',
-                        'payment_status'  => 'unpaid',
+                        'payment_status'  => in_array($paymentMethod, ['cash', 'cod', 'dine_in']) ? 'unpaid' : 'paid',
                         'payment_method'  => $paymentMethod,
                         'notes'           => $request->notes
                     ]);

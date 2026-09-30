@@ -7,7 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use App\Models\User;
+use App\Models\Restaurant\RestaurantOrder;
+use App\Models\Restaurant\RestaurantOrderItem;
+use App\Models\Restaurant\RestaurantTable;
+use App\Models\Payment\VendorWallet;
+use App\Models\Payment\WalletTransaction;
 
 class OrderController extends Controller
 {
@@ -19,7 +25,6 @@ class OrderController extends Controller
         $totalAmount = floatval($order->total_amount ?? 0);
         $taxAmount = floatval($order->tax_amount ?? 0);
 
-        // CGST / SGST Breakdown
         $order->cgst = property_exists($order, 'cgst') && $order->cgst !== null 
             ? floatval($order->cgst) 
             : ($taxAmount / 2);
@@ -28,7 +33,6 @@ class OrderController extends Controller
             ? floatval($order->sgst) 
             : ($taxAmount / 2);
 
-        // Delivery Charge Logic: Free if subtotal >= 999
         if (property_exists($order, 'delivery_charge') && $order->delivery_charge !== null) {
             $order->delivery_charge = floatval($order->delivery_charge);
         } elseif (property_exists($order, 'delivery_fee') && $order->delivery_fee !== null) {
@@ -56,6 +60,177 @@ class OrderController extends Controller
         return $order;
     }
 
+    /**
+     * Store new order from Customer/Member Checkout
+     * STRICT CHECK: Blocks DB insertion if payment method is Online/UPI and unpaid.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'vendor_id'       => 'required|exists:users,id',
+            'order_type'      => 'required|in:dine_in,takeaway,delivery',
+            'table_id'        => 'nullable|exists:restaurant_tables,id',
+            'customer_phone'  => 'nullable|string|min:10|max:15',
+            'customer_name'   => 'nullable|string|max:100',
+            'payment_method'  => 'required|string',
+            'payment_status'  => 'nullable|string|in:unpaid,paid',
+            'cart'            => 'required|array|min:1',
+            'cart.*.id'       => 'required',
+            'cart.*.name'     => 'required|string',
+            'cart.*.price'    => 'required|numeric',
+            'cart.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        $vendorId = $request->vendor_id;
+        $paymentMethod = strtolower($request->payment_method ?? 'cash');
+        $paymentStatus = strtolower($request->payment_status ?? (in_array($paymentMethod, ['cash', 'cod']) ? 'unpaid' : 'paid'));
+
+        // STRICT RULE: Agar COD/Cash nahi hai aur Paid bhi nahi hua, to DB me entry nahi hogi
+        if (!in_array($paymentMethod, ['cash', 'cod']) && $paymentStatus !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => __('Order cannot be created before successful payment. Please complete payment first.')
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $cart = $request->cart;
+            $subTotal = 0;
+            $totalTax = 0;
+            $processedCart = [];
+
+            foreach ($cart as $item) {
+                $itemTotal = $item['price'] * $item['quantity'];
+                
+                $taxPercentage = 0;
+                $restaurantItem = DB::table('restaurant_items')->where('id', $item['id'])->first();
+                if (!$restaurantItem) {
+                    $restaurantItem = DB::table('restaurant_custom_items')->where('id', $item['id'])->first();
+                }
+                
+                if ($restaurantItem && isset($restaurantItem->tax_id) && $restaurantItem->tax_id) {
+                    $taxData = DB::table('taxes')->where('id', $restaurantItem->tax_id)->first();
+                    if ($taxData) {
+                        $taxPercentage = $taxData->tax_percentage;
+                    }
+                }
+                
+                if ($taxPercentage > 0) {
+                    $basePrice = $itemTotal / (1 + ($taxPercentage / 100));
+                    $itemTax = $itemTotal - $basePrice;
+                } else {
+                    $basePrice = $itemTotal;
+                    $itemTax = 0;
+                }
+                
+                $subTotal += $basePrice;
+                $totalTax += $itemTax;
+                
+                $processedCart[] = [
+                    'id'         => $item['id'],
+                    'name'       => $item['name'],
+                    'price'      => $item['price'],
+                    'quantity'   => $item['quantity'],
+                    'subtotal'   => $basePrice,
+                    'tax_amount' => $itemTax
+                ];
+            }
+
+            $totalAmount = $subTotal + $totalTax;
+            $orderNumber = 'ORD-' . strtoupper(Str::random(6)) . '-' . time();
+
+            $order = RestaurantOrder::create([
+                'user_id'         => $vendorId,
+                'customer_id'     => Auth::id(),
+                'table_id'        => $request->order_type === 'dine_in' ? $request->table_id : null,
+                'order_number'    => $orderNumber,
+                'order_type'      => $request->order_type,
+                'is_guest'        => Auth::check() ? false : true,
+                'customer_name'   => $request->customer_name ?? (Auth::user() ? Auth::user()->name : __('Guest Customer')),
+                'customer_phone'  => $request->customer_phone ?? (Auth::user() ? Auth::user()->mobile : null),
+                'sub_total'       => round($subTotal, 2),
+                'discount_amount' => 0.00,
+                'tax_amount'      => round($totalTax, 2),
+                'tip_amount'      => 0.00,
+                'total_amount'    => round($totalAmount, 2),
+                'currency_code'   => 'INR',
+                'status'          => 'pending',
+                'payment_status'  => $paymentStatus,
+                'payment_method'  => $paymentMethod,
+                'notes'           => $request->delivery_address ? "Delivery Address: {$request->delivery_address}" : null
+            ]);
+
+            if (class_exists(VendorWallet::class)) {
+                $wallet = VendorWallet::firstOrCreate(
+                    ['vendor_id' => $vendorId],
+                    ['bonus_balance' => 200.00, 'sales_balance' => 0.00]
+                );
+
+                $commissionFee = max(1.00, round($totalAmount * 0.01, 2));
+
+                if ($wallet->bonus_balance >= $commissionFee) {
+                    $wallet->decrement('bonus_balance', $commissionFee);
+                    $walletType = 'bonus';
+                } else {
+                    $wallet->decrement('sales_balance', $commissionFee);
+                    $walletType = 'sales';
+                }
+
+                if (class_exists(WalletTransaction::class)) {
+                    WalletTransaction::create([
+                        'vendor_id'   => $vendorId,
+                        'wallet_type' => $walletType,
+                        'type'        => 'debit',
+                        'amount'      => $commissionFee,
+                        'description' => 'Order Commission Fee (1% / Min ₹1) - Order #' . $order->order_number,
+                        'status'      => 'success'
+                    ]);
+                }
+            }
+
+            foreach ($processedCart as $item) {
+                RestaurantOrderItem::create([
+                    'order_id'       => $order->id,
+                    'item_id'        => $item['id'],
+                    'item_name'      => $item['name'],
+                    'quantity'       => $item['quantity'],
+                    'price'          => $item['price'],
+                    'tax_amount'     => round($item['tax_amount'], 2),
+                    'subtotal'       => round($item['subtotal'], 2),
+                    'batch_number'   => 1,
+                    'kitchen_status' => 'sent_to_kitchen',
+                ]);
+            }
+
+            if ($request->order_type === 'dine_in' && $request->table_id && class_exists(RestaurantTable::class)) {
+                RestaurantTable::where('id', $request->table_id)
+                    ->update([
+                        'status'           => 'occupied',
+                        'current_order_id' => $order->id
+                    ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success'  => true,
+                'message'  => __('Order placed successfully!'),
+                'order_id' => $order->id,
+                'order'    => $order
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => __('Failed to place order: ') . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function index()
     {
         $userId = Auth::id();
@@ -75,6 +250,15 @@ class OrderController extends Controller
                     if (Auth::user() && !empty(Auth::user()->mobile) && Schema::hasColumn('restaurant_orders', 'customer_phone')) {
                         $q->orWhere('customer_phone', Auth::user()->mobile);
                     }
+                });
+
+                // STRICT FIX: Hide all unpaid online/UPI payment orders from customer history
+                $query->where(function($subQ) {
+                    $subQ->whereIn('payment_method', ['cash', 'cod'])
+                         ->orWhere(function($onlineQ) {
+                             $onlineQ->whereNotIn('payment_method', ['cash', 'cod'])
+                                     ->where('payment_status', 'paid');
+                         });
                 });
 
                 if (Schema::hasColumn('restaurant_orders', 'created_at')) {

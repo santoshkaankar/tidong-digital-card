@@ -18,14 +18,14 @@ class DeliveryDashboardController extends Controller
             ->count();
 
         $activeDeliveries = RestaurantOrder::where('delivery_boy_id', $deliveryBoyId)
-            ->where('status', 'out_for_delivery')
+            ->whereIn('status', ['accepted', 'picked_up', 'out_for_delivery'])
             ->count();
 
         $totalEarnings = RestaurantOrder::where('delivery_boy_id', $deliveryBoyId)
             ->where('status', 'delivered')
             ->sum('delivery_fee');
 
-        $availablePickups = RestaurantOrder::where('status', 'ready_for_pickup')
+        $availablePickups = RestaurantOrder::whereIn('status', ['ready', 'ready_for_pickup'])
             ->whereNull('delivery_boy_id')
             ->count();
 

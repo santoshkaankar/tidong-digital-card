@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Member\CardController;
 use App\Http\Controllers\Member\WalletController;
-use App\Http\Controllers\Member\FriendController;
 use App\Http\Controllers\Member\SearchController;
 use App\Http\Controllers\Member\ProfileController;
 use App\Http\Controllers\Member\OrderController;
@@ -56,9 +55,7 @@ Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
     // Referral & Earn Route
     Route::get('/referral', [AffiliateController::class, 'index'])->name('referral');
 
-    // Friend Circle Route
-    Route::get('/friend-circle/{type}', [FriendController::class, 'index'])->name('friend.index');
-
+  
     // Orders Routes
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
     Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');

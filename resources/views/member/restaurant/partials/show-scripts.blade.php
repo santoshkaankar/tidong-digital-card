@@ -32,7 +32,7 @@
         calculateModalBill();
     }
 
-    // 2. Cart Quantity Update (Includes GST % parameter)
+    // 2. Cart Quantity Update
     function updateQty(itemId, price, change, name = 'Food Item', taxPercent = 5.00) {
         let taxVal = parseFloat(taxPercent);
         if (isNaN(taxVal) || taxVal <= 0) taxVal = 5.00;
@@ -135,7 +135,7 @@
         calculateModalBill();
     }
 
-    // 6. Complete Bill Calculation (Base Subtotal + Tax Breakdown Logic Fixed)
+    // 6. Complete Bill Calculation
     function calculateModalBill() {
         let inclusiveSubtotal = 0;
         let totalTax = 0;
@@ -145,7 +145,6 @@
             let itemSub = (item.price * item.quantity);
             let taxRate = (item.taxPercent && item.taxPercent > 0) ? item.taxPercent : 5.00;
             
-            // Extract base price and tax from inclusive amount
             let itemBase = itemSub / (1 + (taxRate / 100));
             let itemTax = itemSub - itemBase;
 
@@ -165,10 +164,8 @@
             deliveryCharge = (inclusiveSubtotal >= FREE_DELIVERY_THRESHOLD) ? 0.00 : DEFAULT_DELIVERY_CHARGE;
         }
 
-        // Grand Total = Inclusive Subtotal + Delivery Charge + Tip Amount
         let grandTotal = inclusiveSubtotal + deliveryCharge + selectedTipAmount;
 
-        // UI Updates: Item Subtotal displays Base Price so that Base + CGST + SGST = Inclusive Total
         if (document.getElementById('modalSubtotal')) {
             document.getElementById('modalSubtotal').innerText = `₹${baseSubtotal.toFixed(2)}`;
         }
@@ -201,7 +198,7 @@
     // 7. Trigger Live Order Modal
     function submitLiveOrder() {
         if (Object.keys(cartItems).length === 0) {
-            alert("Kripya pehle items select karein!");
+            alert("Please select items first!");
             return;
         }
 
@@ -294,6 +291,45 @@
     });
 
     // 9. Process Final Order Submission
+    function sendOrderToBackend(payload, confirmBtn, totalAmount) {
+        fetch("{{ route('member.restaurant.placeOrder') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || "Order placed successfully!");
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else if (data.order_id) {
+                    window.location.href = "/member/orders/" + data.order_id;
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert("Error: " + (data.message || "Unable to process order."));
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `Confirm & Place Order (<span id="btnTotalText">₹${totalAmount.toFixed(2)}</span>)`;
+                }
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("An error occurred while processing the order.");
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = `Confirm & Place Order (<span id="btnTotalText">₹${totalAmount.toFixed(2)}</span>)`;
+            }
+        });
+    }
+
     function processFinalOrder() {
         let orderTypeSelect = document.getElementById('orderTypeSelect');
         let orderType = orderTypeSelect ? orderTypeSelect.value : 'delivery';
@@ -314,11 +350,11 @@
             finalPincode = pincodeInput ? pincodeInput.value.trim() : '';
 
             if (!finalPincode) {
-                alert("Kripya search box se Area / City / Pincode select karein!");
+                alert("Please select Area / City / Pincode from search box!");
                 return;
             }
             if (!street) {
-                alert("Kripya House No. / Flat / Street Address enter karein!");
+                alert("Please enter House No. / Flat / Street Address!");
                 return;
             }
 
@@ -363,63 +399,62 @@
             confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
         }
 
-        fetch("{{ route('member.restaurant.placeOrder') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({
-                restaurant_id: "{{ $restaurant->id }}",
-                order_type: orderType,
-                delivery_address: finalFullAddress,
-                pincode: finalPincode,
-                payment_method: selectedPaymentMethod,
-                delivery_charge: deliveryCharge,
-                tip_amount: selectedTipAmount,
-                tax_amount: totalTaxForBackend,
-                total_amount: totalAmount,
-                items: itemsPayload
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                if (selectedPaymentMethod === 'online' || data.is_online) {
-                    if (data.redirect_url) {
-                        window.location.href = data.redirect_url;
-                    } else if (data.order_id) {
-                        window.location.href = "/payment/checkout/" + data.order_id;
-                    } else {
-                        window.location.reload();
-                    }
-                } else {
-                    alert(data.message || "Order placed successfully!");
-                    if (data.redirect_url) {
-                        window.location.href = data.redirect_url;
-                    } else if (data.order_id) {
-                        window.location.href = "/member/orders/" + data.order_id;
-                    } else {
-                        window.location.reload();
-                    }
-                }
-            } else {
-                alert("Error: " + (data.message || "Order process nahi ho saka."));
+        let payload = {
+            restaurant_id: "{{ $restaurant->id }}",
+            order_type: orderType,
+            delivery_address: finalFullAddress,
+            pincode: finalPincode,
+            payment_method: selectedPaymentMethod,
+            delivery_charge: deliveryCharge,
+            tip_amount: selectedTipAmount,
+            tax_amount: totalTaxForBackend,
+            total_amount: totalAmount,
+            items: itemsPayload
+        };
+
+        const isOnlinePayment = ['online', 'upi', 'razorpay', 'phonepe', 'paytm'].includes(selectedPaymentMethod.toLowerCase());
+
+        if (isOnlinePayment) {
+            if (typeof Razorpay === 'undefined') {
+                alert("Payment Gateway failed to load. Please refresh the page.");
                 if (confirmBtn) {
                     confirmBtn.disabled = false;
                     confirmBtn.innerHTML = `Confirm & Place Order (<span id="btnTotalText">₹${totalAmount.toFixed(2)}</span>)`;
                 }
+                return;
             }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Order process karne me error aaya.");
-            if (confirmBtn) {
-                confirmBtn.disabled = false;
-                confirmBtn.innerHTML = `Confirm & Place Order (<span id="btnTotalText">₹${totalAmount.toFixed(2)}</span>)`;
-            }
-        });
+
+            let options = {
+                "key": "{{ config('services.razorpay.key') ?? env('RAZORPAY_KEY') }}",
+                "amount": Math.round(totalAmount * 100),
+                "currency": "INR",
+                "name": "{{ $restaurant->name ?? 'Restaurant' }}",
+                "description": "Food Order Payment",
+                "handler": function (response) {
+                    payload.payment_status = 'paid';
+                    payload.razorpay_payment_id = response.razorpay_payment_id;
+                    sendOrderToBackend(payload, confirmBtn, totalAmount);
+                },
+                "modal": {
+                    "ondismiss": function() {
+                        alert("Payment Cancelled! Order cannot be placed without payment.");
+                        if (confirmBtn) {
+                            confirmBtn.disabled = false;
+                            confirmBtn.innerHTML = `Confirm & Place Order (<span id="btnTotalText">₹${totalAmount.toFixed(2)}</span>)`;
+                        }
+                    }
+                },
+                "prefill": {
+                    "name": "{{ auth()->user()->name ?? '' }}",
+                    "contact": "{{ auth()->user()->mobile ?? '' }}"
+                }
+            };
+            let rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            payload.payment_status = 'unpaid';
+            sendOrderToBackend(payload, confirmBtn, totalAmount);
+        }
     }
 
     // 10. Tiffin Custom Date Toggle
@@ -443,7 +478,7 @@
         });
 
         if (!catalogId) {
-            alert("Kripya Tiffin Package select karein!");
+            alert("Please select a Tiffin Package!");
             return;
         }
 
@@ -470,6 +505,6 @@
                 alert("Error: " + data.message);
             }
         })
-        .catch(err => alert("Tiffin booking me error aaya: " + err));
+        .catch(err => alert("Error booking tiffin: " + err));
     }
 </script>

@@ -14,6 +14,7 @@ use App\Models\Payment\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class OrderController extends Controller
@@ -55,28 +56,28 @@ class OrderController extends Controller
         $todayDay = now()->format('l');
 
         foreach ($tiffinTables as $tableName) {
-            if (\Schema::hasTable($tableName)) {
+            if (Schema::hasTable($tableName)) {
                 $query = DB::table($tableName);
                 
-                if (\Schema::hasColumn($tableName, 'user_id')) {
+                if (Schema::hasColumn($tableName, 'user_id')) {
                     $query->where('user_id', $vendorId);
-                } elseif (\Schema::hasColumn($tableName, 'vendor_id')) {
+                } elseif (Schema::hasColumn($tableName, 'vendor_id')) {
                     $query->where('vendor_id', $vendorId);
                 }
 
-                if (\Schema::hasColumn($tableName, 'day_of_week')) {
+                if (Schema::hasColumn($tableName, 'day_of_week')) {
                     $query->whereRaw('LOWER(day_of_week) = ?', [strtolower($todayDay)]);
-                } elseif (\Schema::hasColumn($tableName, 'day')) {
+                } elseif (Schema::hasColumn($tableName, 'day')) {
                     $query->whereRaw('LOWER(day) = ?', [strtolower($todayDay)]);
-                } elseif (\Schema::hasColumn($tableName, 'days')) {
+                } elseif (Schema::hasColumn($tableName, 'days')) {
                     $query->where('days', 'LIKE', "%{$todayDay}%");
-                } elseif (\Schema::hasColumn($tableName, 'date')) {
+                } elseif (Schema::hasColumn($tableName, 'date')) {
                     $query->whereDate('date', now()->toDateString());
                 }
 
                 $fetched = $query->get();
 
-                if ($fetched->count() > 0 && !\Schema::hasColumn($tableName, 'day_of_week') && !\Schema::hasColumn($tableName, 'day') && !\Schema::hasColumn($tableName, 'date')) {
+                if ($fetched->count() > 0 && !Schema::hasColumn($tableName, 'day_of_week') && !Schema::hasColumn($tableName, 'day') && !Schema::hasColumn($tableName, 'date')) {
                     $filtered = $fetched->filter(function($item) use ($todayDay) {
                         $title = $item->title ?? $item->name ?? $item->day_name ?? '';
                         return stripos($title, $todayDay) !== false;
@@ -109,6 +110,8 @@ class OrderController extends Controller
             'table_id'        => 'nullable|exists:restaurant_tables,id',
             'customer_phone'  => 'nullable|string|min:10|max:15',
             'customer_name'   => 'nullable|string|max:100',
+            'payment_method'  => 'nullable|string|in:cash,cod,online,upi',
+            'payment_status'  => 'nullable|string|in:unpaid,paid',
             'cart'            => 'required|array|min:1',
             'cart.*.id'       => 'required',
             'cart.*.name'     => 'required|string',
@@ -118,10 +121,21 @@ class OrderController extends Controller
 
         $vendorId = Auth::id();
 
+        // Strict Check: Payment method agar COD/Cash nahi hai aur Paid nahi hua hai, to DB me save na karo
+        $paymentMethod = strtolower($request->payment_method ?? 'cash');
+        $paymentStatus = strtolower($request->payment_status ?? ($paymentMethod === 'cash' || $paymentMethod === 'cod' ? 'paid' : 'unpaid'));
+
+        if (!in_array($paymentMethod, ['cash', 'cod']) && $paymentStatus !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => __('Order cannot be saved before payment completion. Please complete the payment first.')
+            ], 400);
+        }
+
         if ($request->order_type === 'dine_in' && $request->table_id) {
             $activeOrderExists = RestaurantOrder::where('table_id', $request->table_id)
                 ->where('user_id', $vendorId)
-                ->whereNotIn('status', ['completed', 'cancelled'])
+                ->whereNotIn('status', ['completed', 'cancelled', 'delivered'])
                 ->where('payment_status', '!=', 'paid')
                 ->exists();
 
@@ -198,11 +212,11 @@ class OrderController extends Controller
                 'total_amount'    => round($totalAmount, 2),
                 'currency_code'   => 'INR',
                 'status'          => 'pending',
-                'payment_status'  => 'unpaid',
-                'payment_method'  => 'cash',
+                'payment_status'  => $paymentStatus,
+                'payment_method'  => $paymentMethod,
             ]);
 
-            // 1% Commission Logic (Min ₹1)
+            // Commission & Wallet balance logic
             $wallet = VendorWallet::firstOrCreate(
                 ['vendor_id' => $vendorId],
                 ['bonus_balance' => 200.00, 'sales_balance' => 0.00]
@@ -310,7 +324,7 @@ class OrderController extends Controller
             'table_id'        => 'nullable|exists:restaurant_tables,id',
             'customer_name'   => 'nullable|string|max:100',
             'customer_phone'  => 'nullable|string|max:15',
-            'status'          => 'required|in:pending,preparing,cooking,ready,served,completed,cancelled',
+            'status'          => 'required|in:pending,accepted,cooking,preparing,ready,ready_for_pickup,out_for_delivery,pickedup,served,completed,cancelled,delivered',
             'payment_status'  => 'required|in:unpaid,paid',
             'items'           => 'required|array|min:1',
             'items.*.item_id' => 'required',
@@ -375,6 +389,15 @@ class OrderController extends Controller
 
             RestaurantOrderItem::where('order_id', $order->id)->delete();
 
+            $itemKitchenStatus = match($request->status) {
+                'pending' => 'pending',
+                'accepted', 'cooking', 'preparing' => 'cooking',
+                'ready', 'ready_for_pickup' => 'ready',
+                'out_for_delivery', 'pickedup', 'served', 'delivered', 'completed' => 'served',
+                'cancelled' => 'cancelled',
+                default => 'cooking'
+            };
+
             foreach ($processedItems as $itemData) {
                 RestaurantOrderItem::create([
                     'order_id'       => $order->id,
@@ -385,11 +408,11 @@ class OrderController extends Controller
                     'tax_amount'     => round($itemData['tax_amount'], 2),
                     'subtotal'       => round($itemData['subtotal'], 2),
                     'batch_number'   => 1,
-                    'kitchen_status' => 'sent_to_kitchen',
+                    'kitchen_status' => $itemKitchenStatus,
                 ]);
             }
 
-            $order->update([
+            $orderData = [
                 'order_type'     => $request->order_type,
                 'table_id'       => $request->order_type === 'dine_in' ? $request->table_id : null,
                 'customer_name'  => $request->customer_name ?? __('Counter Customer'),
@@ -399,10 +422,16 @@ class OrderController extends Controller
                 'sub_total'      => round($subTotal, 2),
                 'tax_amount'     => round($totalTax, 2),
                 'total_amount'   => round($totalAmount, 2),
-            ]);
+            ];
+
+            if ($request->status === 'delivered') {
+                $orderData['delivered_at'] = now();
+            }
+
+            $order->update($orderData);
 
             if ($order->table_id) {
-                if ($request->status === 'completed' || $request->status === 'cancelled' || $request->payment_status === 'paid') {
+                if (in_array($request->status, ['completed', 'cancelled', 'delivered']) || $request->payment_status === 'paid') {
                     RestaurantTable::where('id', $order->table_id)->update([
                         'status'           => 'available',
                         'current_order_id' => null
