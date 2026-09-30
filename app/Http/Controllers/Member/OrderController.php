@@ -17,10 +17,27 @@ class OrderController extends Controller
 
         $subTotal = floatval($order->sub_total ?? 0);
         $totalAmount = floatval($order->total_amount ?? 0);
-        
-        $order->delivery_charge = property_exists($order, 'delivery_charge') && $order->delivery_charge !== null 
-            ? floatval($order->delivery_charge) 
-            : max(0, $totalAmount - $subTotal);
+        $taxAmount = floatval($order->tax_amount ?? 0);
+
+        // CGST / SGST Breakdown
+        $order->cgst = property_exists($order, 'cgst') && $order->cgst !== null 
+            ? floatval($order->cgst) 
+            : ($taxAmount / 2);
+
+        $order->sgst = property_exists($order, 'sgst') && $order->sgst !== null 
+            ? floatval($order->sgst) 
+            : ($taxAmount / 2);
+
+        // Delivery Charge Logic: Free if subtotal >= 999
+        if (property_exists($order, 'delivery_charge') && $order->delivery_charge !== null) {
+            $order->delivery_charge = floatval($order->delivery_charge);
+        } elseif (property_exists($order, 'delivery_fee') && $order->delivery_fee !== null) {
+            $order->delivery_charge = floatval($order->delivery_fee);
+        } else {
+            $order->delivery_charge = ($subTotal >= 999.00 || (isset($order->order_type) && $order->order_type !== 'delivery')) 
+                ? 0.00 
+                : max(0, $totalAmount - ($subTotal + $taxAmount));
+        }
 
         if (empty($order->delivery_address)) {
             if (!empty($order->notes) && str_contains(strtolower($order->notes), 'address')) {
@@ -178,7 +195,6 @@ class OrderController extends Controller
             abort(404, 'Order nahi mila ya aapke account se linked nahi hai.');
         }
 
-        // Fetch Restaurant details for safe fallback
         $restaurant = null;
         if (!empty($order->user_id)) {
             $restaurant = User::find($order->user_id);

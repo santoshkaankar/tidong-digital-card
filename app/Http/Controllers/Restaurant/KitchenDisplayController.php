@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Restaurant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Restaurant\RestaurantOrder;
+use App\Models\Restaurant\RestaurantOrderItem;
 use App\Models\Restaurant\RestaurantTable;
 use App\Models\Restaurant\WaiterCall;
 use Illuminate\Http\Request;
@@ -18,11 +19,7 @@ class KitchenDisplayController extends Controller
 
         $activeOrders = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
             ->where('user_id', $userId)
-            ->where(function($query) {
-                $query->where('payment_status', '!=', 'paid')
-                      ->orWhereNull('payment_status');
-            })
-            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotIn('status', ['completed', 'cancelled', 'delivered'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -99,7 +96,7 @@ class KitchenDisplayController extends Controller
 
         $runningOrders = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
             ->where('user_id', $userId)
-            ->whereIn('status', ['pending', 'cooking', 'preparing', 'waiting', 'accepted'])
+            ->whereNotIn('status', ['completed', 'cancelled', 'delivered'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -119,11 +116,12 @@ class KitchenDisplayController extends Controller
         ]);
     }
 
+    // Complete Flow Status Handler
     public function updateOrderStatus(Request $request, $id)
     {
         try {
             $request->validate([
-                'status' => 'required|string',
+                'status' => 'required|in:pending,accepted,cooking,preparing,ready,pickedup,served,delivered,completed,cancelled',
                 'payment_status' => 'nullable|string'
             ]);
 
@@ -143,10 +141,23 @@ class KitchenDisplayController extends Controller
                 $order->payment_status = $request->payment_status;
             }
 
+            // Sync item kitchen_status based on main order status
+            $itemKitchenStatus = match($request->status) {
+                'pending' => 'pending',
+                'accepted', 'cooking', 'preparing' => 'cooking',
+                'ready' => 'ready',
+                'pickedup', 'served', 'delivered', 'completed' => 'served',
+                'cancelled' => 'cancelled',
+                default => 'cooking'
+            };
+
+            RestaurantOrderItem::where('order_id', $order->id)
+                ->update(['kitchen_status' => $itemKitchenStatus]);
+
             $order->save();
 
-            // Table Release Logic
-            if ($request->status === 'completed' && $order->table_id) {
+            // Table Auto Release Logic on Complete / Cancel
+            if (in_array($request->status, ['completed', 'cancelled', 'delivered']) && $order->table_id) {
                 RestaurantTable::where('id', $order->table_id)
                     ->where('user_id', $userId)
                     ->update([
@@ -157,7 +168,8 @@ class KitchenDisplayController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('Order status updated successfully.')
+                'message' => __('Order status updated successfully to ') . $order->status,
+                'status'  => $order->status
             ]);
 
         } catch (\Exception $e) {
@@ -181,7 +193,7 @@ class KitchenDisplayController extends Controller
         $order = RestaurantOrder::where('user_id', $userId)->findOrFail($id);
 
         $order->payment_status = 'paid';
-        $order->status = 'completed';
+        $order->status = ($order->order_type === 'delivery') ? 'delivered' : 'completed';
         $order->save();
 
         if ($order->table_id) {
@@ -195,7 +207,7 @@ class KitchenDisplayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => __('Payment received, order completed, and table released successfully.')
+            'message' => __('Payment received and order status updated successfully.')
         ]);
     }
 }

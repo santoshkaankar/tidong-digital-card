@@ -1,5 +1,5 @@
 <style>
-/* Modal Overflow Fix & Mobile Touch Layering */
+/* Live Pincode Search Dropdown Styling */
 #pincodeSearchResults {
     position: absolute !important;
     top: 100% !important;
@@ -26,15 +26,9 @@
     width: 100% !important;
     text-align: left !important;
     background: #ffffff !important;
-    -webkit-tap-highlight-color: rgba(37, 99, 235, 0.2) !important;
 }
 
-.pincode-result-item:last-child {
-    border-bottom: none !important;
-}
-
-.pincode-result-item:active,
-.pincode-result-item:hover {
+.pincode-result-item:hover, .pincode-result-item:active {
     background-color: #eff6ff !important;
     color: #2563eb !important;
 }
@@ -42,12 +36,51 @@
 
 <script>
     let cartItems = {};
+    let selectedTipAmount = 0.00;
+    const FREE_DELIVERY_THRESHOLD = 999.00;
     const DEFAULT_DELIVERY_CHARGE = 30.00;
 
-    // 1. Cart Quantity Update
-    function updateQty(itemId, price, change, name = 'Food Item') {
+    // 1. Tip Selection Handlers
+    function selectTip(amount, element) {
+        selectedTipAmount = parseFloat(amount) || 0;
+        const customInput = document.getElementById('customTipInput');
+        if (customInput) customInput.value = selectedTipAmount > 0 ? selectedTipAmount : '';
+
+        document.querySelectorAll('.tip-btn').forEach(btn => {
+            btn.classList.remove('btn-primary', 'active');
+            btn.classList.add('btn-outline-primary');
+        });
+
+        if (element) {
+            element.classList.remove('btn-outline-primary', 'btn-outline-secondary');
+            element.classList.add('btn-primary', 'active');
+        }
+
+        calculateModalBill();
+    }
+
+    function applyCustomTip(value) {
+        selectedTipAmount = parseFloat(value) || 0;
+        document.querySelectorAll('.tip-btn').forEach(btn => {
+            btn.classList.remove('btn-primary', 'active');
+            btn.classList.add('btn-outline-primary');
+        });
+        calculateModalBill();
+    }
+
+    // 2. Cart Quantity Update (Includes GST % parameter)
+    function updateQty(itemId, price, change, name = 'Food Item', taxPercent = 5.00) {
+        let taxVal = parseFloat(taxPercent);
+        if (isNaN(taxVal) || taxVal <= 0) taxVal = 5.00;
+
         if (!cartItems[itemId]) {
-            cartItems[itemId] = { id: itemId, price: price, quantity: 0, name: name };
+            cartItems[itemId] = { 
+                id: itemId, 
+                price: parseFloat(price), 
+                quantity: 0, 
+                name: name,
+                taxPercent: taxVal
+            };
         }
         cartItems[itemId].quantity += change;
 
@@ -64,13 +97,16 @@
         renderFloatingBar();
     }
 
-    // 2. Floating Bar Render
+    // 3. Floating Bottom Cart Bar
     function renderFloatingBar() {
         let totalCount = 0;
         let totalAmount = 0;
         Object.values(cartItems).forEach(item => {
             totalCount += item.quantity;
-            totalAmount += (item.price * item.quantity);
+            let itemSubtotal = (item.price * item.quantity);
+            let taxRate = (item.taxPercent && item.taxPercent > 0) ? item.taxPercent : 5.00;
+            let itemTax = (itemSubtotal * taxRate) / 100;
+            totalAmount += (itemSubtotal + itemTax);
         });
 
         const bar = document.getElementById('floatingOrderBar');
@@ -89,7 +125,7 @@
         }
     }
 
-    // 3. Saved Address Dropdown Change Handler
+    // 4. Saved Address Selection Handler
     function handleSavedAddressChange(selectElement) {
         const selectedOption = selectElement.options[selectElement.selectedIndex];
         const streetInput = document.getElementById('deliveryStreetInput');
@@ -118,7 +154,7 @@
         }
     }
 
-    // 4. Toggle Delivery / Dine-in / Takeaway
+    // 5. Toggle Delivery / Dine-in / Takeaway
     function toggleOrderTypeView() {
         const orderTypeSelect = document.getElementById('orderTypeSelect');
         if (!orderTypeSelect) return;
@@ -137,24 +173,52 @@
         calculateModalBill();
     }
 
-    // 5. Calculate Bill Details in Modal
+    // 6. Complete Bill Calculation (Subtotal + CGST + SGST + Delivery + Tip)
     function calculateModalBill() {
         let subtotal = 0;
+        let totalTax = 0;
+
         Object.values(cartItems).forEach(item => {
-            subtotal += (item.price * item.quantity);
+            let itemSub = (item.price * item.quantity);
+            let taxRate = (item.taxPercent && item.taxPercent > 0) ? item.taxPercent : 5.00;
+            let itemTax = (itemSub * taxRate) / 100;
+            subtotal += itemSub;
+            totalTax += itemTax;
         });
+
+        let cgst = totalTax / 2;
+        let sgst = totalTax / 2;
 
         const orderTypeSelect = document.getElementById('orderTypeSelect');
         const orderType = orderTypeSelect ? orderTypeSelect.value : 'delivery';
 
-        let deliveryCharge = (orderType === 'delivery') ? DEFAULT_DELIVERY_CHARGE : 0.00;
-        let grandTotal = subtotal + deliveryCharge;
+        let deliveryCharge = 0.00;
+        if (orderType === 'delivery') {
+            deliveryCharge = (subtotal >= FREE_DELIVERY_THRESHOLD) ? 0.00 : DEFAULT_DELIVERY_CHARGE;
+        }
+
+        let grandTotal = subtotal + totalTax + deliveryCharge + selectedTipAmount;
 
         if (document.getElementById('modalSubtotal')) {
             document.getElementById('modalSubtotal').innerText = `₹${subtotal.toFixed(2)}`;
         }
+        if (document.getElementById('modalCGST')) {
+            document.getElementById('modalCGST').innerText = `+ ₹${cgst.toFixed(2)}`;
+        }
+        if (document.getElementById('modalSGST')) {
+            document.getElementById('modalSGST').innerText = `+ ₹${sgst.toFixed(2)}`;
+        }
+        if (document.getElementById('modalTipAmount')) {
+            document.getElementById('modalTipAmount').innerText = `+ ₹${selectedTipAmount.toFixed(2)}`;
+        }
         if (document.getElementById('modalDeliveryCharge')) {
-            document.getElementById('modalDeliveryCharge').innerText = deliveryCharge > 0 ? `+ ₹${deliveryCharge.toFixed(2)}` : 'FREE';
+            if (orderType !== 'delivery') {
+                document.getElementById('modalDeliveryCharge').innerText = 'N/A';
+            } else if (deliveryCharge === 0) {
+                document.getElementById('modalDeliveryCharge').innerHTML = '<span class="badge bg-success">FREE</span>';
+            } else {
+                document.getElementById('modalDeliveryCharge').innerText = `+ ₹${deliveryCharge.toFixed(2)}`;
+            }
         }
         if (document.getElementById('modalTotalPayable')) {
             document.getElementById('modalTotalPayable').innerText = `₹${grandTotal.toFixed(2)}`;
@@ -164,7 +228,7 @@
         }
     }
 
-    // 6. Open Order Modal
+    // 7. Trigger Live Order Modal (Fixed double modal background issue)
     function submitLiveOrder() {
         if (Object.keys(cartItems).length === 0) {
             alert("Kripya pehle items select karein!");
@@ -176,12 +240,12 @@
 
         let modalElem = document.getElementById('deliveryAddressModal');
         if (modalElem) {
-            let modal = new bootstrap.Modal(modalElem);
+            let modal = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
             modal.show();
         }
     }
 
-    // 7. Live AJAX Pincode & Area Search Handler (Mobile & Touch Optimized)
+    // 8. Live AJAX Pincode Search Event Listener
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById('addressSearchInput');
         const searchResults = document.getElementById('pincodeSearchResults');
@@ -259,7 +323,7 @@
         }
     });
 
-    // 8. Process Final Order Submission (WITH PAYMENT METHOD REDIRECT FIXED)
+    // 9. Process Final Order Submission
     function processFinalOrder() {
         let orderTypeSelect = document.getElementById('orderTypeSelect');
         let orderType = orderTypeSelect ? orderTypeSelect.value : 'delivery';
@@ -291,26 +355,36 @@
             finalFullAddress = `${street}${area ? ', ' + area : ''}${city ? ', ' + city : ''}${state ? ', ' + state : ''} - ${finalPincode}`;
         }
 
-        // Get selected payment method ('cod' or 'online')
         let selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'cod';
 
         let itemsPayload = [];
         let subtotal = 0;
+        let totalTax = 0;
+
         Object.values(cartItems).forEach(item => {
             let cleanId = item.id.toString().replace('global_', '').replace('custom_', '');
-            subtotal += (item.price * item.quantity);
+            let itemSub = (item.price * item.quantity);
+            let taxRate = (item.taxPercent && item.taxPercent > 0) ? item.taxPercent : 5.00;
+            let itemTax = (itemSub * taxRate) / 100;
+
+            subtotal += itemSub;
+            totalTax += itemTax;
+
             itemsPayload.push({
                 id: parseInt(cleanId) || cleanId,
                 quantity: item.quantity,
                 price: item.price,
-                name: item.name
+                name: item.name,
+                tax_percent: taxRate
             });
         });
 
-        let deliveryCharge = (orderType === 'delivery') ? DEFAULT_DELIVERY_CHARGE : 0.00;
-        let totalAmount = subtotal + deliveryCharge;
+        let deliveryCharge = (orderType === 'delivery') 
+            ? ((subtotal >= FREE_DELIVERY_THRESHOLD) ? 0.00 : DEFAULT_DELIVERY_CHARGE) 
+            : 0.00;
 
-        // Button Loading State
+        let totalAmount = subtotal + totalTax + deliveryCharge + selectedTipAmount;
+
         let confirmBtn = document.querySelector('#deliveryAddressModal button[onclick="processFinalOrder()"]');
         if (confirmBtn) {
             confirmBtn.disabled = true;
@@ -331,6 +405,8 @@
                 pincode: finalPincode,
                 payment_method: selectedPaymentMethod,
                 delivery_charge: deliveryCharge,
+                tip_amount: selectedTipAmount,
+                tax_amount: totalTax,
                 total_amount: totalAmount,
                 items: itemsPayload
             })
@@ -338,7 +414,6 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // ONLINE PAYMENT REDIRECT LOGIC
                 if (selectedPaymentMethod === 'online' || data.is_online) {
                     if (data.redirect_url) {
                         window.location.href = data.redirect_url;
@@ -348,7 +423,6 @@
                         window.location.reload();
                     }
                 } else {
-                    // COD SUCCESS LOGIC
                     alert(data.message || "Order placed successfully!");
                     if (data.redirect_url) {
                         window.location.href = data.redirect_url;
@@ -376,7 +450,7 @@
         });
     }
 
-    // 9. Tiffin Custom Dates Toggle
+    // 10. Tiffin Custom Date Toggle
     function toggleCustomDates(val) {
         let container = document.getElementById('toDateContainer');
         if (container) {
@@ -384,7 +458,7 @@
         }
     }
 
-    // 10. Submit Tiffin Booking
+    // 11. Tiffin Booking Submission
     function submitTiffinBooking() {
         let duration = document.getElementById('tiffinDuration').value;
         let fromDate = document.getElementById('tiffinFromDate').value;

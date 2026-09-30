@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Restaurant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Restaurant\RestaurantOrder;
+use App\Models\Restaurant\RestaurantOrderItem;
 use App\Models\Restaurant\RestaurantTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,12 +12,13 @@ use Illuminate\Support\Facades\Auth;
 class KitchenOrderController extends Controller
 {
     /**
-     * Update Running Order Status (Pending -> Cooking -> Ready -> Served)
+     * Complete Order Flow Status Route Handler
+     * Pending -> Accepted -> Cooking -> Ready -> Pickedup -> Served -> Delivered -> Completed -> Cancelled
      */
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,cooking,preparing,ready,served,cancelled,completed'
+            'status' => 'required|in:pending,accepted,cooking,preparing,ready,pickedup,served,delivered,cancelled,completed'
         ]);
 
         $order = RestaurantOrder::where('id', $id)
@@ -25,10 +27,23 @@ class KitchenOrderController extends Controller
 
         if ($order) {
             $order->status = $request->status;
+            
+            $itemKitchenStatus = match($request->status) {
+                'pending' => 'pending',
+                'accepted', 'cooking', 'preparing' => 'cooking',
+                'ready' => 'ready',
+                'pickedup', 'served', 'delivered', 'completed' => 'served',
+                'cancelled' => 'cancelled',
+                default => 'cooking'
+            };
+
+            RestaurantOrderItem::where('order_id', $order->id)
+                ->update(['kitchen_status' => $itemKitchenStatus]);
+
             $order->save();
 
-            // Release Table if Order Completed or Cancelled
-            if (in_array($request->status, ['completed', 'cancelled']) && $order->table_id) {
+            // Release Table if Order Completed or Cancelled or Delivered
+            if (in_array($request->status, ['completed', 'cancelled', 'delivered']) && $order->table_id) {
                 RestaurantTable::where('id', $order->table_id)
                     ->where('user_id', Auth::id())
                     ->update([

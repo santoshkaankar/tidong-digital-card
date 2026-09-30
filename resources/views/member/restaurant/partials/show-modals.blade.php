@@ -104,7 +104,7 @@
                             $userAddresses = $savedAddresses ?? ($authUser && $authUser->addresses ? $authUser->addresses : []);
                         @endphp
 
-                        <!-- 1. Saved Address Dropdown -->
+                        <!-- Saved Address Dropdown -->
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Select Saved Address / New</label>
                             <select id="savedAddressDropdown" class="form-select rounded-3" onchange="handleSavedAddressChange(this)">
@@ -163,6 +163,22 @@
                         </div>
                     </div>
 
+                    <!-- TIP SELECTION SECTION (ADDED BACK) -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-hand-holding-usd text-warning me-1"></i> Add Tip for Delivery Partner</span>
+                            <span class="text-muted" style="font-size: 11px;">100% goes to driver</span>
+                        </label>
+                        <div class="d-flex gap-2 mb-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-3 flex-fill tip-btn active" onclick="selectTip(0, this)">₹0</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-3 flex-fill tip-btn" onclick="selectTip(10, this)">₹10</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-3 flex-fill tip-btn" onclick="selectTip(20, this)">₹20</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-3 flex-fill tip-btn" onclick="selectTip(30, this)">₹30</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-3 flex-fill tip-btn" onclick="selectTip(50, this)">₹50</button>
+                        </div>
+                        <input type="number" id="customTipInput" class="form-control form-control-sm rounded-3" placeholder="Other Tip Amount (₹)" oninput="applyCustomTip(this.value)">
+                    </div>
+
                     <!-- Bill Breakdown Card -->
                     <div class="card bg-light border-0 rounded-3 p-3 mb-3">
                         <h6 class="fw-bold mb-2 text-dark small text-uppercase">Bill Details</h6>
@@ -170,9 +186,21 @@
                             <span>Item Subtotal</span>
                             <span class="fw-semibold text-dark" id="modalSubtotal">₹0.00</span>
                         </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1 small text-muted">
+                            <span>CGST (2.5%)</span>
+                            <span class="fw-semibold text-dark" id="modalCGST">+ ₹0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1 small text-muted">
+                            <span>SGST (2.5%)</span>
+                            <span class="fw-semibold text-dark" id="modalSGST">+ ₹0.00</span>
+                        </div>
                         <div class="d-flex justify-content-between align-items-center mb-1 small text-muted" id="deliveryFeeRow">
                             <span>Delivery Partner Fee</span>
                             <span class="fw-bold text-success" id="modalDeliveryCharge">+ ₹30.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1 small text-muted">
+                            <span>Tip Amount</span>
+                            <span class="fw-semibold text-dark" id="modalTipAmount">+ ₹0.00</span>
                         </div>
                         <hr class="my-2">
                         <div class="d-flex justify-content-between align-items-center fw-bold text-dark">

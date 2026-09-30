@@ -167,7 +167,7 @@ class RestaurantController extends Controller
         }
     }
 
-    // 4. Place Order Function (Handles COD and Online Payment Gateway Triggers)
+    // 4. Customer Place Order (Fully Safe Dynamic Schema Mapping)
     public function placeOrder(Request $request)
     {
         try {
@@ -178,28 +178,76 @@ class RestaurantController extends Controller
                 'pincode'          => 'nullable|string',
                 'payment_method'   => 'nullable|string',
                 'items'            => 'required|array|min:1',
+                'tip_amount'       => 'nullable|numeric|min:0',
             ]);
 
             $order = DB::transaction(function () use ($request) {
                 $subTotal = 0;
+                $totalTax = 0;
 
-                // Delivery Charge Standard ₹30 for delivery orders
-                $deliveryCharge = ($request->order_type === 'delivery') ? 30.00 : 0.00;
-                if ($request->has('delivery_charge') && is_numeric($request->delivery_charge)) {
-                    $deliveryCharge = floatval($request->delivery_charge);
+                // Loop 1: Calculate Total Bill
+                foreach ($request->items as $itemData) {
+                    $cleanId = preg_replace('/[^0-9]/', '', $itemData['id'] ?? 0);
+                    $item = RestaurantItem::find($cleanId) ?? RestaurantCustomItem::find($cleanId);
+
+                    $price = isset($itemData['price']) && is_numeric($itemData['price']) 
+                        ? floatval($itemData['price']) 
+                        : ($item ? floatval($item->price) : 0);
+
+                    $quantity = intval($itemData['quantity'] ?? 1);
+                    $itemSubtotal = $price * $quantity;
+
+                    $taxPercent = 0;
+                    if ($item) {
+                        $rawTax = $item->tax_percent ?? $item->tax_rate ?? $item->tax ?? 0;
+                        if (is_object($rawTax)) {
+                            $taxPercent = floatval($rawTax->rate ?? $rawTax->tax_percent ?? $rawTax->percent ?? 0);
+                        } else {
+                            $taxPercent = floatval($rawTax);
+                        }
+                    }
+
+                    if ($taxPercent <= 0 && isset($itemData['tax_percent'])) {
+                        $rawTaxPayload = $itemData['tax_percent'];
+                        if (is_object($rawTaxPayload)) {
+                            $taxPercent = floatval($rawTaxPayload->rate ?? $rawTaxPayload->tax_percent ?? 0);
+                        } else {
+                            $taxPercent = floatval($rawTaxPayload);
+                        }
+                    }
+
+                    if ($taxPercent <= 0) {
+                        $taxPercent = 5.00;
+                    }
+
+                    $itemTax = ($itemSubtotal * $taxPercent) / 100;
+
+                    $subTotal += $itemSubtotal;
+                    $totalTax += $itemTax;
                 }
+
+                // Delivery Fee Logic: Free if order >= 999
+                $deliveryCharge = 0.00;
+                if ($request->order_type === 'delivery') {
+                    $deliveryCharge = ($subTotal >= 999.00) ? 0.00 : 30.00;
+                }
+
+                $tipAmount = floatval($request->input('tip_amount', 0.00));
+                $cgst = round($totalTax / 2, 2);
+                $sgst = round($totalTax / 2, 2);
+                $grandTotal = round($subTotal + $totalTax + $deliveryCharge + $tipAmount, 2);
 
                 $paymentMethod = strtolower($request->input('payment_method', 'cod'));
 
-                // Format Address
                 $formattedAddress = '';
                 if ($request->order_type === 'delivery' && !empty($request->delivery_address)) {
                     $formattedAddress = $request->delivery_address;
-                    if (!empty($request->pincode)) {
+                    if (!empty($request->pincode) && !str_contains($formattedAddress, $request->pincode)) {
                         $formattedAddress .= " (Pincode: " . $request->pincode . ")";
                     }
                 }
 
+                // Base fields that exist across all standard schemas
                 $orderData = [
                     'user_id'          => $request->restaurant_id, 
                     'customer_id'      => auth()->id(),            
@@ -207,20 +255,29 @@ class RestaurantController extends Controller
                     'customer_phone'   => auth()->user()->mobile ?? auth()->user()->phone ?? null,
                     'order_number'     => 'ORD-' . strtoupper(Str::random(6)),
                     'order_type'       => $request->order_type,
-                    'sub_total'        => 0,
-                    'total_amount'     => 0,
+                    'sub_total'        => $subTotal,
+                    'tax_amount'       => $totalTax,
+                    'tip_amount'       => $tipAmount,
+                    'total_amount'     => $grandTotal,
                     'status'           => 'pending',
-                    'payment_status'   => 'unpaid', // Fixed SQL Data Truncation Error
+                    'payment_status'   => 'unpaid',
                 ];
 
-                if (Schema::hasColumn('restaurant_orders', 'payment_method')) {
-                    $orderData['payment_method'] = $paymentMethod;
+                // Safely add optional/variable columns dynamically based on DB table schema
+                if (Schema::hasColumn('restaurant_orders', 'cgst')) {
+                    $orderData['cgst'] = $cgst;
+                }
+                if (Schema::hasColumn('restaurant_orders', 'sgst')) {
+                    $orderData['sgst'] = $sgst;
+                }
+                if (Schema::hasColumn('restaurant_orders', 'delivery_fee')) {
+                    $orderData['delivery_fee'] = $deliveryCharge;
                 }
                 if (Schema::hasColumn('restaurant_orders', 'delivery_charge')) {
                     $orderData['delivery_charge'] = $deliveryCharge;
                 }
-                if (Schema::hasColumn('restaurant_orders', 'delivery_fee')) {
-                    $orderData['delivery_fee'] = $deliveryCharge;
+                if (Schema::hasColumn('restaurant_orders', 'payment_method')) {
+                    $orderData['payment_method'] = $paymentMethod;
                 }
                 if (Schema::hasColumn('restaurant_orders', 'delivery_address')) {
                     $orderData['delivery_address'] = $formattedAddress;
@@ -235,17 +292,24 @@ class RestaurantController extends Controller
                     $orderData['address'] = $formattedAddress;
                 }
                 if (Schema::hasColumn('restaurant_orders', 'delivery_status')) {
-                    $orderData['delivery_status'] = $request->order_type === 'delivery' ? 'assigning_delivery_boy' : 'not_applicable';
+                    $orderData['delivery_status'] = $request->order_type === 'delivery' ? 'pending' : 'not_applicable';
                 }
 
+                // 1. CREATE ORDER FIRST
                 $order = RestaurantOrder::create($orderData);
 
+                // Check if Order ID generated successfully
+                if (!$order || !$order->id) {
+                    throw new \Exception("Failed to generate Order ID.");
+                }
+
+                // 2. NOW LOOP AND INSERT ITEMS WITH ORDER ID
                 foreach ($request->items as $itemData) {
-                    $item = RestaurantItem::find($itemData['id'] ?? 0);
-                    
+                    $cleanId = preg_replace('/[^0-9]/', '', $itemData['id'] ?? 0);
+                    $item = RestaurantItem::find($cleanId) ?? RestaurantCustomItem::find($cleanId);
+
                     $itemName = $itemData['name'] 
                              ?? $itemData['item_name'] 
-                             ?? $itemData['title'] 
                              ?? ($item ? ($item->name ?? $item->title ?? $item->item_name) : null) 
                              ?? 'Food Item';
 
@@ -256,22 +320,44 @@ class RestaurantController extends Controller
                     $quantity = intval($itemData['quantity'] ?? 1);
                     $itemSubtotal = $price * $quantity;
 
+                    $taxPercent = 0;
+                    if ($item) {
+                        $rawTax = $item->tax_percent ?? $item->tax_rate ?? $item->tax ?? 0;
+                        if (is_object($rawTax)) {
+                            $taxPercent = floatval($rawTax->rate ?? $rawTax->tax_percent ?? $rawTax->percent ?? 0);
+                        } else {
+                            $taxPercent = floatval($rawTax);
+                        }
+                    }
+
+                    if ($taxPercent <= 0 && isset($itemData['tax_percent'])) {
+                        $rawTaxPayload = $itemData['tax_percent'];
+                        if (is_object($rawTaxPayload)) {
+                            $taxPercent = floatval($rawTaxPayload->rate ?? $rawTaxPayload->tax_percent ?? 0);
+                        } else {
+                            $taxPercent = floatval($rawTaxPayload);
+                        }
+                    }
+
+                    if ($taxPercent <= 0) {
+                        $taxPercent = 5.00;
+                    }
+
+                    $itemTax = ($itemSubtotal * $taxPercent) / 100;
+
                     RestaurantOrderItem::create([
                         'order_id'       => $order->id,
-                        'item_id'        => $itemData['id'] ?? null,
+                        'item_id'        => $cleanId ?: null,
                         'item_name'      => $itemName,
                         'quantity'       => $quantity,
                         'price'          => $price,
                         'subtotal'       => $itemSubtotal,
-                        'kitchen_status' => 'cooking'
+                        'tax_percent'    => $taxPercent,
+                        'tax_amount'     => $itemTax,
+                        'batch_number'   => 1,
+                        'kitchen_status' => 'pending'
                     ]);
-
-                    $subTotal += $itemSubtotal;
                 }
-
-                $order->sub_total = $subTotal;
-                $order->total_amount = $subTotal + $deliveryCharge;
-                $order->save();
 
                 return $order;
             });
@@ -279,7 +365,6 @@ class RestaurantController extends Controller
             $paymentMethod = strtolower($request->input('payment_method', 'cod'));
             $isOnline = in_array($paymentMethod, ['online', 'upi', 'razorpay', 'phonepe', 'paytm']);
 
-            // Direct route setup for payment or order details
             if ($isOnline) {
                 if (Route::has('payment.process')) {
                     $paymentUrl = route('payment.process', ['order_id' => $order->id]);

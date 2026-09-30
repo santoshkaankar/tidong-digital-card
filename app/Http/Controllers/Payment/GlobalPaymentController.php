@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 class GlobalPaymentController extends Controller
 {
     /**
-     * Checkout View Page / Modal Data
+     * Checkout View Page
      */
     public function checkout($orderId)
     {
@@ -21,13 +21,11 @@ class GlobalPaymentController extends Controller
         $payeeName = "MEENU SHARMA";
         $amount = number_format($order->total_amount, 2, '.', '');
 
-        // Dynamic UPI Link for automatic amount filling in UPI apps
+        // Dynamic UPI Link & QR Code
         $upiString = "upi://pay?pa={$upiId}&pn=" . urlencode($payeeName) . "&am={$amount}&cu=INR&tn=" . urlencode("Order #" . $order->id);
-
-        // QR Code Generator API
         $qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($upiString);
 
-        return view('payment.checkout', compact('order', 'upiId', 'payeeName', 'qrCodeUrl'));
+        return view('payment.checkout', compact('order', 'upiId', 'payeeName', 'qrCodeUrl', 'upiString'));
     }
 
     /**
@@ -55,7 +53,7 @@ class GlobalPaymentController extends Controller
 
             $selectedGateway = strtolower($request->gateway ?? $request->payment_method ?? 'online');
 
-            // 1. CASH / COD -> Send to kitchen and redirect to Order Details page
+            // 1. CASH / COD
             if (in_array($selectedGateway, ['cash', 'cod', 'manual'])) {
                 $order->update([
                     'payment_status' => 'unpaid',
@@ -77,7 +75,7 @@ class GlobalPaymentController extends Controller
                 return $this->redirectToOrderPage($order->id, $msg);
             }
 
-            // 2. RAZORPAY / NET BANKING / CARD INTEGRATION FIX
+            // 2. RAZORPAY / NET BANKING / CARD
             if (in_array($selectedGateway, ['razorpay', 'card', 'netbanking'])) {
                 $razorpayKey = config('services.razorpay.key', 'rzp_test_sample_key');
 
@@ -85,29 +83,14 @@ class GlobalPaymentController extends Controller
                     return response()->json([
                         'status'            => 'modal',
                         'key'               => $razorpayKey,
-                        'amount'            => (float)$order->total_amount * 100, // Amount in paise
+                        'amount'            => (float)$order->total_amount * 100,
                         'razorpay_order_id' => 'order_' . $order->id . '_' . time(),
                         'order_id'          => $order->id
                     ]);
                 }
             }
 
-            // 3. PhonePe Gateway Integration
-            if ($selectedGateway === 'phonepe' && class_exists('App\Gateways\PhonePeGateway')) {
-                $phonepe = new \App\Gateways\PhonePeGateway();
-                $res = $phonepe->createOrder($order->id, $order->total_amount);
-
-                if (isset($res['data']['instrumentResponse']['redirectInfo']['url'])) {
-                    $url = $res['data']['instrumentResponse']['redirectInfo']['url'];
-
-                    if ($request->expectsJson() || $request->ajax()) {
-                        return response()->json(['status' => 'redirect', 'url' => $url]);
-                    }
-                    return redirect()->away($url);
-                }
-            }
-
-            // 4. ONLINE / UPI / QR -> Redirect directly to Checkout Page
+            // 3. ONLINE / UPI / QR Redirect
             if (in_array($selectedGateway, ['qr', 'qr_code', 'online', 'upi'])) {
                 $checkoutUrl = route('payment.checkout', $order->id);
 
@@ -119,14 +102,6 @@ class GlobalPaymentController extends Controller
                     ]);
                 }
                 return redirect()->to($checkoutUrl);
-            }
-
-            // Default Fallback
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'status' => 'redirect',
-                    'url'    => route('payment.checkout', $order->id)
-                ]);
             }
 
             return redirect()->route('payment.checkout', $order->id);
@@ -148,7 +123,7 @@ class GlobalPaymentController extends Controller
             $orderId = $request->order_id ?? $request->merchantTransactionId;
             $order = RestaurantOrder::findOrFail($orderId);
 
-            $commissionRate = 0.05; // 5% Commission
+            $commissionRate = 0.05;
             $adminCommission = $order->total_amount * $commissionRate;
             $vendorPayout = $order->total_amount - $adminCommission;
 
@@ -156,7 +131,7 @@ class GlobalPaymentController extends Controller
                 'payment_status'   => 'paid',
                 'transaction_id'   => $request->transaction_id ?? $request->razorpay_payment_id ?? ('TXN_' . time()),
                 'admin_commission' => $adminCommission,
-                'vendor_payout'     => $vendorPayout,
+                'vendor_payout'    => $vendorPayout,
                 'status'           => 'sent_to_kitchen'
             ]);
 
@@ -179,7 +154,7 @@ class GlobalPaymentController extends Controller
     }
 
     /**
-     * REAL AUTO-TRIGGER: Polling API to check payment status
+     * Polling API to check payment status
      */
     public function checkStatus($orderId)
     {
@@ -190,9 +165,6 @@ class GlobalPaymentController extends Controller
         ]);
     }
 
-    /**
-     * Redirect Route Resolver Helper
-     */
     private function getRedirectUrl($orderId)
     {
         if (Route::has('member.orders.show')) {
@@ -203,9 +175,6 @@ class GlobalPaymentController extends Controller
         return url('/member/orders/' . $orderId);
     }
 
-    /**
-     * Redirect Helper Function
-     */
     private function redirectToOrderPage($orderId, $message)
     {
         return redirect()->to($this->getRedirectUrl($orderId))->with('success', $message);

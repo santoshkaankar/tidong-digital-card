@@ -11,18 +11,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .payment-card {
-            max-width: 480px;
-            margin: 40px auto;
+            max-width: 460px;
+            margin: 30px auto;
             border: none;
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            background: #ffffff;
         }
         .payment-btn {
             text-align: left;
-            padding: 16px 20px;
+            padding: 14px 18px;
             font-weight: 600;
             border-radius: 12px;
             display: flex;
@@ -30,31 +32,31 @@
             justify-content: space-between;
             transition: all 0.2s ease;
             text-decoration: none;
-            border: 1px solid #dee2e6;
+            border: 1px solid #e2e8f0;
             background: #ffffff;
-            color: #212529;
+            color: #1e293b;
             width: 100%;
         }
         .payment-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            background: #f1f5f9;
-            color: #0d6efd;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
         .qr-box {
-            border: 2px dashed #0d6efd;
+            border: 2px dashed #3b82f6;
             padding: 12px;
-            border-radius: 12px;
-            background: #fff;
+            border-radius: 14px;
+            background: #ffffff;
             display: inline-block;
         }
         .pulse-box {
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
-            0% { opacity: 0.6; }
+            0% { opacity: 0.7; }
             50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            100% { opacity: 0.7; }
         }
     </style>
 </head>
@@ -62,11 +64,11 @@
 
 <div class="container">
     <div class="card payment-card p-4">
-        <div class="text-center mb-4">
+        <div class="text-center mb-3">
             <h4 class="fw-bold text-primary mb-1">
                 <i class="fas fa-shield-alt me-2"></i>Tidong Secure Payment
             </h4>
-            <p class="text-muted small">Select payment method for Order #{{ $order->id }}</p>
+            <p class="text-muted small">Order #{{ $order->id }} ke liye payment method chunein</p>
         </div>
 
         <div class="bg-light rounded-3 p-3 text-center mb-3 border">
@@ -74,69 +76,59 @@
             <h2 class="fw-bold mb-0 text-dark">₹{{ number_format($order->total_amount, 2) }}</h2>
         </div>
 
-        @php
-            $upiId = "6395392537@ybl";
-            $payeeName = "MEENU SHARMA";
-            $billAmount = number_format($order->total_amount, 2, '.', '');
-            $upiString = "upi://pay?pa={$upiId}&pn=" . urlencode($payeeName) . "&am={$billAmount}&cu=INR&tn=" . urlencode("Order #" . $order->id);
-            $qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" . urlencode($upiString);
-        @endphp
-
         <!-- Dynamic QR Code Option -->
         <div class="text-center mb-3">
             <div class="qr-box">
-                <img src="{{ $qrApiUrl }}" alt="Scan & Pay QR" style="width: 170px; height: 170px; object-fit: contain;">
+                <img src="{{ $qrCodeUrl ?? $qrApiUrl }}" alt="Scan & Pay QR" style="width: 170px; height: 170px; object-fit: contain;">
             </div>
-            <p class="small text-muted mt-2 mb-1">Scan & Pay via Any UPI App (MEENU SHARMA)</p>
+            <p class="small text-muted mt-2 mb-1">Kisi bhi UPI App se Scan karke pay karein ({{ $payeeName }})</p>
             
             <div id="autoDetectAlert" class="alert alert-info py-2 small fw-bold pulse-box my-2">
-                <i class="fas fa-spinner fa-spin me-2"></i> Auto-Detecting Payment Status...
+                <i class="fas fa-spinner fa-spin me-2"></i> Payment status detect ho raha hai...
             </div>
 
-            <button onclick="confirmQrPayment()" id="qrConfirmBtn" class="btn btn-sm btn-success fw-bold w-100 py-2">
-                <i class="fas fa-check-circle me-1"></i> I Have Paid via QR Code
+            <button onclick="confirmQrPayment()" id="qrConfirmBtn" class="btn btn-sm btn-success fw-bold w-100 py-2 rounded-3">
+                <i class="fas fa-check-circle me-1"></i> Maine QR Code Se Payment Kar Diya
             </button>
         </div>
 
-        <div class="text-center text-muted small mb-3">─── OR PAY VIA GATEWAY ───</div>
+        <div class="text-center text-muted small my-2">─── YA GATEWAY SE PAY KAREIN ───</div>
 
         <!-- Payment Options -->
-        <div class="d-grid gap-3">
-            <!-- Mobile vs Desktop handle for UPI Apps -->
-            <button onclick="handleUpiClick('{{ $upiString }}')" class="btn payment-btn text-primary">
-                <span><i class="fas fa-mobile-alt me-3"></i>UPI Apps / PhonePe / GPay / Paytm</span>
+        <div class="d-grid gap-2 mt-2">
+            <button onclick="handleUpiClick('{{ $upiString }}')" class="btn payment-btn">
+                <span><i class="fas fa-mobile-alt me-3 text-primary"></i>UPI Apps / PhonePe / GPay / Paytm</span>
                 <i class="fas fa-chevron-right text-muted"></i>
             </button>
 
-            <button onclick="processCheckout('netbanking')" class="btn payment-btn text-dark">
+            <button onclick="processCheckout('netbanking')" class="btn payment-btn">
                 <span><i class="fas fa-university me-3 text-secondary"></i>Net Banking (All Indian Banks)</span>
                 <i class="fas fa-chevron-right text-muted"></i>
             </button>
 
-            <button onclick="processCheckout('card')" class="btn payment-btn text-dark">
+            <button onclick="processCheckout('card')" class="btn payment-btn">
                 <span><i class="far fa-credit-card me-3 text-success"></i>Debit / Credit Card</span>
                 <i class="fas fa-chevron-right text-muted"></i>
             </button>
         </div>
 
-        <div id="loadingSpinner" class="text-center mt-4 d-none">
+        <div id="loadingSpinner" class="text-center mt-3 d-none">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="small text-muted mt-2">Connecting Payment Gateway...</p>
+            <p class="small text-muted mt-2">Payment Gateway Connect Ho Raha Hai...</p>
         </div>
     </div>
 </div>
 
-<!-- Razorpay Standard Checkout SDK -->
+<!-- Razorpay SDK -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-// Target Order Page Link
 const orderId = "{{ $order->id }}";
 const targetOrderUrl = "{{ Route::has('member.orders.show') ? route('member.orders.show', $order->id) : '/member/orders/' . $order->id }}";
 
-// 1. REAL AUTO-TRIGGER: BACKGROUND CHECK EVERY 3 SECONDS
+// Background Status Checker (Every 3 seconds)
 let autoCheckInterval = setInterval(() => {
     fetch("/payment/check-status/" + orderId, {
         method: "GET",
@@ -151,7 +143,7 @@ let autoCheckInterval = setInterval(() => {
             clearInterval(autoCheckInterval);
             const alertBox = document.getElementById('autoDetectAlert');
             alertBox.className = "alert alert-success py-2 small fw-bold my-2";
-            alertBox.innerHTML = '<i class="fas fa-check-circle me-1"></i> Payment Received! Redirecting...';
+            alertBox.innerHTML = '<i class="fas fa-check-circle me-1"></i> Payment Mil Gaya! Redirecting...';
             setTimeout(() => {
                 window.location.href = data.redirect_url || targetOrderUrl;
             }, 1000);
@@ -160,17 +152,15 @@ let autoCheckInterval = setInterval(() => {
     .catch(err => console.log('Checking payment status...'));
 }, 3000);
 
-// Smart UPI App Click Handler (Mobile vs Desktop)
 function handleUpiClick(upiLink) {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) {
         window.location.href = upiLink;
     } else {
-        alert("Direct UPI app launching is not supported on Desktop. Please scan the QR code using your phone UPI app.");
+        alert("Desktop par direct UPI app support nahi hai. Please apne phone se QR Code scan karein.");
     }
 }
 
-// 2. QR Code Payment Confirmation Function
 function confirmQrPayment() {
     const qrBtn = document.getElementById('qrConfirmBtn');
     qrBtn.disabled = true;
@@ -190,32 +180,25 @@ function confirmQrPayment() {
     })
     .then(async response => {
         const text = await response.text();
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            throw new Error("Server Error");
-        }
-        return data;
+        return JSON.parse(text);
     })
     .then(data => {
         if (data.status === 'success') {
-            alert('Payment Successful! Your order has been sent to the kitchen.');
+            alert('Payment Successful! Aapka order kitchen ko bhej diya gaya hai.');
             window.location.href = data.redirect_url || targetOrderUrl;
         } else {
-            alert(data.message || 'Payment could not be verified.');
+            alert(data.message || 'Payment verify nahi ho saka.');
             qrBtn.disabled = false;
-            qrBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> I Have Paid via QR Code';
+            qrBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Maine QR Code Se Payment Kar Diya';
         }
     })
     .catch(error => {
         qrBtn.disabled = false;
-        qrBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> I Have Paid via QR Code';
-        alert('Server connection error. Please try again.');
+        qrBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Maine QR Code Se Payment Kar Diya';
+        alert('Server connection error. Kripya punah prayas karein.');
     });
 }
 
-// 3. Gateway Checkout Handler (Razorpay / Net Banking / Card)
 function processCheckout(gateway) {
     const loadingSpinner = document.getElementById('loadingSpinner');
     loadingSpinner.classList.remove('d-none');
@@ -234,15 +217,8 @@ function processCheckout(gateway) {
     })
     .then(async response => {
         const text = await response.text();
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            throw new Error("Payment Error");
-        }
-        if (!response.ok) {
-            throw new Error(data.message || 'Payment Error');
-        }
+        const data = JSON.parse(text);
+        if (!response.ok) throw new Error(data.message || 'Payment Error');
         return data;
     })
     .then(data => {
@@ -250,12 +226,10 @@ function processCheckout(gateway) {
 
         if (data.status === 'redirect' && data.url) {
             window.location.href = data.url;
-        } 
-        else if (data.status === 'success') {
-            alert('Payment request submitted successfully!');
+        } else if (data.status === 'success') {
+            alert('Payment request submit ho gayi!');
             window.location.href = data.redirect_url || targetOrderUrl;
-        }
-        else if (data.status === 'modal') {
+        } else if (data.status === 'modal') {
             const options = {
                 "key": data.key,
                 "amount": data.amount,
@@ -266,14 +240,12 @@ function processCheckout(gateway) {
                 "handler": function (response) {
                     verifyPayment(response);
                 },
-                "theme": {
-                    "color": "#0d6efd"
-                }
+                "theme": { "color": "#0d6efd" }
             };
             const rzp = new Razorpay(options);
             rzp.open();
         } else {
-            alert('Payment process failed. Please try paying via QR Code.');
+            alert('Payment process fail ho gaya. QR Code se pay karein.');
         }
     })
     .catch(error => {
@@ -282,7 +254,6 @@ function processCheckout(gateway) {
     });
 }
 
-// 4. Razorpay Callback Verification Function
 function verifyPayment(paymentData) {
     paymentData.order_id = orderId;
     fetch("{{ route('payment.callback') }}", {
@@ -296,16 +267,7 @@ function verifyPayment(paymentData) {
     })
     .then(async response => {
         const text = await response.text();
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            throw new Error("Server Error");
-        }
-        if (!response.ok) {
-            throw new Error(data.message || 'Verification failed');
-        }
-        return data;
+        return JSON.parse(text);
     })
     .then(data => {
         if (data.status === 'success') {

@@ -17,10 +17,10 @@ class RestaurantOrderItem extends Model
         'item_name', 
         'quantity', 
         'price', 
-        'tax_amount',
         'subtotal',
         'batch_number', 
         'kitchen_status', 
+        'tax_amount',
         'item_notes'
     ];
 

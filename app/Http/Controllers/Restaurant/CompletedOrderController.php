@@ -9,15 +9,15 @@ use Illuminate\Support\Facades\Auth;
 class CompletedOrderController extends Controller
 {
     /**
-     * Fetch Completed / Served Orders
+     * Fetch Completed / Served / Delivered Orders
      */
     public function index()
     {
         $completedOrders = RestaurantOrder::with(['items.restaurantItem.globalItem', 'table'])
             ->where('user_id', Auth::id())
-            ->whereIn('status', ['served', 'completed'])
+            ->whereIn('status', ['served', 'delivered', 'completed'])
             ->orderBy('updated_at', 'desc')
-            ->take(20)
+            ->take(30)
             ->get();
 
         return response()->json([
