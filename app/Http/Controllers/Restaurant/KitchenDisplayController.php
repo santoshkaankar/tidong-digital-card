@@ -116,12 +116,12 @@ class KitchenDisplayController extends Controller
         ]);
     }
 
-    // Complete Flow Status Handler
+    // Workflow Fix: Order Type Check logic added
     public function updateOrderStatus(Request $request, $id)
     {
         try {
             $request->validate([
-                'status' => 'required|in:pending,accepted,cooking,preparing,ready,pickedup,served,delivered,completed,cancelled',
+                'status' => 'required|in:pending,accepted,cooking,preparing,ready,pickedup,picked_up,served,on_the_way,out_for_delivery,delivered,completed,cancelled',
                 'payment_status' => 'nullable|string'
             ]);
 
@@ -135,18 +135,31 @@ class KitchenDisplayController extends Controller
                 ], 404);
             }
 
-            $order->status = $request->status;
+            $requestedStatus = $request->status;
+
+            // DINE-IN orders convert to 'served' upon completion in Kitchen
+            // DELIVERY orders MUST remain 'ready' so Delivery Boy can accept it
+            if ($order->order_type === 'dine_in') {
+                if (in_array($requestedStatus, ['ready', 'pickedup', 'picked_up', 'served'])) {
+                    $order->status = 'served';
+                } else {
+                    $order->status = $requestedStatus;
+                }
+            } else {
+                $order->status = $requestedStatus;
+            }
 
             if ($request->filled('payment_status')) {
                 $order->payment_status = $request->payment_status;
             }
 
-            // Sync item kitchen_status based on main order status
-            $itemKitchenStatus = match($request->status) {
+            // Correct Item level kitchen_status synchronization
+            $itemKitchenStatus = match($order->status) {
                 'pending' => 'pending',
                 'accepted', 'cooking', 'preparing' => 'cooking',
                 'ready' => 'ready',
-                'pickedup', 'served', 'delivered', 'completed' => 'served',
+                'served' => 'served',
+                'pickedup', 'picked_up', 'on_the_way', 'out_for_delivery', 'delivered', 'completed' => ($order->order_type === 'dine_in' ? 'served' : 'delivered'),
                 'cancelled' => 'cancelled',
                 default => 'cooking'
             };
@@ -156,8 +169,8 @@ class KitchenDisplayController extends Controller
 
             $order->save();
 
-            // Table Auto Release Logic on Complete / Cancel
-            if (in_array($request->status, ['completed', 'cancelled', 'delivered']) && $order->table_id) {
+            // Table release logic for Dine-in orders
+            if (in_array($order->status, ['completed', 'cancelled', 'served']) && $order->table_id) {
                 RestaurantTable::where('id', $order->table_id)
                     ->where('user_id', $userId)
                     ->update([
@@ -193,7 +206,7 @@ class KitchenDisplayController extends Controller
         $order = RestaurantOrder::where('user_id', $userId)->findOrFail($id);
 
         $order->payment_status = 'paid';
-        $order->status = ($order->order_type === 'delivery') ? 'delivered' : 'completed';
+        $order->status = 'completed';
         $order->save();
 
         if ($order->table_id) {
@@ -207,7 +220,36 @@ class KitchenDisplayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => __('Payment received and order status updated successfully.')
+            'message' => __('Payment received and order marked as completed.')
         ]);
     }
+
+    public function verifyHandoverOtp(Request $request, $id)
+{
+    $request->validate([
+        'otp' => 'required|string|size:4'
+    ]);
+
+    $userId = Auth::id();
+    $order = RestaurantOrder::where('user_id', $userId)->where('id', $id)->first();
+
+    if (!$order) {
+        return response()->json(['success' => false, 'message' => 'Order not found!'], 404);
+    }
+
+    if ($order->delivery_otp === $request->otp) {
+        // Status ko 'completed' set karein taaki KDS Active list se hat jaye
+        $order->status = 'completed';
+        // Agar payment status pending tha toh use bhi paid mark kar sakte hain
+        $order->payment_status = 'paid';
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP Verified! Order completed successfully.'
+        ]);
+    }
+
+    return response()->json(['success' => false, 'message' => 'Invalid OTP! Please try again.'], 422);
+}
 }

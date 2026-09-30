@@ -77,7 +77,6 @@ class CustomerRestaurantController extends Controller
             $paymentMethod = strtolower($request->input('payment_method', 'cash'));
             $paymentStatus = strtolower($request->input('payment_status', 'unpaid'));
 
-            // STRICT CHECK: Unpaid online dine-in orders block hongi
             if (!in_array($paymentMethod, ['cash', 'cod', 'dine_in']) && $paymentStatus !== 'paid') {
                 return response()->json([
                     'success' => false,
@@ -173,7 +172,7 @@ class CustomerRestaurantController extends Controller
         }
     }
 
-    // 3. Live Order Status Polling for Customer
+    // 3. Live Order Status Polling mapped with Step 1 to Step 7 Workflow
     public function getOrderStatus($token, $order_id)
     {
         $table = RestaurantTable::where('qr_code_token', $token)->firstOrFail();
@@ -184,27 +183,30 @@ class CustomerRestaurantController extends Controller
             ->firstOrFail();
 
         $statusText = match (strtolower($order->status)) {
-            'pending'   => 'Order Placed',
-            'accepted'  => 'Order Accepted',
-            'cooking', 'preparing' => 'Preparing / Cooking',
-            'ready'     => 'Food Ready',
-            'pickedup'  => 'Picked Up',
-            'served'    => 'Served',
-            'delivered' => 'Delivered',
-            'completed' => 'Completed',
-            'cancelled' => 'Cancelled',
-            default     => 'Order Processing',
+            'pending'                  => 'Step 1: Order Pending (Awaiting Accept)',
+            'accepted', 'cooking', 
+            'preparing'                => 'Step 2: Cooking in Kitchen',
+            'ready', 'ready_for_pickup'=> 'Step 3: Food Ready & Packed',
+            'served'                   => 'Step 4: Served (Dine-in)',
+            'picked_up', 'pickedup'    => 'Step 4: Picked Up (Delivery)',
+            'on_the_way', 
+            'out_for_delivery'         => 'Step 5: On The Way to Location',
+            'delivered'                => 'Step 6: Order Delivered',
+            'completed'                => 'Step 7: Order Completed & Settled',
+            'cancelled'                => 'Order Cancelled',
+            default                    => 'Order Processing',
         };
 
         $badgeClass = match (strtolower($order->status)) {
-            'pending'   => 'bg-secondary text-white',
-            'accepted'  => 'bg-warning text-dark',
-            'cooking', 'preparing' => 'bg-primary text-white',
-            'ready'     => 'bg-info text-white',
-            'pickedup', 'served' => 'bg-primary text-white',
-            'delivered', 'completed' => 'bg-success text-white',
-            'cancelled' => 'bg-danger text-white',
-            default     => 'bg-secondary text-white',
+            'pending'                  => 'bg-secondary text-white',
+            'accepted', 'cooking', 
+            'preparing'                => 'bg-warning text-dark',
+            'ready'                    => 'bg-info text-white',
+            'picked_up', 'pickedup', 
+            'served', 'on_the_way'      => 'bg-primary text-white',
+            'delivered', 'completed'   => 'bg-success text-white',
+            'cancelled'                => 'bg-danger text-white',
+            default                    => 'bg-secondary text-white',
         };
 
         $groupedItems = $order->items->groupBy('item_id')->map(function($items) {

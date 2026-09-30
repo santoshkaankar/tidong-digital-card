@@ -4,205 +4,207 @@ namespace App\Http\Controllers\Delivery;
 
 use App\Http\Controllers\Controller;
 use App\Models\Restaurant\RestaurantOrder;
-use App\Models\Restaurant\RestaurantOrderItem;
-use App\Models\Restaurant\RestaurantTable;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DeliveryOrderController extends Controller
 {
-    // Live Pickups & Active Orders List
+    /**
+     * Show available orders ready for delivery & active orders assigned to rider
+     */
     public function index()
     {
-        $deliveryBoyId = auth()->id();
+        $deliveryBoyId = Auth::id();
 
-        // 1. Available restaurant orders for pickup
-        $availableOrders = RestaurantOrder::whereIn('status', ['ready', 'ready_for_pickup'])
+        // 1. Available Pickup Orders (Status: ready & Order Type: delivery)
+        $availableOrders = RestaurantOrder::with(['items', 'restaurant'])
+            ->where('order_type', 'delivery')
+            ->where('status', 'ready')
             ->whereNull('delivery_boy_id')
-            ->latest()
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        // 2. Orders currently being delivered by this delivery boy
-        $activeOrders = RestaurantOrder::where('delivery_boy_id', $deliveryBoyId)
-            ->whereIn('status', ['accepted', 'picked_up', 'out_for_delivery'])
-            ->latest()
+        // 2. Active Orders assigned to this rider
+        $activeOrders = RestaurantOrder::with(['items', 'restaurant'])
+            ->where('delivery_boy_id', $deliveryBoyId)
+            ->whereIn('status', ['accepted', 'pickedup', 'picked_up', 'on_the_way', 'out_for_delivery'])
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return view('delivery.orders.index', compact('availableOrders', 'activeOrders'));
     }
 
-    // Accept Order (Pickup) & System Auto-Generate OTPs
+    /**
+     * Accept Order by Delivery Partner & Generate Delivery OTP
+     */
     public function accept($id)
     {
-        $order = RestaurantOrder::findOrFail($id);
+        try {
+            $order = RestaurantOrder::where('id', $id)
+                ->where('status', 'ready')
+                ->whereNull('delivery_boy_id')
+                ->first();
 
-        if (!in_array($order->status, ['ready', 'ready_for_pickup'])) {
-            return back()->with('error', 'Order is no longer available for pickup.');
+            if (!$order) {
+                if (request()->wantsJson() || request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Order is no longer available or already taken.'
+                    ], 400);
+                }
+                return redirect()->back()->with('error', 'Order is no longer available or already taken.');
+            }
+
+            // Assign Delivery Partner
+            $order->delivery_boy_id = Auth::id();
+            $order->status = 'out_for_delivery';
+
+            // Generate Pickup OTP if not generated yet (4 Digits)
+            if (empty($order->pickup_otp)) {
+                $order->pickup_otp = rand(1000, 9999);
+            }
+
+            // Generate Delivery OTP for Customer Verification (4 Digits)
+            if (empty($order->delivery_otp)) {
+                $order->delivery_otp = rand(1000, 9999);
+            }
+
+            $order->save();
+
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order accepted successfully!',
+                    'redirect_url' => route('delivery.orders.index')
+                ]);
+            }
+
+            return redirect()->route('delivery.orders.index')->with('success', 'Order accepted successfully! Delivery OTP generated.');
+
+        } catch (\Exception $e) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error accepting order: ' . $e->getMessage());
         }
-
-        // Generate In-House 4-Digit Pickup & Delivery OTPs if not generated
-        if (empty($order->pickup_otp)) {
-            $order->pickup_otp = rand(1000, 9999);
-        }
-        if (empty($order->delivery_otp)) {
-            $order->delivery_otp = rand(1000, 9999);
-        }
-
-        $order->delivery_boy_id = auth()->id();
-        $order->status = 'accepted';
-        $order->save();
-
-        return back()->with('success', 'Order accepted! Proceed to pickup store.');
     }
 
-    // 1. Verify Pickup OTP (Store -> Delivery Boy)
+    /**
+     * Verify Pickup OTP from Restaurant
+     */
     public function verifyPickupOtp(Request $request, $id)
     {
         $request->validate([
-            'otp' => 'required|numeric|digits:4'
+            'pickup_otp' => 'required|digits:4'
         ]);
 
         $order = RestaurantOrder::where('id', $id)
-            ->where('delivery_boy_id', auth()->id())
-            ->firstOrFail();
+            ->where('delivery_boy_id', Auth::id())
+            ->first();
 
-        if ($order->pickup_otp == $request->otp) {
-            $order->status = 'out_for_delivery';
-            $order->save();
-
-            RestaurantOrderItem::where('order_id', $order->id)
-                ->update(['kitchen_status' => 'served']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Pickup OTP matched! Order picked up successfully.'
-            ]);
+        if (!$order) {
+            return redirect()->back()->with('error', 'Order not found.');
         }
 
-        return response()->json(['success' => false, 'message' => 'Invalid Pickup OTP.'], 422);
+        if ($order->pickup_otp && $order->pickup_otp != $request->pickup_otp) {
+            return redirect()->back()->with('error', 'Invalid Pickup OTP! Please check with store.');
+        }
+
+        $order->status = 'pickedup';
+        $order->save();
+
+        return redirect()->route('delivery.orders.index')->with('success', 'Order picked up successfully!');
     }
 
-    // 2. Verify Delivery OTP & Auto-Update Dedicated Wallet
-    public function verifyDeliveryOtp(Request $request, $id)
+    /**
+     * Update Live Status (On the way / Delivered)
+     */
+    public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'otp' => 'required|numeric|digits:4'
+            'status' => 'required|in:pickedup,on_the_way,out_for_delivery,delivered,completed'
         ]);
 
         $order = RestaurantOrder::where('id', $id)
-            ->where('delivery_boy_id', auth()->id())
-            ->firstOrFail();
+            ->where('delivery_boy_id', Auth::id())
+            ->first();
 
-        if ($order->delivery_otp != $request->otp) {
-            return response()->json(['success' => false, 'message' => 'Invalid Delivery OTP.'], 422);
+        if (!$order) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Order not found.'], 404);
+            }
+            return redirect()->back()->with('error', 'Order not found.');
         }
 
-        DB::transaction(function () use ($order) {
-            // A. Mark Order Delivered
-            $order->status = 'delivered';
-            $order->delivered_at = now();
+        $order->status = $request->status;
+        if (in_array($request->status, ['delivered', 'completed'])) {
             $order->payment_status = 'paid';
-            $order->save();
+        }
+        $order->save();
 
-            // Release table if associated
-            if ($order->table_id) {
-                RestaurantTable::where('id', $order->table_id)->update([
-                    'status'           => 'available',
-                    'current_order_id' => null
-                ]);
-            }
-
-            // B. Get or Create Dedicated Delivery Wallet
-            $userId = auth()->id();
-            $wallet = DB::table('delivery_wallets')->where('user_id', $userId)->first();
-
-            if (!$wallet) {
-                $walletId = DB::table('delivery_wallets')->insertGetId([
-                    'user_id'         => $userId,
-                    'earning_balance' => 0.00,
-                    'cash_in_hand'    => 0.00,
-                    'created_at'      => now(),
-                    'updated_at'      => now(),
-                ]);
-                $wallet = DB::table('delivery_wallets')->where('id', $walletId)->first();
-            }
-
-            // C. Add Delivery Earning Commission
-            $deliveryFee = $order->delivery_charge ?? $order->delivery_fee ?? 40.00;
-
-            DB::table('delivery_wallets')
-                ->where('user_id', $userId)
-                ->increment('earning_balance', $deliveryFee);
-
-            DB::table('delivery_wallet_transactions')->insert([
-                'user_id'     => $userId,
-                'order_id'    => $order->id,
-                'type'        => 'earning_credit',
-                'amount'      => $deliveryFee,
-                'description' => "Delivery payout for Order #{$order->id}",
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
-
-            // D. Check COD and Track Cash in Hand
-            $paymentType = strtolower($order->payment_type ?? $order->payment_mode ?? $order->payment_method ?? '');
-            if (in_array($paymentType, ['cod', 'cash'])) {
-                $codAmount = $order->total_amount ?? $order->grand_total ?? 0.00;
-
-                DB::table('delivery_wallets')
-                    ->where('user_id', $userId)
-                    ->increment('cash_in_hand', $codAmount);
-
-                DB::table('delivery_wallet_transactions')->insert([
-                    'user_id'     => $userId,
-                    'order_id'    => $order->id,
-                    'type'        => 'cod_cash_collected',
-                    'amount'      => $codAmount,
-                    'description' => "Cash Collected (COD) for Order #{$order->id}",
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
-            }
-        });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Delivery OTP verified successfully! Order marked delivered.'
-        ]);
-    }
-
-    // Direct Complete (Backup Method)
-    public function complete($id)
-    {
-        $order = RestaurantOrder::where('id', $id)
-            ->where('delivery_boy_id', auth()->id())
-            ->firstOrFail();
-
-        $order->update([
-            'status' => 'delivered',
-            'delivered_at' => now(),
-            'payment_status' => 'paid',
-        ]);
-
-        if ($order->table_id) {
-            RestaurantTable::where('id', $order->table_id)->update([
-                'status'           => 'available',
-                'current_order_id' => null
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order status updated to ' . $order->status
             ]);
         }
 
-        return redirect()->route('delivery.orders.history')
-            ->with('success', 'Order delivered successfully!');
+        return redirect()->route('delivery.orders.index')->with('success', 'Order status updated successfully!');
     }
 
-    // Delivery History
+    /**
+     * Complete Order with Delivery OTP Verification
+     */
+    public function complete(Request $request, $id)
+    {
+        $request->validate([
+            'delivery_otp' => 'required|digits:4'
+        ]);
+
+        $order = RestaurantOrder::where('id', $id)
+            ->where('delivery_boy_id', Auth::id())
+            ->first();
+
+        if (!$order) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Order not found.'], 404);
+            }
+            return redirect()->back()->with('error', 'Order not found.');
+        }
+
+        // Verify Customer Delivery OTP
+        if ($order->delivery_otp && $order->delivery_otp != $request->delivery_otp) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Invalid Customer Delivery OTP!'], 422);
+            }
+            return redirect()->back()->with('error', 'Invalid Delivery OTP! Please ask customer for correct 4-digit code.');
+        }
+
+        // Complete Order & Update Payment
+        $order->status = 'completed';
+        $order->payment_status = 'paid';
+        $order->save();
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order delivered and completed successfully!'
+            ]);
+        }
+
+        return redirect()->route('delivery.orders.index')->with('success', 'Order delivered & completed successfully!');
+    }
+
+    /**
+     * Order History
+     */
     public function history()
     {
-        $orders = RestaurantOrder::where('delivery_boy_id', auth()->id())
-            ->where('status', 'delivered')
-            ->latest()
-            ->get();
+        $completedOrders = RestaurantOrder::where('delivery_boy_id', Auth::id())
+            ->whereIn('status', ['delivered', 'completed'])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(15);
 
-        return view('delivery.orders.history', compact('orders'));
+        return view('delivery.orders.history', compact('completedOrders'));
     }
 }

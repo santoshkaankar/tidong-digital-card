@@ -131,6 +131,9 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
 
     // Order Status Update
     Route::post('/kitchen-orders/{id}/status', [KitchenDisplayController::class, 'updateOrderStatus'])->name('kitchen_order.update_status');
+    
+    //Otp
+    Route::post('/kitchen-orders/{id}/verify-otp', [KitchenDisplayController::class, 'verifyHandoverOtp'])->name('.kitchen.verify-otp');
 
     // Completed Orders Log Route
     Route::get('/completed-orders', [CompletedOrderController::class, 'index'])->name('completed_orders.index');

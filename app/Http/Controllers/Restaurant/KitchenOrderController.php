@@ -13,12 +13,12 @@ class KitchenOrderController extends Controller
 {
     /**
      * Complete Order Flow Status Route Handler
-     * Pending -> Accepted -> Cooking -> Ready -> Pickedup -> Served -> Delivered -> Completed -> Cancelled
+     * 1. pending -> 2. cooking -> 3. ready -> 4. served/picked_up -> 5. on_the_way -> 6. delivered -> 7. completed
      */
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,accepted,cooking,preparing,ready,pickedup,served,delivered,cancelled,completed'
+            'status' => 'required|in:pending,accepted,cooking,preparing,ready,pickedup,picked_up,served,on_the_way,out_for_delivery,delivered,cancelled,completed'
         ]);
 
         $order = RestaurantOrder::where('id', $id)
@@ -26,13 +26,24 @@ class KitchenOrderController extends Controller
             ->first();
 
         if ($order) {
-            $order->status = $request->status;
+            $status = $request->status;
+
+            // Auto Split logic: Only Dine-in gets converted to 'served'
+            if ($order->order_type === 'dine_in') {
+                if (in_array($status, ['ready', 'pickedup', 'picked_up'])) {
+                    $status = 'served';
+                }
+            }
+
+            $order->status = $status;
             
-            $itemKitchenStatus = match($request->status) {
+            // Sync kitchen status accurately without breaking delivery flow
+            $itemKitchenStatus = match($status) {
                 'pending' => 'pending',
                 'accepted', 'cooking', 'preparing' => 'cooking',
                 'ready' => 'ready',
-                'pickedup', 'served', 'delivered', 'completed' => 'served',
+                'served' => 'served',
+                'pickedup', 'picked_up', 'on_the_way', 'out_for_delivery', 'delivered', 'completed' => ($order->order_type === 'dine_in' ? 'served' : 'delivered'),
                 'cancelled' => 'cancelled',
                 default => 'cooking'
             };
@@ -42,8 +53,8 @@ class KitchenOrderController extends Controller
 
             $order->save();
 
-            // Release Table if Order Completed or Cancelled or Delivered
-            if (in_array($request->status, ['completed', 'cancelled', 'delivered']) && $order->table_id) {
+            // Release Table when Order completed or cancelled
+            if (in_array($order->status, ['completed', 'cancelled']) && $order->table_id) {
                 RestaurantTable::where('id', $order->table_id)
                     ->where('user_id', Auth::id())
                     ->update([

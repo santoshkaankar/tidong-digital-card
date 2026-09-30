@@ -2,11 +2,10 @@
     <div class="row g-3">
         @foreach($activeOrders as $order)
             @php
-                // Table/Room Number Clean-up
                 $rawTable = $order->table->table_number ?? $order->table_id ?? 'N/A';
                 $cleanTable = preg_replace('/^table\s*#?/i', '', trim($rawTable));
+                $orderType = strtolower($order->order_type ?? 'dine_in');
 
-                // Group Duplicate Items & Prepare Speech Text
                 $groupedItems = [];
                 $itemSpeechList = [];
 
@@ -14,14 +13,10 @@
                     foreach($order->items as $item) {
                         $iName = $item->item_name ?? $item->name ?? ($item->restaurantItem->globalItem->name ?? 'Item');
                         if(!isset($groupedItems[$iName])) {
-                            $groupedItems[$iName] = [
-                                'name' => $iName,
-                                'quantity' => 0
-                            ];
+                            $groupedItems[$iName] = ['name' => $iName, 'quantity' => 0];
                         }
                         $groupedItems[$iName]['quantity'] += $item->quantity;
                     }
-
                     foreach($groupedItems as $gItem) {
                         $itemSpeechList[] = $gItem['quantity'] . ' ' . $gItem['name'];
                     }
@@ -42,17 +37,15 @@
                                 <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                     <h6 class="fw-bold mb-0" style="color: var(--text-main);">#{{ $order->order_number ?? 'ORD-'.$order->id }}</h6>
                                     
-                                    <span class="badge bg-warning text-dark fw-bold">Table {{ $cleanTable }}</span>
-                                    
-                                    @if($order->status === 'pending')
-                                        <span class="badge bg-warning text-dark fw-bold">WAITING</span>
-                                    @elseif($order->status === 'cooking')
-                                        <span class="badge bg-primary text-white fw-bold">COOKING</span>
-                                    @elseif($order->status === 'ready' || $order->status === 'served')
-                                        <span class="badge bg-success text-white fw-bold">SERVED</span>
+                                    @if($orderType === 'delivery')
+                                        <span class="badge bg-primary fw-bold"><i class="bi bi-truck me-1"></i>DELIVERY</span>
+                                    @elseif($orderType === 'takeaway')
+                                        <span class="badge bg-info text-dark fw-bold"><i class="bi bi-bag-check me-1"></i>TAKEAWAY</span>
                                     @else
-                                        <span class="badge bg-secondary text-white">{{ strtoupper($order->status) }}</span>
+                                        <span class="badge bg-warning text-dark fw-bold">Table {{ $cleanTable }}</span>
                                     @endif
+                                    
+                                    <span class="badge bg-secondary text-white">{{ strtoupper($order->status) }}</span>
 
                                     @if($isOnlinePaid)
                                         <span class="badge bg-info text-dark"><i class="bi bi-patch-check-fill me-1"></i>ONLINE PAID</span>
@@ -77,16 +70,30 @@
                             @endif
                         </div>
 
-                        <!-- Complete Action Buttons Workflow -->
+                        <!-- Dynamic Action Buttons Workflow -->
                         <div class="d-flex align-items-center gap-2">
-                            @if($order->status === 'pending')
+                            @if($order->status === 'pending' || $order->status === 'waiting')
                                 <button type="button" class="btn btn-success btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'cooking')">
                                     <i class="bi bi-check-circle me-1"></i> Accept
                                 </button>
+
                             @elseif($order->status === 'cooking')
-                                <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'served')">
-                                    <i class="bi bi-tray-fill me-1"></i> Serve Order
+                                @if(in_array($orderType, ['delivery', 'takeaway']))
+                                    <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'ready')">
+                                        <i class="bi bi-box-seam me-1"></i> Mark Ready
+                                    </button>
+                                @else
+                                    <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'served')">
+                                        <i class="bi bi-tray-fill me-1"></i> Serve Order
+                                    </button>
+                                @endif
+
+                            @elseif($order->status === 'ready' && $orderType === 'delivery')
+                                <!-- Delivery Boy Picked Up OTP Handover Button -->
+                                <button type="button" class="btn btn-warning text-dark btn-sm px-3 fw-bold" onclick="openOtpHandoverModal({{ $order->id }}, '{{ $order->order_number }}')">
+                                    <i class="bi bi-shield-lock-fill me-1"></i> Handover (Verify OTP)
                                 </button>
+
                             @else
                                 <button type="button" class="btn btn-dark btn-sm px-3 fw-bold" onclick="handleOrderDone({{ $order->id }}, {{ $isOnlinePaid ? 'true' : 'false' }}, '{{ $order->order_number ?? 'ORD-'.$order->id }}')">
                                     <i class="bi bi-check2-all me-1"></i> Mark Done
@@ -98,7 +105,7 @@
                             </button>
 
                             <!-- Voice Notification Megaphone -->
-                            <button type="button" class="btn btn-light btn-sm rounded-circle p-2" title="Announce Order" onclick="KDS_NOTIFIER.playNewOrderAlert('Table {{ $cleanTable }}', '{{ addslashes($speechItemsText) }}')">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle p-2" title="Announce Order" onclick="KDS_NOTIFIER.playNewOrderAlert('{{ $orderType === 'delivery' ? 'Delivery Order' : 'Table ' . $cleanTable }}', '{{ addslashes($speechItemsText) }}')">
                                 <i class="bi bi-megaphone-fill text-primary"></i>
                             </button>
                         </div>
@@ -114,27 +121,86 @@
     </div>
 @endif
 
-<!-- Payment Modal -->
-<div class="modal fade" id="paymentVerifyModal" tabindex="-1" aria-hidden="true">
+<!-- Handover OTP Modal -->
+<div class="modal fade" id="otpHandoverModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-cash-stack me-2"></i>Confirm Payment Status</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock me-2"></i>Verify Handover OTP</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center p-4">
-                <i class="bi bi-question-circle-fill text-warning display-4 mb-3 d-block"></i>
-                <h5 class="fw-bold mb-2" id="modalOrderTitle">Order #...</h5>
-                <p class="text-muted">Has the cash/offline payment been received for this order?</p>
+                <p class="text-muted small mb-3">Delivery boy se OTP le kar yahan verify karein:</p>
+                <input type="hidden" id="handover_order_id">
+                <input type="text" id="entered_handover_otp" maxlength="4" class="form-control form-control-lg text-center fs-2 fw-bold border-2 border-warning rounded-3" placeholder="____" autocomplete="off">
+                <div id="otp_error_msg" class="text-danger small mt-2 d-none"></div>
             </div>
-            <div class="modal-footer d-flex justify-content-between bg-light">
-                <button type="button" class="btn btn-outline-danger fw-bold px-4" id="btnPaymentNo">
-                    <i class="bi bi-x-circle me-1"></i> No (Pending)
-                </button>
-                <button type="button" class="btn btn-success fw-bold px-4" id="btnPaymentYes">
-                    <i class="bi bi-check-circle me-1"></i> Yes, Payment Received
-                </button>
+            <div class="modal-footer justify-content-center bg-light">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning fw-bold px-4" onclick="submitHandoverOtp()">Verify & Handover</button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    function openOtpHandoverModal(orderId, orderNum) {
+        document.getElementById('handover_order_id').value = orderId;
+        document.getElementById('entered_handover_otp').value = '';
+        document.getElementById('otp_error_msg').classList.add('d-none');
+        
+        var modalEl = document.getElementById('otpHandoverModal');
+        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+
+    function submitHandoverOtp() {
+        var orderId = document.getElementById('handover_order_id').value;
+        var otp = document.getElementById('entered_handover_otp').value;
+        var errDiv = document.getElementById('otp_error_msg');
+
+        if (!otp || otp.length < 4) {
+            errDiv.innerText = "Please enter 4-digit OTP";
+            errDiv.classList.remove('d-none');
+            return;
+        }
+
+        fetch('/vendor/restaurant/kitchen-orders/' + orderId + '/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                otp: otp,
+                _token: getCsrfToken()
+            })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                var modalEl = document.getElementById('otpHandoverModal');
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
+                // Clear gray backdrop overlay
+                var backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(function(b) { b.remove(); });
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = 'auto';
+
+                // Instantly remove order from Active KDS screen
+                syncLiveCalls(true);
+            } else {
+                errDiv.innerText = data.message || "Invalid OTP! Try again.";
+                errDiv.classList.remove('d-none');
+            }
+        })
+        .catch(function(err) {
+            console.error(err);
+            errDiv.innerText = "Server error occurred!";
+            errDiv.classList.remove('d-none');
+        });
+    }
+</script>

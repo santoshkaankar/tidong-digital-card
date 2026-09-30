@@ -28,16 +28,7 @@
 
     const HINDI_NUMS = {
         0:'शून्य', 1:'एक', 2:'दो', 3:'तीन', 4:'चार', 5:'पांच', 6:'छह', 7:'सात', 8:'आठ', 9:'नौ', 10:'दस',
-        11:'ग्यारह', 12:'बारह', 13:'तेरह', 14:'चौदह', 15:'पंद्रह', 16:'सोलह', 17:'सत्रह', 18:'अठारह', 19:'उन्नीस', 20:'बीस',
-        21:'इक्कीस', 22:'बाईस', 23:'तेईस', 24:'चौबीस', 25:'पच्चीस', 26:'छब्बीस', 27:'सत्ताईस', 28:'अट्ठाईस', 29:'उनतीस', 30:'तीस',
-        31:'इकतलीस', 32:'बत्तीस', 33:'तैंतीस', 34:'चौंतीस', 35:'पैंतीस', 36:'छत्तीस', 37:'सैंतीस', 38:'अड़तीस', 39:'उनतालीस', 40:'चालीस',
-        41:'इकतालीस', 42:'बयालीस', 43:'तैंतालीस', 44:'चवालिस', 45:'पैंतालीस', 46:'छियालीस', 47:'सैंतालीस', 48:'अड़तालीस', 49:'उनचास', 50:'पचास',
-        51:'इक्कावन', 52:'बावन', 53:'तिर्पन', 54:'चौवन', 55:'पचपन', 56:'छप्पन', 57:'सत्तावन', 58:'अट्ठावन', 59:'उनसठ', 60:'साठ',
-        61:'इकसठ', 62:'बासठ', 63:'तिरसठ', 64:'चौंसठ', 65:'पैंसठ', 66:'छियासठ', 67:'सरसठ', 68:'अड़सठ', 69:'उनहत्तर', 70:'सत्तर',
-        71:'इकहत्तर', 72:'बहत्तर', 73:'तिहत्तर', 74:'चौहत्तर', 75:'पचहत्तर', 76:'छिहत्तर', 77:'सतहत्तर', 78:'अठहत्तर', 79:'उनासी', 80:'अस्सी',
-        81:'इक्यासी', 82:'बयासी', 83:'तिरासी', 84:'चौरासी', 85:'पचासी', 86:'छियासी', 87:'सत्तासी', 88:'अ्ठासी', 89:'नवासी', 90:'नब्बे',
-        91:'इक्यान्वे', 92:'बाण्वे', 93:'तिरान्वे', 94:'चौरान्वे', 95:'पञ्चान्वे', 96:'छियान्वे', 97:'सत्तान्वे', 98:'अट्ठान्वे', 99:'निरांवें',
-        100:'सौ', 1000:'हज़ार'
+        11:'ग्यारह', 12:'बारह', 13:'तेरह', 14:'चौदह', 15:'पंद्रह', 16:'सोलह', 17:'सत्रह', 18:'अठारह', 19:'उन्नीस', 20:'बीस'
     };
 
     function convertNumbers(text, lang) {
@@ -46,10 +37,7 @@
 
         return text.toString().replace(/\d+/g, function(match) {
             let num = parseInt(match, 10);
-            if (HINDI_NUMS[num]) {
-                return HINDI_NUMS[num];
-            }
-            return match;
+            return HINDI_NUMS[num] || match;
         });
     }
 
@@ -90,54 +78,33 @@
             newOrder: "New order received from {table}. {items}. Thank you!", 
             updated: "Voice language updated to English", 
             test: "Kitchen Display System Test Voice Active" 
-        },
-        'mr-IN': { 
-            waiterCall: "लक्ष द्या! {table} वर वेटरची गरज आहे", 
-            cashPayment: "लक्ष द्या! {table} कडून रोख रक्कम गोळा करा",
-            newOrder: "नवीन ऑर्डर आली आहे {table} वरून. {items}. धन्यवाद!", 
-            updated: "भाषा मराठी सेट झाली आहे", 
-            test: "किचन डिस्प्ले सिस्टम टेस्ट व्हॉईस सक्रिय आहे" 
-        },
-        'gu-IN': { 
-            waiterCall: "ધ્યાન આપો! {table} પર વેઈટરની જરૂર છે", 
-            cashPayment: "ધ્યાન આપો! {table} થી રોકડ ચુકવણી મેળવો",
-            newOrder: "નવો ઓર્ડર આવ્યો છે {table} થી. {items}. આભાર!", 
-            updated: "ભાષા ગુજરાતી સેટ થઈ છે", 
-            test: "કિચન ડિસ્प्ले સિસ્ટમ ટેસ્ટ વૉઇસ" 
         }
     };
-
-    function getNativeNewOrderText(locationText, itemsText) {
-        let langMap = TRANSLATIONS[currentLang] || TRANSLATIONS['hi-IN'];
-        let template = langMap.newOrder || TRANSLATIONS['hi-IN'].newOrder;
-
-        let sanitizedLocation = sanitizeTextForSpeech(locationText, currentLang);
-        let sanitizedItems = sanitizeTextForSpeech(itemsText, currentLang);
-
-        return template.replace('{table}', sanitizedLocation).replace('{items}', sanitizedItems);
-    }
 
     function speakText(text) {
         if (!('speechSynthesis' in window) || !text) return;
 
+        // Cancel any pending speech queue to prevent wrong speech type/stack overlap
         window.speechSynthesis.cancel();
 
-        let utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = currentLang;
-        utterance.rate = 0.88;
-        utterance.pitch = 1.0;
+        setTimeout(() => {
+            let utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = currentLang;
+            utterance.rate = 0.88;
+            utterance.pitch = 1.0;
 
-        let voices = window.speechSynthesis.getVoices();
-        let matchedVoice = voices.find(v => 
-            v.lang.replace('_', '-') === currentLang || 
-            v.lang.startsWith(currentLang.split('-')[0])
-        );
+            let voices = window.speechSynthesis.getVoices();
+            let matchedVoice = voices.find(v => 
+                v.lang.replace('_', '-') === currentLang || 
+                v.lang.startsWith(currentLang.split('-')[0])
+            );
 
-        if (matchedVoice) {
-            utterance.voice = matchedVoice;
-        }
+            if (matchedVoice) {
+                utterance.voice = matchedVoice;
+            }
 
-        window.speechSynthesis.speak(utterance);
+            window.speechSynthesis.speak(utterance);
+        }, 50);
     }
 
     function triggerWaiterAlert() {
@@ -214,13 +181,6 @@
         }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        let topSelect = document.getElementById('kdsTopLangSelect');
-        if (topSelect) {
-            topSelect.value = currentLang;
-        }
-    });
-
     if (currentCallCount > 0) {
         startWaiterLoop();
     } else if (currentCashCount > 0) {
@@ -260,14 +220,14 @@
             freshAudio.play().catch(e => console.log('Audio play blocked', e));
 
             setTimeout(() => {
-                let msg = getNativeNewOrderText(locationNo, itemsText);
+                let langMap = TRANSLATIONS[currentLang] || TRANSLATIONS['hi-IN'];
+                let template = langMap.newOrder || TRANSLATIONS['hi-IN'].newOrder;
+                let sanitizedLoc = sanitizeTextForSpeech(locationNo, currentLang);
+                let sanitizedItems = sanitizeTextForSpeech(itemsText, currentLang);
+                let msg = template.replace('{table}', sanitizedLoc).replace('{items}', sanitizedItems);
+                
                 speakText(msg);
             }, 500);
-        },
-
-        testVoice: function() {
-            let msg = TRANSLATIONS[currentLang] ? TRANSLATIONS[currentLang].test : TRANSLATIONS['hi-IN'].test;
-            speakText(msg);
         },
 
         stopAll: stopAllLoops

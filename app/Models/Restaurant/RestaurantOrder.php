@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Models\Restaurant;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,9 +12,19 @@ class RestaurantOrder extends Model
     use HasFactory;
 
     protected $table = 'restaurant_orders';
-
-    // Allow all columns safely without fillable restrictions
     protected $guarded = [];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Naya order bante hi automatic 4-digit delivery_otp save hoga
+        static::creating(function ($order) {
+            if (empty($order->delivery_otp)) {
+                $order->delivery_otp = str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
 
     public function table()
     {
@@ -23,6 +34,11 @@ class RestaurantOrder extends Model
     public function items()
     {
         return $this->hasMany(RestaurantOrderItem::class, 'order_id');
+    }
+
+    public function restaurant()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function vendor()

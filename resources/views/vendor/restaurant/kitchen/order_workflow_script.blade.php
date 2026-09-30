@@ -10,6 +10,22 @@
     var lastWaiterCallId = null;
     var lastCashCallId = null;
 
+    // Track active modal status to pause background refresh when modal is open
+    var isAnyModalActive = false;
+
+    document.addEventListener('show.bs.modal', function () {
+        isAnyModalActive = true;
+    });
+
+    document.addEventListener('hidden.bs.modal', function () {
+        isAnyModalActive = false;
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(function(b) { b.remove(); });
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = 'auto';
+        document.body.style.paddingRight = '0px';
+    });
+
     function getCsrfToken() {
         var tokenMeta = document.querySelector('meta[name="csrf-token"]');
         if (tokenMeta) return tokenMeta.getAttribute('content');
@@ -40,7 +56,7 @@
         .then(function(response) { return response.json(); })
         .then(function(data) {
             if (data.success) {
-                syncLiveCalls();
+                syncLiveCalls(true);
             } else {
                 alert(data.message || 'Status update failed.');
             }
@@ -88,8 +104,11 @@
             };
         }
 
+        // Auto Refresh every 5 seconds (Paused if modal is open)
         setInterval(function() {
-            syncLiveCalls();
+            if (!isAnyModalActive) {
+                syncLiveCalls();
+            }
         }, 5000);
     });
 
@@ -118,7 +137,7 @@
         .then(function(response) { return response.json(); })
         .then(function(data) {
             if (data.success) {
-                syncLiveCalls();
+                syncLiveCalls(true);
             } else {
                 alert(data.message || 'Order could not be completed.');
             }
@@ -128,7 +147,11 @@
         });
     }
 
-    function syncLiveCalls() {
+    function syncLiveCalls(forceSync = false) {
+        if (isAnyModalActive && !forceSync) {
+            return;
+        }
+
         fetch('/vendor/restaurant/kitchen-screen/live-orders', {
             method: 'GET',
             headers: {
@@ -192,9 +215,11 @@
                 }
             }
 
-            var runningBox = document.getElementById('running-orders-container');
-            if (runningBox && data.running_orders_html !== undefined) {
-                runningBox.innerHTML = data.running_orders_html;
+            if (!isAnyModalActive || forceSync) {
+                var runningBox = document.getElementById('running-orders-container');
+                if (runningBox && data.running_orders_html !== undefined) {
+                    runningBox.innerHTML = data.running_orders_html;
+                }
             }
 
             var countBadge = document.querySelector('.badge.bg-secondary.rounded-pill');
@@ -290,7 +315,7 @@
             } else {
                 lastProcessedWaiterCount = 0; 
                 lastWaiterCallId = null;
-                syncLiveCalls();
+                syncLiveCalls(true);
             }
         })
         .catch(function(err) { console.error('Error:', err); });
@@ -317,7 +342,7 @@
             } else {
                 lastProcessedCashCount = 0;
                 lastCashCallId = null;
-                syncLiveCalls();
+                syncLiveCalls(true);
             }
         })
         .catch(function(err) { console.error('Error:', err); });
