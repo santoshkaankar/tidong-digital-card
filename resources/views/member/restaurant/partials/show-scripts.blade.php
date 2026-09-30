@@ -1,39 +1,3 @@
-<style>
-/* Live Pincode Search Dropdown Styling */
-#pincodeSearchResults {
-    position: absolute !important;
-    top: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 999999 !important;
-    background: #ffffff !important;
-    max-height: 240px !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    border: 2px solid #2563eb !important;
-    border-radius: 8px !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
-    margin-top: 4px !important;
-}
-
-.pincode-result-item {
-    padding: 12px 14px !important;
-    font-size: 14px !important;
-    cursor: pointer !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    color: #0f172a !important;
-    display: block !important;
-    width: 100% !important;
-    text-align: left !important;
-    background: #ffffff !important;
-}
-
-.pincode-result-item:hover, .pincode-result-item:active {
-    background-color: #eff6ff !important;
-    color: #2563eb !important;
-}
-</style>
-
 <script>
     let cartItems = {};
     let selectedTipAmount = 0.00;
@@ -104,9 +68,7 @@
         Object.values(cartItems).forEach(item => {
             totalCount += item.quantity;
             let itemSubtotal = (item.price * item.quantity);
-            let taxRate = (item.taxPercent && item.taxPercent > 0) ? item.taxPercent : 5.00;
-            let itemTax = (itemSubtotal * taxRate) / 100;
-            totalAmount += (itemSubtotal + itemTax);
+            totalAmount += itemSubtotal;
         });
 
         const bar = document.getElementById('floatingOrderBar');
@@ -173,16 +135,22 @@
         calculateModalBill();
     }
 
-    // 6. Complete Bill Calculation (Subtotal + CGST + SGST + Delivery + Tip)
+    // 6. Complete Bill Calculation (Base Subtotal + Tax Breakdown Logic Fixed)
     function calculateModalBill() {
-        let subtotal = 0;
+        let inclusiveSubtotal = 0;
         let totalTax = 0;
+        let baseSubtotal = 0;
 
         Object.values(cartItems).forEach(item => {
             let itemSub = (item.price * item.quantity);
             let taxRate = (item.taxPercent && item.taxPercent > 0) ? item.taxPercent : 5.00;
-            let itemTax = (itemSub * taxRate) / 100;
-            subtotal += itemSub;
+            
+            // Extract base price and tax from inclusive amount
+            let itemBase = itemSub / (1 + (taxRate / 100));
+            let itemTax = itemSub - itemBase;
+
+            inclusiveSubtotal += itemSub;
+            baseSubtotal += itemBase;
             totalTax += itemTax;
         });
 
@@ -194,13 +162,15 @@
 
         let deliveryCharge = 0.00;
         if (orderType === 'delivery') {
-            deliveryCharge = (subtotal >= FREE_DELIVERY_THRESHOLD) ? 0.00 : DEFAULT_DELIVERY_CHARGE;
+            deliveryCharge = (inclusiveSubtotal >= FREE_DELIVERY_THRESHOLD) ? 0.00 : DEFAULT_DELIVERY_CHARGE;
         }
 
-        let grandTotal = subtotal + totalTax + deliveryCharge + selectedTipAmount;
+        // Grand Total = Inclusive Subtotal + Delivery Charge + Tip Amount
+        let grandTotal = inclusiveSubtotal + deliveryCharge + selectedTipAmount;
 
+        // UI Updates: Item Subtotal displays Base Price so that Base + CGST + SGST = Inclusive Total
         if (document.getElementById('modalSubtotal')) {
-            document.getElementById('modalSubtotal').innerText = `₹${subtotal.toFixed(2)}`;
+            document.getElementById('modalSubtotal').innerText = `₹${baseSubtotal.toFixed(2)}`;
         }
         if (document.getElementById('modalCGST')) {
             document.getElementById('modalCGST').innerText = `+ ₹${cgst.toFixed(2)}`;
@@ -228,7 +198,7 @@
         }
     }
 
-    // 7. Trigger Live Order Modal (Fixed double modal background issue)
+    // 7. Trigger Live Order Modal
     function submitLiveOrder() {
         if (Object.keys(cartItems).length === 0) {
             alert("Kripya pehle items select karein!");
@@ -358,17 +328,19 @@
         let selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'cod';
 
         let itemsPayload = [];
-        let subtotal = 0;
-        let totalTax = 0;
+        let inclusiveSubtotal = 0;
+        let totalTaxForBackend = 0;
 
         Object.values(cartItems).forEach(item => {
             let cleanId = item.id.toString().replace('global_', '').replace('custom_', '');
             let itemSub = (item.price * item.quantity);
             let taxRate = (item.taxPercent && item.taxPercent > 0) ? item.taxPercent : 5.00;
-            let itemTax = (itemSub * taxRate) / 100;
+            
+            let itemBase = itemSub / (1 + (taxRate / 100));
+            let itemTax = itemSub - itemBase;
 
-            subtotal += itemSub;
-            totalTax += itemTax;
+            inclusiveSubtotal += itemSub;
+            totalTaxForBackend += itemTax;
 
             itemsPayload.push({
                 id: parseInt(cleanId) || cleanId,
@@ -380,10 +352,10 @@
         });
 
         let deliveryCharge = (orderType === 'delivery') 
-            ? ((subtotal >= FREE_DELIVERY_THRESHOLD) ? 0.00 : DEFAULT_DELIVERY_CHARGE) 
+            ? ((inclusiveSubtotal >= FREE_DELIVERY_THRESHOLD) ? 0.00 : DEFAULT_DELIVERY_CHARGE) 
             : 0.00;
 
-        let totalAmount = subtotal + totalTax + deliveryCharge + selectedTipAmount;
+        let totalAmount = inclusiveSubtotal + deliveryCharge + selectedTipAmount;
 
         let confirmBtn = document.querySelector('#deliveryAddressModal button[onclick="processFinalOrder()"]');
         if (confirmBtn) {
@@ -406,7 +378,7 @@
                 payment_method: selectedPaymentMethod,
                 delivery_charge: deliveryCharge,
                 tip_amount: selectedTipAmount,
-                tax_amount: totalTax,
+                tax_amount: totalTaxForBackend,
                 total_amount: totalAmount,
                 items: itemsPayload
             })

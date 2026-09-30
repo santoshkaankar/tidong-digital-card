@@ -167,7 +167,7 @@ class RestaurantController extends Controller
         }
     }
 
-    // 4. Customer Place Order (Fully Safe Dynamic Schema Mapping)
+    // 4. Customer Place Order (Inclusive Tax Calculation Fixed)
     public function placeOrder(Request $request)
     {
         try {
@@ -185,7 +185,7 @@ class RestaurantController extends Controller
                 $subTotal = 0;
                 $totalTax = 0;
 
-                // Loop 1: Calculate Total Bill
+                // Loop 1: Calculate Total Bill with Inclusive Tax Extraction
                 foreach ($request->items as $itemData) {
                     $cleanId = preg_replace('/[^0-9]/', '', $itemData['id'] ?? 0);
                     $item = RestaurantItem::find($cleanId) ?? RestaurantCustomItem::find($cleanId);
@@ -195,7 +195,7 @@ class RestaurantController extends Controller
                         : ($item ? floatval($item->price) : 0);
 
                     $quantity = intval($itemData['quantity'] ?? 1);
-                    $itemSubtotal = $price * $quantity;
+                    $itemSubtotal = $price * $quantity; // This amount already includes tax
 
                     $taxPercent = 0;
                     if ($item) {
@@ -217,10 +217,12 @@ class RestaurantController extends Controller
                     }
 
                     if ($taxPercent <= 0) {
-                        $taxPercent = 5.00;
+                        $taxPercent = 5.00; // Default 5% inclusive tax rate
                     }
 
-                    $itemTax = ($itemSubtotal * $taxPercent) / 100;
+                    // Extract tax from inclusive item subtotal
+                    $itemBasePrice = $itemSubtotal / (1 + ($taxPercent / 100));
+                    $itemTax = $itemSubtotal - $itemBasePrice;
 
                     $subTotal += $itemSubtotal;
                     $totalTax += $itemTax;
@@ -235,7 +237,9 @@ class RestaurantController extends Controller
                 $tipAmount = floatval($request->input('tip_amount', 0.00));
                 $cgst = round($totalTax / 2, 2);
                 $sgst = round($totalTax / 2, 2);
-                $grandTotal = round($subTotal + $totalTax + $deliveryCharge + $tipAmount, 2);
+                
+                // Grand Total = SubTotal (inclusive) + Delivery Charge + Tip Amount (Tax is NOT added again)
+                $grandTotal = round($subTotal + $deliveryCharge + $tipAmount, 2);
 
                 $paymentMethod = strtolower($request->input('payment_method', 'cod'));
 
@@ -256,7 +260,7 @@ class RestaurantController extends Controller
                     'order_number'     => 'ORD-' . strtoupper(Str::random(6)),
                     'order_type'       => $request->order_type,
                     'sub_total'        => $subTotal,
-                    'tax_amount'       => $totalTax,
+                    'tax_amount'       => round($totalTax, 2),
                     'tip_amount'       => $tipAmount,
                     'total_amount'     => $grandTotal,
                     'status'           => 'pending',
@@ -343,7 +347,8 @@ class RestaurantController extends Controller
                         $taxPercent = 5.00;
                     }
 
-                    $itemTax = ($itemSubtotal * $taxPercent) / 100;
+                    $itemBasePrice = $itemSubtotal / (1 + ($taxPercent / 100));
+                    $itemTax = $itemSubtotal - $itemBasePrice;
 
                     RestaurantOrderItem::create([
                         'order_id'       => $order->id,
@@ -353,7 +358,7 @@ class RestaurantController extends Controller
                         'price'          => $price,
                         'subtotal'       => $itemSubtotal,
                         'tax_percent'    => $taxPercent,
-                        'tax_amount'     => $itemTax,
+                        'tax_amount'     => round($itemTax, 2),
                         'batch_number'   => 1,
                         'kitchen_status' => 'pending'
                     ]);
