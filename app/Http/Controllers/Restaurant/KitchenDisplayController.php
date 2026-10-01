@@ -143,20 +143,28 @@ class KitchenDisplayController extends Controller
                     $order->status = $requestedStatus;
                 }
             } else {
-                $order->status = $requestedStatus;
+                // Delivery/Takeaway Orders step-by-step update
+                if ($requestedStatus === 'cooking') {
+                    $order->status = 'cooking';
+                } elseif ($requestedStatus === 'ready') {
+                    $order->status = 'ready'; // Delivery Boy ke Handover OTP ke liye ready status zaruri hai
+                } else {
+                    $order->status = $requestedStatus;
+                }
             }
 
             if ($request->filled('payment_status')) {
                 $order->payment_status = $request->payment_status;
             }
 
-            // PostgreSQL Constraint Fix: 'delivered' replaced with 'completed'
+            // PostgreSQL kitchen_status map
             $itemKitchenStatus = match($order->status) {
                 'pending' => 'pending',
                 'accepted', 'cooking', 'preparing' => 'cooking',
                 'ready' => 'ready',
                 'served' => 'served',
-                'pickedup', 'picked_up', 'on_the_way', 'out_for_delivery', 'delivered', 'completed' => ($order->order_type === 'dine_in' ? 'served' : 'completed'),
+                'pickedup', 'picked_up', 'on_the_way', 'out_for_delivery' => 'delivered',
+                'delivered', 'completed' => 'completed',
                 'cancelled' => 'cancelled',
                 default => 'cooking'
             };
