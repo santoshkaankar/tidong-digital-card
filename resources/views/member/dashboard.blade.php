@@ -28,10 +28,10 @@
 @section('content')
 <div class="container-fluid py-4 px-4">
 
-    <!-- 1. YouTube Style Cover & Profile Section (Top of Dashboard) -->
+    <!-- 1. Profile Section -->
     <div class="profile-container mb-4">
         <div class="banner-wrapper">
-            @if(isset($card) && $card->banner_image)
+            @if(isset($card) &&$card->banner_image)
                 <img src="{{ asset('storage/' . $card->banner_image) }}" alt="Channel Banner" class="banner-img">
             @else
                 <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-secondary text-white fw-bold small">
@@ -47,7 +47,7 @@
             <div class="d-flex flex-wrap justify-content-between align-items-end">
                 <div class="d-flex align-items-end gap-3 gap-md-4">
                     <div class="avatar-wrapper">
-                        @if(isset($card) && $card->profile_photo)
+                        @if(isset($card) &&$card->profile_photo)
                             <img src="{{ asset('storage/' . $card->profile_photo) }}" alt="Profile Photo" class="avatar-img">
                         @else
                             <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Default Avatar" class="avatar-img">
@@ -58,7 +58,7 @@
                     </div>
                     
                     <div class="mb-1">
-                        <h4 class="fw-bold text-dark mb-1">{{ $card->name ?? Auth::user()->name }} @if(isset($card->nickname) && $card->nickname) <span class="text-muted fs-6">({{ $card->nickname }})</span> @endif</h4>
+                        <h4 class="fw-bold text-dark mb-1">{{ $card->name ?? Auth::user()->name }} @if(isset($card->nickname) &&$card->nickname) <span class="text-muted fs-6">({{ $card->nickname }})</span> @endif</h4>
                         <p class="text-muted mb-0 small"><i class="fas fa-envelope me-1"></i> {{ $card->gmail ?? Auth::user()->email }}</p>
                     </div>
                 </div>
@@ -75,7 +75,10 @@
         </div>
     </div>
 
-    <!-- 2. Top Action Buttons Row -->
+    <!-- 2. MAIN HUB CARD (Profile ke turant baad sabse uper) -->
+    @include('member.partials.tidong-hub')
+
+    <!-- 3. SECONDARY ACTION BUTTONS (Niche Shifted & Fixed URLs) -->
     <div class="row g-2 mb-4">
         <div class="col-md-4 col-12">
             <a href="{{ route('member.profile.edit') }}" class="btn btn-primary w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm mobile-card-action-btn rounded-4">
@@ -84,7 +87,7 @@
             </a>
         </div>
         <div class="col-md-4 col-6">
-            <a href="{{ url('/member/card/create') }}" class="btn btn-info text-white w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm mobile-card-action-btn rounded-4">
+            <a href="{{ url('/member/cards') }}" class="btn btn-info text-white w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm mobile-card-action-btn rounded-4">
                 <i class="fas fa-plus-circle fs-5"></i>
                 <span>Create / Edit Card</span>
             </a>
@@ -96,14 +99,11 @@
             </a>
         </div>
     </div>
-    
-    <!-- Tidong Super Hub Strip Include -->
-    @include('member.partials.tidong-hub')
 
-    <!-- 3. Include Advertising Component -->
+    <!-- 4. Include Advertising Component -->
     @include('member.partials.advertising')
 
-    <!-- 4. Analytics & Stats Row -->
+    <!-- 5. Analytics & Stats Row -->
     <div class="row g-4 mb-4">
         <div class="col-md-3">
             <div class="info-card border-start border-4 border-primary">
@@ -138,7 +138,7 @@
         </div>
     </div>
 
-    <!-- 5. Quick Actions Section -->
+    <!-- 6. Quick Actions Section -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold text-dark m-0"><i class="fas fa-bolt text-primary me-2"></i> Quick Actions</h5>
         <span class="text-muted small">Core features</span>
@@ -153,7 +153,7 @@
                         <p class="text-muted small mb-0">Edit Profile & Info</p>
                     </div>
                 </div>
-                <a href="{{ url('/member/configure') }}" class="btn btn-primary mt-auto w-100 btn-sm">Configure Form</a>
+                <a href="{{ route('member.profile.edit') }}" class="btn btn-primary mt-auto w-100 btn-sm">Configure Form</a>
             </div>
         </div>
         <div class="col-md-3">
@@ -196,9 +196,7 @@
 
 </div>
 
-
-
-<!-- Modal for Profile Photo Update -->
+<!-- Modals -->
 <div class="modal fade" id="updateAvatarModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0">
@@ -224,7 +222,6 @@
     </div>
 </div>
 
-<!-- Modal for Banner Image Update -->
 <div class="modal fade" id="updateBannerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0">
