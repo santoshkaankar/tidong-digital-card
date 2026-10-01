@@ -88,11 +88,16 @@
                                     </button>
                                 @endif
 
-                            @elseif($order->status === 'ready' && $orderType === 'delivery')
-                                <!-- Delivery Boy Picked Up OTP Handover Button -->
-                                <button type="button" class="btn btn-warning text-dark btn-sm px-3 fw-bold" onclick="openOtpHandoverModal({{ $order->id }}, '{{ $order->order_number }}')">
-                                    <i class="bi bi-shield-lock-fill me-1"></i> Handover (Verify OTP)
-                                </button>
+                            @elseif(in_array($order->status, ['ready', 'pickedup', 'picked_up', 'out_for_delivery', 'on_the_way']) && in_array($orderType, ['delivery', 'takeaway']))
+    <!-- Delivery / Takeaway OTP Handover Verification Button -->
+    <button type="button" class="btn btn-warning text-dark btn-sm px-3 fw-bold" onclick="openOtpHandoverModal({{ $order->id }}, '{{ $order->order_number }}')">
+        <i class="bi bi-shield-lock-fill me-1"></i> Handover (Verify OTP)
+    </button>
+@else
+    <button type="button" class="btn btn-dark btn-sm px-3 fw-bold" onclick="handleOrderDone({{ $order->id }}, {{ $isOnlinePaid ? 'true' : 'false' }}, '{{ $order->order_number ?? 'ORD-'.$order->id }}')">
+        <i class="bi bi-check2-all me-1"></i> Mark Done
+    </button>
+@endif
 
                             @else
                                 <button type="button" class="btn btn-dark btn-sm px-3 fw-bold" onclick="handleOrderDone({{ $order->id }}, {{ $isOnlinePaid ? 'true' : 'false' }}, '{{ $order->order_number ?? 'ORD-'.$order->id }}')">
