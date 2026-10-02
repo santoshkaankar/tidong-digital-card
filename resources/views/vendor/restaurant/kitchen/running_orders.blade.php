@@ -71,49 +71,44 @@
                         </div>
 
                         <!-- Dynamic Action Buttons Workflow -->
-                        <div class="d-flex align-items-center gap-2">
-                            @if($order->status === 'pending' || $order->status === 'waiting')
-                                <button type="button" class="btn btn-success btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'cooking')">
-                                    <i class="bi bi-check-circle me-1"></i> Accept
-                                </button>
+<div class="d-flex align-items-center gap-2">
+    @if($order->status === 'pending' || $order->status === 'waiting')
+        <button type="button" class="btn btn-success btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'cooking')">
+            <i class="bi bi-check-circle me-1"></i> Accept
+        </button>
 
-                            @elseif($order->status === 'cooking')
-                                @if(in_array($orderType, ['delivery', 'takeaway']))
-                                    <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'ready')">
-                                        <i class="bi bi-box-seam me-1"></i> Mark Ready
-                                    </button>
-                                @else
-                                    <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'served')">
-                                        <i class="bi bi-tray-fill me-1"></i> Serve Order
-                                    </button>
-                                @endif
+    @elseif($order->status === 'cooking')
+        @if(in_array($orderType, ['delivery', 'takeaway']))
+            <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'ready')">
+                <i class="bi bi-box-seam me-1"></i> Mark Ready
+            </button>
+        @else
+            <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="updateOrderStatus({{ $order->id }}, 'served')">
+                <i class="bi bi-tray-fill me-1"></i> Serve Order
+            </button>
+        @endif
 
-                            @elseif(in_array($order->status, ['ready', 'pickedup', 'picked_up', 'out_for_delivery', 'on_the_way']) && in_array($orderType, ['delivery', 'takeaway']))
-    <!-- Delivery / Takeaway OTP Handover Verification Button -->
-    <button type="button" class="btn btn-warning text-dark btn-sm px-3 fw-bold" onclick="openOtpHandoverModal({{ $order->id }}, '{{ $order->order_number }}')">
-        <i class="bi bi-shield-lock-fill me-1"></i> Handover (Verify OTP)
+    @elseif(in_array($order->status, ['ready', 'pickedup', 'picked_up', 'out_for_delivery', 'on_the_way']) && in_array($orderType, ['delivery', 'takeaway']))
+        <!-- Delivery / Takeaway OTP Handover Verification Button -->
+        <button type="button" class="btn btn-warning text-dark btn-sm px-3 fw-bold" onclick="openOtpHandoverModal({{ $order->id }}, '{{ $order->order_number }}')">
+            <i class="bi bi-shield-lock-fill me-1"></i> Handover (Verify OTP)
+        </button>
+
+    @else
+        <button type="button" class="btn btn-dark btn-sm px-3 fw-bold" onclick="handleOrderDone({{ $order->id }}, {{ $isOnlinePaid ? 'true' : 'false' }}, '{{ $order->order_number ?? 'ORD-'.$order->id }}')">
+            <i class="bi bi-check2-all me-1"></i> Mark Done
+        </button>
+    @endif
+
+    <button type="button" class="btn btn-outline-primary btn-sm px-3 fw-semibold d-flex align-items-center gap-1" onclick="openOrderDetailModal({{ $order->id }})">
+        <i class="bi bi-eye"></i> View Detail
     </button>
-@else
-    <button type="button" class="btn btn-dark btn-sm px-3 fw-bold" onclick="handleOrderDone({{ $order->id }}, {{ $isOnlinePaid ? 'true' : 'false' }}, '{{ $order->order_number ?? 'ORD-'.$order->id }}')">
-        <i class="bi bi-check2-all me-1"></i> Mark Done
+
+    <!-- Voice Notification Megaphone -->
+    <button type="button" class="btn btn-light btn-sm rounded-circle p-2" title="Announce Order" onclick="KDS_NOTIFIER.playNewOrderAlert('{{ $orderType === 'delivery' ? 'Delivery Order' : 'Table ' . $cleanTable }}', '{{ addslashes($speechItemsText) }}')">
+        <i class="bi bi-megaphone-fill text-primary"></i>
     </button>
-@endif
-
-                            @else
-                                <button type="button" class="btn btn-dark btn-sm px-3 fw-bold" onclick="handleOrderDone({{ $order->id }}, {{ $isOnlinePaid ? 'true' : 'false' }}, '{{ $order->order_number ?? 'ORD-'.$order->id }}')">
-                                    <i class="bi bi-check2-all me-1"></i> Mark Done
-                                </button>
-                            @endif
-
-                            <button type="button" class="btn btn-outline-primary btn-sm px-3 fw-semibold d-flex align-items-center gap-1" onclick="openOrderDetailModal({{ $order->id }})">
-                                <i class="bi bi-eye"></i> View Detail
-                            </button>
-
-                            <!-- Voice Notification Megaphone -->
-                            <button type="button" class="btn btn-light btn-sm rounded-circle p-2" title="Announce Order" onclick="KDS_NOTIFIER.playNewOrderAlert('{{ $orderType === 'delivery' ? 'Delivery Order' : 'Table ' . $cleanTable }}', '{{ addslashes($speechItemsText) }}')">
-                                <i class="bi bi-megaphone-fill text-primary"></i>
-                            </button>
-                        </div>
+</div>
                     </div>
                 </div>
             </div>
