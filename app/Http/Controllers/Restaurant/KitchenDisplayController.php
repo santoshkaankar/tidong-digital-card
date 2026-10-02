@@ -230,10 +230,6 @@ class KitchenDisplayController extends Controller
 
     public function verifyHandoverOtp(Request $request, $id)
 {
-    $request->validate([
-        'otp' => 'required|string'
-    ]);
-
     $userId = Auth::id();
     $order = RestaurantOrder::where('user_id', $userId)->where('id', $id)->first();
 
@@ -241,24 +237,22 @@ class KitchenDisplayController extends Controller
         return response()->json(['success' => false, 'message' => __('Order not found!')], 404);
     }
 
-    $inputOtp = trim((string)$request->otp);
-    
-    // Delivery OTP / Pickup OTP dono se match check karein
-    $deliveryOtp = trim((string)($order->delivery_otp ?? ''));
-    $pickupOtp   = trim((string)($order->pickup_otp ?? $order->otp ?? ''));
+    // Checking if order is In-House / Dine-in / Table / Pickup
+    $inHouseTypes = ['dine_in', 'table', 'takeaway', 'pickup', 'cabin', 'pos'];
+    is_array($order->order_type) ? $orderType = strtolower($order->order_type[0] ?? '') : $orderType = strtolower($order->order_type ?? '');
 
-    if (($deliveryOtp !== '' && $inputOtp === $deliveryOtp) || ($pickupOtp !== '' && $inputOtp === $pickupOtp)) {
+    // Agar in-house order hai YA request me direct force mark done bheja gaya hai:
+    if (in_array($orderType, $inHouseTypes) || $order->table_id || !$request->has('otp')) {
         
-        // Delivery status and payment status update
         $order->status = 'completed';
         $order->payment_status = 'paid';
         $order->save();
 
-        // KDS Kitchen items status sync update
+        // Sync Kitchen Items status
         RestaurantOrderItem::where('order_id', $order->id)
             ->update(['kitchen_status' => 'completed']);
 
-        // Table unlock handling (agar applicable ho)
+        // Release Table if applicable
         if ($order->table_id) {
             RestaurantTable::where('id', $order->table_id)
                 ->where('user_id', $userId)
@@ -270,10 +264,32 @@ class KitchenDisplayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => __('OTP Verified! Order handover completed successfully.')
+            'message' => __('Order marked as completed successfully!')
         ]);
     }
 
-    return response()->json(['success' => false, 'message' => __('Invalid OTP! Please try again.')], 422);
+    // Delivery orders ke liye OTP Verification logic
+    $request->validate(['otp' => 'required|string']);
+    $inputOtp = trim((string)$request->otp);
+    
+    $deliveryOtp = trim((string)($order->delivery_otp ?? ''));
+    $pickupOtp   = trim((string)($order->pickup_otp ?? $order->otp ?? ''));
+
+    if (($deliveryOtp !== '' && $inputOtp === $deliveryOtp) || ($pickupOtp !== '' && $inputOtp === $pickupOtp)) {
+        
+        $order->status = 'completed';
+        $order->payment_status = 'paid';
+        $order->save();
+
+        RestaurantOrderItem::where('order_id', $order->id)
+            ->update(['kitchen_status' => 'completed']);
+
+        return response()->json([
+             me => true,
+            'message' => __('OTP Verified! Order completed.')
+        ]);
+    }
+
+    return response()->json(['success' => false, 'message' => __('Invalid OTP!')], 422);
 }
 }
