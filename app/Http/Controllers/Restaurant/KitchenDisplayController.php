@@ -229,29 +229,51 @@ class KitchenDisplayController extends Controller
     }
 
     public function verifyHandoverOtp(Request $request, $id)
-    {
-        $request->validate([
-            'otp' => 'required|string|size:4'
-        ]);
+{
+    $request->validate([
+        'otp' => 'required|string'
+    ]);
 
-        $userId = Auth::id();
-        $order = RestaurantOrder::where('user_id', $userId)->where('id', $id)->first();
+    $userId = Auth::id();
+    $order = RestaurantOrder::where('user_id', $userId)->where('id', $id)->first();
 
-        if (!$order) {
-            return response()->json(['success' => false, 'message' => 'Order not found!'], 404);
-        }
-
-        if ($order->delivery_otp === $request->otp) {
-            $order->status = 'completed';
-            $order->payment_status = 'paid';
-            $order->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'OTP Verified! Order completed successfully.'
-            ]);
-        }
-
-        return response()->json(['success' => false, 'message' => 'Invalid OTP! Please try again.'], 422);
+    if (!$order) {
+        return response()->json(['success' => false, 'message' => __('Order not found!')], 404);
     }
+
+    $inputOtp = trim((string)$request->otp);
+    
+    // Delivery OTP / Pickup OTP dono se match check karein
+    $deliveryOtp = trim((string)($order->delivery_otp ?? ''));
+    $pickupOtp   = trim((string)($order->pickup_otp ?? $order->otp ?? ''));
+
+    if (($deliveryOtp !== '' && $inputOtp === $deliveryOtp) || ($pickupOtp !== '' && $inputOtp === $pickupOtp)) {
+        
+        // Delivery status and payment status update
+        $order->status = 'completed';
+        $order->payment_status = 'paid';
+        $order->save();
+
+        // KDS Kitchen items status sync update
+        RestaurantOrderItem::where('order_id', $order->id)
+            ->update(['kitchen_status' => 'completed']);
+
+        // Table unlock handling (agar applicable ho)
+        if ($order->table_id) {
+            RestaurantTable::where('id', $order->table_id)
+                ->where('user_id', $userId)
+                ->update([
+                    'status' => 'available',
+                    'current_order_id' => null
+                ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('OTP Verified! Order handover completed successfully.')
+        ]);
+    }
+
+    return response()->json(['success' => false, 'message' => __('Invalid OTP! Please try again.')], 422);
+}
 }
