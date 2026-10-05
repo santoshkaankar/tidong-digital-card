@@ -11,6 +11,7 @@ use App\Models\Restaurant\RestaurantOrderItem;
 use App\Models\Restaurant\RestaurantTable;
 use App\Models\Payment\VendorWallet;
 use App\Models\Payment\WalletTransaction;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,12 +24,18 @@ class OrderController extends Controller
     {
         $vendorId = Auth::id();
 
-        $orders = RestaurantOrder::with(['items', 'table'])
+        $orders = RestaurantOrder::with(['items', 'table', 'deliveryBoy'])
             ->where('user_id', $vendorId)
             ->latest()
             ->paginate(15);
 
-        return view('vendor.restaurant.orders.index', compact('orders'));
+        // Fetch Online & Active Delivery Boys for the Vendor View Dropdown
+        $deliveryBoys = User::where('role', 'delivery')
+            ->where('duty_status', 'online')
+            ->where('status', 'active')
+            ->get();
+
+        return view('vendor.restaurant.orders.index', compact('orders', 'deliveryBoys'));
     }
 
     public function posIndex()
@@ -121,7 +128,6 @@ class OrderController extends Controller
 
         $vendorId = Auth::id();
 
-        // Strict Check: Payment method agar COD/Cash nahi hai aur Paid nahi hua hai, to DB me save na karo
         $paymentMethod = strtolower($request->payment_method ?? 'cash');
         $paymentStatus = strtolower($request->payment_status ?? ($paymentMethod === 'cash' || $paymentMethod === 'cod' ? 'paid' : 'unpaid'));
 
@@ -216,7 +222,6 @@ class OrderController extends Controller
                 'payment_method'  => $paymentMethod,
             ]);
 
-            // Commission & Wallet balance logic
             $wallet = VendorWallet::firstOrCreate(
                 ['vendor_id' => $vendorId],
                 ['bonus_balance' => 200.00, 'sales_balance' => 0.00]

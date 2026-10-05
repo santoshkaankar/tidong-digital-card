@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Restaurant\RestaurantOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+ use App\Models\User;
 
 class DeliveryOrderController extends Controller
 {
@@ -207,4 +208,44 @@ class DeliveryOrderController extends Controller
 
         return view('delivery.orders.history', compact('completedOrders'));
     }
+
+
+
+   
+
+// Manual Assign Delivery Boy by Vendor
+public function assignDeliveryBoyManual(Request $request, $id)
+{
+    $request->validate([
+        'delivery_boy_id' => 'required|exists:users,id'
+    ]);
+
+    $order = RestaurantOrder::where('user_id', Auth::id())->findOrFail($id);
+    $order->delivery_boy_id = $request->delivery_boy_id;
+    $order->status = 'out_for_delivery';
+    $order->save();
+
+    return redirect()->back()->with('success', __('Delivery boy assigned successfully!'));
+}
+
+// Auto Assign Delivery Boy by Vendor
+public function assignDeliveryBoyAuto($id)
+{
+    $order = RestaurantOrder::where('user_id', Auth::id())->findOrFail($id);
+
+    $availableBoy = User::where('role', 'delivery')
+        ->where('duty_status', 'online')
+        ->where('status', 'active')
+        ->first();
+
+    if (!$availableBoy) {
+        return redirect()->back()->with('error', __('No online delivery boy available right now!'));
+    }
+
+    $order->delivery_boy_id = $availableBoy->id;
+    $order->status = 'out_for_delivery';
+    $order->save();
+
+    return redirect()->back()->with('success', __('Delivery boy auto-assigned successfully!'));
+}
 }

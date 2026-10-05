@@ -22,7 +22,7 @@ class ItemController extends Controller
             ->latest()
             ->get();
 
-        // 2. Vendor Custom Items (Personal Restaurant Items) - FIXED HERE
+        // 2. Vendor Custom Items (Personal Restaurant Items)
         $customItems = RestaurantCustomItem::where('user_id', $userId)
             ->with(['category', 'tax'])
             ->latest()
@@ -85,7 +85,7 @@ class ItemController extends Controller
         return redirect()->back()->with('success', 'Global item successfully added to menu!');
     }
 
-    // Modal 2: Save Custom Item to Global Master & Link to Menu (Alternatively handled by CustomItemController, but kept safe here)
+    // Modal 2: Save Custom Item to Global Master & Link to Menu
     public function storeCustomItem(Request $request)
     {
         $request->validate([
@@ -136,6 +136,29 @@ class ItemController extends Controller
 
         return redirect()->back()->with('success', 'Custom item successfully added to menu!');
     }
+
+    // Standard Items status toggle
+public function toggleStatus(Request $request, $id)
+{
+    $item = RestaurantItem::where('user_id', auth()->id())->findOrFail($id);
+    
+    // Database me is_available ya status column ko update karein
+    $item->is_available = $request->has('is_available') ? $request->is_available : !$item->is_available;
+    $item->save();
+
+    return response()->json(['success' => true, 'is_available' => $item->is_available]);
+}
+
+// Custom Items status toggle
+public function toggleCustomStatus(Request $request, $id)
+{
+    $customItem = RestaurantCustomItem::where('user_id', auth()->id())->findOrFail($id);
+    
+    $customItem->is_available = $request->has('is_available') ? $request->is_available : !$customItem->is_available;
+    $customItem->save();
+
+    return response()->json(['success' => true, 'is_available' => $customItem->is_available]);
+}
 
     public function destroy($id)
     {

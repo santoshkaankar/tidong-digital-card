@@ -35,9 +35,16 @@
     </div>
 @endif
 
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
 <div class="content-card p-4">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 text-nowrap">
             <thead class="table-light">
                 <tr>
                     <th class="border-0">Order No.</th>
@@ -47,6 +54,7 @@
                     <th class="border-0">Amount</th>
                     <th class="border-0">Payment</th>
                     <th class="border-0">Status</th>
+                    <th class="border-0">Delivery Boy</th>
                     <th class="border-0">Date & Time</th>
                     <th class="border-0 text-end pe-3">Actions</th>
                 </tr>
@@ -63,7 +71,7 @@
                         $waMsg = "Hello! Your bill for Order #{$order->order_number} is ₹{$order->total_amount}.\nPay instantly via UPI: " . $upiPayUrl;
                         $waUrl = $custPhone ? "https://wa.me/91" . preg_replace('/[^0-9]/', '', $custPhone) . "?text=" . urlencode($waMsg) : null;
                         
-                        $orderTypeLabel = strtoupper(str_replace('_', ' ', $order->order_type));
+                        $orderTypeLabel = strtoupper(str_replace('_', ' ', $order->order_type ?? 'dine_in'));
                         $tableLabel = $order->table ? 'Table #'.$order->table->table_number : 'N/A';
 
                         $itemsList = [];
@@ -87,30 +95,74 @@
                         <td class="fw-semibold text-dark">
                             {{ $tableLabel }}
                         </td>
-                        <td>
-                            <span class="text-muted small">
-                                @foreach($order->items as $orderItem)
-                                    <span class="fw-semibold text-dark">{{ $orderItem->item->name ?? $orderItem->item_name ?? 'Item' }}</span> 
-                                    <span class="badge bg-light text-dark border me-1">x{{ $orderItem->quantity }}</span>{{ !$loop->last ? ' ' : '' }}
-                                @endforeach
-                            </span>
+                        <td style="max-width: 300px; white-space: normal;">
+                            @foreach($order->items as $orderItem)
+                                <span class="badge bg-light text-dark border me-1 mb-1">
+                                    {{ $orderItem->item->name ?? $orderItem->item_name ?? 'Item' }} 
+                                    <span class="text-primary fw-bold">x{{ $orderItem->quantity }}</span>
+                                </span>
+                            @endforeach
                         </td>
                         <td class="fw-bold text-dark">₹{{ number_format($order->total_amount, 2) }}</td>
                         <td>
                             <span class="badge bg-{{ $order->payment_status == 'paid' ? 'success' : 'warning' }} bg-opacity-10 text-{{ $order->payment_status == 'paid' ? 'success' : 'warning' }} px-3 py-1.5 rounded-pill fw-semibold">
-                                {{ ucfirst($order->payment_status) }}
+                                {{ ucfirst($order->payment_status ?? 'unpaid') }}
                             </span>
                         </td>
                         <td>
                             <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-1.5 rounded-pill fw-semibold">
-                                {{ ucfirst($order->status) }}
+                                {{ ucfirst($order->status ?? 'pending') }}
                             </span>
                         </td>
-                        <td class="text-muted small">{{ $order->created_at->format('d M Y, h:i A') }}</td>
+
+                        <!-- Delivery Boy Assignment Column -->
+                        <td>
+                            @if(($order->order_type ?? '') === 'delivery')
+                                @if($order->deliveryBoy)
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1.5 fw-semibold">
+                                        <i class="bi bi-bicycle me-1"></i> {{ $order->deliveryBoy->name }}
+                                    </span>
+                                @else
+                                    <div class="d-flex flex-column gap-1" style="min-width: 150px;">
+                                        <!-- Manual Assign Form -->
+                                        @if(Route::has('vendor.restaurant.orders.assign-manual'))
+                                            <form action="{{ route('vendor.restaurant.orders.assign-manual', $order->id) }}" method="POST" class="d-flex gap-1">
+                                                @csrf
+                                                <select name="delivery_boy_id" class="form-select form-select-sm text-sm" required style="font-size: 0.75rem;">
+                                                    <option value="">Select Boy</option>
+                                                    @if(isset($deliveryBoys))
+                                                        @foreach($deliveryBoys as $boy)
+                                                            <option value="{{ $boy->id }}">{{ $boy->name }}</option>
+                                                        @endforeach
+                                                    @endif
+                                                </select>
+                                                <button type="submit" class="btn btn-sm btn-primary py-0 px-2" style="font-size: 0.75rem;" title="Assign">
+                                                    Assign
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        <!-- Auto Assign Form -->
+                                        @if(Route::has('vendor.restaurant.orders.assign-auto'))
+                                            <form action="{{ route('vendor.restaurant.orders.assign-auto', $order->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-dark w-100 py-0" style="font-size: 0.7rem;">
+                                                    ⚡ Auto Assign
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                @endif
+                            @else
+                                <span class="text-muted small">N/A</span>
+                            @endif
+                        </td>
+
+                        <td class="text-muted small">{{ $order->created_at ? $order->created_at->format('d M Y, h:i A') : '-' }}</td>
                         
                         <td class="text-end pe-3">
                             <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-outline-dark" title="Print Receipt" onclick='printReceipt(@json($order->order_number), @json($orderTypeLabel), @json($tableLabel), @json($order->total_amount), @json($order->created_at->format("d-m-Y h:i A")), @json($itemsList), @json($taxVal))'>
+                                <button type="button" class="btn btn-outline-dark" title="Print Receipt" onclick='printReceipt(@json($order->order_number), @json($orderTypeLabel), @json($tableLabel), @json($order->total_amount), @json($order->created_at ? $order->created_at->format("d-m-Y h:i A") : ""), @json($itemsList), @json($taxVal))'>
                                     <i class="bi bi-printer"></i> Prt
                                 </button>
                                 
@@ -132,97 +184,9 @@
                             </div>
                         </td>
                     </tr>
-
-                    <!-- View Order Modal (Updated with Delivery Charges & Deductions Breakdown) -->
-                    <div class="modal fade" id="viewModal{{ $order->id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
-                            <div class="modal-content border-0 shadow rounded-4">
-                                <div class="modal-header border-bottom-0 pb-0">
-                                    <h5 class="modal-title fw-bold">Order Details & Breakdown #{{ $order->order_number }}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body p-4">
-                                    @php
-                                        $subtotal = $order->sub_total ?? $order->items->sum(fn($i) => ($i->price ?? 0) * ($i->quantity ?? 1));
-                                        $deliveryCharge = $order->delivery_charge ?? 0;
-                                        $customerTotal = $order->total_amount;
-
-                                        // Deductions Logic
-                                        $commission = max(5.00, $subtotal * 0.05);
-                                        $commissionGst = $commission * 0.18;
-                                        $pgFee = $customerTotal * 0.02;
-                                        $pgGst = $pgFee * 0.18;
-                                        $deliveryDeduction = ($order->delivery_by ?? 'vendor') === 'platform' ? $deliveryCharge : 0.00;
-
-                                        $totalDeductions = $commission + $commissionGst + $pgFee + $pgGst + $deliveryDeduction;
-                                        $netPayout = $customerTotal - $totalDeductions;
-                                    @endphp
-
-                                    <div class="table-responsive mb-4">
-                                        <table class="table table-bordered align-middle mb-0">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Particulars</th>
-                                                    <th class="text-end">Type</th>
-                                                    <th class="text-end">Amount</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>Items Subtotal</td>
-                                                    <td class="text-end text-muted">Base Amount</td>
-                                                    <td class="text-end fw-bold">₹{{ number_format($subtotal, 2) }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Delivery Charge</td>
-                                                    <td class="text-end text-success"><i class="bi bi-plus-circle me-1"></i>Addition</td>
-                                                    <td class="text-end text-success fw-bold">+ ₹{{ number_format($deliveryCharge, 2) }}</td>
-                                                </tr>
-                                                <tr class="table-info fw-bold">
-                                                    <td colspan="2">Customer Total Paid</td>
-                                                    <td class="text-end">₹{{ number_format($customerTotal, 2) }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Platform Commission (5%)</td>
-                                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
-                                                    <td class="text-end text-danger">- ₹{{ number_format($commission, 2) }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>GST on Commission (18%)</td>
-                                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
-                                                    <td class="text-end text-danger">- ₹{{ number_format($commissionGst, 2) }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Payment Gateway Charge (2% + GST)</td>
-                                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
-                                                    <td class="text-end text-danger">- ₹{{ number_format($pgFee + $pgGst, 2) }}</td>
-                                                </tr>
-                                                @if($deliveryDeduction > 0)
-                                                <tr>
-                                                    <td>Platform Delivery Fee</td>
-                                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
-                                                    <td class="text-end text-danger">- ₹{{ number_format($deliveryDeduction, 2) }}</td>
-                                                </tr>
-                                                @endif
-                                                <tr class="table-success fw-bold fs-6">
-                                                    <td colspan="2">Net Vendor Payout</td>
-                                                    <td class="text-end text-success">₹{{ number_format($netPayout, 2) }}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <div class="p-3 bg-light rounded-3 text-center">
-                                        <p class="small text-muted mb-2">Scan & Pay via any UPI App</p>
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($upiPayUrl) }}" alt="UPI QR" class="img-fluid border p-2 bg-white rounded-3">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-5">
+                        <td colspan="10" class="text-center text-muted py-5">
                             No order records found yet.
                         </td>
                     </tr>
@@ -237,6 +201,101 @@
         </div>
     @endif
 </div>
+
+<!-- Modals Placed Outside Table Body to Avoid Layout Distortion -->
+@foreach($orders as $order)
+    @php
+        $upiId = auth()->user()->upi_id ?? 'merchant@upi';
+        $restName = auth()->user()->restaurant_name ?? auth()->user()->name ?? 'Restaurant';
+        $upiPayUrl = "upi://pay?pa=" . rawurlencode($upiId) . "&pn=" . rawurlencode($restName) . "&am=" . $order->total_amount . "&cu=INR&tn=" . rawurlencode("Order " . $order->order_number);
+        
+        $subtotal =$order->sub_total ?? $order->items->sum(fn($i) => ($i->price ?? 0) * ($i->quantity ?? 1));
+        $deliveryCharge =$order->delivery_charge ?? 0;
+        $customerTotal =$order->total_amount;
+
+        // Deductions Logic
+        $commission = max(5.00,$subtotal * 0.05);
+        $commissionGst =$commission * 0.18;
+        $pgFee =$customerTotal * 0.02;
+        $pgGst =$pgFee * 0.18;
+        $deliveryDeduction = ($order->delivery_by ?? 'vendor') === 'platform' ? $deliveryCharge : 0.00;
+
+        $totalDeductions =$commission + $commissionGst +$pgFee + $pgGst +$deliveryDeduction;
+        $netPayout = $customerTotal -$totalDeductions;
+    @endphp
+
+    <div class="modal fade" id="viewModal{{ $order->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold">Order Details & Breakdown #{{ $order->order_number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Particulars</th>
+                                    <th class="text-end">Type</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Items Subtotal</td>
+                                    <td class="text-end text-muted">Base Amount</td>
+                                    <td class="text-end fw-bold">₹{{ number_format($subtotal, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Delivery Charge</td>
+                                    <td class="text-end text-success"><i class="bi bi-plus-circle me-1"></i>Addition</td>
+                                    <td class="text-end text-success fw-bold">+ ₹{{ number_format($deliveryCharge, 2) }}</td>
+                                </tr>
+                                <tr class="table-info fw-bold">
+                                    <td colspan="2">Customer Total Paid</td>
+                                    <td class="text-end">₹{{ number_format($customerTotal, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Platform Commission (5%)</td>
+                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
+                                    <td class="text-end text-danger">- ₹{{ number_format($commission, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>GST on Commission (18%)</td>
+                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
+                                    <td class="text-end text-danger">- ₹{{ number_format($commissionGst, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Payment Gateway Charge (2% + GST)</td>
+                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
+                                    <td class="text-end text-danger">- ₹{{ number_format($pgFee +$pgGst, 2) }}</td>
+                                </tr>
+                                @if($deliveryDeduction > 0)
+                                <tr>
+                                    <td>Platform Delivery Fee</td>
+                                    <td class="text-end text-danger"><i class="bi bi-minus-circle me-1"></i>Deduction</td>
+                                    <td class="text-end text-danger">- ₹{{ number_format($deliveryDeduction, 2) }}</td>
+                                </tr>
+                                @endif
+                                <tr class="table-success fw-bold fs-6">
+                                    <td colspan="2">Net Vendor Payout</td>
+                                    <td class="text-end text-success">₹{{ number_format($netPayout, 2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 text-center">
+                        <p class="small text-muted mb-2">Scan & Pay via any UPI App</p>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($upiPayUrl) }}" alt="UPI QR" class="img-fluid border p-2 bg-white rounded-3">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endforeach
+
 @endsection
 
 @push('scripts')

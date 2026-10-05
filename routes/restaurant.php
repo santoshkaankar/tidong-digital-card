@@ -20,6 +20,7 @@ use App\Http\Controllers\Restaurant\TiffinReportController;
 use App\Http\Controllers\Restaurant\SettingController;
 use App\Http\Controllers\Restaurant\PincodeController;
 use App\Http\Controllers\Restaurant\RestaurantController;
+use App\Http\Controllers\Delivery\DeliveryOrderController;
 
 
 /*
@@ -145,7 +146,17 @@ Route::middleware(['auth', 'role:vendor'])->prefix('vendor/restaurant')->name('v
     Route::get('/settings', [SettingController::class, 'index'])->name('settings');
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
     Route::get('/location-search', [SettingController::class, 'searchLocation'])->name('location.search');
-});
+
+
+Route::patch('/items/{id}/toggle-status', [ItemController::class, 'toggleStatus'])->name('items.toggle-status');
+    Route::patch('/custom-items/{id}/toggle-status', [ItemController::class, 'toggleCustomStatus'])->name('custom-items.toggle-status');
+
+
+        // Delivery Boy Assignment Routes (Handled by Delivery Controller)
+    Route::post('/orders/{id}/assign-manual', [DeliveryOrderController::class, 'assignDeliveryBoyManual'])->name('orders.assign-manual');
+    Route::post('/orders/{id}/assign-auto', [DeliveryOrderController::class, 'assignDeliveryBoyAuto'])->name('orders.assign-auto');
+
+    });
 
 // Pincodes Live Search Route
 Route::get('/pincodes/search', [PincodeController::class, 'search'])->name('pincodes.search');
@@ -153,3 +164,4 @@ Route::get('/pincodes/search', [PincodeController::class, 'search'])->name('pinc
 
 // Place Order Route
 Route::post('/place-order', [RestaurantController::class, 'placeOrder'])->name('placeOrder');
+

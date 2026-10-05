@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Food Items — Restaurant Hub</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,6 +18,12 @@
         .table-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
         .custom-table th { background-color: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 1rem; }
         .custom-table td { padding: 1rem; vertical-align: middle; }
+
+        .form-switch .form-check-input {
+            width: 2.5em;
+            height: 1.25em;
+            cursor: pointer;
+        }
 
         @media (max-width: 991.98px) {
             .sidebar-area { width: 0; }
@@ -62,13 +69,13 @@
                     <i class="bi bi-plus-lg"></i>
                     <span>Add New Custom Item</span>
                 </button>
+
                 <a href="{{ route('vendor.restaurant.weekly-menu.index') }}" class="btn btn-success rounded-3 px-3 py-2 fw-semibold d-flex align-items-center gap-2">
-    <i class="bi bi-box-seam"></i>
-    <span>Add Tiffin Item</span>
-</a>
+                    <i class="bi bi-box-seam"></i>
+                    <span>Add Tiffin Item</span>
+                </a>
             </div>
         </div>
-        
 
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show border-0 rounded-3 mb-4" role="alert">
@@ -91,7 +98,7 @@
         <!-- Table Display -->
         <div class="table-card">
             <div class="table-responsive">
-                <table class="table custom-table mb-0 align-middle" style="min-width: 700px;">
+                <table class="table custom-table mb-0 align-middle" style="min-width: 750px;">
                     <thead>
                         <tr>
                             <th width="60">#</th>
@@ -101,7 +108,8 @@
                             <th>Tax</th>
                             <th>MRP (₹)</th>
                             <th>Selling Price (₹)</th>
-                            <th class="text-end" width="120">Actions</th>
+                            <th width="140" class="text-center">Stock Availability</th>
+                            <th class="text-end" width="90">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -132,6 +140,19 @@
                                     @else
                                         <span class="fw-bold text-dark fs-6">₹{{ number_format($item->mrp ?? $item->price ?? 0, 2) }}</span>
                                     @endif
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-inline-block">
+                                        <input class="form-check-input stock-toggle" 
+                                               type="checkbox" 
+                                               role="switch" 
+                                               data-id="{{ $item->id }}" 
+                                               data-type="standard" 
+                                               {{ ($item->is_available ?? true) ? 'checked' : '' }}>
+                                    </div>
+                                    <span class="d-block small text-muted stock-label" id="label-standard-{{ $item->id }}">
+                                        {{ ($item->is_available ?? true) ? 'In Stock' : 'Out of Stock' }}
+                                    </span>
                                 </td>
                                 <td class="text-end">
                                     <form action="{{ route('vendor.restaurant.items.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Remove item from menu?');">
@@ -179,6 +200,19 @@
                                             <span class="fw-bold text-dark fs-6">₹{{ number_format($custom->mrp ?? 0, 2) }}</span>
                                         @endif
                                     </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input class="form-check-input stock-toggle" 
+                                                   type="checkbox" 
+                                                   role="switch" 
+                                                   data-id="{{ $custom->id }}" 
+                                                   data-type="custom" 
+                                                   {{ ($custom->is_available ?? true) ? 'checked' : '' }}>
+                                        </div>
+                                        <span class="d-block small text-muted stock-label" id="label-custom-{{ $custom->id }}">
+                                            {{ ($custom->is_available ?? true) ? 'In Stock' : 'Out of Stock' }}
+                                        </span>
+                                    </td>
                                     <td class="text-end">
                                         <form action="{{ route('vendor.restaurant.custom-items.destroy', $custom->id) }}" method="POST" onsubmit="return confirm('Remove custom item?');">
                                             @csrf
@@ -190,10 +224,9 @@
                             @endforeach
                         @endif
 
-                        
                         @if($items->isEmpty() && (empty($customItems) || $customItems->isEmpty()))
                             <tr>
-                                <td colspan="8" class="text-center py-5 text-muted">
+                                <td colspan="9" class="text-center py-5 text-muted">
                                     <i class="bi bi-box-seam display-5 d-block mb-2 opacity-50"></i>
                                     No food items added yet. Click on "Select Global Item" or "Add New Custom Item".
                                 </td>
@@ -310,7 +343,7 @@
                             <option value="">-- Choose Tax (Optional) --</option>
                             @if(isset($taxes))
                                 @foreach($taxes as $tax)
-                                    <option value="{{ $tax->id }}">{{ $tax->tax_name }} ({{ $tax->tax_percentage }}%)</option>
+                                    <option value="{{ $tax->id }}">{{ $tax->tax_name }} ({{$tax->tax_percentage }}%)</option>
                                 @endforeach
                             @endif
                         </select>
@@ -362,6 +395,43 @@
         if (taxSelect) {
             taxSelect.value = taxId ? taxId : "";
         }
+    });
+
+    // AJAX Handler for Stock Availability Toggle
+    document.querySelectorAll('.stock-toggle').forEach(function(element) {
+        element.addEventListener('change', function() {
+            const itemId = this.getAttribute('data-id');
+            const itemType = this.getAttribute('data-type');
+            const isChecked = this.checked ? 1 : 0;
+            const labelElement = document.getElementById(`label-${itemType}-${itemId}`);
+
+            let url = itemType === 'custom' 
+                ? `/vendor/restaurant/custom-items/${itemId}/toggle-status` 
+                : `/vendor/restaurant/items/${itemId}/toggle-status`;
+
+            fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ is_available: isChecked })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    labelElement.textContent = isChecked ? 'In Stock' : 'Out of Stock';
+                } else {
+                    alert('Status update karne me dikkat aai!');
+                    this.checked = !this.checked;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Something went wrong!');
+                this.checked = !this.checked;
+            });
+        });
     });
 </script>
 </body>

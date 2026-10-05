@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models\Restaurant;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -49,5 +48,11 @@ class RestaurantOrder extends Model
     public function customer()
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    // Delivery Boy Relationship
+    public function deliveryBoy()
+    {
+        return $this->belongsTo(User::class, 'delivery_boy_id');
     }
 }
