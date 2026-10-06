@@ -235,7 +235,6 @@ public function assignDeliveryBoyAuto($id)
 
     $availableBoy = User::where('role', 'delivery')
         ->where('duty_status', 'online')
-        ->where('status', 'active')
         ->first();
 
     if (!$availableBoy) {
