@@ -29,11 +29,8 @@ class OrderController extends Controller
             ->latest()
             ->paginate(15);
 
-        // Fetch Online & Active Delivery Boys for the Vendor View Dropdown
-        $deliveryBoys = User::where('role', 'delivery')
-            ->where('duty_status', 'online')
-            ->where('status', 'active')
-            ->get();
+        // Fetch Delivery Boys for Vendor Dropdown
+        $deliveryBoys = User::where('role', 'delivery')->get();
 
         return view('vendor.restaurant.orders.index', compact('orders', 'deliveryBoys'));
     }
@@ -256,7 +253,7 @@ class OrderController extends Controller
                     'tax_amount'     => round($item['tax_amount'], 2),
                     'subtotal'       => round($item['subtotal'], 2),
                     'batch_number'   => 1,
-                    'kitchen_status' => 'sent_to_kitchen',
+                    'kitchen_status' => 'pending', // Fixed PostgreSQL Check Constraint
                 ]);
             }
 
@@ -506,5 +503,47 @@ class OrderController extends Controller
         }
 
         return view('vendor.restaurant.orders.print', compact('order', 'taxLines'));
+    }
+
+    /**
+     * Vendor Handover OTP Verification (Fix for KDS Handover Modal)
+     */
+    public function verifyPickupOtp(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'pickup_otp' => 'required'
+            ]);
+
+            $order = RestaurantOrder::where('id', $id)->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found!'
+                ], 404);
+            }
+
+            if (!empty($order->pickup_otp) && $order->pickup_otp != $request->pickup_otp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid Handover OTP!'
+                ], 422);
+            }
+
+            $order->status = 'out_for_delivery';
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Handover successful!'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
