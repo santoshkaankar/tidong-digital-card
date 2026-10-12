@@ -21,44 +21,18 @@ class GlobalVoiceController extends Controller
             ]);
         }
 
-        // 1. User ke voice input se Pincode (6 digits) ya District/Area extract karne ki koshish
-        preg_match('/\b\d{6}\b/', $userVoiceInput, $pincodeMatches);
-        $searchedPincode = $pincodeMatches[0] ?? null;
-
-        $matchedRestaurants = collect();
-
-        if ($searchedPincode) {
-            // Agar user ne pincode bola hai, toh pincodes table se match karke wahan ke vendors find karo (Limit 3)
-            $pincodeData = DB::table('pincodes')->where('pincode', $searchedPincode)->first();
-            
-            if ($pincodeData) {
-                // Us district ya office name ke hisab se vendors fetch karo taaki server crash na ho
-                $matchedRestaurants = User::whereHas('restaurantItems')
-                    ->where(function($q) use ($pincodeData) {
-                        $q->where('address', 'LIKE', '%' . $pincodeData->district . '%')
-                          ->orWhere('address', 'LIKE', '%' . $pincodeData->office_name . '%');
-                    })
-                    ->select('id', 'name', 'restaurant_name', 'address', 'city')
-                    ->take(3)
-                    ->get();
-            }
-        }
-
-        // Agar specific pincode nahi mila ya match nahi hua, toh default safe limit (Sirf 3 restaurants) fetch karo taaki memory bachi rahe
-        if ($matchedRestaurants->isEmpty()) {
-            $matchedRestaurants = User::whereHas('restaurantItems')
-                ->select('id', 'name', 'restaurant_name', 'address', 'city')
-                ->latest()
-                ->take(3)
-                ->get();
-        }
+        // 1. Safe fetch: Database se saare available registered restaurants nikal lo (Max 5) taaki kabhi empty na ho
+        $allRestaurants = User::whereHas('restaurantItems')
+            ->select('id', 'name', 'restaurant_name', 'address', 'city')
+            ->take(5)
+            ->get();
 
         $vendorId = session('vendor_id');
         $availableItems = [];
         if ($vendorId) {
             $availableItems = RestaurantItem::where('user_id', $vendorId)
                 ->where('status', true)
-                ->take(20) // Memory protect karne ke liye items ki limit
+                ->take(30)
                 ->get(['id', 'item_name', 'price']);
         }
 
@@ -69,22 +43,22 @@ class GlobalVoiceController extends Controller
             ]);
         }
 
-        // AI Prompt
-        $aiPrompt = "Aap Tidong Voice Assistant hain. User ne kaha: '$userVoiceInput'.
-Context:
-- Nearby Restaurants Found: " . json_encode($matchedRestaurants) . "
-- Menu Items: " . json_encode($availableItems) . "
+        // 2. Powerful Assistant Prompt: Kabhi mana nahi karega, hamesha friendly baat karega
+        $aiPrompt = "Aap Tidong ke smart AI restaurant assistant hain. User ne pucha hai: '$userVoiceInput'.
+Context Data:
+- Platform par registered available restaurants: " . json_encode($allRestaurants) . "
+- Current Menu Items: " . json_encode($availableItems) . "
 
-Instructions:
-1. User ko Hinglish (Roman Hindi) me batao ki us area me kaun se restaurants available hain (sirf 2-3 batao). Kabhi mana mat karo.
-2. Agar order karna chahe toh items identify karo.
-3. Jawab chhota aur clear rakho.
+Instructions for Assistant:
+1. Aapko kabhi bhi 'restaurant nahi hai' ya 'mafi chahta hu' bolkar mana nahi karna hai. 
+2. Agar user kuch bhi puche (jaise khana kahan milega, door ke restaurants, ya general help), toh upar diye gaye registered restaurants me se 2-3 ke naam aur unki details batao. Agar koi aur sawal ho toh ek friendly smart assistant ki tarah Hinglish me jawab do.
+3. Agar user order karne ko bole toh items identify karo.
 
 Strictly JSON format me return karo:
 {
   \"type\": \"search\" | \"order\" | \"info\",
   \"items\": [{\"id\": item_id, \"quantity\": qty}],
-  \"reply\": \"Hinglish me saaf jawab likho jo bolne me achha lage\"
+  \"reply\": \"Yahan ekdum natural, friendly aur conversational Hinglish jawab likho jo bolne me ek real assistant jaisa lage (under 2 sentences)\"
 }";
 
         $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$apiKey}", [
@@ -98,7 +72,7 @@ Strictly JSON format me return karo:
         
         $parsedJson = json_decode(preg_replace('/```json|```/', '', $rawResponseText), true);
 
-        $botReply = $parsedJson['reply'] ?? "Hamare paas aapke area me restaurants available hain, aap kya khana chahenge?";
+        $botReply = $parsedJson['reply'] ?? "Haanji, hamare paas kai behtareen restaurants registered hain, aap bataiye kya khana pasand karenge?";
         $intentType = $parsedJson['type'] ?? 'info';
         $orderedItems = $parsedJson['items'] ?? [];
 
@@ -128,7 +102,7 @@ Strictly JSON format me return karo:
 
         return response()->json([
             'bot_reply' => $botReply,
-            $intentType
+            'intent' => $intentType
         ]);
     }
 }
