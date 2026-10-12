@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Global;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use App\Models\User; // Restaurant vendors ke liye
+use App\Models\User;
 use App\Models\Restaurant\RestaurantItem;
-use App\Models\Restaurant\RestaurantTable;
 
 class GlobalVoiceController extends Controller
 {
@@ -21,7 +20,6 @@ class GlobalVoiceController extends Controller
             ]);
         }
 
-        // 1. Registered Restaurants / Food Search Context gather karein
         $restaurants = User::whereHas('restaurantItems')->select('id', 'name', 'restaurant_name', 'address')->take(5)->get();
         $vendorId = session('vendor_id');
         
@@ -39,23 +37,18 @@ class GlobalVoiceController extends Controller
             ]);
         }
 
-        // 2. AI Prompt jisme restaurant search, table inquiry aur ordering sabhi handled hain
-        $aiPrompt = "You are Tidong Digital Restaurant Assistant. User said: '$userVoiceInput'.
-Context Data:
-- Available Restaurants/Vendors: " . json_encode($restaurants) . "
-- Current Vendor Menu Items: " . json_encode($availableItems) . "
+        $aiPrompt = "Aap Tidong Voice Assistant hain. User ne kaha: '$userVoiceInput'.
+Context:
+- Restaurants: " . json_encode($restaurants) . "
+- Menu Items: " . json_encode($availableItems) . "
 
 Instructions:
-Analyze user intent:
-1. If user is asking for restaurants or food options nearby, list the registered restaurants and their food.
-2. If user is asking about table availability, provide a general estimated wait time (e.g., 'Abhi 2 tables khali hain, ya 10 minute ka wait hai').
-3. If user wants to order items, match them with menu items and prepare order items.
-
-Return response STRICTLY in valid JSON format:
+User ke sawal ka jawab Hinglish (Roman Hindi) me do. Agar khana mangana hai toh items identify karo.
+Strictly JSON format me return karo:
 {
   \"type\": \"search\" | \"order\" | \"info\",
   \"items\": [{\"id\": item_id, \"quantity\": qty}],
-  \"reply\": \"Hinglish natural voice response to speak to the user (keep it polite, clear and conversational under 2 sentences)\"
+  \"reply\": \"Yahan Hinglish me chhota aur saaf jawab likho jo bolne me achha lage (jaise: 'Maine 1 Paneer Tikka cart me add kar diya hai' ya 'Hamare paas yeh restaurants available hain')\"
 }";
 
         $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$apiKey}", [
@@ -73,7 +66,6 @@ Return response STRICTLY in valid JSON format:
         $intentType = $parsedJson['type'] ?? 'info';
         $orderedItems = $parsedJson['items'] ?? [];
 
-        // Agar user ka intent order karne ka hai, toh cart me add karein
         if ($intentType == 'order' && !empty($orderedItems) && $vendorId) {
             $cart = session()->get('cart', []);
             foreach ($orderedItems as $item) {
