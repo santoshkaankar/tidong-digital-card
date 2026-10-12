@@ -53,7 +53,7 @@
                     document.getElementById('micBtn').classList.remove('btn-dark');
                     document.getElementById('micBtn').classList.add('btn-danger');
                 }
-            }, 1000);
+            }, 1500);
         };
     }
 
@@ -110,30 +110,8 @@
         window.speechSynthesis.cancel();
         let utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'hi-IN';
-        
-        // Mobile par clear aur deep male sounding voice ke liye parameters fix kiye hain
-        utterance.pitch = 0.8; // Low pitch se aawaz heavy aur male jaisi aayegi
-        utterance.rate = 1.0;  // Normal bolne ki speed
-
-        // Mobile browser voices list check karke Indian Male voice force karna
-        let voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) {
-            let selectedVoice = voices.find(v => (v.lang.includes('hi') || v.lang.includes('IN')) && (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('Rishi') || v.name.toLowerCase().includes('Hemant')));
-            if (!selectedVoice) {
-                selectedVoice = voices.find(v => v.lang.includes('hi-IN') || v.lang.includes('hi'));
-            }
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
-        }
-
+        utterance.pitch = 0.6; // Deep and clear tone for mobile
+        utterance.rate = 0.95; 
         window.speechSynthesis.speak(utterance);
-    }
-
-    // Mobile browsers me voices load hone me thoda time leti hain, uske liye listener
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = function() {
-            window.speechSynthesis.getVoices();
-        };
     }
 </script>
