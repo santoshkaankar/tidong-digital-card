@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Global;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\User;
-use App\Models\Restaurant\RestaurantItem;
 
 class GlobalVoiceController extends Controller
 {
@@ -21,88 +20,58 @@ class GlobalVoiceController extends Controller
             ]);
         }
 
-        // 1. Safe fetch: Database se saare available registered restaurants nikal lo (Max 5) taaki kabhi empty na ho
+        // Database se registered restaurants fetch karein
         $allRestaurants = User::whereHas('restaurantItems')
             ->select('id', 'name', 'restaurant_name', 'address', 'city')
             ->take(5)
             ->get();
 
-        $vendorId = session('vendor_id');
-        $availableItems = [];
-        if ($vendorId) {
-            $availableItems = RestaurantItem::where('user_id', $vendorId)
-                ->where('status', true)
-                ->take(30)
-                ->get(['id', 'item_name', 'price']);
+        $restaurantListText = "";
+        foreach($allRestaurants as $res) {
+            $name = $res->restaurant_name ?? $res->name ?? 'Restaurant';
+            $city = $res->city ?? 'Nearby';
+            $restaurantListText .= "- {$name} ({$city})\n";
         }
 
         $apiKey = env('GEMINI_API_KEY');
+
         if (!$apiKey) {
             return response()->json([
-                'bot_reply' => 'AI Voice service configured nahi hai.',
+                'bot_reply' => 'Gemini API Key missing hai, kripya Render environment check karein.',
             ]);
         }
 
-        // 2. Powerful Assistant Prompt: Kabhi mana nahi karega, hamesha friendly baat karega
         $aiPrompt = "Aap Tidong ke smart AI restaurant assistant hain. User ne pucha hai: '$userVoiceInput'.
-Context Data:
-- Platform par registered available restaurants: " . json_encode($allRestaurants) . "
-- Current Menu Items: " . json_encode($availableItems) . "
+Hamaare paas ye restaurants registered hain:
+{$restaurantListText}
 
-Instructions for Assistant:
-1. Aapko kabhi bhi 'restaurant nahi hai' ya 'mafi chahta hu' bolkar mana nahi karna hai. 
-2. Agar user kuch bhi puche (jaise khana kahan milega, door ke restaurants, ya general help), toh upar diye gaye registered restaurants me se 2-3 ke naam aur unki details batao. Agar koi aur sawal ho toh ek friendly smart assistant ki tarah Hinglish me jawab do.
-3. Agar user order karne ko bole toh items identify karo.
+Aapko kabhi bhi 'restaurant nahi hai' ya 'mafi chahta hu' bolkar mana nahi karna hai. Hamesha friendly Hinglish me 1 ya 2 lines me seedha jawab do. Agar koi restaurant ya khana puche toh upar diye gaye list me se naam lekar batao.";
 
-Strictly JSON format me return karo:
-{
-  \"type\": \"search\" | \"order\" | \"info\",
-  \"items\": [{\"id\": item_id, \"quantity\": qty}],
-  \"reply\": \"Yahan ekdum natural, friendly aur conversational Hinglish jawab likho jo bolne me ek real assistant jaisa lage (under 2 sentences)\"
-}";
+        try {
+            // Gemini API Call
+            $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+                'contents' => [
+                    ['parts' => [['text' => $aiPrompt]]]
+                ]
+            ]);
 
-        $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$apiKey}", [
-            'contents' => [
-                ['parts' => [['text' => $aiPrompt]]]
-            ]
-        ]);
+            $aiData = $response->json();
+            $botReply = $aiData['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
-        $aiData = $response->json();
-        $rawResponseText = $aiData['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
-        
-        $parsedJson = json_decode(preg_replace('/```json|```/', '', $rawResponseText), true);
-
-        $botReply = $parsedJson['reply'] ?? "Haanji, hamare paas kai behtareen restaurants registered hain, aap bataiye kya khana pasand karenge?";
-        $intentType = $parsedJson['type'] ?? 'info';
-        $orderedItems = $parsedJson['items'] ?? [];
-
-        if ($intentType == 'order' && !empty($orderedItems) && $vendorId) {
-            $cart = session()->get('cart', []);
-            foreach ($orderedItems as $item) {
-                $itemId = $item['id'] ?? null;
-                $qty = $item['quantity'] ?? 1;
-
-                if ($itemId) {
-                    if (isset($cart[$itemId])) {
-                        $cart[$itemId]['quantity'] += $qty;
-                    } else {
-                        $dbItem = RestaurantItem::find($itemId);
-                        if ($dbItem) {
-                            $cart[$itemId] = [
-                                'name' => $dbItem->item_name,
-                                'price' => $dbItem->price,
-                                'quantity' => $qty
-                            ];
-                        }
-                    }
-                }
+            if ($botReply) {
+                return response()->json([
+                    'bot_reply' => trim($botReply),
+                    'intent' => 'info'
+                ]);
             }
-            session()->put('cart', $cart);
+        } catch (\Exception $e) {
+            Log::error('Gemini API Error: ' . $e->getMessage());
         }
 
+        // Fallback Reply (Agar API kisi wajeh se response na de)
         return response()->json([
-            'bot_reply' => $botReply,
-            'intent' => $intentType
+            'bot_reply' => "Haanji, hamare platform par behtareen restaurants available hain. Aap kya khana pasand karenge?",
+            'intent' => 'info'
         ]);
     }
 }
