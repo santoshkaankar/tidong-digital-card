@@ -10,6 +10,8 @@ use App\Http\Middleware\DeviceIdentityMiddleware;
 use Illuminate\Support\Facades\View;
 use App\Http\Controllers\Restaurant\ProceedTiffinController;
 use App\Http\Controllers\Auth\MobilePasswordResetController;
+use App\Http\Controllers\Global\GlobalVoiceController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -172,3 +174,5 @@ Route::get('/vendor/dashboard', function () {
 Route::get('/services/taxi', function () { return redirect()->route('customer.hub'); })->name('vendor.taxi.rides');
 Route::get('/services/forex', function () { return redirect()->route('customer.hub'); })->name('vendor.exchange.rates');
 Route::get('/services/guide', function () { return redirect()->route('customer.hub'); })->name('vendor.guide.bookings');
+
+Route::post('/global/voice-process', [GlobalVoiceController::class, 'processVoiceCommand'])->name('global.voice.process');

@@ -35,7 +35,7 @@
     <!-- Sponsored Ads & Partner Offers Grid (Sahi naam yahan hai) -->
     @include('partials.welcome.sponsored-ads')
 
-   
+   @include('global.partials.voice_assistant')
 
     <!-- Modals -->
     @include('partials.welcome.modals')
