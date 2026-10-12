@@ -1,8 +1,7 @@
 <!-- Global Floating AI Voice Assistant Widget -->
 <div id="aiVoiceWidget" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
-    <button id="micBtn" class="btn btn-danger rounded-circle shadow-lg d-flex align-items-center justify-content-center p-0" onclick="toggleGlobalVoiceAssistant()" style="width: 50px; height: 50px; border: 2px solid #fff;" title="Bolkar Order Karein">
-        <!-- Professional SVG Microphone Icon -->
-        <svg id="micSvgIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-mic-fill text-white" viewBox="0 0 16 16">
+    <button id="micBtn" class="btn btn-danger rounded-circle shadow-lg d-flex align-items-center justify-content-center p-0" onclick="toggleGlobalVoiceAssistant()" style="width: 50px; height: 50px; border: 2px solid #fff;" title="Bolkar Puchiye ya Order Karein">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-mic-fill text-white" viewBox="0 0 16 16">
             <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/>
             <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
         </svg>
@@ -38,21 +37,27 @@
 
         globalRecognition.onresult = function(event) {
             let userTranscript = event.results[0][0].transcript;
-            document.getElementById('voiceTextStatus').innerText = `Aapne bola: "${userTranscript}"`;
+            document.getElementById('voiceTextStatus').innerText = `Suna: "${userTranscript}"`;
             
-            // Thoda ruk kar backend ko bhejenge taaki user ko text dikh sake
-            setTimeout(() => {
-                sendGlobalVoiceCommand(userTranscript);
-            }, 800);
+            // Backend par command bhejein
+            sendGlobalVoiceCommand(userTranscript);
         };
 
         globalRecognition.onerror = function(event) {
-            speakGlobalResponse("Samajh nahi aaya, kripya dobara bolein.");
+            console.error("Speech recognition error", event.error);
+            speakGlobalResponse("Awaaz saaf nahi aayi, kripya dobara bolein.");
             stopGlobalListening();
         };
 
         globalRecognition.onend = function() {
-            stopGlobalListening();
+            // Turant band na ho kar status maintain karega
+            setTimeout(() => {
+                if(!isGlobalListening) {
+                    document.getElementById('voiceStatusBox').style.display = 'none';
+                    document.getElementById('micBtn').classList.remove('btn-dark');
+                    document.getElementById('micBtn').classList.add('btn-danger');
+                }
+            }, 1000);
         };
     }
 
@@ -62,9 +67,14 @@
             return;
         }
         if (!isGlobalListening) {
-            globalRecognition.start();
+            try {
+                globalRecognition.start();
+            } catch (e) {
+                console.log(e);
+            }
         } else {
             globalRecognition.stop();
+            stopGlobalListening();
         }
     }
 
@@ -72,7 +82,6 @@
         isGlobalListening = false;
         document.getElementById('micBtn').classList.remove('btn-dark');
         document.getElementById('micBtn').classList.add('btn-danger');
-        document.getElementById('voiceStatusBox').style.display = 'none';
     }
 
     function sendGlobalVoiceCommand(userSpeechText) {
@@ -87,12 +96,18 @@
         .then(res => res.json())
         .then(data => {
             speakGlobalResponse(data.bot_reply);
-            setTimeout(() => {
-                location.reload(); // Cart update hone ke baad page refresh
-            }, 2500);
+            document.getElementById('voiceTextStatus').innerText = data.bot_reply;
+            
+            // Agar order hua hai toh 3 seconds baad page refresh karega taaki cart dikhe
+            if (data.intent === 'order') {
+                setTimeout(() => {
+                    location.reload();
+                }, 3500);
+            }
         })
         .catch(err => {
             speakGlobalResponse("Mafi chahta hu, process karne me dikkat aayi.");
+            document.getElementById('voiceStatusBox').style.display = 'none';
         });
     }
 
