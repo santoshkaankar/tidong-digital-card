@@ -58,15 +58,13 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'                => ['required', 'string', 'max:255'],
-            'username'            => ['nullable', 'string', 'max:255', 'unique:users'],
-            'email'               => ['required', 'email', 'unique:users'],
-            'mobile'              => ['required', 'string', 'max:15', 'unique:users'],
-            'password'            => ['required', 'min:6'],
-            'role'                => ['required', 'in:admin,employee,business,member,vendor,delivery'],
-            'business_type'       => ['nullable', 'string', 'max:255'],
-            'sponsor_referral_id' => ['nullable', 'string', 'exists:users,referral_id'],
-            'position'            => ['required_if:role,member', 'string', 'in:left,right'],
+            'name'          => ['required', 'string', 'max:255'],
+            'username'      => ['nullable', 'string', 'max:255', 'unique:users'],
+            'email'         => ['required', 'email', 'unique:users'],
+            'mobile'        => ['required', 'string', 'max:15', 'unique:users'],
+            'password'      => ['required', 'min:6'],
+            'role'          => ['required', 'string'],
+            'business_type' => ['nullable', 'string', 'max:255'],
         ]);
 
         $parentId = null;
@@ -79,16 +77,14 @@ class AuthController extends Controller
 
             $sponsor = User::where('referral_id', $sponsorRefId)->first();
             
-            if (!$sponsor) {
-                return back()->withErrors(['sponsor_referral_id' => 'Yeh Sponsor Referral ID system mein mojood nahi hai!'])->withInput();
+            if ($sponsor) {
+                $sponsorId = $sponsor->id;
+                $preferredPosition = $request->position ?: 'left';
+
+                $placement = $this->findPlacementNode($sponsor->id, $preferredPosition);
+                $parentId = $placement['parent_id'];
+                $position = $placement['position'];
             }
-
-            $sponsorId = $sponsor->id;
-            $preferredPosition = $request->position ?: 'left';
-
-            $placement = $this->findPlacementNode($sponsor->id, $preferredPosition);
-            $parentId = $placement['parent_id'];
-            $position = $placement['position'];
 
             do {
                 $referralId = 'TABS' . strtoupper(Str::random(8));
@@ -107,7 +103,7 @@ class AuthController extends Controller
             'mobile'        => $request->mobile,
             'password'      => Hash::make($request->password),
             'role'          => $request->role,
-            'business_type' => in_array($request->role, ['business', 'vendor']) ? $request->business_type : null,
+            'business_type' => $request->business_type ?? null,
             'vehicle_no'    => $request->vehicle_no ?? null,
         ]);
 
@@ -174,11 +170,7 @@ class AuthController extends Controller
             return Route::has('delivery.dashboard') ? redirect()->route('delivery.dashboard') : view('delivery.dashboard');
         }
 
-        if ($user->business_type === 'shopping') {
-            return Route::has('shopping.shop-dashboard') ? redirect()->route('shopping.shop-dashboard') : view('shopping.shop-dashboard');
-        }
-
-        if (in_array($role, ['business', 'vendor'])) {
+        if (in_array($role, ['business', 'vendor', 'restaurant', 'food'])) {
             $routeName = match ($user->business_type) {
                 'taxi' => 'vendor.taxi.dashboard',
                 'hotel' => 'vendor.hotel.dashboard',
@@ -186,14 +178,14 @@ class AuthController extends Controller
                 'food', 'restaurant' => 'vendor.restaurant.dashboard',
                 'money_exchange' => 'vendor.exchange.dashboard',
                 'tourist_guide' => 'vendor.guide.dashboard',
-                default => null,
+                default => 'vendor.restaurant.dashboard',
             };
 
             if ($routeName && Route::has($routeName)) {
                 return redirect()->route($routeName);
             }
 
-            return redirect('/');
+            return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : redirect('/');
         }
 
         return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : view('member.dashboard');

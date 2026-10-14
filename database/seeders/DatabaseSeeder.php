@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -23,7 +24,33 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Baaki ke seeders (Data safe aur locked rahega, overwrite nahi hoga)
+        // 2. Customer User Auto Create
+        $customer = User::firstOrCreate(
+            ['email' => 'meenushona1@gmail.com'],
+            [
+                'name'          => 'meenu',
+                'username'      => 'meenu',
+                'mobile'        => '6395392537',
+                'role'          => 'member',
+                'referral_id'   => 'TDMS6395GSSS',
+                'password'      => Hash::make('password'),
+                'status'        => 'approved',
+                'mobile_verified' => 1,
+                'email_verified'  => 1,
+            ]
+        );
+
+        // 3. Add 46,40,000.00 T-Coins to Wallet
+        Wallet::updateOrCreate(
+            ['user_id' => $customer->id],
+            [
+                't_coins'                 => 4540000.00,
+                'real_balance'            => 0.00,
+                'non_withdrawable_balance'=> 0.00,
+            ]
+        );
+
+        // Baaki ke seeders
         $this->call([
             CountrySeeder::class,
             PincodeSeeder::class,
@@ -31,7 +58,6 @@ class DatabaseSeeder extends Seeder
             TaxSeeder::class,
             AffiliateStageSeeder::class,
             RetailProductSeeder::class,
-            ShoppingCatalogSeeder::class,
         ]);
     }
 }
