@@ -492,6 +492,7 @@ return new class extends Migration
                 $table->decimal('price', 10, 2)->default(0);
                 $table->boolean('is_available')->default(true);
                 $table->boolean('in_stock')->default(true);
+                $table->string('status')->default('1');
                 $table->timestamps();
                 $table->unique(['user_id', 'global_item_id']);
             });
@@ -773,6 +774,50 @@ return new class extends Migration
                 $table->timestamps();
             });
         }
+        // 1. Vendor Businesses Table (Ek vendor ke alag-alag types ke business jaise Restaurant, Marriage Garden)
+        if (!Schema::hasTable('vendor_businesses')) {
+            Schema::create('vendor_businesses', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Main Vendor ID
+                $table->string('business_name'); // Jaise: "Sharma Restaurant", "Royal Garden"
+                $table->string('business_type'); // Jaise: 'restaurant', 'marriage_garden', 'tiffin', etc.
+                $table->string('slug')->unique();
+                $table->string('phone')->nullable();
+                $table->text('address')->nullable();
+                $table->string('city')->nullable();
+                $table->string('pincode', 10)->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
+
+        // 2. Vendor Outlets Table (Agar kisi business ki multiple branches ya locations hain)
+        if (!Schema::hasTable('vendor_outlets')) {
+            Schema::create('vendor_outlets', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('vendor_id')->constrained('users')->onDelete('cascade');
+                $table->foreignId('business_id')->nullable()->constrained('vendor_businesses')->onDelete('cascade');
+                $table->string('outlet_name'); // e.g. Tidong Sweets - Borkheda Branch
+                $table->string('phone')->nullable();
+                $table->text('address')->nullable();
+                $table->string('city')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
+
+        // 3. Vendor Employees Table (Staff Management for Vendor/Outlets)
+        if (!Schema::hasTable('vendor_employees')) {
+            Schema::create('vendor_employees', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('vendor_id')->constrained('users')->onDelete('cascade'); // Master Vendor
+                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');   // Staff user account
+                $table->foreignId('outlet_id')->nullable()->constrained('vendor_outlets')->onDelete('set null');
+                $table->string('designation')->default('Manager'); // Cashier, Chef, Manager, etc.
+                $table->string('status')->default('active');
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void
@@ -820,5 +865,8 @@ return new class extends Migration
         Schema::dropIfExists('marriage_plans');
         Schema::dropIfExists('credit_cards');
         Schema::dropIfExists('delivery_wallet_transactions');
+        Schema::dropIfExists('vendor_employees');
+        Schema::dropIfExists('vendor_outlets');
+        Schema::dropIfExists('vendor_businesses');
     }
 };
