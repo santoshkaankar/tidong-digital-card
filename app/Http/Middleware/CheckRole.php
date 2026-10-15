@@ -32,8 +32,8 @@ class CheckRole
             return $next($request);
         }
 
-        // 3. Safe Bypass: Agar vendor pehle se hi vendor URL par hai toh loop na bane
-        if (($userRole === 'business' || $userRole === 'vendor') && $request->is('vendor/*')) {
+        // 3. Safe Bypass: Agar vendor ya vendor_employee pehle se hi vendor URL par hai toh loop na bane
+        if (($userRole === 'business' || $userRole === 'vendor' || $userRole === 'vendor_employee') && $request->is('vendor*')) {
             return $next($request);
         }
 
@@ -52,6 +52,14 @@ class CheckRole
 
         if ($userRole === 'employee') {
             return redirect()->route('employee.dashboard');
+        }
+
+        // Vendor Employee ke liye Restaurant Dashboard par direct bypass
+        if ($userRole === 'vendor_employee') {
+            if (Route::has('vendor.restaurant.dashboard')) {
+                return redirect()->route('vendor.restaurant.dashboard');
+            }
+            return redirect('/vendor/restaurant/dashboard');
         }
 
         // Vendor / Business user hamesha Master Dashboard par hi jayega

@@ -39,9 +39,44 @@ class AuthController extends Controller
             'password' => $request->password
         ];
 
+        // Standard Laravel Auth attempt
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return $this->redirectToUserDashboard(Auth::user());
+            $user = Auth::user();
+
+            // Agar user Vendor Employee hai, toh session set karein aur direct outlet dashboard bhejien
+            if (strtolower($user->role) === 'vendor_employee') {
+                $employeeRecord = \App\Models\Vendor\VendorEmployee::where('email', $user->email)->first();
+                if ($employeeRecord) {
+                    if (!$employeeRecord->is_active) {
+                        Auth::logout();
+                        return back()->withErrors([
+                            'login' => 'Your staff account has been disabled by the vendor.',
+                        ])->onlyInput('login');
+                    }
+
+                    $perms = is_array($employeeRecord->permissions) 
+                        ? $employeeRecord->permissions 
+                        : json_decode($employeeRecord->permissions ?? '[]', true);
+
+                    session([
+                        'vendor_employee_id'   => $employeeRecord->id,
+                        'vendor_id'            => $employeeRecord->vendor_id,
+                        'business_id'          => $employeeRecord->business_id,
+                        'employee_name'        => $employeeRecord->name,
+                        'employee_designation' => $employeeRecord->designation,
+                        'employee_permissions' => $perms ?? [],
+                    ]);
+                }
+
+                // Direct redirect to Restaurant Outlet Dashboard
+                if (Route::has('vendor.restaurant.dashboard')) {
+                    return redirect()->route('vendor.restaurant.dashboard')->with('success', 'Welcome back, ' . $user->name . '!');
+                }
+                return redirect('/vendor/restaurant/dashboard')->with('success', 'Welcome back, ' . $user->name . '!');
+            }
+
+            return $this->redirectToUserDashboard($user);
         }
 
         return back()->withErrors([
@@ -70,7 +105,6 @@ class AuthController extends Controller
         $position = 'left';
         $referralId = null;
 
-        // Sirf Member ke liye binary aur sponsor system chalega
         if ($request->role === 'member') {
             $sponsorRefId = $request->sponsor_referral_id ?: 'TDMS6395GSSS';
             $sponsor = User::where('referral_id', $sponsorRefId)->first();
@@ -89,7 +123,6 @@ class AuthController extends Controller
             } while (User::where('referral_id', $referralId)->exists());
         }
 
-        // User Create Karein
         $user = User::create([
             'name'          => $request->name,
             'username'      => $request->username ?? null,
@@ -104,7 +137,6 @@ class AuthController extends Controller
             'role'          => $request->role,
         ]);
 
-        // Member binary count increment
         if ($request->role === 'member' && $parentId) {
             $currentParentId = $parentId;
             $currentPosition = $position;
@@ -157,23 +189,28 @@ class AuthController extends Controller
         $role = strtolower($user->role);
 
         if ($role === 'admin') {
-            return Route::has('admin.dashboard') ? redirect()->route('admin.dashboard') : view('admin.dashboard');
+            return Route::has('admin.dashboard') ? redirect()->route('admin.dashboard') : redirect('/admin/dashboard');
         }
 
         if ($role === 'employee') {
-            return Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : view('employee.dashboard');
+            return Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : redirect('/employee/dashboard');
         }
 
         if ($role === 'delivery') {
-            return Route::has('delivery.dashboard') ? redirect()->route('delivery.dashboard') : view('delivery.dashboard');
+            return Route::has('delivery.dashboard') ? redirect()->route('delivery.dashboard') : redirect('/delivery/dashboard');
         }
 
-        // Vendor / Business user hamesha Master Dashboard par jayega, kisi restaurant page par nahi
+        if ($role === 'vendor_employee') {
+            return Route::has('vendor.restaurant.dashboard') 
+                ? redirect()->route('vendor.restaurant.dashboard') 
+                : redirect('/vendor/restaurant/dashboard');
+        }
+
         if (in_array($role, ['business', 'vendor'])) {
-            return redirect()->route('vendor.dashboard');
+            return Route::has('vendor.dashboard') ? redirect()->route('vendor.dashboard') : redirect('/vendor/dashboard');
         }
 
-        return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : view('member.dashboard');
+        return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : redirect('/member/dashboard');
     }
 
     public function showForgotPassword()
@@ -220,9 +257,19 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $request->session()->forget([
+            'vendor_employee_id', 
+            'vendor_id', 
+            'business_id', 
+            'employee_name', 
+            'employee_designation', 
+            'employee_permissions'
+        ]);
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         Auth::logout();
+        
         return redirect()->route('login');
     }
 }

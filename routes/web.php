@@ -12,7 +12,7 @@ use App\Http\Controllers\Restaurant\ProceedTiffinController;
 use App\Http\Controllers\Auth\MobilePasswordResetController;
 use App\Http\Controllers\Global\GlobalVoiceController;
 use App\Http\Controllers\Vendor\VendorDashboardController;
-
+use App\Http\Controllers\PincodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -114,6 +114,7 @@ require __DIR__ . '/shopping.php';
 require __DIR__ . '/delivery.php';
 require __DIR__ . '/hub.php';
 require __DIR__ . '/vendor.php';
+require __DIR__.'/game.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -172,3 +173,5 @@ Route::get('/services/forex', function () { return redirect()->route('customer.h
 Route::get('/services/guide', function () { return redirect()->route('customer.hub'); })->name('vendor.guide.bookings');
 
 Route::post('/global/voice-process', [GlobalVoiceController::class, 'processVoiceCommand'])->name('global.voice.process');
+
+Route::get('/pincode/search', [PincodeController::class, 'search'])->name('pincode.search');

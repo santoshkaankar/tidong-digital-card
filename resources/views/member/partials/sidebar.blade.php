@@ -45,6 +45,13 @@
                 </a>
             </li>
 
+            <!-- 🎮 Minecraft Real 3D Game Link Added Here -->
+            <li class="{{ request()->is('game*') ? 'active' : '' }} mb-1">
+                <a href="{{ route('game.index') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2" style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3);">
+                    <i class="fas fa-cube text-success"></i> <span style="color: #00ff88; font-weight: bold;">Minecraft Real 3D</span>
+                </a>
+            </li>
+
             <li class="{{ request()->is('member/hub*') ? 'active' : '' }} mb-1">
                 <a href="{{ url('/member/hub') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-qrcode text-primary"></i> Tidong Super Hub

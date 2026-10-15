@@ -22,6 +22,11 @@
             </a>
         </li>
         <li class="nav-item mb-1">
+    <a href="{{ route('vendor.employees.index') }}" class="nav-link text-white {{ request()->routeIs('vendor.employees.*') ? 'active bg-primary' : '' }}">
+        <i class="fas fa-users-cog me-2"></i> Employee & Staff
+    </a>
+</li>
+        <li class="nav-item mb-1">
             <a href="{{ route('vendor.card.index') ?? '#' }}" class="nav-link text-white">
                 <i class="fas fa-id-card me-2"></i> Digital Cards & VCard
             </a>

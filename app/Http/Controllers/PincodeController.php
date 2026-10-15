@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\DB;
 class PincodeController extends Controller
 {
     /**
-     * Safe AJAX Live Search returning 4 main fields (office_name, pincode, district, state_name)
-     * Compatible with MySQL and Supabase PostgreSQL.
+     * Safe AJAX Live Search returning office_name, pincode, district, and state
+     * Supports City, Area, and Pincode search for MySQL and PostgreSQL.
      */
     public function search(Request $request)
     {
@@ -28,7 +28,8 @@ class PincodeController extends Controller
                     ->select('id', 'office_name', 'pincode', 'district', 'state_name as state')
                     ->where(function($q) use ($query) {
                         $q->whereRaw("pincode::text LIKE ?", [$query . '%'])
-                          ->orWhereRaw("office_name ILIKE ?", ['%' . $query . '%']);
+                          ->orWhereRaw("office_name ILIKE ?", ['%' . $query . '%'])
+                          ->orWhereRaw("district ILIKE ?", ['%' . $query . '%']);
                     })
                     ->limit(15)
                     ->get();
@@ -38,7 +39,8 @@ class PincodeController extends Controller
                     ->select('id', 'office_name', 'pincode', 'district', 'state_name as state')
                     ->where(function($q) use ($query) {
                         $q->where('pincode', 'LIKE', $query . '%')
-                          ->orWhere('office_name', 'LIKE', '%' . $query . '%');
+                          ->orWhere('office_name', 'LIKE', '%' . $query . '%')
+                          ->orWhere('district', 'LIKE', '%' . $query . '%');
                     })
                     ->limit(15)
                     ->get();

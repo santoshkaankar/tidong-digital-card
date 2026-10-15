@@ -807,17 +807,21 @@ return new class extends Migration
         }
 
         // 3. Vendor Employees Table (Staff Management for Vendor/Outlets)
-        if (!Schema::hasTable('vendor_employees')) {
-            Schema::create('vendor_employees', function (Blueprint $table) {
-                $table->id();
-                $table->foreignId('vendor_id')->constrained('users')->onDelete('cascade'); // Master Vendor
-                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');   // Staff user account
-                $table->foreignId('outlet_id')->nullable()->constrained('vendor_outlets')->onDelete('set null');
-                $table->string('designation')->default('Manager'); // Cashier, Chef, Manager, etc.
-                $table->string('status')->default('active');
-                $table->timestamps();
-            });
-        }
+if (!Schema::hasTable('vendor_employees')) {
+    Schema::create('vendor_employees', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('vendor_id')->constrained('users')->onDelete('cascade'); // Master Vendor / Admin
+        $table->foreignId('business_id')->constrained('vendor_businesses')->onDelete('cascade'); // Outlet / Business
+        $table->string('name');
+        $table->string('email')->unique();
+        $table->string('phone')->nullable();
+        $table->string('password');
+        $table->string('designation')->default('Manager'); // Cashier, Chef, Manager, Waiter, etc.
+        $table->json('permissions')->nullable(); // Module wise permissions (POS, KDS, Orders, etc.)
+        $table->boolean('is_active')->default(true);
+        $table->timestamps();
+    });
+}
     }
 
     public function down(): void

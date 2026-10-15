@@ -126,6 +126,12 @@
     }
 </style>
 
+@php
+    $user = auth()->user();
+    $isMaster = $user && in_array($user->role, ['vendor', 'business', 'admin']);
+    $perms = session('employee_permissions', []);
+@endphp
+
 <aside class="restaurant-sidebar" id="restaurantSidebar">
     <div class="sidebar-top-content">
         <!-- Brand Header -->
@@ -136,7 +142,9 @@
                 </div>
                 <div>
                     <h6 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.3px;">Restaurant Hub</h6>
-                    <small class="text-muted" style="font-size: 0.72rem;">Partner Panel</small>
+                    <small class="text-muted" style="font-size: 0.72rem;">
+                        {{ $isMaster ? 'Partner Panel' : 'Staff Panel (' . session('employee_designation') . ')' }}
+                    </small>
                 </div>
             </div>
             <button type="button" class="btn-close d-lg-none" id="closeRestaurantSidebar" aria-label="Close"></button>
@@ -146,7 +154,7 @@
         <ul class="sidebar-menu">
             <li class="menu-label">Main Menu</li>
             
-            @if(auth()->check() && in_array(auth()->user()->role, ['vendor', 'business']))
+            @if($isMaster)
                 <!-- Master Dashboard Link (Visible only to main Master Vendor / Admin) -->
                 <li>
                     <a href="{{ route('vendor.dashboard') }}" class="nav-item-link text-primary fw-bold bg-light-primary mb-2 border border-primary-subtle shadow-sm">
@@ -160,48 +168,82 @@
                     <i class="bi bi-grid-1x2-fill"></i> Dashboard
                 </a>
             </li>
+
+            <!-- Live Kitchen (KDS) -->
+            @if($isMaster || in_array('kds', $perms))
             <li>
                 <a href="{{ route('vendor.restaurant.kitchen.screen') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.kitchen.screen') ? 'active' : '' }}">
                     <i class="bi bi-tv-fill"></i> Live Kitchen (KDS)
                 </a>
             </li>
+            @endif
+
+            <!-- POS / Counter Billing -->
+            @if($isMaster || in_array('pos', $perms))
             <li>
                 <a href="{{ route('vendor.restaurant.pos.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.pos.*') ? 'active' : '' }}">
                     <i class="bi bi-calculator-fill"></i> POS / Counter Billing
                 </a>
             </li>
+            @endif
+
+            <!-- Orders History -->
+            @if($isMaster || in_array('orders', $perms))
             <li>
                 <a href="{{ route('vendor.restaurant.orders.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.orders.*') ? 'active' : '' }}">
                     <i class="bi bi-receipt"></i> Orders History
                 </a>
             </li>
+            @endif
 
             <li class="menu-label mt-2">Menu & Catalog</li>
+            
+            <!-- Select Category -->
+            @if($isMaster || in_array('categories', $perms))
             <li>
                 <a href="{{ route('vendor.restaurant.categories.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.categories.*') ? 'active' : '' }}">
                     <i class="bi bi-tags"></i> Select Category
                 </a>
             </li>
+            @endif
+
+            <!-- Thali / Tiffin Items -->
+            @if($isMaster || in_array('tiffin_items', $perms))
             <li>
                 <a href="{{ route('vendor.restaurant.items.create_custom') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.items.create_custom') ? 'active' : '' }}">
                     <i class="bi bi-box-seam"></i> Thali / Tiffin Items
                 </a>
             </li>
+            @endif
+
+            <!-- Select Items / Menu -->
+            @if($isMaster || in_array('items', $perms))
             <li>
                 <a href="{{ route('vendor.restaurant.items.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.items.index') ? 'active' : '' }}">
                     <i class="bi bi-card-list"></i> Select Items
                 </a>
             </li>
+            @endif
+
+            @if($isMaster)
             <li>
                 <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
                     <i class="bi bi-book"></i> Create Catalog / Menu Card
                 </a>
             </li>
+            @endif
+
+            <!-- Create Tiffin Menu -->
+            @if($isMaster || in_array('tiffin_menu', $perms))
             <li>
                 <a href="{{ route('vendor.restaurant.weekly-menu.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.weekly-menu.*') ? 'active' : '' }}">
                     <i class="bi bi-calendar-week"></i> Create Tiffin Menu
                 </a>
             </li>
+            @endif
+
+            <!-- Proceed Tiffin Order -->
+            @if($isMaster || in_array('proceed_tiffin', $perms))
             <li>
                 <a href="{{ route('vendor.restaurant.proceed-tiffin.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.index') ? 'active' : '' }}">
                     <i class="bi bi-calendar-plus"></i> Proceed Tiffin Order
@@ -212,7 +254,9 @@
                     <i class="bi bi-list-check"></i> Order List
                 </a>
             </li>
+            @endif
 
+            @if($isMaster)
             <li class="menu-label mt-2">Operations & Tables</li>
             <li>
                 <a href="{{ route('vendor.restaurant.tables.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.tables.*') ? 'active' : '' }}">
@@ -231,6 +275,7 @@
                     <i class="bi bi-send-check"></i> Push Notifications / Offers
                 </a>
             </li>
+            @endif
         </ul>
     </div>
 

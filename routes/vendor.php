@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendor\VendorCardController;
 use App\Http\Controllers\Vendor\VendorBusinessController;
 use App\Http\Controllers\Vendor\VendorDashboardController;
+use App\Http\Controllers\Vendor\VendorEmployeeController;
 
 Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function () {
     // Master Dashboard
@@ -33,4 +34,13 @@ Route::middleware(['web', 'auth'])->prefix('businesses')->name('businesses.')->g
     Route::get('/', [VendorBusinessController::class, 'index'])->name('index');
     Route::post('/store', [VendorBusinessController::class, 'store'])->name('store');
     Route::get('/switch/{id}', [VendorBusinessController::class, 'switchBusiness'])->name('switch');
+});
+
+Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function () {
+    // ... aapke baaki routes ...
+
+    // Employee Management Routes
+    Route::get('/employees', [App\Http\Controllers\Vendor\VendorEmployeeController::class, 'index'])->name('employees.index');
+    Route::post('/employees/store', [App\Http\Controllers\Vendor\VendorEmployeeController::class, 'store'])->name('employees.store');
+    Route::post('/employees/toggle/{id}', [App\Http\Controllers\Vendor\VendorEmployeeController::class, 'toggleStatus'])->name('employees.toggle');
 });
