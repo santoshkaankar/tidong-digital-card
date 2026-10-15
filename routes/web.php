@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\View;
 use App\Http\Controllers\Restaurant\ProceedTiffinController;
 use App\Http\Controllers\Auth\MobilePasswordResetController;
 use App\Http\Controllers\Global\GlobalVoiceController;
+use App\Http\Controllers\Vendor\VendorDashboardController;
 
 
 /*
@@ -23,7 +24,7 @@ Route::get('/', function () {
         $role = auth()->user()->role ?? 'customer';
         return match($role) {
             'admin' => Route::has('admin.dashboard') ? redirect()->route('admin.dashboard') : redirect('/admin/dashboard'),
-            'vendor', 'business' => Route::has('vendor.restaurant.dashboard') ? redirect()->route('vendor.restaurant.dashboard') : (Route::has('vendor.dashboard') ? redirect()->route('vendor.dashboard') : redirect('/')),
+            'vendor', 'business' => Route::has('vendor.dashboard') ? redirect()->route('vendor.dashboard') : redirect('/vendor/businesses'),
             'employee' => Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : redirect('/'),
             default => Route::has('member.dashboard') ? redirect()->route('member.dashboard') : redirect('/member/dashboard')
         };
@@ -40,11 +41,11 @@ Route::get('/instruction/{slug}', function ($slug) {
 
 Route::get('/vendor/restaurant/customer-lookup', [ProceedTiffinController::class, 'customerLookup'])->name('vendor.restaurant.customer-lookup');
 
-// 1. Mobile Number फॉर्म दिखाने और OTP भेजने के लिए
+// 1. Mobile Number form dikhane aur OTP bhejne ke liye
 Route::get('/forgot-password-mobile', [MobilePasswordResetController::class, 'showMobileForm'])->name('password.mobile.form');
 Route::post('/send-otp', [MobilePasswordResetController::class, 'sendOtp'])->name('password.send.otp');
 
-// 2. OTP और नया Password एंटर करने के लिए
+// 2. OTP aur naya Password enter karne ke liye
 Route::get('/verify-otp/{mobile}', [MobilePasswordResetController::class, 'showVerifyForm'])->name('password.verify.form');
 Route::post('/reset-password-mobile', [MobilePasswordResetController::class, 'resetPassword'])->name('password.reset.mobile');
 
@@ -130,7 +131,7 @@ Route::middleware([DeviceIdentityMiddleware::class])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 7. Public Content & Policy Pages (FULL RESTORED)
+| 7. Public Content & Policy Pages
 |--------------------------------------------------------------------------
 */
 Route::view('/about-us', 'pages.about')->name('pages.about');
@@ -159,16 +160,11 @@ Route::prefix('guidance')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 9. Alias & Service Fallback Routes (Prevents RouteNotFoundExceptions)
+| 9. Alias & Service Fallback Routes
 |--------------------------------------------------------------------------
 */
-// Vendor Dashboard Alias
-Route::get('/vendor/dashboard', function () {
-    if (Route::has('vendor.restaurant.dashboard')) {
-        return redirect()->route('vendor.restaurant.dashboard');
-    }
-    return redirect()->route('member.dashboard');
-})->name('vendor.dashboard');
+// Vendor Master Dashboard Alias Route
+Route::get('/vendor/dashboard', [VendorDashboardController::class, 'index'])->name('vendor.dashboard');
 
 // Quick Services Menu Links
 Route::get('/services/taxi', function () { return redirect()->route('customer.hub'); })->name('vendor.taxi.rides');

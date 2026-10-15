@@ -41,7 +41,6 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            
             return $this->redirectToUserDashboard(Auth::user());
         }
 
@@ -58,13 +57,12 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'          => ['required', 'string', 'max:255'],
-            'username'      => ['nullable', 'string', 'max:255', 'unique:users'],
-            'email'         => ['required', 'email', 'unique:users'],
-            'mobile'        => ['required', 'string', 'max:15', 'unique:users'],
-            'password'      => ['required', 'min:6'],
-            'role'          => ['required', 'string'],
-            'business_type' => ['nullable', 'string', 'max:255'],
+            'name'      => ['required', 'string', 'max:255'],
+            'username'  => ['nullable', 'string', 'max:255', 'unique:users'],
+            'email'     => ['required', 'email', 'unique:users'],
+            'mobile'    => ['required', 'string', 'max:15', 'unique:users'],
+            'password'  => ['required', 'min:6'],
+            'role'      => ['required', 'string'],
         ]);
 
         $parentId = null;
@@ -72,9 +70,9 @@ class AuthController extends Controller
         $position = 'left';
         $referralId = null;
 
+        // Sirf Member ke liye binary aur sponsor system chalega
         if ($request->role === 'member') {
             $sponsorRefId = $request->sponsor_referral_id ?: 'TDMS6395GSSS';
-
             $sponsor = User::where('referral_id', $sponsorRefId)->first();
             
             if ($sponsor) {
@@ -91,6 +89,7 @@ class AuthController extends Controller
             } while (User::where('referral_id', $referralId)->exists());
         }
 
+        // User Create Karein
         $user = User::create([
             'name'          => $request->name,
             'username'      => $request->username ?? null,
@@ -103,10 +102,9 @@ class AuthController extends Controller
             'mobile'        => $request->mobile,
             'password'      => Hash::make($request->password),
             'role'          => $request->role,
-            'business_type' => $request->business_type ?? null,
-            'vehicle_no'    => $request->vehicle_no ?? null,
         ]);
 
+        // Member binary count increment
         if ($request->role === 'member' && $parentId) {
             $currentParentId = $parentId;
             $currentPosition = $position;
@@ -170,22 +168,9 @@ class AuthController extends Controller
             return Route::has('delivery.dashboard') ? redirect()->route('delivery.dashboard') : view('delivery.dashboard');
         }
 
-        if (in_array($role, ['business', 'vendor', 'restaurant', 'food'])) {
-            $routeName = match ($user->business_type) {
-                'taxi' => 'vendor.taxi.dashboard',
-                'hotel' => 'vendor.hotel.dashboard',
-                'emporium' => 'vendor.emporium.dashboard',
-                'food', 'restaurant' => 'vendor.restaurant.dashboard',
-                'money_exchange' => 'vendor.exchange.dashboard',
-                'tourist_guide' => 'vendor.guide.dashboard',
-                default => 'vendor.restaurant.dashboard',
-            };
-
-            if ($routeName && Route::has($routeName)) {
-                return redirect()->route($routeName);
-            }
-
-            return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : redirect('/');
+        // Vendor / Business user hamesha Master Dashboard par jayega, kisi restaurant page par nahi
+        if (in_array($role, ['business', 'vendor'])) {
+            return redirect()->route('vendor.dashboard');
         }
 
         return Route::has('member.dashboard') ? redirect()->route('member.dashboard') : view('member.dashboard');
@@ -199,10 +184,7 @@ class AuthController extends Controller
     public function sendResetLink(Request $request)
     {
         $request->validate(['email' => 'required|email']);
-
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $status = Password::sendResetLink($request->only('email'));
 
         return $status === Password::RESET_LINK_SENT
             ? back()->with('status', __($status))

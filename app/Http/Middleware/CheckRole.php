@@ -37,7 +37,7 @@ class CheckRole
             return $next($request);
         }
 
-        // 4. STRICT LOCK: Agar wrong user kisi aur ka URL khole, usko USKE KHUD KE DASHBOARD par kheinch laao
+        // 4. STRICT LOCK: Users ko unke sahi Central Dashboard par bhejo
         if ($userRole === 'admin') {
             return redirect()->route('admin.dashboard');
         }
@@ -54,25 +54,12 @@ class CheckRole
             return redirect()->route('employee.dashboard');
         }
 
+        // Vendor / Business user hamesha Master Dashboard par hi jayega
         if ($userRole === 'business' || $userRole === 'vendor') {
-            $targetRoute = match ($user->business_type ?? null) {
-                'taxi' => 'vendor.taxi.dashboard',
-                'hotel' => 'vendor.hotel.dashboard',
-                'emporium' => 'vendor.emporium.dashboard',
-                'food', 'restaurant' => 'vendor.restaurant.dashboard',
-                'money_exchange' => 'vendor.exchange.dashboard',
-                'tourist_guide' => 'vendor.guide.dashboard',
-                default => 'vendor.dashboard',
-            };
-
-            if (Route::has($targetRoute)) {
-                if ($request->routeIs($targetRoute)) {
-                    return $next($request);
-                }
-                return redirect()->route($targetRoute);
+            if (Route::has('vendor.dashboard')) {
+                return redirect()->route('vendor.dashboard');
             }
-
-            return redirect()->route('vendor.dashboard');
+            return redirect()->route('businesses.index');
         }
 
         return redirect('/');

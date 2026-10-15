@@ -145,6 +145,16 @@
         <!-- Navigation Links -->
         <ul class="sidebar-menu">
             <li class="menu-label">Main Menu</li>
+            
+            @if(auth()->check() && in_array(auth()->user()->role, ['vendor', 'business']))
+                <!-- Master Dashboard Link (Visible only to main Master Vendor / Admin) -->
+                <li>
+                    <a href="{{ route('vendor.dashboard') }}" class="nav-item-link text-primary fw-bold bg-light-primary mb-2 border border-primary-subtle shadow-sm">
+                        <i class="fas fa-arrow-left me-1"></i> &larr; Master Dashboard
+                    </a>
+                </li>
+            @endif
+
             <li>
                 <a href="{{ route('vendor.restaurant.dashboard') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.dashboard') ? 'active' : '' }}">
                     <i class="bi bi-grid-1x2-fill"></i> Dashboard
@@ -183,25 +193,25 @@
                 </a>
             </li>
             <li>
-    <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
-        <i class="bi bi-book"></i> Create Catalog / Menu Card
-    </a>
-</li>
-<li>
-    <a href="{{ route('vendor.restaurant.weekly-menu.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.weekly-menu.*') ? 'active' : '' }}">
-        <i class="bi bi-calendar-week"></i> Create Tiffin Menu
-    </a>
-</li>
-<li>
-    <a href="{{ route('vendor.restaurant.proceed-tiffin.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.index') ? 'active' : '' }}">
-        <i class="bi bi-calendar-plus"></i> Proceed Tiffin Order
-    </a>
-</li>
-<li>
-    <a href="{{ route('vendor.restaurant.proceed-tiffin.schedule') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.schedule') ? 'active' : '' }}">
-        <i class="bi bi-list-check"></i> Order List
-    </a>
-</li>
+                <a href="{{ route('vendor.restaurant.menu-card.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.menu-card.*') ? 'active' : '' }}">
+                    <i class="bi bi-book"></i> Create Catalog / Menu Card
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.weekly-menu.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.weekly-menu.*') ? 'active' : '' }}">
+                    <i class="bi bi-calendar-week"></i> Create Tiffin Menu
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.proceed-tiffin.index') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.index') ? 'active' : '' }}">
+                    <i class="bi bi-calendar-plus"></i> Proceed Tiffin Order
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('vendor.restaurant.proceed-tiffin.schedule') }}" class="nav-item-link {{ request()->routeIs('vendor.restaurant.proceed-tiffin.schedule') ? 'active' : '' }}">
+                    <i class="bi bi-list-check"></i> Order List
+                </a>
+            </li>
 
             <li class="menu-label mt-2">Operations & Tables</li>
             <li>

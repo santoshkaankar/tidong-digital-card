@@ -1,21 +1,21 @@
 <x-guest-layout>
     <!-- Back to Home Button -->
-<div class="mb-4">
-    <a href="{{ url('/') }}" class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
-        <i class="fas fa-arrow-left me-2"></i> &larr; Back to Home Page
-    </a>
-</div>
+    <div class="mb-4">
+        <a href="{{ url('/') }}" class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
+            <i class="fas fa-arrow-left me-2"></i> &larr; Back to Home Page
+        </a>
+    </div>
     <div class="text-center mb-6">
         <h2 class="text-2xl font-bold text-gray-900 tracking-wide">Create Account</h2>
-        <p class="text-sm text-gray-600 mt-1 font-medium">Register as User, Merchant or Service Partner</p>
+        <p class="text-sm text-gray-600 mt-1 font-medium">Register as Member, Business Partner or Delivery Service</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
         @csrf
 
-        <!-- Name -->
+        <!-- Name / Firm Name -->
         <div>
-            <label for="name" class="block font-semibold text-sm text-gray-800">Name / Business Name</label>
+            <label for="name" class="block font-semibold text-sm text-gray-800">Full Name / Firm Name</label>
             <input id="name" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="name" :value="old('name')" required autofocus placeholder="Enter full name or firm name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2 text-red-600" />
         </div>
@@ -46,18 +46,17 @@
             <label for="role" class="block font-semibold text-sm text-gray-800">Select Account Type</label>
             <select id="role" name="role" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" required onchange="handleRoleChange(this.value)">
                 <option value="member" {{ old('role') == 'member' ? 'selected' : '' }}>Member / Customer / Tourist</option>
-                <option value="business" {{ old('role') == 'business' ? 'selected' : '' }}>Business / Service Partner</option>
+                <option value="business" {{ old('role') == 'business' ? 'selected' : '' }}>Business Partner / Vendor</option>
                 <option value="delivery" {{ old('role') == 'delivery' ? 'selected' : '' }}>Delivery Service</option>
             </select>
             <x-input-error :messages="$errors->get('role')" class="mt-2 text-red-600" />
         </div>
 
-        <!-- Dynamic Member / Sponsor Section -->
+        <!-- Dynamic Member / Sponsor Section (Sirf Member ke liye dikhega) -->
         <div id="member-fields-container" class="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl">
             <div class="mb-3">
-                <label for="sponsor_referral_id" class="block font-semibold text-sm text-gray-800">Sponsor Referral ID <span class="text-xs text-gray-500 font-normal">(Optional, defaults to root ID if left blank)</span></label>
-                <input id="sponsor_referral_id" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="sponsor_referral_id" value="{{ old('sponsor_referral_id', 'TDMS6395GSSS') }}" placeholder="Enter sponsor referral ID" />
-                <x-input-error :messages="$errors->get('sponsor_referral_id')" class="mt-2 text-red-600" />
+                <label for="sponsor_referral_id" class="block font-semibold text-sm text-gray-800">Sponsor Referral ID <span class="text-xs text-gray-500 font-normal">(Optional)</span></label>
+                <input id="sponsor_referral_id" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm" type="text" name="sponsor_referral_id" value="{{ old('sponsor_referral_id', 'TDMS6395GSSS') }}" placeholder="Enter sponsor referral ID" />
             </div>
 
             <!-- Binary Position Toggle Switch -->
@@ -73,92 +72,27 @@
                         Right Leg (B)
                     </label>
                 </div>
-                <x-input-error :messages="$errors->get('position')" class="mt-2 text-red-600" />
-            </div>
-        </div>
-
-        <!-- Dynamic Business Type Section -->
-        <div id="vendor-fields-container" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl" style="display: none;">
-            <div class="mb-3">
-                <label for="business_type" class="block font-semibold text-sm text-gray-800">Select Your Business Service <span class="text-red-600">*</span></label>
-                <select name="business_type" id="business_type" class="form-select rounded-lg border border-gray-300 bg-white py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 w-full" disabled onchange="handleBusinessTypeChange(this.value)">
-                    <option value="" disabled selected>-- Select Service Type --</option>
-
-                    <optgroup label="Food & Hospitality">
-                        <option value="restaurant">Restaurant (Dine-in / KDS / POS / Tiffin / Street Food)</option>
-                        <option value="catering">Catering Service (Event & Bulk Food)</option>
-                        <option value="cafe_icecream">Cafe & Ice Cream Parlour</option>
-                        <option value="bakery">Bakery & Cake Shop</option>
-                        <option value="hotel">Hotel / Resort / Guest House</option>
-                        <option value="homestay">Homestay / PG Accommodations</option>
-                    </optgroup>
-
-                    <optgroup label="Events, Venue & Media">
-                        <option value="marriage_home">Marriage Home / Banquet Hall / Garden</option>
-                        <option value="event_planner">Event & Wedding Planner</option>
-                        <option value="tent_decoration">Tent House & Decoration</option>
-                        <option value="photography">Photography & Videography</option>
-                        <option value="dj_sound">DJ & Sound System</option>
-                    </optgroup>
-
-                    <optgroup label="Transport & Travel">
-                        <option value="taxi">Taxi / Cab Service</option>
-                        <option value="bike_rental">Bike / Scooter Rental</option>
-                        <option value="tourist_guide">Tourist Guide</option>
-                        <option value="travel_agency">Travel & Tour Operator</option>
-                    </optgroup>
-
-                    <optgroup label="Shopping & E-Commerce">
-                        <option value="shopping">Shopping & Mega Store (General / Fashion / Grocery / Multi-vendor)</option>
-                    </optgroup>
-
-                    <optgroup label="Health, Wellness & Beauty">
-                        <option value="salon_spa">Salon, Spa & Beauty Parlour</option>
-                        <option value="gym_fitness">Gym & Fitness Center</option>
-                        <option value="medical_pharmacy">Medical / Pharmacy</option>
-                    </optgroup>
-
-                    <optgroup label="Financial & Professional Services">
-                        <option value="money_exchange">Money Exchange (Forex)</option>
-                        <option value="real_estate">Real Estate & Property Dealer</option>
-                        <option value="coaching_tuition">Coaching & Education Institute</option>
-                        <option value="local_services">Local Utility & Support Services</option>
-                    </optgroup>
-                </select>
-                <x-input-error :messages="$errors->get('business_type')" class="mt-2 text-red-600" />
-            </div>
-
-            <!-- Taxi & Rental Vehicle Field -->
-            <div id="vehicle-field" class="mt-3" style="display: none;">
-                <label for="vehicle_no" class="block font-semibold text-xs text-gray-700">Vehicle Number / Registration</label>
-                <input id="vehicle_no" name="vehicle_no" type="text" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm" placeholder="e.g. RJ-14-TA-1234" />
-            </div>
-
-            <!-- License Field for Regulated Services -->
-            <div id="license-field" class="mt-3" style="display: none;">
-                <label for="license_no" class="block font-semibold text-xs text-gray-700">Govt License / FSSAI / Reg. Number</label>
-                <input id="license_no" name="license_no" type="text" class="block mt-1 w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm" placeholder="e.g. FSSAI / LIC-2026-8890" />
             </div>
         </div>
 
         <!-- Password -->
         <div class="mt-4">
             <label for="password" class="block font-semibold text-sm text-gray-800">Password</label>
-            <input id="password" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="password" name="password" required autocomplete="new-password" placeholder="••••••••" />
+            <input id="password" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm" type="password" name="password" required autocomplete="new-password" placeholder="••••••••" />
             <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-600" />
         </div>
 
         <!-- Confirm Password -->
         <div class="mt-4">
             <label for="password_confirmation" class="block font-semibold text-sm text-gray-800">Confirm Password</label>
-            <input id="password_confirmation" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="password" name="password_confirmation" required autocomplete="new-password" placeholder="••••••••" />
+            <input id="password_confirmation" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm" type="password" name="password_confirmation" required autocomplete="new-password" placeholder="••••••••" />
         </div>
 
-        <!-- Terms & Conditions Checkbox -->
+        <!-- Terms & Conditions -->
         <div class="mt-4 flex items-center">
             <input type="checkbox" name="terms" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" id="terms" required>
             <label class="ms-2 text-sm text-gray-600" for="terms">
-                I agree to the <a href="#" class="text-blue-600 hover:underline">Terms & Conditions</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                I agree to the <a href="#" class="text-blue-600 hover:underline">Terms & Conditions</a>
             </label>
         </div>
 
@@ -194,63 +128,11 @@
     }
 
     function handleRoleChange(role) {
-        const vendorContainer = document.getElementById('vendor-fields-container');
         const memberContainer = document.getElementById('member-fields-container');
-        const businessSelect = document.getElementById('business_type');
-        const sponsorInput = document.getElementById('sponsor_referral_id');
-        
-        if (role === 'business') {
-            vendorContainer.style.display = 'block';
-            memberContainer.style.display = 'none';
-            if (businessSelect) {
-                businessSelect.disabled = false;
-                businessSelect.setAttribute('required', 'required');
-                if (!businessSelect.value) {
-                    businessSelect.value = 'shopping';
-                }
-                handleBusinessTypeChange(businessSelect.value);
-            }
-            if (sponsorInput) sponsorInput.removeAttribute('required');
-        } else if (role === 'delivery') {
-            // Delivery ke liye dono extra boxes band rahenge
-            vendorContainer.style.display = 'none';
-            memberContainer.style.display = 'none';
-            if (businessSelect) {
-                businessSelect.removeAttribute('required');
-                businessSelect.disabled = true;
-            }
-            if (sponsorInput) sponsorInput.removeAttribute('required');
-        } else {
-            // Member ke liye
-            vendorContainer.style.display = 'none';
+        if (role === 'member') {
             memberContainer.style.display = 'block';
-            if (businessSelect) {
-                businessSelect.removeAttribute('required');
-                businessSelect.disabled = true;
-            }
-            if (sponsorInput && !sponsorInput.value) {
-                sponsorInput.value = 'TDMS6395GSSS';
-            }
-
-            document.getElementById('vehicle-field').style.display = 'none';
-            document.getElementById('license-field').style.display = 'none';
-        }
-    }
-
-    function handleBusinessTypeChange(type) {
-        const vehicleField = document.getElementById('vehicle-field');
-        const licenseField = document.getElementById('license-field');
-
-        const vehicleTypes = ['taxi', 'bike_rental'];
-        const licenseTypes = [
-            'money_exchange', 'tourist_guide', 'bakery', 'cafe_icecream', 'catering', 'marriage_home', 'medical_pharmacy'
-        ];
-
-        if (vehicleField) {
-            vehicleField.style.display = vehicleTypes.includes(type) ? 'block' : 'none';
-        }
-        if (licenseField) {
-            licenseField.style.display = licenseTypes.includes(type) ? 'block' : 'none';
+        } else {
+            memberContainer.style.display = 'none';
         }
     }
 

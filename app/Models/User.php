@@ -78,4 +78,10 @@ class User extends Authenticatable
             'categories' => 'array',
         ];
     }
+    
+    // Vendor ke multiple businesses ka relation (Sub-directory Vendor)
+public function vendorBusinesses()
+{
+    return $this->hasMany(\App\Models\Vendor\VendorBusiness::class, 'user_id');
+}
 }
