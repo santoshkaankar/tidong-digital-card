@@ -159,6 +159,9 @@ Route::prefix('guidance')->group(function () {
     Route::get('/deductions', function () { return view('pages.guidance.deductions'); })->name('guidance.deductions');
 });
 
+Route::get('/city-game', function () {
+    return view('city-game');
+});
 /*
 |--------------------------------------------------------------------------
 | 9. Alias & Service Fallback Routes
