@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tidong Pro 3D World</title>
+    <title>Tidong Pro 3D Open World & Showroom</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
         #loading {
@@ -11,29 +11,54 @@
             color: #fff; font-size: 18px; font-weight: bold; text-align: center; background: rgba(0,0,0,0.85);
             padding: 20px; border-radius: 10px; z-index: 100;
         }
-        #info {
+        /* Database HUD & Showroom Market UI */
+        #hud {
             position: absolute; top: 20px; left: 20px; color: white;
-            background: rgba(0, 0, 0, 0.7); padding: 12px 18px; border-radius: 8px;
-            pointer-events: none; font-size: 14px; line-height: 1.5; z-index: 10;
+            background: rgba(0, 0, 0, 0.85); padding: 15px 20px; border-radius: 10px;
+            z-index: 10; font-size: 14px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.2);
+            max-width: 300px;
+        }
+        #hud span { color: #facc15; font-weight: bold; }
+        .item-card {
+            background: rgba(255,255,255,0.1); margin-top: 8px; padding: 6px 10px;
+            border-radius: 5px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;
         }
     </style>
-    <!-- Three.js aur libraries -->
+    <!-- Three.js Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Water.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
-    <div id="loading">Realistic 3D World Load ho raha hai...</div>
+    <div id="loading">Tidong 3D World aur Showroom Load ho raha hai...</div>
     
-    <div id="info">
-        <b>Tidong.in - Pro 3D World</b><br>
-        • Mouse se click karke palat kar dekhein<br>
-        • Scroll karke zoom karein
+    <!-- Database Connected HUD & Market Showroom Panel -->
+    <div id="hud">
+        <b>Tidong.in - Pro World HUD</b><br>
+        • Wallet: <span id="wallet-balance">{{ $wallet->t_coins ?? 0 }}</span> T-Coins<br>
+        • My Inventory: <span>{{ $inventory->count() }}</span> Items<br>
+        <hr style="border:0; border-top:1px solid rgba(255,255,255,0.2); margin:8px 0;">
+        <b>Database Showroom Categories:</b>
+        <div style="max-height: 150px; overflow-y: auto; margin-top: 5px;">
+            @if(isset($marketItems) && count($marketItems) > 0)
+                @foreach($marketItems as $category => $items)
+                    <div style="font-size: 11px; color: #38bdf8; margin-top: 6px; text-transform: uppercase;">📁 {{ $category }} ({{ count($items) }})</div>
+                    @foreach($items->take(2) as $item)
+                        <div class="item-card">
+                            <span>{{ $item->name }}</span>
+                            <span style="color: #facc15;">{{ $item->price }} T</span>
+                        </div>
+                    @endforeach
+                @endforeach
+            @else
+                <div style="color: #ef4444; font-size: 12px;">Koi market item nahi mila! Seeder check karein.</div>
+            @endif
+        </div>
     </div>
 
     <script>
-        // 1. Scene, Camera & Renderer
+        // 1. Scene, Camera & Renderer Setup
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
         scene.fog = new THREE.FogExp2(0x87CEEB, 0.0015);
@@ -99,7 +124,7 @@
         road.position.set(150, 0.1, 0);
         scene.add(road);
 
-        // 5. Load 3D Model (Car / Demo Object)
+        // 5. Load Showroom Car Model (Ferrari)
         const loader = new THREE.GLTFLoader();
         loader.load('https://threejs.org/examples/models/gltf/Ferrari.glb', function (gltf) {
             const car = gltf.scene;
@@ -107,10 +132,11 @@
             car.position.set(150, 0.2, 0);
             scene.add(car);
             
+            // Loading screen hide karo
             document.getElementById('loading').style.display = 'none';
         }, undefined, function (error) {
             console.error('Error loading model:', error);
-            document.getElementById('loading').innerText = 'Model load hone me error aayi!';
+            document.getElementById('loading').innerText = '3D Model load karne me error aayi!';
         });
 
         // 6. Animation Loop

@@ -57,7 +57,6 @@ class DatabaseSeeder extends Seeder
             GlobalItemsSeeder::class,
             TaxSeeder::class,
             AffiliateStageSeeder::class,
-            RetailProductSeeder::class,
             MarketItemsSeeder::class,
         ]);
     }
