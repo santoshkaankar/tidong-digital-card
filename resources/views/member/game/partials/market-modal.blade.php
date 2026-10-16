@@ -1,73 +1,77 @@
 <!-- File Path: resources/views/member/game/partials/market-modal.blade.php -->
-<button type="button" class="btn btn-warning fw-bold rounded-pill position-absolute top-0 start-0 m-3 shadow px-4 py-2" style="z-index: 100000;" data-bs-toggle="modal" data-bs-target="#gameMarketModal">
-    🏬 Tidong Super Market & Wallet
-</button>
-
-<div class="modal fade" id="gameMarketModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content bg-dark text-white border-warning shadow-lg">
-            <div class="modal-header border-secondary d-flex justify-content-between align-items-center">
-                <h5 class="modal-title fw-bold text-warning">🛒 Tidong Database Market</h5>
-                <div class="bg-secondary px-3 py-1 rounded-pill text-warning fw-bold border border-warning">
-                    💰 Wallet: <span id="gameWalletBalance">25000</span> T-Coins
-                </div>
+<div class="modal fade" id="marketModal" tabindex="-1" aria-labelledby="marketModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark text-white border-secondary shadow-lg">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold" id="marketModalLabel"><i class="fas fa-store text-info me-2"></i>Tidong City Showroom & Market</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                
-                <ul class="nav nav-pills mb-3 bg-secondary p-1 rounded-pill justify-content-center" role="tablist">
-                    <li class="nav-item"><button class="nav-link active fw-bold rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#mode-buy" type="button">🛍️ Buy Market</button></li>
-                    <li class="nav-item"><button class="nav-link fw-bold rounded-pill px-4 text-white" data-bs-toggle="pill" data-bs-target="#mode-sell" type="button" onclick="loadInventoryForSale()">💰 Sell Inventory</button></li>
-                </ul>
-
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="mode-buy" role="tabpanel">
-                        
-                        <div class="mb-3">
-                            <input type="text" id="marketSearchInput" class="form-control bg-secondary text-white border-0 rounded-pill px-4" placeholder="🔍 Search Phones, Cars, Tools, Sofas, Grocery..." onkeyup="filterMarketItems()">
+                <div class="row g-3">
+                    <!-- Item 1: Premium Outfit -->
+                    <div class="col-md-4">
+                        <div class="card bg-secondary text-white border-0 h-100">
+                            <div class="card-body text-center d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="fas fa-tshirt fa-3x text-info mb-3"></i>
+                                    <h6 class="fw-bold">Cyber Outfit</h6>
+                                    <p class="text-light small">Changes character outfit color instantly.</p>
+                                </div>
+                                <button class="btn btn-info btn-sm fw-bold text-dark w-100 mt-2" onclick="buyItem(1500, 0x10b981)">
+                                    Buy for 1,500 T-Coins
+                                </button>
+                            </div>
                         </div>
-
-                        <!-- Sub Categories Tabs -->
-                        <ul class="nav nav-tabs mb-3 border-secondary flex-nowrap overflow-auto" role="tablist" style="white-space: nowrap;">
-                            <li class="nav-item"><button class="nav-link active btn-sm text-warning fw-bold" data-bs-toggle="tab" data-bs-target="#sub-phones" type="button">📱 Phones</button></li>
-                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-cars" type="button">🏎️ Cars</button></li>
-                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-clothing" type="button">👔 Clothing</button></li>
-                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-grocery" type="button">🍎 Grocery</button></li>
-                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-tools" type="button">🛠️ Tools & Mower</button></li>
-                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-appliances" type="button">💡 Appliances</button></li>
-                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-decor" type="button">🪑 Decor & Sofa</button></li>
-                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-bathroom" type="button">🚿 Bathroom</button></li>
-                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-career" type="button">🎒 School/Job</button></li>
-                        </ul>
-
-                        <div class="tab-content">
-                            <div class="tab-pane fade show active" id="sub-phones">@include('member.game.partials.market-phones')</div>
-                            <div class="tab-pane fade" id="sub-cars">@include('member.game.partials.market-cars')</div>
-                            <div class="tab-pane fade" id="sub-clothing">@include('member.game.partials.market-clothing')</div>
-                            <div class="tab-pane fade" id="sub-grocery">@include('member.game.partials.market-grocery')</div>
-                            <div class="tab-pane fade" id="sub-tools">@include('member.game.partials.market-tools')</div>
-                            <div class="tab-pane fade" id="sub-appliances">@include('member.game.partials.market-appliances')</div>
-                            <div class="tab-pane fade" id="sub-decor">@include('member.game.partials.market-decor')</div>
-                            <div class="tab-pane fade" id="sub-bathroom">@include('member.game.partials.market-bathroom')</div>
-                            <div class="tab-pane fade" id="sub-career">@include('member.game.partials.market-career')</div>
-                        </div>
-
                     </div>
 
-                    <div class="tab-pane fade" id="mode-sell" role="tabpanel">
-                        <div class="p-3 bg-secondary rounded-3">
-                            <h6 class="text-warning mb-3">📦 Your Database Inventory (Click to Sell)</h6>
-                            <div id="userInventoryList" class="row g-3" style="max-height: 400px; overflow-y: auto;">
-                                <p class="text-light small">Loading inventory...</p>
+                    <!-- Item 2: Sports Car -->
+                    <div class="col-md-4">
+                        <div class="card bg-secondary text-white border-0 h-100">
+                            <div class="card-body text-center d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="fas fa-car fa-3x text-warning mb-3"></i>
+                                    <h6 class="fw-bold">Tidong GT Car</h6>
+                                    <p class="text-light small">Unlock vehicle driving mode on infinite roads.</p>
+                                </div>
+                                <button class="btn btn-warning btn-sm fw-bold text-dark w-100 mt-2" onclick="buyItem(10000, 0xf59e0b)">
+                                    Buy for 10,000 T-Coins
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 3: Luxury Gadget -->
+                    <div class="col-md-4">
+                        <div class="card bg-secondary text-white border-0 h-100">
+                            <div class="card-body text-center d-flex flex-column justify-content-between">
+                                <div>
+                                    <i class="fas fa-laptop-code fa-3x text-success mb-3"></i>
+                                    <h6 class="fw-bold">Dev Gadget Pro</h6>
+                                    <p class="text-light small">Boosts earnings & digital card status.</p>
+                                </div>
+                                <button class="btn btn-success btn-sm fw-bold text-white w-100 mt-2" onclick="buyItem(5000, 0x3b82f6)">
+                                    Buy for 5,000 T-Coins
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Close Market</button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    let currentCoins = 25400;
+
+    function buyItem(price, colorHex) {
+        if (currentCoins >= price) {
+            currentCoins -= price;
+            document.getElementById('wallet-balance').innerText = currentCoins.toLocaleString();
+            updatePlayerOutfit(colorHex);
+            alert('Purchase successful! Item equipped.');
+        } else {
+            alert('Insufficient T-Coins in your wallet!');
+        }
+    }
+</script>
