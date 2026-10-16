@@ -1,4 +1,3 @@
-<!-- File Path: resources/views/member/game/vast-game.blade.php (या आपकी मुख्य गेम फाइल) -->
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -24,7 +23,6 @@
             background-color: #000;
             overflow: hidden;
         }
-        /* टच कंट्रोल बटन स्टाइल */
         .game-touch-controls {
             position: absolute;
             bottom: 30px;
@@ -52,6 +50,7 @@
             box-shadow: 0 6px 15px rgba(0,0,0,0.6);
             cursor: pointer;
             outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .touch-row {
             display: flex;
@@ -62,16 +61,34 @@
 <body>
 
 <div class="game-fullscreen-wrapper" id="gameFullscreenWrapper">
-    <!-- Three.js Canvas Container -->
     <div id="gameContainer" style="width: 100%; height: 100%;"></div>
 
-    <!-- टच कंट्रोल बटन (एक ही फाइल में शामिल) -->
+    <!-- टच कंट्रोल बटन -->
     <div class="game-touch-controls">
-        <button type="button" class="touch-btn" ontouchstart="movePlayerDirection('up')" onclick="movePlayerDirection('up')">⬆️</button>
+        <button type="button" class="touch-btn" 
+                ontouchstart="setTouchDirection('up', true); event.preventDefault();" 
+                ontouchend="setTouchDirection('up', false)"
+                onmousedown="setTouchDirection('up', true)" 
+                onmouseup="setTouchDirection('up', false)">⬆️</button>
+        
         <div class="touch-row">
-            <button type="button" class="touch-btn" ontouchstart="movePlayerDirection('left')" onclick="movePlayerDirection('left')">⬅️</button>
-            <button type="button" class="touch-btn" ontouchstart="movePlayerDirection('down')" onclick="movePlayerDirection('down')">⬇️</button>
-            <button type="button" class="touch-btn" ontouchstart="movePlayerDirection('right')" onclick="movePlayerDirection('right')">➡️</button>
+            <button type="button" class="touch-btn" 
+                    ontouchstart="setTouchDirection('left', true); event.preventDefault();" 
+                    ontouchend="setTouchDirection('left', false)"
+                    onmousedown="setTouchDirection('left', true)" 
+                    onmouseup="setTouchDirection('left', false)">⬅️</button>
+            
+            <button type="button" class="touch-btn" 
+                    ontouchstart="setTouchDirection('down', true); event.preventDefault();" 
+                    ontouchend="setTouchDirection('down', false)"
+                    onmousedown="setTouchDirection('down', true)" 
+                    onmouseup="setTouchDirection('down', false)">⬇️</button>
+            
+            <button type="button" class="touch-btn" 
+                    ontouchstart="setTouchDirection('right', true); event.preventDefault();" 
+                    ontouchend="setTouchDirection('right', false)"
+                    onmousedown="setTouchDirection('right', true)" 
+                    onmouseup="setTouchDirection('right', false)">➡️</button>
         </div>
     </div>
 </div>
@@ -79,12 +96,16 @@
 <!-- Load Three.js Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+    const touchState = { up: false, down: false, left: false, right: false };
+    function setTouchDirection(dir, isPressed) {
+        touchState[dir] = isPressed;
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         const wrapper = document.getElementById('gameContainer');
         const parentWrapper = document.getElementById('gameFullscreenWrapper');
         if (!wrapper) return;
 
-        // फुलस्क्रीन इनेबल करना
         function triggerAutoFullscreen() {
             if (!document.fullscreenElement) {
                 if (parentWrapper.requestFullscreen) {
@@ -118,34 +139,75 @@
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
         dirLight.position.set(50, 100, 50);
         dirLight.castShadow = true;
         scene.add(dirLight);
 
         // 5. Ground & Roads
-        const groundGeo = new THREE.PlaneGeometry(900, 900);
-        const groundMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.8 });
+        const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x3a5a40, roughness: 0.9 });
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
 
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
-        const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(900, 0.1, 24), roadMat);
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+        const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(1000, 0.1, 26), roadMat);
         mainRoad.position.y = 0.05;
         scene.add(mainRoad);
 
-        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(24, 0.1, 900), roadMat);
+        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(26, 0.1, 1000), roadMat);
         crossRoad.position.y = 0.06;
         scene.add(crossRoad);
 
-        // 6. Showrooms & Workers
+        // --- 🚗 रियलिस्टिक कार बनाने का फंक्शन ---
+        function createRealisticCar(colorHex) {
+            const carGroup = new THREE.Group();
+            
+            // कार की बॉडी (नीला निचला हिस्सा)
+            const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.7, roughness: 0.2 });
+            const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(4.5, 1.2, 9), bodyMat);
+            lowerBody.position.y = 0.8;
+            lowerBody.castShadow = true;
+            carGroup.add(lowerBody);
+
+            // कार का केबिन (ऊपरी हिस्सा)
+            const upperBody = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.0, 5), bodyMat);
+            upperBody.position.set(0, 1.7, -0.3);
+            upperBody.castShadow = true;
+            carGroup.add(upperBody);
+
+            // कांच (Windshield)
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1, metalness: 0.9 });
+            const windshield = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.8, 0.1), glassMat);
+            windshield.position.set(0, 1.7, 2.2);
+            carGroup.add(windshield);
+
+            // पहिए (Wheels)
+            const wheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 16);
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+            const wheelPositions = [
+                [-2.3, 0.5, 2.8], [2.3, 0.5, 2.8],
+                [-2.3, 0.5, -2.8], [2.3, 0.5, -2.8]
+            ];
+            wheelPositions.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(...pos);
+                carGroup.add(wheel);
+            });
+
+            return carGroup;
+        }
+
+        // --- 🏢 रियलिस्टिक शोरूम और गाड़ियाँ ---
         const animatedWorkers = [];
 
-        function createShowroom(x, z, width, height, depth, color, title, hasCarsOutside) {
+        function createShowroom(x, z, width, height, depth, color, title, hasCars) {
             const group = new THREE.Group();
 
+            // बिल्डिंग ढांचा
             const bGeo = new THREE.BoxGeometry(width, height, depth);
             const bMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
             const building = new THREE.Mesh(bGeo, bMat);
@@ -154,77 +216,87 @@
             building.receiveShadow = true;
             group.add(building);
 
-            const glassGeo = new THREE.BoxGeometry(width * 0.75, height * 0.6, 0.4);
-            const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5, roughness: 0.1 });
+            // कांच का खूबसूरत बड़ा फसाड (Glass Storefront)
+            const glassGeo = new THREE.BoxGeometry(width * 0.8, height * 0.65, 0.3);
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x87ceeb, transparent: true, opacity: 0.6, roughness: 0.1 });
             const glass = new THREE.Mesh(glassGeo, glassMat);
             glass.position.set(0, height * 0.35, depth / 2 + 0.1);
             group.add(glass);
 
-            const boardGeo = new THREE.BoxGeometry(width * 0.8, 2.2, 0.6);
-            const boardMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.4 });
+            // शोरूम का बोर्ड
+            const boardGeo = new THREE.BoxGeometry(width * 0.85, 2.5, 0.5);
+            const boardMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.5 });
             const board = new THREE.Mesh(boardGeo, boardMat);
             board.position.set(0, height + 1.2, depth / 2);
             group.add(board);
 
-            const workerGeo = new THREE.BoxGeometry(1.2, 2.5, 0.8);
-            const workerMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-            const worker = new THREE.Mesh(workerGeo, workerMat);
-            worker.position.set(0, 1.25, 0);
-            group.add(worker);
+            // अंदर टहलने वाला वर्कर (इंसान जैसा आकार)
+            const workerGroup = new THREE.Group();
+            const wTorso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.5), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+            wTorso.position.y = 1.0;
+            const wHead = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+            wHead.position.y = 1.9;
+            workerGroup.add(wTorso);
+            workerGroup.add(wHead);
+            workerGroup.position.set(0, 0, 0);
+            group.add(workerGroup);
 
             animatedWorkers.push({
-                mesh: worker,
+                mesh: workerGroup,
                 minX: -width * 0.3,
                 maxX: width * 0.3,
-                speed: 0.03,
+                speed: 0.025,
                 dir: 1
             });
 
-            if (hasCarsOutside) {
-                for (let c = -1; c <= 1; c += 2) {
-                    const carGeo = new THREE.BoxGeometry(5, 2, 8);
-                    const carMat = new THREE.MeshStandardMaterial({ color: c > 0 ? 0xdc2626 : 0x2563eb, metalness: 0.8 });
-                    const parkedCar = new THREE.Mesh(carGeo, carMat);
-                    parkedCar.position.set(c * 6, 1, depth / 2 + 7);
-                    parkedCar.castShadow = true;
-                    group.add(parkedCar);
-                }
+            // शोरूम के बाहर शानदार गाड़ियाँ खड़ी करना
+            if (hasCars) {
+                const car1 = createRealisticCar(0x3b82f6);
+                car1.position.set(-6, 0, depth / 2 + 8);
+                group.add(car1);
+
+                const car2 = createRealisticCar(0xef4444);
+                car2.position.set(6, 0, depth / 2 + 8);
+                group.add(car2);
             }
 
             group.position.set(x, 0, z);
             scene.add(group);
         }
 
-        createShowroom(-50, -50, 30, 16, 25, 0x334155, "🏎️ SuperCars Hub", true);
-        createShowroom(50, -50, 26, 14, 24, 0x1e3a8a, "📱 Gadgets Hub", false);
-        createShowroom(-50, 50, 28, 15, 26, 0x065f46, "🍎 Grocery Mart", false);
-        createShowroom(50, 50, 32, 16, 28, 0x78350f, "👔 Clothing Showroom", false);
+        createShowroom(-60, -60, 34, 18, 28, 0x1f2937, "🏎️ SuperCars Showroom", true);
+        createShowroom(60, -60, 28, 15, 25, 0x1e3a8a, "📱 Mobile & Gadgets Hub", false);
+        createShowroom(-60, 60, 30, 16, 26, 0x065f46, "🍎 Tidong Fresh Mart", false);
+        createShowroom(60, 60, 32, 17, 28, 0x78350f, "👔 Luxury Clothing", false);
 
-        // 7. Player Character Setup (एकदम साफ और फंक्शनल)
+        // --- 🧑‍💻 रियलिस्टिक इंसान जैसा कैरेक्टर (Player) ---
         const playerGroup = new THREE.Group();
 
-        const torsoGeo = new THREE.BoxGeometry(2.0, 3.0, 1.2);
-        const torsoMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8 });
-        const torso = new THREE.Mesh(torsoGeo, torsoMat);
-        torso.position.y = 2.5;
-        torso.castShadow = true;
-        playerGroup.add(torso);
+        // शरीर (Torso)
+        const pTorso = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.0, 0.7), new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.3 }));
+        pTorso.position.y = 2.0;
+        pTorso.castShadow = true;
+        playerGroup.add(pTorso);
 
-        const headGeo = new THREE.SphereGeometry(0.9, 16, 16);
-        const headMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
-        const head = new THREE.Mesh(headGeo, headMat);
-        head.position.y = 4.5;
-        playerGroup.add(head);
+        // सिर (Head)
+        const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+        pHead.position.y = 3.3;
+        pHead.castShadow = true;
+        playerGroup.add(pHead);
 
-        const legGeo = new THREE.BoxGeometry(0.6, 2.2, 0.6);
-        const legMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-        
-        const leftLeg = new THREE.Mesh(legGeo, legMat);
-        leftLeg.position.set(-0.5, 0.5, 0);
+        // बाल (Hair)
+        const pHair = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.2, 0.55), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+        pHair.position.y = 3.65;
+        playerGroup.add(pHair);
+
+        // पैर (Legs)
+        const pLegMat = new THREE.MeshStandardMaterial({ color: 0x1f2937 });
+        const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.5, 0.4), pLegMat);
+        leftLeg.position.set(-0.3, 0.75, 0);
         playerGroup.add(leftLeg);
 
-        const rightLeg = new THREE.Mesh(legGeo, legMat);
-        rightLeg.position.set(0.5, 0.5, 0);
+        const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.5, 0.4), pLegMat);
+        rightLeg.position.set(0.3, 0.75, 0);
         playerGroup.add(rightLeg);
 
         playerGroup.position.set(0, 0, 5);
@@ -232,19 +304,11 @@
         window.playerCharacter = playerGroup;
 
         // कंट्रोल्स और मूवमेंट
-        const speed = 0.8;
+        const speed = 0.7;
         const keys = {};
 
         window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
-
-        window.movePlayerDirection = function(direction) {
-            if (!window.playerCharacter) return;
-            if (direction === 'up') window.playerCharacter.position.z -= 3.5;
-            if (direction === 'down') window.playerCharacter.position.z += 3.5;
-            if (direction === 'left') window.playerCharacter.position.x -= 3.5;
-            if (direction === 'right') window.playerCharacter.position.x += 3.5;
-        };
 
         let walkCycle = 0;
 
@@ -252,7 +316,7 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // वर्कर्स का चलना
+            // शोरूम के अंदर वर्कर्स का टहलना
             animatedWorkers.forEach(w => {
                 w.mesh.position.x += w.speed * w.dir;
                 if (w.mesh.position.x > w.maxX || w.mesh.position.x < w.minX) {
@@ -260,17 +324,17 @@
                 }
             });
 
-            // कैरेक्टर की बोर्ड कीबोर्ड मूवमेंट
+            // कैरेक्टर चलना और पैर हिलाना
             let moving = false;
-            if (keys['arrowup'] || keys['w']) { playerGroup.position.z -= speed; moving = true; }
-            if (keys['arrowdown'] || keys['s']) { playerGroup.position.z += speed; moving = true; }
-            if (keys['arrowleft'] || keys['a']) { playerGroup.position.x -= speed; moving = true; }
-            if (keys['arrowright'] || keys['d']) { playerGroup.position.x += speed; moving = true; }
+            if (keys['arrowup'] || keys['w'] || touchState.up) { playerGroup.position.z -= speed; moving = true; }
+            if (keys['arrowdown'] || keys['s'] || touchState.down) { playerGroup.position.z += speed; moving = true; }
+            if (keys['arrowleft'] || keys['a'] || touchState.left) { playerGroup.position.x -= speed; moving = true; }
+            if (keys['arrowright'] || keys['d'] || touchState.right) { playerGroup.position.x += speed; moving = true; }
 
             if (moving) {
-                walkCycle += 0.2;
-                leftLeg.rotation.x = Math.sin(walkCycle) * 0.7;
-                rightLeg.rotation.x = -Math.sin(walkCycle) * 0.7;
+                walkCycle += 0.25;
+                leftLeg.rotation.x = Math.sin(walkCycle) * 0.6;
+                rightLeg.rotation.x = -Math.sin(walkCycle) * 0.6;
             } else {
                 leftLeg.rotation.x = 0;
                 rightLeg.rotation.x = 0;
