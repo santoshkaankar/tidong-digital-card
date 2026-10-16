@@ -174,7 +174,7 @@ class AffiliateController extends Controller
 
                     $wallet = Wallet::firstOrCreate(
                         ['user_id' => $user->id],
-                        ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 4540000.00]
+                        ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 25000.00]
                     );
 
                     $wallet->decrement('t_coins', $netAmount);
@@ -198,7 +198,7 @@ class AffiliateController extends Controller
 
                         $wallet = Wallet::firstOrCreate(
                             ['user_id' => $user->id],
-                            ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 4540000.00]
+                            ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 25000.00]
                         );
 
                         if ($wallet->non_withdrawable_balance >= $netAmount) {

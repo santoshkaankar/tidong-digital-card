@@ -16,7 +16,7 @@ class MemberWalletService
         DB::transaction(function () use ($userId, $rewardAmount) {
             $wallet = Wallet::firstOrCreate(
                 ['user_id' => $userId],
-                ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 4540000.00]
+                ['real_balance' => 0.00, 'non_withdrawable_balance' => 0.00, 't_coins' => 25000.00]
             );
 
             $payableToReal = $rewardAmount;

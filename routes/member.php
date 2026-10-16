@@ -11,6 +11,8 @@ use App\Http\Controllers\Member\RoyaltyController;
 use App\Http\Controllers\Member\HubController;
 use App\Http\Controllers\Member\RestaurantController;
 use App\Http\Controllers\PincodeController;
+use App\Http\Controllers\Member\GameSubscriptionController;
+use App\Http\Controllers\Member\MemberChildController;
 
 Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
 
@@ -55,7 +57,6 @@ Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
     // Referral & Earn Route
     Route::get('/referral', [AffiliateController::class, 'index'])->name('referral');
 
-  
     // Orders Routes
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
     Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
@@ -74,6 +75,17 @@ Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
 
     // Live AJAX Pincodes Search Route
     Route::get('/pincodes/search', [PincodeController::class, 'search'])->name('pincodes.search');
+
+    // 👨‍👩‍👧‍👦 Child Accounts Management Routes
+    Route::get('/children', [MemberChildController::class, 'index'])->name('children.index');
+    Route::post('/children/store', [MemberChildController::class, 'store'])->name('children.store');
+
+    // 🎮 Game Pro Routes & Subscription
+    Route::get('/game/pro', function () {
+        return view('member.game.pro');
+    })->name('game.pro');
+    
+    Route::post('/game/pay-subscription-tcoins', [GameSubscriptionController::class, 'subscribeWithTCoins'])->name('game.subscription.tcoins');
 
 });
 

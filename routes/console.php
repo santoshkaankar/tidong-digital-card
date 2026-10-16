@@ -58,7 +58,7 @@ Schedule::call(function () {
                 [
                     'real_balance'             => 0.00, 
                     'non_withdrawable_balance' => 0.00, 
-                    't_coins'                  => 4540000.00
+                    't_coins'                  => 25000.00
                 ]
             );
 

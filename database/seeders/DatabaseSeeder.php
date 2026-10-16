@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
         Wallet::updateOrCreate(
             ['user_id' => $customer->id],
             [
-                't_coins'                 => 4540000.00,
+                't_coins'                 => 25000.00,
                 'real_balance'            => 0.00,
                 'non_withdrawable_balance'=> 0.00,
             ]
