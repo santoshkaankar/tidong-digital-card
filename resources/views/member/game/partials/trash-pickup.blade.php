@@ -16,17 +16,18 @@
             const container = document.getElementById('gameContainer');
             if (container) {
                 const hud = document.createElement('div');
-                hud.style.position = 'absolute';
-                hud.style.top = '15px';
-                hud.style.left = '15px';
-                hud.style.background = 'rgba(0, 0, 0, 0.7)';
-                hud.style.color = '#ffc107';
-                hud.style.padding = '8px 15px';
-                hud.style.borderRadius = '20px';
-                hud.style.fontFamily = 'monospace';
-                hud.style.fontSize = '14px';
-                hud.style.fontWeight = 'bold';
-                hud.style.zIndex = '10';
+                // Check inside trash-pickup.blade.php for the HUD styling:
+hud.style.position = 'absolute';
+hud.style.top = '15px';
+hud.style.left = '15px';
+hud.style.background = 'rgba(0, 0, 0, 0.75)';
+hud.style.color = '#ffc107';
+hud.style.padding = '8px 16px';
+hud.style.borderRadius = '20px';
+hud.style.fontFamily = 'sans-serif';
+hud.style.fontSize = '13px';
+hud.style.whiteSpace = 'nowrap'; // Text katne se rokne ke liye
+hud.style.zIndex = '1000';
                 hud.innerHTML = '🧹 Cleaned Debris: <span id="cleanedScore">0</span> / 50';
                 container.appendChild(hud);
             }

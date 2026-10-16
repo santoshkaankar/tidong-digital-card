@@ -1,15 +1,28 @@
 <!-- File Path: resources/views/member/game/partials/vast-ground.blade.php -->
-<div class="position-relative w-100 overflow-hidden shadow-lg bg-black rounded-4 mb-3" style="height: 75vh; min-height: 550px; border: 2px solid rgba(245, 158, 11, 0.3);">
-    
-    <!-- Full Screen Mode Button -->
-    <button id="toggleFullscreenBtn" class="position-absolute top-0 end-0 m-3 btn btn-sm btn-warning fw-bold z-3 shadow px-3 py-2 rounded-pill">
-        <i class="fas fa-expand me-1"></i> Full Screen
+<style>
+    /* पूरे स्क्रीन पर गेम को एज-टू-एज (Edge-to-Edge) फिट करने के लिए CSS */
+    .game-fullscreen-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        background-color: #000;
+        overflow: hidden;
+    }
+</style>
+
+<div class="game-fullscreen-wrapper" id="gameFullscreenWrapper">
+    <!-- Full Screen Toggle Button -->
+    <button id="toggleFullscreenBtn" class="btn btn-sm btn-warning fw-bold position-absolute top-0 end-0 m-3 z-3 shadow px-3 py-2 rounded-pill">
+        <i class="fas fa-expand me-1"></i> Exit / Full
     </button>
     
-    <!-- Canvas Container -->
+    <!-- Three.js Canvas Container -->
     <div id="gameContainer" style="width: 100%; height: 100%;"></div>
 
-    <!-- Include Market Modal UI inside container context -->
+    <!-- Include Market Modal UI inside full context -->
     @include('member.game.partials.market-modal')
 </div>
 
@@ -26,14 +39,14 @@
         scene.background = new THREE.Color(0x87ceeb);
 
         // 2. Camera Setup
-        const camera = new THREE.PerspectiveCamera(60, wrapper.clientWidth / wrapper.clientHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         window.gameCamera = camera;
         camera.position.set(0, 20, 50);
         camera.lookAt(0, 0, 0);
 
         // 3. Renderer Setup
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(wrapper.clientWidth, wrapper.clientHeight);
+        renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         wrapper.appendChild(renderer.domElement);
 
@@ -70,20 +83,20 @@
         }
         animate();
 
+        // Screen Resize Handling
         window.addEventListener('resize', function() {
-            if (!wrapper) return;
-            camera.aspect = wrapper.clientWidth / wrapper.clientHeight;
+            camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(wrapper.clientWidth, wrapper.clientHeight);
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Fullscreen Toggle
+        // Fullscreen Toggle (Native API)
         const fullscreenBtn = document.getElementById('toggleFullscreenBtn');
-        const parentCard = wrapper.closest('.position-relative');
-        if (fullscreenBtn && parentCard) {
+        const parentWrapper = document.getElementById('gameFullscreenWrapper');
+        if (fullscreenBtn && parentWrapper) {
             fullscreenBtn.addEventListener('click', function() {
                 if (!document.fullscreenElement) {
-                    if (parentCard.requestFullscreen) parentCard.requestFullscreen();
+                    if (parentWrapper.requestFullscreen) parentWrapper.requestFullscreen();
                     fullscreenBtn.innerHTML = '<i class="fas fa-compress me-1"></i> Exit Full';
                 } else {
                     if (document.exitFullscreen) document.exitFullscreen();
@@ -94,7 +107,7 @@
     });
 </script>
 
-<!-- Modularly Include Spawner & Interaction Files -->
+<!-- Modularly Include Spawner, Interactions & Character -->
 @include('member.game.partials.trash-spawner')
 @include('member.game.partials.trash-pickup')
 @include('member.game.partials.player-character')
