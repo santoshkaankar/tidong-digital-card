@@ -1,28 +1,27 @@
 <!-- File Path: resources/views/member/game/partials/vast-ground.blade.php -->
 <style>
-    /* पूरे स्क्रीन पर गेम को एज-टू-एज (Edge-to-Edge) फिट करने के लिए CSS */
+    /* Fixed Fullscreen Layer without visible scrollbars */
     .game-fullscreen-wrapper {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        z-index: 9999;
+        z-index: 99999;
         background-color: #000;
         overflow: hidden;
+        touch-action: none;
     }
 </style>
 
 <div class="game-fullscreen-wrapper" id="gameFullscreenWrapper">
-    <!-- Full Screen Toggle Button -->
-    <button id="toggleFullscreenBtn" class="btn btn-sm btn-warning fw-bold position-absolute top-0 end-0 m-3 z-3 shadow px-3 py-2 rounded-pill">
-        <i class="fas fa-expand me-1"></i> Exit / Full
-    </button>
+    <!-- Invisible Fullscreen Trigger (Hidden from View) -->
+    <button id="toggleFullscreenBtn" style="display: none !important; visibility: hidden;"></button>
     
     <!-- Three.js Canvas Container -->
     <div id="gameContainer" style="width: 100%; height: 100%;"></div>
 
-    <!-- Include Market Modal UI inside full context -->
+    <!-- Include Market Modal UI inside container context -->
     @include('member.game.partials.market-modal')
 </div>
 
@@ -31,7 +30,23 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const wrapper = document.getElementById('gameContainer');
+        const parentWrapper = document.getElementById('gameFullscreenWrapper');
         if (!wrapper) return;
+
+        // Auto Fullscreen Request on First User Touch/Click (Browser Security Policy)
+        function triggerAutoFullscreen() {
+            if (!document.fullscreenElement) {
+                if (parentWrapper.requestFullscreen) {
+                    parentWrapper.requestFullscreen().catch(() => {});
+                } else if (parentWrapper.webkitRequestFullscreen) {
+                    parentWrapper.webkitRequestFullscreen();
+                }
+            }
+        }
+
+        // Event listeners for automatic full screen on tap/click
+        window.addEventListener('click', triggerAutoFullscreen, { once: true });
+        window.addEventListener('touchstart', triggerAutoFullscreen, { once: true });
 
         // 1. Scene Setup
         const scene = new THREE.Scene();
@@ -90,20 +105,14 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Fullscreen Toggle (Native API)
-        const fullscreenBtn = document.getElementById('toggleFullscreenBtn');
-        const parentWrapper = document.getElementById('gameFullscreenWrapper');
-        if (fullscreenBtn && parentWrapper) {
-            fullscreenBtn.addEventListener('click', function() {
-                if (!document.fullscreenElement) {
-                    if (parentWrapper.requestFullscreen) parentWrapper.requestFullscreen();
-                    fullscreenBtn.innerHTML = '<i class="fas fa-compress me-1"></i> Exit Full';
-                } else {
-                    if (document.exitFullscreen) document.exitFullscreen();
-                    fullscreenBtn.innerHTML = '<i class="fas fa-expand me-1"></i> Full Screen';
+        // Handle Escape Key & Browser Back Button automatically
+        window.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
                 }
-            });
-        }
+            }
+        });
     });
 </script>
 
