@@ -106,56 +106,49 @@
                 </a>
             </li>
 
-            <!-- 🛍️ Direct Vendor Pay -->
-            <li class="mb-1">
-                <a href="{{ url('/member/vendor-pay') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
-                    <i class="fas fa-store text-success"></i> Vendor Direct Pay
-                </a>
-            </li>
-
-            <!-- 📢 Real Brand Ads Hub -->
-            <li class="{{ request()->is('member/brand-tasks*') ? 'active' : '' }} mb-1">
-                <a href="{{ url('/member/brand-tasks') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
-                    <i class="fas fa-bullhorn text-danger"></i> Real Brand Ads Hub
-                </a>
-            </li>
-
+            <!-- 🌐 Tidong Super Hub -->
             <li class="{{ request()->is('member/hub*') ? 'active' : '' }} mb-1">
                 <a href="{{ url('/member/hub') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-qrcode text-primary"></i> Tidong Super Hub
                 </a>
             </li>
 
+            <!-- 📷 QR Scanner -->
             <li class="mb-1">
                 <a href="javascript:void(0)" onclick="openGlobalQrScanner()" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-camera text-success"></i> QR Code Scanner
                 </a>
             </li>
 
+            <!-- 🧾 All Orders -->
             <li class="{{ request()->is('member/orders*') ? 'active' : '' }} mb-1">
                 <a href="{{ url('/member/orders') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-receipt text-warning"></i> All Orders & Tracking
                 </a>
             </li>
 
+            <!-- 👤 Profile & Stats -->
             <li class="{{ request()->is('member/profile*') ? 'active' : '' }} mb-1">
                 <a href="{{ url('/member/profile') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-user-circle text-info"></i> My Profile & Stats
                 </a>
             </li>
 
+            <!-- 🤝 Affiliates Dashboard -->
             <li class="{{ request()->is('member/referral*') ? 'active' : '' }} mb-1">
                 <a href="{{ url('/member/referral') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-users-cog text-info"></i> Affiliates Dashboard
                 </a>
             </li>
 
+            <!-- 🎁 Refer & Earn -->
             <li class="mb-1">
                 <a href="#" data-bs-toggle="modal" data-bs-target="#referEarnModal" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-gift text-success"></i> Refer & Earn
                 </a>
             </li>
 
+            <!-- 👥 Friend Circle -->
             <li class="{{ request()->is('member/friend*') ? 'active' : '' }} mb-1">
                 <a href="#friendCircleSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="sidebar-link text-decoration-none d-flex align-items-center justify-content-between p-2 rounded-2">
                     <span class="d-flex align-items-center gap-2"><i class="fas fa-users text-primary"></i> Friend Circle</span>
@@ -168,6 +161,7 @@
                 </ul>
             </li>
 
+            <!-- 🎴 Visiting Cards -->
             <li class="{{ request()->is('member/cards*') ? 'active' : '' }} mb-1">
                 <a href="{{ url('/member/cards') }}" class="sidebar-link text-decoration-none d-flex align-items-center gap-2 p-2 rounded-2">
                     <i class="fas fa-id-card text-info"></i> My Visiting Cards
