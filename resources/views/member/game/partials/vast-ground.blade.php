@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tidong 3D Open-World Simulation Pro</title>
+    <title>Tidong 3D Ultimate Open-World & Market Simulation</title>
     <style>
         body, html {
             margin: 0;
@@ -12,6 +12,7 @@
             height: 100%;
             overflow: hidden;
             background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .game-fullscreen-wrapper {
             position: fixed;
@@ -23,61 +24,208 @@
             background-color: #000;
             overflow: hidden;
         }
+
+        /* Top HUD Bar */
+        .game-hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100000;
+            pointer-events: none;
+        }
+        .hud-card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid #f59e0b;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: auto;
+        }
+        .wallet-badge {
+            color: #10b981;
+        }
+
+        /* Touch Controls */
         .game-touch-controls {
             position: absolute;
-            bottom: 30px;
-            right: 30px;
+            bottom: 25px;
+            right: 25px;
             z-index: 200000;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
             user-select: none;
-            pointer-events: auto;
         }
         .touch-btn {
-            width: 75px;
-            height: 75px;
-            background: rgba(234, 179, 8, 0.95);
+            width: 70px;
+            height: 70px;
+            background: rgba(245, 158, 11, 0.95);
             border: 3px solid #fff;
             border-radius: 50%;
             color: #000;
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.6);
             cursor: pointer;
             outline: none;
             -webkit-tap-highlight-color: transparent;
         }
         .touch-row {
             display: flex;
-            gap: 25px;
+            gap: 20px;
         }
-        .hud-overlay {
+
+        /* Action Prompt */
+        .shop-prompt-btn {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #fff;
-            font-family: Arial, sans-serif;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 14px 30px;
+            border-radius: 30px;
             font-size: 18px;
-            background: rgba(0,0,0,0.6);
-            padding: 10px 20px;
+            font-weight: bold;
+            border: 3px solid #ffffff;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+            cursor: pointer;
+            z-index: 250000;
+            display: none;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.08); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* Shopping Modal Popup */
+        .market-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 300000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .market-modal-card {
+            background: #1e293b;
+            border: 2px solid #f59e0b;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .modal-header {
+            background: #0f172a;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #334155;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #f59e0b;
+        }
+        .close-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 15px;
+        }
+        .item-card {
+            background: #334155;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid #475569;
+            transition: transform 0.2s;
+        }
+        .item-card:hover {
+            transform: translateY(-4px);
+            border-color: #f59e0b;
+        }
+        .item-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .item-price {
+            color: #10b981;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .buy-btn {
+            background: #f59e0b;
+            color: #000;
+            border: none;
+            padding: 10px;
             border-radius: 8px;
-            z-index: 100000;
-            border: 1px solid #eab308;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        .buy-btn:hover {
+            background: #d97706;
+            color: #fff;
         }
     </style>
 </head>
 <body>
 
 <div class="game-fullscreen-wrapper" id="gameFullscreenWrapper">
-    <div class="hud-overlay">🏢 Tidong Open-World | 탐험 모드</div>
+    <!-- HUD -->
+    <div class="game-hud">
+        <div class="hud-card">🏬 Tidong Open-World City</div>
+        <div class="hud-card">💰 T-Coins: <span class="wallet-badge" id="walletBalance">75,000</span></div>
+    </div>
+
+    <!-- 3D Canvas -->
     <div id="gameContainer" style="width: 100%; height: 100%;"></div>
 
-    <!-- टच कंट्रोल्स -->
+    <!-- Shop Prompt -->
+    <button type="button" class="shop-prompt-btn" id="shopPromptBtn" onclick="openShowroomModal()">🛒 शोरूम के अंदर जाएँ और खरीदारी करें</button>
+
+    <!-- Touch Controls -->
     <div class="game-touch-controls">
         <button type="button" class="touch-btn" 
                 ontouchstart="setTouchDirection('up', true); event.preventDefault();" 
@@ -107,12 +255,112 @@
     </div>
 </div>
 
-<!-- Load Three.js Library -->
+<!-- Modal -->
+<div class="market-modal-overlay" id="marketModalOverlay">
+    <div class="market-modal-card">
+        <div class="modal-header">
+            <h2 id="modalShowroomTitle">🏪 Showroom Store</h2>
+            <button class="close-btn" onclick="closeShowroomModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modalItemList"></div>
+    </div>
+</div>
+
+<!-- Three.js Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
     const touchState = { up: false, down: false, left: false, right: false };
     function setTouchDirection(dir, isPressed) {
         touchState[dir] = isPressed;
+    }
+
+    // Complete Inventory & Store Database
+    const showroomDatabase = {
+        cars: {
+            title: "🏎️ Tidong SuperCars Showroom",
+            items: [
+                { name: "Lamborgini Aventa (Red)", price: 15000, type: "car", desc: "हाई-स्पीड लग्जरी स्पोर्ट्स कार" },
+                { name: "BMW M5 Competition", price: 10000, type: "car", desc: "प्रीमियम सेडान कार" }
+            ]
+        },
+        gadgets: {
+            title: "📱 Aepple & Samsing Gadgets Hub",
+            items: [
+                { name: "Aepple iPhone 16 Pro", price: 1500, type: "phone", desc: "टाइटेनियम फिनिश स्मार्टफोन" },
+                { name: "Tidong VR Headset", price: 800, type: "vr", desc: "वर्चुअल रियलिटी ग्लासेज" }
+            ]
+        },
+        clothing: {
+            title: "👔 Gucchi Fashion & Customization Store",
+            items: [
+                { name: "Gucchi Designer Suit (Royal Blue)", price: 2500, type: "outfit", color: 0x1e3a8a, desc: "कैरेक्टर के कपड़े बदलें" },
+                { name: "Niki Air Sneakers (Shoes)", price: 800, type: "shoes", desc: "प्रीमियम स्पोर्ट्स जूते" },
+                { name: "Ray-Ban Sunglasses (चश्मा)", price: 400, type: "glasses", desc: "स्टाइलिश धूप का चश्मा" }
+            ]
+        },
+        grocery: {
+            title: "🍎 Tidong Fresh Grocery Mart",
+            items: [
+                { name: "ऑर्गेनिक फ्रूट बास्केट", price: 200, type: "grocery", desc: "ताजे फल एवं सब्जियां" },
+                { name: "प्रीमियम राशन किट", price: 600, type: "grocery", desc: "मासिक घरेलू राशन" }
+            ]
+        }
+    };
+
+    let activeNearShowroom = null;
+    let playerBodyMesh = null; // कैरेक्टर के कपड़े बदलने के लिए रेफरेंस
+
+    function openShowroomModal() {
+        if (!activeNearShowroom) return;
+        const data = showroomDatabase[activeNearShowroom];
+        if (!data) return;
+
+        document.getElementById('modalShowroomTitle').innerText = data.title;
+        const listElem = document.getElementById('modalItemList');
+        listElem.innerHTML = '';
+
+        data.items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.innerHTML = `
+                <div>
+                    <div class="item-title">${item.name}</div>
+                    <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px;">${item.desc}</div>
+                </div>
+                <div>
+                    <div class="item-price">🪙 ${item.price} T-Coins</div>
+                    <button class="buy-btn" onclick='purchaseItem(${JSON.stringify(item)})'>खरीदें (Buy Now)</button>
+                </div>
+            `;
+            listElem.appendChild(card);
+        });
+
+        document.getElementById('marketModalOverlay').style.display = 'flex';
+    }
+
+    function closeShowroomModal() {
+        document.getElementById('marketModalOverlay').style.display = 'none';
+    }
+
+    function purchaseItem(item) {
+        const walletElem = document.getElementById('walletBalance');
+        let currentBalance = parseInt(walletElem.innerText.replace(/,/g, ''));
+
+        if (currentBalance < item.price) {
+            alert('❌ आपके वॉलेट में पर्याप्त T-Coins नहीं हैं!');
+            return;
+        }
+
+        currentBalance -= item.price;
+        walletElem.innerText = currentBalance.toLocaleString();
+
+        // यदि कपड़ा या सूट खरीदा है, तो कैरेक्टर का रंग/रूप तुरंत बदलें
+        if (item.type === 'outfit' && playerBodyMesh) {
+            playerBodyMesh.material.color.setHex(item.color);
+        }
+
+        alert(`🎉 बधाई हो! आपने सफलतापूर्व खरीद लिया: ${item.name}\nशेष बैलेंस: 🪙 ${currentBalance.toLocaleString()} T-Coins`);
+        closeShowroomModal();
     }
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -122,279 +370,134 @@
 
         function triggerAutoFullscreen() {
             if (!document.fullscreenElement) {
-                if (parentWrapper.requestFullscreen) {
-                    parentWrapper.requestFullscreen().catch(() => {});
-                } else if (parentWrapper.webkitRequestFullscreen) {
-                    parentWrapper.webkitRequestFullscreen();
-                }
+                if (parentWrapper.requestFullscreen) parentWrapper.requestFullscreen().catch(() => {});
             }
         }
         window.addEventListener('click', triggerAutoFullscreen, { once: true });
-        window.addEventListener('touchstart', triggerAutoFullscreen, { once: true });
 
-        // 1. Scene Setup
+        // 1. Scene
         const scene = new THREE.Scene();
         window.gameScene = scene;
-        scene.background = new THREE.Color(0x7ec0ee); // सुंदर आसमान
+        scene.background = new THREE.Color(0x7ec0ee);
 
-        // 2. Camera Setup
-        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000);
+        // 2. Camera
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         window.gameCamera = camera;
-        camera.position.set(0, 18, 35);
-        camera.lookAt(0, 0, 0);
 
-        // 3. Renderer Setup
+        // 3. Renderer
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         wrapper.appendChild(renderer.domElement);
 
-        // 4. Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
-        dirLight.position.set(100, 150, 100);
+        // 4. Lights
+        scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        dirLight.position.set(60, 120, 60);
         dirLight.castShadow = true;
         scene.add(dirLight);
 
-        // 5. Ground & Endless Infinite Roads Setup
-        const groundGeo = new THREE.PlaneGeometry(3000, 3000);
-        const groundMat = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.9 });
-        const ground = new THREE.Mesh(groundGeo, groundMat);
+        // 5. Ground & Roads
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(1000, 1000),
+            new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.8 })
+        );
         ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
         scene.add(ground);
 
-        // पानी का क्षेत्र और टापू (Water & Islands)
-        const waterGeo = new THREE.PlaneGeometry(800, 800);
-        const waterMat = new THREE.MeshStandardMaterial({ color: 0x1d3557, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 });
-        const water = new THREE.Mesh(waterGeo, waterMat);
-        water.rotation.x = -Math.PI / 2;
-        water.position.set(400, -0.2, 0);
-        scene.add(water);
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
+        const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(1000, 0.1, 26), roadMat);
+        mainRoad.position.y = 0.05;
+        scene.add(mainRoad);
 
-        // पानी में टापू (Island)
-        const islandGeo = new THREE.CylinderGeometry(80, 90, 2, 32);
-        const islandMat = new THREE.MeshStandardMaterial({ color: 0xd4a373 });
-        const island = new THREE.Mesh(islandGeo, islandMat);
-        island.position.set(400, 0.5, 0);
-        scene.add(island);
+        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(26, 0.1, 1000), roadMat);
+        crossRoad.position.y = 0.06;
+        scene.add(crossRoad);
 
-        // टापू पर सुंदर पेड़
-        function createDetailedTree(x, z) {
-            const treeGroup = new THREE.Group();
-            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.9, 5, 8), trunkMat);
-            trunk.position.y = 2.5;
-            trunk.castShadow = true;
-            treeGroup.add(trunk);
+        // 6. Showroom Locations
+        const showroomTargets = [
+            { id: 'cars', x: -65, z: -65, title: "SuperCars Showroom", color: 0x1e293b },
+            { id: 'gadgets', x: 65, z: -65, title: "Gadgets Hub", color: 0x1d4ed8 },
+            { id: 'grocery', x: -65, z: 65, title: "Fresh Mart", color: 0x047857 },
+            { id: 'clothing', x: 65, z: 65, title: "Fashion Store", color: 0xb45309 }
+        ];
 
-            const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2b9348, roughness: 0.6 });
-            const leaves1 = new THREE.Mesh(new THREE.SphereGeometry(2.5, 8, 8), leavesMat);
-            leaves1.position.y = 5.5;
-            treeGroup.add(leaves1);
-
-            const leaves2 = new THREE.Mesh(new THREE.SphereGeometry(1.8, 8, 8), leavesMat);
-            leaves2.position.set(1.2, 6.2, 0);
-            treeGroup.add(leaves2);
-
-            treeGroup.position.set(x, 0, z);
-            scene.add(treeGroup);
-        }
-        createDetailedTree(380, -10);
-        createDetailedTree(420, 15);
-
-        // लंबी और कभी न खत्म होने वाली सड़कें (Endless Roads)
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.4 });
-        const roads = [];
-        for (let i = -5; i <= 5; i++) {
-            const roadSegment = new THREE.Mesh(new THREE.BoxGeometry(450, 0.1, 28), roadMat);
-            roadSegment.position.set(i * 450, 0.05, 0);
-            roadSegment.receiveShadow = true;
-            scene.add(roadSegment);
-            roads.push(roadSegment);
-        }
-
-        // --- 🚗 रियलिस्टिक कार मॉडल ---
-        function createRealisticCar(colorHex) {
-            const carGroup = new THREE.Group();
-            const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.8, roughness: 0.2 });
-            
-            const lower = new THREE.Mesh(new THREE.BoxGeometry(4.8, 1.3, 9.5), bodyMat);
-            lower.position.y = 0.9;
-            lower.castShadow = true;
-            carGroup.add(lower);
-
-            const upper = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.1, 5.2), bodyMat);
-            upper.position.set(0, 1.8, -0.4);
-            upper.castShadow = true;
-            carGroup.add(upper);
-
-            const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1, metalness: 0.9 });
-            const windshield = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.9, 0.1), glassMat);
-            windshield.position.set(0, 1.8, 2.35);
-            carGroup.add(windshield);
-
-            const wheelGeo = new THREE.CylinderGeometry(0.55, 0.55, 0.4, 16);
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-            [[ -2.4, 0.55, 3 ], [ 2.4, 0.55, 3 ], [ -2.4, 0.55, -3 ], [ 2.4, 0.55, -3 ]].forEach(pos => {
-                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-                wheel.rotation.z = Math.PI / 2;
-                wheel.position.set(...pos);
-                carGroup.add(wheel);
-            });
-
-            return carGroup;
-        }
-
-        // --- 🏢 भव्य और रियलिस्टिक शोरूम (Showrooms) ---
-        const animatedWorkers = [];
-
-        function createShowroom(x, z, width, height, depth, wallColor, signText, hasCars) {
+        showroomTargets.forEach(s => {
             const group = new THREE.Group();
+            const bMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(36, 18, 30),
+                new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.3 })
+            );
+            bMesh.position.y = 9;
+            group.add(bMesh);
 
-            // बिल्डिंग दीवारें
-            const bMat = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.3 });
-            const building = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), bMat);
-            building.position.y = height / 2;
-            building.castShadow = true;
-            building.receiveShadow = true;
-            group.add(building);
-
-            // कांच की बड़ी पारदर्शी दीवार (Glass Facade)
-            const glassMat = new THREE.MeshStandardMaterial({ color: 0x87ceeb, transparent: true, opacity: 0.5, roughness: 0.1 });
-            const glass = new THREE.Mesh(new THREE.BoxGeometry(width * 0.85, height * 0.7, 0.3), glassMat);
-            glass.position.set(0, height * 0.38, depth / 2 + 0.1);
+            const glass = new THREE.Mesh(
+                new THREE.BoxGeometry(30, 12, 0.3),
+                new THREE.MeshStandardMaterial({ color: 0x87ceeb, transparent: true, opacity: 0.5 })
+            );
+            glass.position.set(0, 7, 15.1);
             group.add(glass);
 
-            // शोरूम का चमकता हुआ बोर्ड
-            const boardMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.6 });
-            const board = new THREE.Mesh(new THREE.BoxGeometry(width * 0.9, 2.8, 0.6), boardMat);
-            board.position.set(0, height + 1.4, depth / 2);
-            group.add(board);
-
-            // अंदर टहलने वाला वर्कर
-            const workerGroup = new THREE.Group();
-            const wBody = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-            wBody.position.y = 1.1;
-            const wHead = new THREE.Mesh(new THREE.SphereGeometry(0.38, 12, 12), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
-            wHead.position.y = 2.1;
-            workerGroup.add(wBody);
-            workerGroup.add(wHead);
-            workerGroup.position.set(0, 0, 0);
-            group.add(workerGroup);
-
-            animatedWorkers.push({
-                mesh: workerGroup,
-                minX: -width * 0.3,
-                maxX: width * 0.3,
-                speed: 0.03,
-                dir: 1
-            });
-
-            // बाहर खड़ी गाड़ियाँ
-            if (hasCars) {
-                const car1 = createRealisticCar(0xef4444);
-                car1.position.set(-7, 0, depth / 2 + 9);
-                group.add(car1);
-
-                const car2 = createRealisticCar(0x3b82f6);
-                car2.position.set(7, 0, depth / 2 + 9);
-                group.add(car2);
-            }
-
-            group.position.set(x, 0, z);
+            group.position.set(s.x, 0, s.z);
             scene.add(group);
-        }
+        });
 
-        // सड़क के दोनों तरफ भव्य शोरूम
-        createShowroom(-70, -65, 38, 20, 30, 0x1e293b, "🏎️ Tidong SuperCars Hub", true);
-        createShowroom(70, -65, 32, 17, 26, 0x1d4ed8, "📱 Aepple & Samsing Hub", false);
-        createShowroom(-70, 65, 34, 18, 28, 0x047857, "🍎 Tidong Fresh Market", false);
-        createShowroom(70, 65, 36, 19, 30, 0xb45309, "👔 Gucchi & Niki Fashion", false);
-
-        // --- 🧑‍💻 रियलिस्टिक कैरेक्टर (Player) ---
+        // 7. Player Setup
         const playerGroup = new THREE.Group();
+        
+        playerBodyMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(1.4, 2.2, 0.8), 
+            new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.3 })
+        );
+        playerBodyMesh.position.y = 2.1;
+        playerGroup.add(playerBodyMesh);
 
-        const pTorso = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.2, 0.8), new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.3 }));
-        pTorso.position.y = 2.1;
-        pTorso.castShadow = true;
-        playerGroup.add(pTorso);
-
-        const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 16), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+        const pHead = new THREE.Mesh(
+            new THREE.SphereGeometry(0.55, 16, 16), 
+            new THREE.MeshStandardMaterial({ color: 0xffdbac })
+        );
         pHead.position.y = 3.5;
-        pHead.castShadow = true;
         playerGroup.add(pHead);
-
-        const pHair = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.25, 0.6), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-        pHair.position.y = 3.9;
-        playerGroup.add(pHair);
-
-        const pLegMat = new THREE.MeshStandardMaterial({ color: 0x1f2937 });
-        const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.6, 0.45), pLegMat);
-        leftLeg.position.set(-0.35, 0.8, 0);
-        playerGroup.add(leftLeg);
-
-        const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.6, 0.45), pLegMat);
-        rightLeg.position.set(0.35, 0.8, 0);
-        playerGroup.add(rightLeg);
 
         playerGroup.position.set(0, 0, 5);
         scene.add(playerGroup);
-        window.playerCharacter = playerGroup;
 
-        // कंट्रोल्स और मूवमेंट
         const speed = 0.85;
         const keys = {};
-
         window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
-        let walkCycle = 0;
-
-        // 6. Render Loop & Infinite World Management
+        // Game Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // वर्कर्स का टहलना
-            animatedWorkers.forEach(w => {
-                w.mesh.position.x += w.speed * w.dir;
-                if (w.mesh.position.x > w.maxX || w.mesh.position.x < w.minX) {
-                    w.dir *= -1;
+            if (keys['arrowup'] || keys['w'] || touchState.up) playerGroup.position.z -= speed;
+            if (keys['arrowdown'] || keys['s'] || touchState.down) playerGroup.position.z += speed;
+            if (keys['arrowleft'] || keys['a'] || touchState.left) playerGroup.position.x -= speed;
+            if (keys['arrowright'] || keys['d'] || touchState.right) playerGroup.position.x += speed;
+
+            // Camera follow
+            camera.position.x = playerGroup.position.x;
+            camera.position.z = playerGroup.position.z + 22;
+            camera.position.y = 12;
+            camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2, playerGroup.position.z);
+
+            // Proximity Check
+            let nearAny = false;
+            showroomTargets.forEach(s => {
+                const dist = Math.hypot(playerGroup.position.x - s.x, playerGroup.position.z - s.z);
+                if (dist < 35) {
+                    nearAny = true;
+                    activeNearShowroom = s.id;
                 }
             });
 
-            // कैरेक्टर मूवमेंट
-            let moving = false;
-            if (keys['arrowup'] || keys['w'] || touchState.up) { playerGroup.position.z -= speed; moving = true; }
-            if (keys['arrowdown'] || keys['s'] || touchState.down) { playerGroup.position.z += speed; moving = true; }
-            if (keys['arrowleft'] || keys['a'] || touchState.left) { playerGroup.position.x -= speed; moving = true; }
-            if (keys['arrowright'] || keys['d'] || touchState.right) { playerGroup.position.x += speed; moving = true; }
-
-            // पैरों का चलने वाला रियलिस्टिक एनिमेशन
-            if (moving) {
-                walkCycle += 0.3;
-                leftLeg.rotation.x = Math.sin(walkCycle) * 0.7;
-                rightLeg.rotation.x = -Math.sin(walkCycle) * 0.7;
+            const promptBtn = document.getElementById('shopPromptBtn');
+            if (nearAny) {
+                promptBtn.style.display = 'block';
             } else {
-                leftLeg.rotation.x = 0;
-                rightLeg.rotation.x = 0;
-            }
-
-            // इनफिनिट रोड लूपिंग (सड़क कभी खत्म न हो, आगे अपने आप आगे खिसके)
-            roads.forEach(road => {
-                if (playerGroup.position.x - road.position.x > 600) {
-                    road.position.x += 450 * roads.length;
-                }
-            });
-
-            // कैमरा फॉलो (स्मूथ थर्ड पर्सन व्यू)
-            if (window.gameCamera) {
-                window.gameCamera.position.x = playerGroup.position.x;
-                window.gameCamera.position.z = playerGroup.position.z + 22;
-                window.gameCamera.position.y = 12;
-                window.gameCamera.lookAt(playerGroup.position.x, playerGroup.position.y + 2, playerGroup.position.z);
+                promptBtn.style.display = 'none';
+                activeNearShowroom = null;
             }
 
             renderer.render(scene, camera);
