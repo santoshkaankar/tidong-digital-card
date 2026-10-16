@@ -1,3 +1,6 @@
+@php
+    $marketItems = \App\Models\Member\MarketItem::all();
+@endphp
 <!-- File Path: resources/views/member/game/pro.blade.php -->
 @extends('member.partials.layout')
 
