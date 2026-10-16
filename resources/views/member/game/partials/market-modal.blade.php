@@ -24,14 +24,20 @@
                     <div class="tab-pane fade show active" id="mode-buy" role="tabpanel">
                         
                         <div class="mb-3">
-                            <input type="text" id="marketSearchInput" class="form-control bg-secondary text-white border-0 rounded-pill px-4" placeholder="🔍 Search Phones, Cars, Nike, Grocery..." onkeyup="filterMarketItems()">
+                            <input type="text" id="marketSearchInput" class="form-control bg-secondary text-white border-0 rounded-pill px-4" placeholder="🔍 Search Phones, Cars, Tools, Sofas, Grocery..." onkeyup="filterMarketItems()">
                         </div>
 
-                        <ul class="nav nav-tabs mb-3 border-secondary" role="tablist">
+                        <!-- Sub Categories Tabs -->
+                        <ul class="nav nav-tabs mb-3 border-secondary flex-nowrap overflow-auto" role="tablist" style="white-space: nowrap;">
                             <li class="nav-item"><button class="nav-link active btn-sm text-warning fw-bold" data-bs-toggle="tab" data-bs-target="#sub-phones" type="button">📱 Phones</button></li>
                             <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-cars" type="button">🏎️ Cars</button></li>
                             <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-clothing" type="button">👔 Clothing</button></li>
                             <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-grocery" type="button">🍎 Grocery</button></li>
+                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-tools" type="button">🛠️ Tools & Mower</button></li>
+                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-appliances" type="button">💡 Appliances</button></li>
+                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-decor" type="button">🪑 Decor & Sofa</button></li>
+                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-bathroom" type="button">🚿 Bathroom</button></li>
+                            <li class="nav-item"><button class="nav-link btn-sm text-light" data-bs-toggle="tab" data-bs-target="#sub-career" type="button">🎒 School/Job</button></li>
                         </ul>
 
                         <div class="tab-content">
@@ -39,6 +45,11 @@
                             <div class="tab-pane fade" id="sub-cars">@include('member.game.partials.market-cars')</div>
                             <div class="tab-pane fade" id="sub-clothing">@include('member.game.partials.market-clothing')</div>
                             <div class="tab-pane fade" id="sub-grocery">@include('member.game.partials.market-grocery')</div>
+                            <div class="tab-pane fade" id="sub-tools">@include('member.game.partials.market-tools')</div>
+                            <div class="tab-pane fade" id="sub-appliances">@include('member.game.partials.market-appliances')</div>
+                            <div class="tab-pane fade" id="sub-decor">@include('member.game.partials.market-decor')</div>
+                            <div class="tab-pane fade" id="sub-bathroom">@include('member.game.partials.market-bathroom')</div>
+                            <div class="tab-pane fade" id="sub-career">@include('member.game.partials.market-career')</div>
                         </div>
 
                     </div>
