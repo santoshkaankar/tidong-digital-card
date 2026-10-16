@@ -50,7 +50,7 @@
         window.gameScene = scene;
         scene.background = new THREE.Color(0x87ceeb);
 
-        // 2. Camera Setup (बेहतर व्यू के लिए थोड़ा पास और स्पष्ट)
+        // 2. Camera Setup
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         window.gameCamera = camera;
         camera.position.set(0, 15, 30);
@@ -72,7 +72,7 @@
         scene.add(dirLight);
 
         // 5. Ground Setup (हरी घास का मैदान)
-        const groundGeo = new THREE.PlaneGeometry(600, 600, 32, 32);
+        const groundGeo = new THREE.PlaneGeometry(800, 800, 32, 32);
         const groundMat = new THREE.MeshStandardMaterial({ 
             color: 0x2e8b57, 
             roughness: 0.8,
@@ -83,63 +83,59 @@
         ground.receiveShadow = true;
         scene.add(ground);
 
-        // --- 🛣️ शहर की सड़कें (Roads) जोड़ना ---
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-        
-        // मुख्य सीधी सड़क (Main Road East-West)
-        const roadGeo1 = new THREE.BoxGeometry(600, 0.1, 15);
-        const mainRoad = new THREE.Mesh(roadGeo1, roadMat);
+        // --- 🛣️ शहर की मुख्य सड़कें (Roads) ---
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+        const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(800, 0.1, 20), roadMat);
         mainRoad.position.y = 0.05;
         scene.add(mainRoad);
 
-        // क्रॉस रोड (Cross Road North-South)
-        const roadGeo2 = new THREE.BoxGeometry(15, 0.1, 600);
-        const crossRoad = new THREE.Mesh(roadGeo2, roadMat);
+        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(20, 0.1, 800), roadMat);
         crossRoad.position.y = 0.06;
         scene.add(crossRoad);
 
-        // --- 🌲 पेड़ और 💡 लाइट के खंभे (Trees & Street Lights) जोड़ना ---
+        // --- 🏢 3D शोरूम और इमारतें (Showrooms & Shops) बनाना ---
+        function createShowroom(x, z, title, colorHex) {
+            // शोरूम की मुख्य बॉडी (Building Box)
+            const bGeo = new THREE.BoxGeometry(25, 14, 25);
+            const bMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.4 });
+            const building = new THREE.Mesh(bGeo, bMat);
+            building.position.set(x, 7, z);
+            scene.add(building);
+
+            // शोरूम का शीशा (Glass Front Window)
+            const glassGeo = new THREE.BoxGeometry(18, 9, 0.5);
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6 });
+            const glass = new THREE.Mesh(glassGeo, glassMat);
+            
+            // दिशा के हिसाब से शीशा लगाना
+            if (z > 0) {
+                glass.position.set(x, 5, z - 12.3);
+            } else {
+                glass.position.set(x, 5, z + 12.3);
+            }
+            scene.add(glass);
+        }
+
+        // सड़क के दोनों तरफ अलग-अलग 3D शोरूम खड़े करना
+        createShowroom(-40, -35, "Car Showroom", 0xef4444);      // लाल कार शोरूम
+        createShowroom(40, -35, "Phone & Gadgets Hub", 0x3b82f6); // नीला गैजेट शोरूम
+        createShowroom(-40, 35, "Super Market & Grocery", 0x10b981); // ग्रोसरी स्टोर
+        createShowroom(40, 35, "Furniture & Decor", 0xf59e0b);   // फर्नीचर शोरूम
+
+        // --- 🌲 पेड़ और 💡 स्ट्रीट लाइट ---
         function createTree(x, z) {
-            // तना (Trunk)
-            const trunkGeo = new THREE.CylinderGeometry(0.8, 1, 6, 8);
-            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
-            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1, 6, 8), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
             trunk.position.set(x, 3, z);
-            
-            // पत्तियां (Leaves)
-            const leavesGeo = new THREE.ConeGeometry(3.5, 7, 8);
-            const leavesMat = new THREE.MeshStandardMaterial({ color: 0x1e7e34 });
-            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+            const leaves = new THREE.Mesh(new THREE.ConeGeometry(4, 8, 8), new THREE.MeshStandardMaterial({ color: 0x1e7e34 }));
             leaves.position.set(x, 7.5, z);
-            
             scene.add(trunk);
             scene.add(leaves);
         }
 
-        function createStreetLight(x, z) {
-            // पोल (Pole)
-            const poleGeo = new THREE.CylinderGeometry(0.3, 0.3, 10, 8);
-            const poleMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
-            const pole = new THREE.Mesh(poleGeo, poleMat);
-            pole.position.set(x, 5, z);
-
-            // लाइट बल्ब (Light Bulb Head)
-            const bulbGeo = new THREE.SphereGeometry(0.8, 8, 8);
-            const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-            const bulb = new THREE.Mesh(bulbGeo, bulbMat);
-            bulb.position.set(x, 10, z);
-
-            scene.add(pole);
-            scene.add(bulb);
-        }
-
-        // सड़क के किनारे पेड़ और खंभे लगाना
-        for (let i = -200; i <= 200; i += 40) {
-            if (Math.abs(i) > 20) {
+        for (let i = -300; i <= 300; i += 50) {
+            if (Math.abs(i) > 60) {
                 createTree(i, 15);
                 createTree(i, -15);
-                createStreetLight(i - 10, 10);
-                createStreetLight(i - 10, -10);
             }
         }
 
