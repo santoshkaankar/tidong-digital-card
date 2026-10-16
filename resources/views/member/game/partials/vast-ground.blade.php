@@ -1,6 +1,5 @@
 <!-- File Path: resources/views/member/game/partials/vast-ground.blade.php -->
 <style>
-    /* Fixed Fullscreen Layer without visible scrollbars */
     .game-fullscreen-wrapper {
         position: fixed;
         top: 0;
@@ -10,16 +9,15 @@
         z-index: 99999;
         background-color: #000;
         overflow: hidden;
-        touch-action: none;
     }
 </style>
 
 <div class="game-fullscreen-wrapper" id="gameFullscreenWrapper">
-    <!-- Invisible Fullscreen Trigger (Hidden from View) -->
-    <button id="toggleFullscreenBtn" style="display: none !important; visibility: hidden;"></button>
-    
     <!-- Three.js Canvas Container -->
     <div id="gameContainer" style="width: 100%; height: 100%;"></div>
+
+    <!-- Include Touch Control Buttons -->
+    @include('member.game.partials.touch-controls')
 
     <!-- Include Market Modal UI inside container context -->
     @include('member.game.partials.market-modal')
@@ -33,7 +31,7 @@
         const parentWrapper = document.getElementById('gameFullscreenWrapper');
         if (!wrapper) return;
 
-        // Auto Fullscreen Request on First User Touch/Click (Browser Security Policy)
+        // Auto Fullscreen Request on First User Touch/Click
         function triggerAutoFullscreen() {
             if (!document.fullscreenElement) {
                 if (parentWrapper.requestFullscreen) {
@@ -44,7 +42,6 @@
             }
         }
 
-        // Event listeners for automatic full screen on tap/click
         window.addEventListener('click', triggerAutoFullscreen, { once: true });
         window.addEventListener('touchstart', triggerAutoFullscreen, { once: true });
 
@@ -104,19 +101,10 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
-        // Handle Escape Key & Browser Back Button automatically
-        window.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                }
-            }
-        });
     });
 </script>
 
-<!-- Modularly Include Spawner, Interactions, Character & Showroom Items -->
+<!-- Modularly Include Spawner, Interactions, Character & Items -->
 @include('member.game.partials.trash-spawner')
 @include('member.game.partials.trash-pickup')
 @include('member.game.partials.player-character')

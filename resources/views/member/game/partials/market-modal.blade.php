@@ -1,8 +1,8 @@
 <!-- File Path: resources/views/member/game/partials/market-modal.blade.php -->
 
-<!-- Open Market HUD Button -->
-<button type="button" class="btn btn-primary fw-bold rounded-pill position-absolute bottom-0 start-0 m-3 shadow z-3 px-4 py-2" data-bs-toggle="modal" data-bs-target="#gameMarketModal">
-    🏬 Tidong Super Market & Showroom
+<!-- Open Market HUD Button (Z-Index Fixed for Fullscreen) -->
+<button type="button" class="btn btn-warning fw-bold rounded-pill position-absolute top-0 start-0 m-3 shadow px-4 py-2" style="z-index: 100000;" data-bs-toggle="modal" data-bs-target="#gameMarketModal">
+    🏬 Tidong Market
 </button>
 
 <!-- Market Modal Popup -->
