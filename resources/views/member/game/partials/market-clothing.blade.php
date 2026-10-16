@@ -1,7 +1,5 @@
-@foreach(($marketItems ?? \App\Models\Member\MarketItem::all())->where('category', 'clothing') as $item)
-
 <div class="row g-3 market-item-list" style="max-height: 420px; overflow-y: auto;">
-    @foreach($marketItems->where('category', 'clothing') as $item)
+    @foreach(($marketItems ?? \App\Models\Member\MarketItem::all())->where('category', 'clothing') as $item)
     <div class="col-md-4 market-card-item" data-name="{{ strtolower($item->name) }}">
         <div class="card bg-secondary text-white text-center p-3 border-0 rounded-3 h-100">
             <h6>👕 {{ $item->name }}</h6>
