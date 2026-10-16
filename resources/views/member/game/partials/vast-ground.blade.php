@@ -12,11 +12,12 @@
 
         // 1. Scene Setup
         const scene = new THREE.Scene();
-        window.gameScene = scene; // Expose scene globally for partials
+        window.gameScene = scene; // Expose scene globally
         scene.background = new THREE.Color(0x87ceeb); // Sky blue color
 
         // 2. Camera Setup
         const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        window.gameCamera = camera; // Expose camera globally for raycasting/pickup
         camera.position.set(0, 20, 50);
         camera.lookAt(0, 0, 0);
 
@@ -68,5 +69,8 @@
     });
 </script>
 
-<!-- Modularly Include Trash Objects File -->
+<!-- Modularly Include Trash Objects Generator -->
 @include('member.game.partials.trash-objects')
+
+<!-- Modularly Include Trash Pickup / Cleaning Interaction -->
+@include('member.game.partials.trash-pickup')
