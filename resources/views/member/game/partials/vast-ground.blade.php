@@ -97,3 +97,4 @@
 <!-- Modularly Include Spawner & Interaction Files -->
 @include('member.game.partials.trash-spawner')
 @include('member.game.partials.trash-pickup')
+@include('member.game.partials.player-character')
