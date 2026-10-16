@@ -10,6 +10,18 @@
         background-color: #000;
         overflow: hidden;
     }
+    .showroom-label {
+        position: absolute;
+        color: white;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid #eab308;
+        pointer-events: none;
+        transform: translate(-50%, -100%);
+    }
 </style>
 
 <div class="game-fullscreen-wrapper" id="gameFullscreenWrapper">
@@ -19,7 +31,7 @@
     <!-- Include Touch Control Buttons -->
     @include('member.game.partials.touch-controls')
 
-    <!-- Include Market Modal UI inside container context -->
+    <!-- Include Market Modal UI -->
     @include('member.game.partials.market-modal')
 </div>
 
@@ -31,7 +43,7 @@
         const parentWrapper = document.getElementById('gameFullscreenWrapper');
         if (!wrapper) return;
 
-        // Auto Fullscreen Request on First User Touch/Click
+        // Auto Fullscreen on Touch/Click
         function triggerAutoFullscreen() {
             if (!document.fullscreenElement) {
                 if (parentWrapper.requestFullscreen) {
@@ -41,7 +53,6 @@
                 }
             }
         }
-
         window.addEventListener('click', triggerAutoFullscreen, { once: true });
         window.addEventListener('touchstart', triggerAutoFullscreen, { once: true });
 
@@ -62,7 +73,7 @@
         renderer.shadowMap.enabled = true;
         wrapper.appendChild(renderer.domElement);
 
-        // 4. Lighting Setup
+        // 4. Lighting
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
 
@@ -71,58 +82,97 @@
         dirLight.castShadow = true;
         scene.add(dirLight);
 
-        // 5. Ground Setup (हरी घास का मैदान)
-        const groundGeo = new THREE.PlaneGeometry(800, 800, 32, 32);
-        const groundMat = new THREE.MeshStandardMaterial({ 
-            color: 0x2e8b57, 
-            roughness: 0.8,
-            metalness: 0.2
-        });
+        // 5. Ground Setup (सड़कें और मैदान)
+        const groundGeo = new THREE.PlaneGeometry(900, 900);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.8 });
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
 
-        // --- 🛣️ शहर की मुख्य सड़कें (Roads) ---
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(800, 0.1, 20), roadMat);
+        // मुख्य सड़कें (Roads)
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
+        const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(900, 0.1, 24), roadMat);
         mainRoad.position.y = 0.05;
         scene.add(mainRoad);
 
-        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(20, 0.1, 800), roadMat);
+        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(24, 0.1, 900), roadMat);
         crossRoad.position.y = 0.06;
         scene.add(crossRoad);
 
-        // --- 🏢 3D शोरूम और इमारतें (Showrooms & Shops) बनाना ---
-        function createShowroom(x, z, title, colorHex) {
-            // शोरूम की मुख्य बॉडी (Building Box)
-            const bGeo = new THREE.BoxGeometry(25, 14, 25);
-            const bMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.4 });
-            const building = new THREE.Mesh(bGeo, bMat);
-            building.position.set(x, 7, z);
-            scene.add(building);
+        // --- 🏢 रियलिस्टिक और अलग-अलग डिजाइन के शोरूम (Showrooms) ---
+        const animatedWorkers = [];
 
-            // शोरूम का शीशा (Glass Front Window)
-            const glassGeo = new THREE.BoxGeometry(18, 9, 0.5);
-            const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6 });
+        function createShowroom(x, z, width, height, depth, color, title, hasCarsOutside) {
+            const group = new THREE.Group();
+
+            // मुख्य बिल्डिंग बॉडी
+            const bGeo = new THREE.BoxGeometry(width, height, depth);
+            const bMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
+            const building = new THREE.Mesh(bGeo, bMat);
+            building.position.y = height / 2;
+            building.castShadow = true;
+            building.receiveShadow = true;
+            group.add(building);
+
+            // कांच की बड़ी खिड़की (Glass Front Facade)
+            const glassGeo = new THREE.BoxGeometry(width * 0.75, height * 0.6, 0.4);
+            const glassMat = new THREE.MeshStandardMaterial({ 
+                color: 0x38bdf8, 
+                transparent: true, 
+                opacity: 0.5, 
+                roughness: 0.1 
+            });
             const glass = new THREE.Mesh(glassGeo, glassMat);
-            
-            // दिशा के हिसाब से शीशा लगाना
-            if (z > 0) {
-                glass.position.set(x, 5, z - 12.3);
-            } else {
-                glass.position.set(x, 5, z + 12.3);
+            glass.position.set(0, height * 0.35, depth / 2 + 0.1);
+            group.add(glass);
+
+            // शोरूम के ऊपर चमकता हुआ बोर्ड (Signboard Banner)
+            const boardGeo = new THREE.BoxGeometry(width * 0.8, 2.2, 0.6);
+            const boardMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.4 });
+            const board = new THREE.Mesh(boardGeo, boardMat);
+            board.position.set(0, height + 1.2, depth / 2);
+            group.add(board);
+
+            // शोरूम के अंदर टहलने वाला वर्कर (Animated Worker)
+            const workerGeo = new THREE.BoxGeometry(1.2, 2.5, 0.8);
+            const workerMat = new THREE.MeshStandardMaterial({ color: 0xffffff }); // वर्कर की यूनिफॉर्म
+            const worker = new THREE.Mesh(workerGeo, workerMat);
+            worker.position.set(0, 1.25, 0);
+            group.add(worker);
+
+            // वर्कर को एनिमेट करने के लिए डेटा सेव करना
+            animatedWorkers.push({
+                mesh: worker,
+                minX: -width * 0.3,
+                maxX: width * 0.3,
+                speed: 0.03,
+                dir: 1
+            });
+
+            // यदि कार शोरूम है, तो बाहर गाड़ियाँ खड़ी करना
+            if (hasCarsOutside) {
+                for (let c = -1; c <= 1; c += 2) {
+                    const carGeo = new THREE.BoxGeometry(5, 2, 8);
+                    const carMat = new THREE.MeshStandardMaterial({ color: c > 0 ? 0xdc2626 : 0x2563eb, metalness: 0.8 });
+                    const parkedCar = new THREE.Mesh(carGeo, carMat);
+                    parkedCar.position.set(c * 6, 1, depth / 2 + 7);
+                    parkedCar.castShadow = true;
+                    group.add(parkedCar);
+                }
             }
-            scene.add(glass);
+
+            group.position.set(x, 0, z);
+            scene.add(group);
         }
 
-        // सड़क के दोनों तरफ अलग-अलग 3D शोरूम खड़े करना
-        createShowroom(-40, -35, "Car Showroom", 0xef4444);      // लाल कार शोरूम
-        createShowroom(40, -35, "Phone & Gadgets Hub", 0x3b82f6); // नीला गैजेट शोरूम
-        createShowroom(-40, 35, "Super Market & Grocery", 0x10b981); // ग्रोसरी स्टोर
-        createShowroom(40, 35, "Furniture & Decor", 0xf59e0b);   // फर्नीचर शोरूम
+        // सड़क के चारों कोनों पर अलग-अलग शोरूम खड़े करना
+        createShowroom(-50, -50, 30, 16, 25, 0x334155, "🏎️ Lamborgini & SuperCars Hub", true);
+        createShowroom(50, -50, 26, 14, 24, 0x1e3a8a, "📱 Aepple & Samsing Gadgets", false);
+        createShowroom(-50, 50, 28, 15, 26, 0x065f46, "🍎 Tidong Fresh Grocery Mart", false);
+        createShowroom(50, 50, 32, 16, 28, 0x78350f, "👔 Gucchi & Niki Clothing Showroom", false);
 
-        // --- 🌲 पेड़ और 💡 स्ट्रीट लाइट ---
+        // --- 🌲 पेड़ और स्ट्रीट लाइट्स ---
         function createTree(x, z) {
             const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1, 6, 8), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
             trunk.position.set(x, 3, z);
@@ -132,16 +182,25 @@
             scene.add(leaves);
         }
 
-        for (let i = -300; i <= 300; i += 50) {
-            if (Math.abs(i) > 60) {
-                createTree(i, 15);
-                createTree(i, -15);
+        for (let i = -350; i <= 350; i += 60) {
+            if (Math.abs(i) > 70) {
+                createTree(i, 16);
+                createTree(i, -16);
             }
         }
 
-        // 6. Render Loop
+        // 6. Render Loop (एनिमेशन और वर्कर्स का टहलना)
         function animate() {
             requestAnimationFrame(animate);
+
+            // शोरूम के अंदर वर्कर्स को आगे-पीछे टहलाना
+            animatedWorkers.forEach(w => {
+                w.mesh.position.x += w.speed * w.dir;
+                if (w.mesh.position.x > w.maxX || w.mesh.position.x < w.minX) {
+                    w.dir *= -1; // दिशा बदलना
+                }
+            });
+
             renderer.render(scene, camera);
         }
         animate();
@@ -155,7 +214,7 @@
     });
 </script>
 
-<!-- Modularly Include Spawner, Interactions, Character & Items -->
+<!-- Modularly Include Spawner, Character & Items -->
 @include('member.game.partials.trash-spawner')
 @include('member.game.partials.trash-pickup')
 @include('member.game.partials.player-character')
