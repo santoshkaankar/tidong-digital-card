@@ -299,7 +299,7 @@ $cardProgress = $wallet->credit_card_progress ?? 25;
                                         </span>
                                     </td>
                                     <td class="fw-bold {{ $tc->type == 'credit' ? 'text-success' : 'text-danger' }}">
-                                        {{ $tc->type == 'credit' ? '+' : '-' }} {{ format_indian_currency($tc->coins) }} T-Coins
+                                        {{ $tc->type == 'credit' ? '+' : '-' }} {{ format_indian_currency($tc->amount) }} T-Coins
                                     </td>
                                     <td class="text-muted small">{{ date('d M Y, h:i A', strtotime($tc->created_at)) }}</td>
                                 </tr>
