@@ -1,55 +1,33 @@
 <!-- File Path: resources/views/member/game/partials/trash-spawner.blade.php -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const checkSceneInterval = setInterval(function() {
-            if (window.gameScene) {
-                clearInterval(checkSceneInterval);
-                initRealisticSpawner(window.gameScene);
-            }
-        }, 100);
+        setTimeout(() => {
+            const scene = window.gameScene;
+            if (!scene) return;
 
-        function initRealisticSpawner(scene) {
-            const trashMaterials = [
-                new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.8 }), // Metal Can
-                new THREE.MeshStandardMaterial({ color: 0x4a3b32, roughness: 0.9 }), // Cardboard Box
-                new THREE.MeshStandardMaterial({ color: 0xdc3545, roughness: 0.6 }), // Plastic Bottle
-                new THREE.MeshStandardMaterial({ color: 0x6c757d, roughness: 0.5 })  // Waste Packet
-            ];
+            // बड़े साइज का कचरा/सामान जनरेट करने का फंक्शन
+            function spawnLargeTrash() {
+                const trashGeo = new THREE.BoxGeometry(2.5, 2.5, 2.5); // बड़ा और साफ़ दिखने वाला साइज
+                const trashMat = new THREE.MeshStandardMaterial({ color: 0xef4444 }); // लाल रंग का डिब्बा
+                const trash = new THREE.Mesh(trashGeo, trashMat);
 
-            const geoBox = new THREE.BoxGeometry(0.7, 0.7, 0.7);
-            const geoCylinder = new THREE.CylinderGeometry(0.3, 0.3, 0.9, 6);
-            const geoSphere = new THREE.SphereGeometry(0.4, 5, 5);
-
-            // Single function to spawn one piece of trash naturally
-            window.spawnSingleTrash = function() {
-                const geometries = [geoBox, geoCylinder, geoSphere];
-                const randGeom = geometries[Math.floor(Math.random() * geometries.length)];
-                const randMat = trashMaterials[Math.floor(Math.random() * trashMaterials.length)];
-
-                const trashMesh = new THREE.Mesh(randGeom, randMat);
+                // सड़क और मैदान के आसपास रैंडम पोजीशन
+                const rx = (Math.random() - 0.5) * 200;
+                const rz = (Math.random() - 0.5) * 200;
                 
-                // Random position within active field range
-                const x = (Math.random() - 0.5) * 300;
-                const z = (Math.random() - 0.5) * 300;
+                // सड़क के बीच में न आए, इसलिए थोड़ा साइड में रखें
+                const finalX = Math.abs(rx) < 15 ? rx + 25 : rx;
 
-                trashMesh.position.set(x, 0.35, z);
-                trashMesh.rotation.x = Math.random() * Math.PI;
-                trashMesh.rotation.y = Math.random() * Math.PI;
-                trashMesh.castShadow = true;
-                trashMesh.receiveShadow = true;
+                trash.position.set(finalX, 1.25, rz);
+                trash.castShadow = true;
 
-                scene.add(trashMesh);
-            };
-
-            // Spawn initial 10 items for immediate start
-            for (let i = 0; i < 10; i++) {
-                window.spawnSingleTrash();
+                scene.add(trash);
             }
 
-            // Realistic Automatic Regeneration: Every 8 seconds new trash drops naturally
-            setInterval(function() {
-                window.spawnSingleTrash();
-            }, 8000);
-        }
+            // मैदान में शुरुआत में 15 बड़े कचरे के डिब्बे गिराना
+            for (let i = 0; i < 15; i++) {
+                spawnLargeTrash();
+            }
+        }, 1500);
     });
 </script>
