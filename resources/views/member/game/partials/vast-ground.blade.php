@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tidong 3D Ultimate AAA Open-World Simulation</title>
+    <title>Tidong 3D Ultimate Open-World Engine</title>
     <style>
         body, html {
             margin: 0;
@@ -36,7 +36,7 @@
             pointer-events: none;
         }
         .hud-card {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             border: 2px solid #f59e0b;
             color: #fff;
             padding: 10px 20px;
@@ -76,6 +76,7 @@
             cursor: pointer;
             outline: none;
             -webkit-tap-highlight-color: transparent;
+            pointer-events: auto;
         }
         .touch-row {
             display: flex;
@@ -89,6 +90,7 @@
             display: flex;
             gap: 15px;
             z-index: 250000;
+            pointer-events: auto;
         }
         .action-btn {
             background: linear-gradient(135deg, #10b981, #059669);
@@ -101,16 +103,11 @@
             box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
             cursor: pointer;
             display: none;
-            animation: pulse 1.5s infinite;
+            pointer-events: auto;
         }
         .market-btn {
             background: linear-gradient(135deg, #f59e0b, #d97706);
             box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6);
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.06); }
-            100% { transform: scale(1); }
         }
         .market-modal-overlay {
             position: fixed;
@@ -124,6 +121,7 @@
             justify-content: center;
             align-items: center;
             backdrop-filter: blur(5px);
+            pointer-events: auto;
         }
         .market-modal-card {
             background: #1e293b;
@@ -199,10 +197,6 @@
             cursor: pointer;
             text-align: center;
         }
-        .buy-btn:hover {
-            background: #d97706;
-            color: #fff;
-        }
     </style>
 </head>
 <body>
@@ -210,18 +204,18 @@
 <div class="game-fullscreen-wrapper" id="gameFullscreenWrapper">
     <div class="game-hud">
         <div class="hud-card" id="hudLocationTitle">🏬 Tidong Open-World City</div>
-        <div class="hud-card">💰 T-Coins: <span class="wallet-badge" id="walletBalance">85,000</span></div>
+        <div class="hud-card">💰 T-Coins: <span class="wallet-badge" id="walletBalance">1,00,000</span></div>
     </div>
 
-    <div id="gameContainer" style="width: 100%; height: 100%;"></div>
+    <div id="gameContainer" style="width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1;"></div>
 
-    <div class="action-prompt-container">
+    <div class="action-prompt-container" style="z-index: 400000;">
         <button type="button" class="action-btn" id="enterShowroomBtn" onclick="enterShowroomInterior()">🏢 शोरूम के अंदर प्रवेश करें</button>
         <button type="button" class="action-btn market-btn" id="openMarketBtn" onclick="openShowroomModal()">🛒 अंदर की मार्केट / कैटलॉग देखें</button>
         <button type="button" class="action-btn" id="exitShowroomBtn" style="background:#dc2626;" onclick="exitShowroomInterior()">🚪 बाहर सड़क पर वापस जाएँ</button>
     </div>
 
-    <div class="game-touch-controls">
+    <div class="game-touch-controls" style="z-index: 400000;">
         <button type="button" class="touch-btn" 
                 ontouchstart="setTouchDirection('up', true); event.preventDefault();" 
                 ontouchend="setTouchDirection('up', false)"
@@ -306,19 +300,11 @@
     let exteriorSceneGroup = null;
     let scene, camera, renderer, playerGroup;
     let currentShowroomType = 'cars';
-    const activeGardeners = [];
 
     document.addEventListener("DOMContentLoaded", function () {
         const wrapper = document.getElementById('gameContainer');
         const parentWrapper = document.getElementById('gameFullscreenWrapper');
         if (!wrapper) return;
-
-        function triggerAutoFullscreen() {
-            if (!document.fullscreenElement) {
-                if (parentWrapper.requestFullscreen) parentWrapper.requestFullscreen().catch(() => {});
-            }
-        }
-        window.addEventListener('click', triggerAutoFullscreen, { once: true });
 
         scene = new THREE.Scene();
         window.gameScene = scene;
@@ -335,7 +321,6 @@
         scene.add(new THREE.AmbientLight(0xffffff, 0.85));
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
         dirLight.position.set(60, 140, 60);
-        dirLight.castShadow = true;
         scene.add(dirLight);
 
         exteriorSceneGroup = new THREE.Group();
@@ -344,7 +329,7 @@
         scene.add(exteriorSceneGroup);
         scene.add(interiorSceneGroup);
 
-        // बाहर की दुनिया - घास और सड़कें
+        // बाहर की दुनिया
         const ground = new THREE.Mesh(
             new THREE.PlaneGeometry(1200, 1200),
             new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.85 })
@@ -357,54 +342,26 @@
         mainRoad.position.y = 0.05;
         exteriorSceneGroup.add(mainRoad);
 
-        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(28, 0.1, 1200), roadMat);
-        crossRoad.position.y = 0.06;
-        exteriorSceneGroup.add(crossRoad);
-
-        // घास की सफाई और लॉन केयर करने वाले वर्कर्स (Gardeners / Cleaners)
-        function createGardener(x, z) {
-            const gGroup = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.8, 0.6), new THREE.MeshStandardMaterial({ color: 0x10b981 })); // हरी यूनिफॉर्म
-            body.position.y = 1.0;
-            gGroup.add(body);
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
-            head.position.y = 1.8;
-            gGroup.add(head);
-
-            gGroup.position.set(x, 0, z);
-            exteriorSceneGroup.add(gGroup);
-
-            activeGardeners.push({
-                mesh: gGroup,
-                minZ: z - 20,
-                maxZ: z + 20,
-                speed: 0.04,
-                dir: 1
-            });
-        }
-        createGardener(-30, 40);
-        createGardener(40, -40);
-
         const showroomTargets = [
-            { id: 'cars', x: -70, z: -70, title: "SuperCars Showroom", color: 0x1e293b },
-            { id: 'gadgets', x: 70, z: -70, title: "Gadgets Hub", color: 0x1d4ed8 },
-            { id: 'grocery', x: -70, z: 70, title: "Fresh Mart", color: 0x047857 },
-            { id: 'clothing', x: 70, z: 70, title: "Fashion Store", color: 0xb45309 }
+            { id: 'cars', x: -60, z: -60, color: 0x1e293b },
+            { id: 'gadgets', x: 60, z: -60, color: 0x1d4ed8 },
+            { id: 'grocery', x: -60, z: 60, color: 0x047857 },
+            { id: 'clothing', x: 60, z: 60, color: 0xb45309 }
         ];
 
         showroomTargets.forEach(s => {
             const group = new THREE.Group();
             const bMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(38, 20, 32),
+                new THREE.BoxGeometry(35, 18, 30),
                 new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.3 })
             );
-            bMesh.position.y = 10;
+            bMesh.position.y = 9;
             group.add(bMesh);
             group.position.set(s.x, 0, s.z);
             exteriorSceneGroup.add(group);
         });
 
-        // प्लेयर कैरेक्टर
+        // प्लेयर
         playerGroup = new THREE.Group();
         playerBodyMesh = new THREE.Mesh(
             new THREE.BoxGeometry(1.4, 2.2, 0.8), 
@@ -436,19 +393,11 @@
             if (keys['arrowleft'] || keys['a'] || touchState.left) playerGroup.position.x -= speed;
             if (keys['arrowright'] || keys['d'] || touchState.right) playerGroup.position.x += speed;
 
-            // घास साफ करने वाले वर्कर्स का टहलना
-            activeGardeners.forEach(g => {
-                g.mesh.position.z += g.speed * g.dir;
-                if (g.mesh.position.z > g.maxZ || g.mesh.position.z < g.minZ) {
-                    g.dir *= -1;
-                }
-            });
-
             if (!isInsideInterior) {
                 let nearAny = false;
                 showroomTargets.forEach(s => {
                     const dist = Math.hypot(playerGroup.position.x - s.x, playerGroup.position.z - s.z);
-                    if (dist < 38) {
+                    if (dist < 40) {
                         nearAny = true;
                         activeNearShowroom = s.id;
                         currentShowroomType = s.id;
@@ -520,13 +469,6 @@
             displayTable.position.set(0, 1.5, 0);
             interiorSceneGroup.add(displayTable);
         }
-
-        const worker = new THREE.Mesh(
-            new THREE.BoxGeometry(1.2, 2.5, 0.8),
-            new THREE.MeshStandardMaterial({ color: 0xffffff })
-        );
-        worker.position.set(-12, 1.25, -15);
-        interiorSceneGroup.add(worker);
 
         document.getElementById('enterShowroomBtn').style.display = 'none';
         document.getElementById('openMarketBtn').style.display = 'block';
