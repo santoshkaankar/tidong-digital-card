@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tidong 3D Ultimate Open-World & Market Simulation</title>
+    <title>Tidong 3D Ultimate AAA Open-World Simulation</title>
     <style>
         body, html {
             margin: 0;
@@ -24,8 +24,6 @@
             background-color: #000;
             overflow: hidden;
         }
-
-        /* Top HUD Bar */
         .game-hud {
             position: absolute;
             top: 15px;
@@ -51,8 +49,6 @@
         .wallet-badge {
             color: #10b981;
         }
-
-        /* Touch Controls */
         .game-touch-controls {
             position: absolute;
             bottom: 25px;
@@ -85,33 +81,37 @@
             display: flex;
             gap: 20px;
         }
-
-        /* Action Prompt */
-        .shop-prompt-btn {
+        .action-prompt-container {
             position: absolute;
             bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 250000;
+        }
+        .action-btn {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
-            padding: 14px 30px;
+            padding: 14px 24px;
             border-radius: 30px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             border: 3px solid #ffffff;
             box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
             cursor: pointer;
-            z-index: 250000;
             display: none;
             animation: pulse 1.5s infinite;
         }
-        @keyframes pulse {
-            0% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.08); }
-            100% { transform: translateX(-50%) scale(1); }
+        .market-btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6);
         }
-
-        /* Shopping Modal Popup */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+        }
         .market-modal-overlay {
             position: fixed;
             top: 0;
@@ -177,11 +177,6 @@
             flex-direction: column;
             justify-content: space-between;
             border: 1px solid #475569;
-            transition: transform 0.2s;
-        }
-        .item-card:hover {
-            transform: translateY(-4px);
-            border-color: #f59e0b;
         }
         .item-title {
             font-size: 16px;
@@ -213,19 +208,19 @@
 <body>
 
 <div class="game-fullscreen-wrapper" id="gameFullscreenWrapper">
-    <!-- HUD -->
     <div class="game-hud">
-        <div class="hud-card">🏬 Tidong Open-World City</div>
-        <div class="hud-card">💰 T-Coins: <span class="wallet-badge" id="walletBalance">75,000</span></div>
+        <div class="hud-card" id="hudLocationTitle">🏬 Tidong Open-World City</div>
+        <div class="hud-card">💰 T-Coins: <span class="wallet-badge" id="walletBalance">85,000</span></div>
     </div>
 
-    <!-- 3D Canvas -->
     <div id="gameContainer" style="width: 100%; height: 100%;"></div>
 
-    <!-- Shop Prompt -->
-    <button type="button" class="shop-prompt-btn" id="shopPromptBtn" onclick="openShowroomModal()">🛒 शोरूम के अंदर जाएँ और खरीदारी करें</button>
+    <div class="action-prompt-container">
+        <button type="button" class="action-btn" id="enterShowroomBtn" onclick="enterShowroomInterior()">🏢 शोरूम के अंदर प्रवेश करें</button>
+        <button type="button" class="action-btn market-btn" id="openMarketBtn" onclick="openShowroomModal()">🛒 अंदर की मार्केट / कैटलॉग देखें</button>
+        <button type="button" class="action-btn" id="exitShowroomBtn" style="background:#dc2626;" onclick="exitShowroomInterior()">🚪 बाहर सड़क पर वापस जाएँ</button>
+    </div>
 
-    <!-- Touch Controls -->
     <div class="game-touch-controls">
         <button type="button" class="touch-btn" 
                 ontouchstart="setTouchDirection('up', true); event.preventDefault();" 
@@ -255,7 +250,6 @@
     </div>
 </div>
 
-<!-- Modal -->
 <div class="market-modal-overlay" id="marketModalOverlay">
     <div class="market-modal-card">
         <div class="modal-header">
@@ -266,7 +260,6 @@
     </div>
 </div>
 
-<!-- Three.js Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
     const touchState = { up: false, down: false, left: false, right: false };
@@ -274,32 +267,31 @@
         touchState[dir] = isPressed;
     }
 
-    // Complete Inventory & Store Database
     const showroomDatabase = {
         cars: {
-            title: "🏎️ Tidong SuperCars Showroom",
+            title: "🏎️ Tidong SuperCars Showroom (Interior)",
             items: [
                 { name: "Lamborgini Aventa (Red)", price: 15000, type: "car", desc: "हाई-स्पीड लग्जरी स्पोर्ट्स कार" },
                 { name: "BMW M5 Competition", price: 10000, type: "car", desc: "प्रीमियम सेडान कार" }
             ]
         },
         gadgets: {
-            title: "📱 Aepple & Samsing Gadgets Hub",
+            title: "📱 Aepple & Samsing Gadgets Hub (Interior)",
             items: [
                 { name: "Aepple iPhone 16 Pro", price: 1500, type: "phone", desc: "टाइटेनियम फिनिश स्मार्टफोन" },
                 { name: "Tidong VR Headset", price: 800, type: "vr", desc: "वर्चुअल रियलिटी ग्लासेज" }
             ]
         },
         clothing: {
-            title: "👔 Gucchi Fashion & Customization Store",
+            title: "👔 Gucchi Fashion Store (Interior)",
             items: [
-                { name: "Gucchi Designer Suit (Royal Blue)", price: 2500, type: "outfit", color: 0x1e3a8a, desc: "कैरेक्टर के कपड़े बदलें" },
-                { name: "Niki Air Sneakers (Shoes)", price: 800, type: "shoes", desc: "प्रीमियम स्पोर्ट्स जूते" },
-                { name: "Ray-Ban Sunglasses (चश्मा)", price: 400, type: "glasses", desc: "स्टाइलिश धूप का चश्मा" }
+                { name: "Gucchi Designer Suit", price: 2500, type: "outfit", color: 0x1e3a8a, desc: "कैरेक्टर के कपड़े बदलें" },
+                { name: "Niki Air Sneakers", price: 800, type: "shoes", desc: "प्रीमियम स्पोर्ट्स जूते" },
+                { name: "Ray-Ban Sunglasses", price: 400, type: "glasses", desc: "स्टाइलिश धूप का चश्मा" }
             ]
         },
         grocery: {
-            title: "🍎 Tidong Fresh Grocery Mart",
+            title: "🍎 Tidong Fresh Grocery Mart (Interior)",
             items: [
                 { name: "ऑर्गेनिक फ्रूट बास्केट", price: 200, type: "grocery", desc: "ताजे फल एवं सब्जियां" },
                 { name: "प्रीमियम राशन किट", price: 600, type: "grocery", desc: "मासिक घरेलू राशन" }
@@ -308,11 +300,257 @@
     };
 
     let activeNearShowroom = null;
-    let playerBodyMesh = null; // कैरेक्टर के कपड़े बदलने के लिए रेफरेंस
+    let isInsideInterior = false;
+    let playerBodyMesh = null;
+    let interiorSceneGroup = null;
+    let exteriorSceneGroup = null;
+    let scene, camera, renderer, playerGroup;
+    let currentShowroomType = 'cars';
+    const activeGardeners = [];
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const wrapper = document.getElementById('gameContainer');
+        const parentWrapper = document.getElementById('gameFullscreenWrapper');
+        if (!wrapper) return;
+
+        function triggerAutoFullscreen() {
+            if (!document.fullscreenElement) {
+                if (parentWrapper.requestFullscreen) parentWrapper.requestFullscreen().catch(() => {});
+            }
+        }
+        window.addEventListener('click', triggerAutoFullscreen, { once: true });
+
+        scene = new THREE.Scene();
+        window.gameScene = scene;
+        scene.background = new THREE.Color(0x7ec0ee);
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.gameCamera = camera;
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        wrapper.appendChild(renderer.domElement);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(60, 140, 60);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        exteriorSceneGroup = new THREE.Group();
+        interiorSceneGroup = new THREE.Group();
+        interiorSceneGroup.visible = false;
+        scene.add(exteriorSceneGroup);
+        scene.add(interiorSceneGroup);
+
+        // बाहर की दुनिया - घास और सड़कें
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(1200, 1200),
+            new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.85 })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        exteriorSceneGroup.add(ground);
+
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+        const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(1200, 0.1, 28), roadMat);
+        mainRoad.position.y = 0.05;
+        exteriorSceneGroup.add(mainRoad);
+
+        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(28, 0.1, 1200), roadMat);
+        crossRoad.position.y = 0.06;
+        exteriorSceneGroup.add(crossRoad);
+
+        // घास की सफाई और लॉन केयर करने वाले वर्कर्स (Gardeners / Cleaners)
+        function createGardener(x, z) {
+            const gGroup = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.8, 0.6), new THREE.MeshStandardMaterial({ color: 0x10b981 })); // हरी यूनिफॉर्म
+            body.position.y = 1.0;
+            gGroup.add(body);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+            head.position.y = 1.8;
+            gGroup.add(head);
+
+            gGroup.position.set(x, 0, z);
+            exteriorSceneGroup.add(gGroup);
+
+            activeGardeners.push({
+                mesh: gGroup,
+                minZ: z - 20,
+                maxZ: z + 20,
+                speed: 0.04,
+                dir: 1
+            });
+        }
+        createGardener(-30, 40);
+        createGardener(40, -40);
+
+        const showroomTargets = [
+            { id: 'cars', x: -70, z: -70, title: "SuperCars Showroom", color: 0x1e293b },
+            { id: 'gadgets', x: 70, z: -70, title: "Gadgets Hub", color: 0x1d4ed8 },
+            { id: 'grocery', x: -70, z: 70, title: "Fresh Mart", color: 0x047857 },
+            { id: 'clothing', x: 70, z: 70, title: "Fashion Store", color: 0xb45309 }
+        ];
+
+        showroomTargets.forEach(s => {
+            const group = new THREE.Group();
+            const bMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(38, 20, 32),
+                new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.3 })
+            );
+            bMesh.position.y = 10;
+            group.add(bMesh);
+            group.position.set(s.x, 0, s.z);
+            exteriorSceneGroup.add(group);
+        });
+
+        // प्लेयर कैरेक्टर
+        playerGroup = new THREE.Group();
+        playerBodyMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(1.4, 2.2, 0.8), 
+            new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.3 })
+        );
+        playerBodyMesh.position.y = 2.1;
+        playerGroup.add(playerBodyMesh);
+
+        const pHead = new THREE.Mesh(
+            new THREE.SphereGeometry(0.55, 16, 16), 
+            new THREE.MeshStandardMaterial({ color: 0xffdbac })
+        );
+        pHead.position.y = 3.5;
+        playerGroup.add(pHead);
+
+        playerGroup.position.set(0, 0, 5);
+        scene.add(playerGroup);
+
+        const speed = 0.85;
+        const keys = {};
+        window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
+        window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (keys['arrowup'] || keys['w'] || touchState.up) playerGroup.position.z -= speed;
+            if (keys['arrowdown'] || keys['s'] || touchState.down) playerGroup.position.z += speed;
+            if (keys['arrowleft'] || keys['a'] || touchState.left) playerGroup.position.x -= speed;
+            if (keys['arrowright'] || keys['d'] || touchState.right) playerGroup.position.x += speed;
+
+            // घास साफ करने वाले वर्कर्स का टहलना
+            activeGardeners.forEach(g => {
+                g.mesh.position.z += g.speed * g.dir;
+                if (g.mesh.position.z > g.maxZ || g.mesh.position.z < g.minZ) {
+                    g.dir *= -1;
+                }
+            });
+
+            if (!isInsideInterior) {
+                let nearAny = false;
+                showroomTargets.forEach(s => {
+                    const dist = Math.hypot(playerGroup.position.x - s.x, playerGroup.position.z - s.z);
+                    if (dist < 38) {
+                        nearAny = true;
+                        activeNearShowroom = s.id;
+                        currentShowroomType = s.id;
+                    }
+                });
+
+                document.getElementById('enterShowroomBtn').style.display = nearAny ? 'block' : 'none';
+                document.getElementById('openMarketBtn').style.display = 'none';
+                document.getElementById('exitShowroomBtn').style.display = 'none';
+
+                camera.position.x = playerGroup.position.x;
+                camera.position.z = playerGroup.position.z + 24;
+                camera.position.y = 12;
+                camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2, playerGroup.position.z);
+            } else {
+                playerGroup.position.x = Math.max(-18, Math.min(18, playerGroup.position.x));
+                playerGroup.position.z = Math.max(-18, Math.min(18, playerGroup.position.z));
+
+                camera.position.set(0, 14, 22);
+                camera.lookAt(0, 2, 0);
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    });
+
+    function enterShowroomInterior() {
+        isInsideInterior = true;
+        exteriorSceneGroup.visible = false;
+        interiorSceneGroup.visible = true;
+
+        while(interiorSceneGroup.children.length > 0){ 
+            interiorSceneGroup.remove(interiorSceneGroup.children[0]); 
+        }
+
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(50, 50),
+            new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.2 })
+        );
+        floor.rotation.x = -Math.PI / 2;
+        interiorSceneGroup.add(floor);
+
+        const wall = new THREE.Mesh(
+            new THREE.BoxGeometry(50, 20, 1),
+            new THREE.MeshStandardMaterial({ color: 0x334155 })
+        );
+        wall.position.set(0, 10, -25);
+        interiorSceneGroup.add(wall);
+
+        if (currentShowroomType === 'cars') {
+            const innerCar = new THREE.Mesh(
+                new THREE.BoxGeometry(6, 2, 11),
+                new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.8 })
+            );
+            innerCar.position.set(0, 1, 0);
+            interiorSceneGroup.add(innerCar);
+        } else {
+            const displayTable = new THREE.Mesh(
+                new THREE.BoxGeometry(10, 3, 4),
+                new THREE.MeshStandardMaterial({ color: 0x475569 })
+            );
+            displayTable.position.set(0, 1.5, 0);
+            interiorSceneGroup.add(displayTable);
+        }
+
+        const worker = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 2.5, 0.8),
+            new THREE.MeshStandardMaterial({ color: 0xffffff })
+        );
+        worker.position.set(-12, 1.25, -15);
+        interiorSceneGroup.add(worker);
+
+        document.getElementById('enterShowroomBtn').style.display = 'none';
+        document.getElementById('openMarketBtn').style.display = 'block';
+        document.getElementById('exitShowroomBtn').style.display = 'block';
+        document.getElementById('hudLocationTitle').innerText = showroomDatabase[currentShowroomType].title;
+
+        playerGroup.position.set(0, 0, 10);
+    }
+
+    function exitShowroomInterior() {
+        isInsideInterior = false;
+        interiorSceneGroup.visible = false;
+        exteriorSceneGroup.visible = true;
+
+        document.getElementById('enterShowroomBtn').style.display = 'block';
+        document.getElementById('openMarketBtn').style.display = 'none';
+        document.getElementById('exitShowroomBtn').style.display = 'none';
+        document.getElementById('hudLocationTitle').innerText = "🏬 Tidong Open-World City";
+
+        playerGroup.position.set(0, 0, 5);
+    }
 
     function openShowroomModal() {
-        if (!activeNearShowroom) return;
-        const data = showroomDatabase[activeNearShowroom];
+        const data = showroomDatabase[currentShowroomType];
         if (!data) return;
 
         document.getElementById('modalShowroomTitle').innerText = data.title;
@@ -354,162 +592,13 @@
         currentBalance -= item.price;
         walletElem.innerText = currentBalance.toLocaleString();
 
-        // यदि कपड़ा या सूट खरीदा है, तो कैरेक्टर का रंग/रूप तुरंत बदलें
         if (item.type === 'outfit' && playerBodyMesh) {
             playerBodyMesh.material.color.setHex(item.color);
         }
 
-        alert(`🎉 बधाई हो! आपने सफलतापूर्व खरीद लिया: ${item.name}\nशेष बैलेंस: 🪙 ${currentBalance.toLocaleString()} T-Coins`);
+        alert(`🎉 बधाई हो! आपने सफलतापूर्वक खरीदा: ${item.name}\nशेष बैलेंस: 🪙 ${currentBalance.toLocaleString()} T-Coins`);
         closeShowroomModal();
     }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const wrapper = document.getElementById('gameContainer');
-        const parentWrapper = document.getElementById('gameFullscreenWrapper');
-        if (!wrapper) return;
-
-        function triggerAutoFullscreen() {
-            if (!document.fullscreenElement) {
-                if (parentWrapper.requestFullscreen) parentWrapper.requestFullscreen().catch(() => {});
-            }
-        }
-        window.addEventListener('click', triggerAutoFullscreen, { once: true });
-
-        // 1. Scene
-        const scene = new THREE.Scene();
-        window.gameScene = scene;
-        scene.background = new THREE.Color(0x7ec0ee);
-
-        // 2. Camera
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        window.gameCamera = camera;
-
-        // 3. Renderer
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        wrapper.appendChild(renderer.domElement);
-
-        // 4. Lights
-        scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        dirLight.position.set(60, 120, 60);
-        dirLight.castShadow = true;
-        scene.add(dirLight);
-
-        // 5. Ground & Roads
-        const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(1000, 1000),
-            new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.8 })
-        );
-        ground.rotation.x = -Math.PI / 2;
-        scene.add(ground);
-
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
-        const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(1000, 0.1, 26), roadMat);
-        mainRoad.position.y = 0.05;
-        scene.add(mainRoad);
-
-        const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(26, 0.1, 1000), roadMat);
-        crossRoad.position.y = 0.06;
-        scene.add(crossRoad);
-
-        // 6. Showroom Locations
-        const showroomTargets = [
-            { id: 'cars', x: -65, z: -65, title: "SuperCars Showroom", color: 0x1e293b },
-            { id: 'gadgets', x: 65, z: -65, title: "Gadgets Hub", color: 0x1d4ed8 },
-            { id: 'grocery', x: -65, z: 65, title: "Fresh Mart", color: 0x047857 },
-            { id: 'clothing', x: 65, z: 65, title: "Fashion Store", color: 0xb45309 }
-        ];
-
-        showroomTargets.forEach(s => {
-            const group = new THREE.Group();
-            const bMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(36, 18, 30),
-                new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.3 })
-            );
-            bMesh.position.y = 9;
-            group.add(bMesh);
-
-            const glass = new THREE.Mesh(
-                new THREE.BoxGeometry(30, 12, 0.3),
-                new THREE.MeshStandardMaterial({ color: 0x87ceeb, transparent: true, opacity: 0.5 })
-            );
-            glass.position.set(0, 7, 15.1);
-            group.add(glass);
-
-            group.position.set(s.x, 0, s.z);
-            scene.add(group);
-        });
-
-        // 7. Player Setup
-        const playerGroup = new THREE.Group();
-        
-        playerBodyMesh = new THREE.Mesh(
-            new THREE.BoxGeometry(1.4, 2.2, 0.8), 
-            new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.3 })
-        );
-        playerBodyMesh.position.y = 2.1;
-        playerGroup.add(playerBodyMesh);
-
-        const pHead = new THREE.Mesh(
-            new THREE.SphereGeometry(0.55, 16, 16), 
-            new THREE.MeshStandardMaterial({ color: 0xffdbac })
-        );
-        pHead.position.y = 3.5;
-        playerGroup.add(pHead);
-
-        playerGroup.position.set(0, 0, 5);
-        scene.add(playerGroup);
-
-        const speed = 0.85;
-        const keys = {};
-        window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
-        window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
-
-        // Game Loop
-        function animate() {
-            requestAnimationFrame(animate);
-
-            if (keys['arrowup'] || keys['w'] || touchState.up) playerGroup.position.z -= speed;
-            if (keys['arrowdown'] || keys['s'] || touchState.down) playerGroup.position.z += speed;
-            if (keys['arrowleft'] || keys['a'] || touchState.left) playerGroup.position.x -= speed;
-            if (keys['arrowright'] || keys['d'] || touchState.right) playerGroup.position.x += speed;
-
-            // Camera follow
-            camera.position.x = playerGroup.position.x;
-            camera.position.z = playerGroup.position.z + 22;
-            camera.position.y = 12;
-            camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2, playerGroup.position.z);
-
-            // Proximity Check
-            let nearAny = false;
-            showroomTargets.forEach(s => {
-                const dist = Math.hypot(playerGroup.position.x - s.x, playerGroup.position.z - s.z);
-                if (dist < 35) {
-                    nearAny = true;
-                    activeNearShowroom = s.id;
-                }
-            });
-
-            const promptBtn = document.getElementById('shopPromptBtn');
-            if (nearAny) {
-                promptBtn.style.display = 'block';
-            } else {
-                promptBtn.style.display = 'none';
-                activeNearShowroom = null;
-            }
-
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', function() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    });
 </script>
 
 </body>
