@@ -116,7 +116,8 @@
     });
 </script>
 
-<!-- Modularly Include Spawner, Interactions & Character -->
+<!-- Modularly Include Spawner, Interactions, Character & Showroom Items -->
 @include('member.game.partials.trash-spawner')
 @include('member.game.partials.trash-pickup')
 @include('member.game.partials.player-character')
+@include('member.game.partials.item-spawner')
