@@ -13,6 +13,7 @@ use App\Http\Controllers\Member\RestaurantController;
 use App\Http\Controllers\PincodeController;
 use App\Http\Controllers\Member\GameSubscriptionController;
 use App\Http\Controllers\Member\MemberChildController;
+use App\Http\Controllers\Member\MemberGameController;
 
 Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
 
@@ -35,6 +36,12 @@ Route::middleware(['auth', 'role:member,user,customer'])->group(function () {
     Route::get('/cards-list', [CardController::class, 'index'])->name('card.index');
     Route::get('/card/configure', [CardController::class, 'configure'])->name('card.configure');
     Route::post('/card/configure', [CardController::class, 'storeMaster'])->name('card.configure.store');
+
+    // 🎮 Real Saved Game Pro Routes & Subscription
+Route::get('/game/pro', [MemberGameController::class, 'proIndex'])->name('game.pro');
+Route::post('/game/buy-item', [MemberGameController::class, 'buyItem'])->name('game.buy.item');
+Route::post('/game/complete-task', [MemberGameController::class, 'completeTask'])->name('game.complete.task');
+Route::post('/game/pay-subscription-tcoins', [GameSubscriptionController::class, 'subscribeWithTCoins'])->name('game.subscription.tcoins');
 
     // CRUD & View Alias Routes for Cards
     Route::get('/card/create', [CardController::class, 'create'])->name('card.create');
