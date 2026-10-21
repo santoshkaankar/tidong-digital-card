@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Login</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('auth.partials.styles')
 </head>
 <body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
 
@@ -82,7 +82,7 @@
             </button>
         </form>
 
-        <p class="mt-6 text-center text-sm text-slate-600">Public registration is currently closed.</p>
+        <p class="mt-6 text-center text-sm text-slate-600"><a href="{{ route('register') }}" class="font-semibold text-indigo-600 hover:underline">Create a Customer Account</a></p>
     </div>
 
 </body>

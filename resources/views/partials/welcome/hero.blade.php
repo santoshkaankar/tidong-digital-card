@@ -7,6 +7,6 @@
 @else<a href="{{ route('login') }}" class="btn btn-primary btn-lg shadow rounded-pill px-4">Login to TIDONG</a>@endauth
 <a href="#quick-services" class="btn btn-outline-light btn-lg rounded-pill px-4">Explore Services</a></div></div>
 <div class="col-lg-5 text-center"><div class="p-4 bg-white bg-opacity-10 rounded-4 shadow-lg border border-secondary border-opacity-25">
-<div class="d-flex justify-content-center gap-3 mb-3"><span class="service-icon-circle">🛍️</span><span class="service-icon-circle">🏬</span><span class="service-icon-circle">🚚</span></div>
+<div class="d-flex justify-content-center gap-3 mb-3"><span class="service-icon-circle" aria-label="Shopping"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i></span><span class="service-icon-circle" aria-label="Business"><i class="fa-solid fa-store" aria-hidden="true"></i></span><span class="service-icon-circle" aria-label="Delivery"><i class="fa-solid fa-truck-fast" aria-hidden="true"></i></span></div>
 <h4 class="fw-bold text-white mb-2">TIDONG® Digital Hub</h4><p class="text-light small mb-0">Customer marketplace, verified business workflows, restaurant POS and delivery partner tools.</p>
 </div></div></div></div></section>

@@ -6,14 +6,17 @@
 <link rel="stylesheet" href="{{ asset('css/tidong-home.css') }}?v=20261021-home1">
 </head><body class="tidong-home">
 @php
-$tidongAccountCodes=[];
-if (auth()->check()) {
-    $tidongAccountCodes=auth()->user()->userAccountTypes()->where('status','active')->whereHas('accountType',fn ($q)=>$q->where('is_active',true))->with('accountType')->get()->pluck('accountType.code')->all();
-}
-$tidongDashboardRoutes=['platform_admin'=>'home','admin'=>'staff-admin.home','platform_employee'=>'employee.home','delivery'=>'delivery.home','customer'=>'customer.home','vendor'=>'vendor.home'];
-$dashboardRoute=url('/');
-foreach($tidongDashboardRoutes as $code=>$routeName){if(in_array($code,$tidongAccountCodes,true)&&Route::has($routeName)){$dashboardRoute=route($routeName);break;}}
-$publicRegistrationEnabled=false; // existing login page states public registration closed
+// Account badges on the public services list remain informational only.
+$tidongAccountCodes = auth()->check()
+    ? auth()->user()->userAccountTypes()->where('status', 'active')
+        ->whereHas('accountType', fn ($query) => $query->where('is_active', true))
+        ->with('accountType')->get()->pluck('accountType.code')->all()
+    : [];
+$dashboardName=auth()->check()
+    ? app(\App\Services\Auth\DashboardRedirector::class)->routeFor(auth()->user())
+    : null;
+$dashboardRoute=$dashboardName ? route($dashboardName) : url('/');
+$publicRegistrationEnabled=true; // existing login page states public registration closed
 $groceryModuleEnabled=false;
 try { $groceryModuleEnabled=app(\App\Services\Platform\ModuleRegistry::class)->isEnabled('grocery'); } catch (\Throwable $exception) { $groceryModuleEnabled=false; } // Never expose a disabled grocery page
 @endphp

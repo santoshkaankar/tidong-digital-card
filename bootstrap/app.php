@@ -54,7 +54,14 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Laravel's default guest redirect points all logged-in users to the
+        // first 'home' route (Super Admin). Redirect by verified role instead.
+        $middleware->redirectUsersTo(function (Request $request): string {
+            $user = $request->user();
+            return $user
+                ? (app(\App\Services\Auth\DashboardRedirector::class)->urlFor($user) ?? url('/'))
+                : url('/');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

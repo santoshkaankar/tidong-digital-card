@@ -20,3 +20,16 @@ body.tidong-home .modal{display:none;position:fixed;inset:0;background:#0008;z-i
 @media(min-width:992px){body.tidong-home .col-lg-2{width:16.6667%}body.tidong-home .col-lg-4{width:33.3333%}body.tidong-home .col-lg-5{width:41.6667%}body.tidong-home .col-lg-7{width:58.3333%}body.tidong-home .text-lg-start{text-align:left}}
 @media(min-width:1200px){body.tidong-home .col-xl-3{width:25%}}
 @media(max-width:991px){body.tidong-home .navbar-toggler{display:block;border:1px solid #ddd;border-radius:6px;background:#fff;width:38px;height:36px}body.tidong-home .navbar-toggler-icon:after{content:'☰';font-size:22px}body.tidong-home .navbar-collapse{display:none;width:100%}body.tidong-home .navbar-collapse.show{display:block}body.tidong-home .navbar-nav{flex-direction:column;align-items:stretch}}
+
+/* TIDONG HOMEPAGE REFINEMENTS 2026-10-21 */
+body.tidong-home .hero-section h1{font-size:clamp(2.15rem,3.5vw,3.45rem)!important;line-height:1.18!important;letter-spacing:-.025em;max-width:700px}
+body.tidong-home .hero-section .lead{color:#f0f5ff!important;line-height:1.75;max-width:620px}
+body.tidong-home .hero-section .col-lg-7{min-width:0}
+body.tidong-home .hero-section .col-lg-5{min-width:0}
+body.tidong-home .hero-section .service-icon-circle{font-size:23px!important;color:#fff!important;background:#234b87!important;box-shadow:inset 0 0 0 1px #557fb8;width:58px;height:58px}
+body.tidong-home .hero-section .service-icon-circle i{font-size:22px;line-height:1}
+body.tidong-home .hero-section .bg-opacity-10{background-color:rgba(255,255,255,.12)!important}
+body.tidong-home .hero-section .shadow-lg{box-shadow:0 16px 42px rgba(0,0,0,.16)!important}
+body.tidong-home .hero-section .p-4{padding:2rem!important}
+@media(max-width:991px){body.tidong-home .hero-section h1{max-width:none;font-size:clamp(2rem,5vw,3rem)!important}body.tidong-home .hero-section .col-lg-5{margin-top:1.5rem}}
+@media(max-width:575px){body.tidong-home .hero-section h1{font-size:2rem!important}body.tidong-home .hero-section .p-4{padding:1.25rem!important}}

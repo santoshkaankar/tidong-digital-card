@@ -20,6 +20,12 @@ class EnsureCustomerAccount
         // TIDONG CUSTOMER MODULE GATE: no cross-role access on disable.
         abort_unless(config('tidong_customer.enabled', true)
             && app(\App\Services\Platform\ModuleRegistry::class)->isEnabled('customer'), 403);
+        // Platform operators are not allowed into the customer dashboard,
+        // even if an old/accidental customer assignment exists.
+        if (app(\App\Services\Auth\DashboardRedirector::class)
+            ->hasAnyPlatformAccountRecord($request->user())) {
+            abort(403, 'Platform users cannot access the Customer area.');
+        }
         $hasActiveCustomerAccount = $request->user()
             ->userAccountTypes()
             ->whereHas('accountType', function ($query) {
