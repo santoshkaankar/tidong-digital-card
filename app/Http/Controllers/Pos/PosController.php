@@ -41,7 +41,28 @@ class PosController extends Controller
         $items = DB::table('pos_menu_items')->where('branch_id', $branch)->orderBy('name')->get();
         $orders = DB::table('pos_orders')->where('branch_id', $branch)->orderByDesc('id')->limit(30)->get();
         $diningTables = DB::table('restaurant_dining_tables')->where('branch_id',$branch)->where('is_active',true)->orderBy('label')->get();
-        return view('pos.branch', compact('branchRecord', 'items', 'orders', 'diningTables'));
+        // Aggregate across all orders, not just the 30 recent rows shown below.
+        $orderStats = DB::table('pos_orders')->where('branch_id', $branch)
+            ->selectRaw("COUNT(*) AS total_orders, SUM(CASE WHEN status IN ('received', 'preparing') THEN 1 ELSE 0 END) AS active_orders, COALESCE(SUM(CASE WHEN status <> 'cancelled' THEN total_paise ELSE 0 END), 0) AS order_value_paise")
+            ->first();
+        $stats = [
+            'items' => $items->count(),
+            'active_items' => $items->where('is_active', true)->count(),
+            'orders' => (int) ($orderStats->total_orders ?? 0),
+            'active_orders' => (int) ($orderStats->active_orders ?? 0),
+            'order_value_paise' => (int) ($orderStats->order_value_paise ?? 0),
+        ];
+        $navBusiness = (object) [
+            'id' => $branchRecord->business_id,
+            'name' => $branchRecord->business_name,
+            'business_type' => $branchRecord->business_type,
+            'status' => $branchRecord->business_status,
+        ];
+        $navBranch = (object) ['id' => $branchRecord->id, 'name' => $branchRecord->name];
+        $navBusinesses = DB::table('businesses')->where('vendor_id', $branchRecord->vendor_id)
+            ->whereNull('deleted_at')->orderBy('name')->get();
+        return view('pos.branch', compact('branchRecord', 'items', 'orders', 'diningTables',
+            'stats', 'navBusiness', 'navBranch', 'navBusinesses'));
     }
 
     public function addMenuItem(Request $request, int $branch): RedirectResponse

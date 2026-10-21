@@ -15,12 +15,78 @@
     $isStudio = $navGroupCode === 'sublimation';
     $isApproved = $navBusiness && $navBusiness->status === 'approved';
 @endphp
-<aside aria-label="Vendor and business navigation" class="no-print w-full shrink-0 rounded-2xl bg-slate-950 p-4 text-white shadow-lg xl:sticky xl:top-4 xl:w-72">
+<style>
+/* Keep the desktop navigation independent from the dashboard scroll. */
+@media (min-width: 1280px) {
+  #tidong-vendor-sidebar {
+    position: sticky;
+    top: 1rem;
+    align-self: flex-start;
+    min-width: 18rem;
+    width: 18rem;
+    height: calc(100vh - 2rem);
+    height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+  }
+  #tidong-vendor-sidebar.tidong-nav-collapsed {
+    width: 3.75rem;
+    min-width: 3.75rem;
+    overflow-x: hidden;
+  }
+}
+#tidong-vendor-sidebar.tidong-nav-collapsed .tidong-sidebar-body { display: none; }
+</style>
+<aside id="tidong-vendor-sidebar" aria-label="Vendor and business navigation" class="no-print w-full shrink-0 rounded-2xl bg-slate-950 p-4 text-white shadow-lg lg:w-72">
+    <div class="mb-2 flex justify-end">
+        <button id="tidong-sidebar-toggle" type="button" aria-controls="tidong-sidebar-body" aria-expanded="true"
+                class="rounded-lg border border-slate-600 px-2 py-1.5 text-xs text-white hover:bg-slate-800" title="Hide or show navigation">Hide menu</button>
+    </div>
+    <div id="tidong-sidebar-body" class="tidong-sidebar-body">
     <div class="flex items-center justify-between gap-3 border-b border-slate-700 pb-4">
         <a href="{{ route('vendor.home') }}" class="text-lg font-extrabold tracking-wide text-white">TIDONG <span class="text-rose-300">Vendor</span></a>
         <span class="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200">Workspace</span>
     </div>
-    <details class="mt-3" open>
+
+    @if ($isStudio && $navBusiness)
+    @php
+        $studioRoot = ['business' => $navBusiness->id] + ($navBranch ? ['branch' => $navBranch->id] : []);
+        $studioMenus = [
+            ['name' => 'Studio Dashboard', 'route' => 'vendor.sublimation.index', 'current' => 'vendor.sublimation.index'],
+            ['name' => 'Create Item', 'route' => 'vendor.sublimation.products.create', 'current' => 'vendor.sublimation.products.create'],
+            ['name' => 'Item List', 'route' => 'vendor.sublimation.products.index', 'current' => 'vendor.sublimation.products.index'],
+            ['name' => 'New Studio Order', 'route' => 'vendor.sublimation.orders.create', 'current' => 'vendor.sublimation.orders.create'],
+            ['name' => 'Order List', 'route' => 'vendor.sublimation.orders.index', 'current' => 'vendor.sublimation.orders.index'],
+            ['name' => 'Design Approvals', 'route' => 'vendor.sublimation.orders.index', 'query' => ['queue' => 'design']],
+            ['name' => 'Production Queue', 'route' => 'vendor.sublimation.orders.index', 'query' => ['queue' => 'production']],
+            ['name' => 'Dispatch & Delivery', 'route' => 'vendor.sublimation.orders.index', 'query' => ['queue' => 'delivery']],
+            ['name' => 'Materials & Stock', 'route' => 'vendor.sublimation.materials.index', 'current' => 'vendor.sublimation.materials.*'],
+            ['name' => 'Studio Reports', 'route' => 'vendor.sublimation.reports.index', 'current' => 'vendor.sublimation.reports.*'],
+        ];
+    @endphp
+    <nav class="mt-4 border-b border-slate-700 pb-4" aria-label="Sublimation studio menu">
+        <p class="mb-2 px-2 text-xs font-bold uppercase tracking-wider text-rose-300">Sublimation Studio</p>
+        <div class="grid grid-cols-2 gap-1 lg:grid-cols-1">
+            @foreach ($studioMenus as $entry)
+                @php
+                    $active = isset($entry['query'])
+                        ? request()->routeIs('vendor.sublimation.orders.index') && request('queue') === $entry['query']['queue']
+                        : (isset($entry['current']) && request()->routeIs($entry['current']) && !request('queue'));
+                @endphp
+                @if (Route::has($entry['route']))
+                    <a href="{{ route($entry['route'], array_merge($studioRoot, $entry['query'] ?? [])) }}"
+                       @if ($active) aria-current="page" @endif
+                       class="block rounded-lg px-3 py-2 text-sm {{ $active ? 'bg-rose-700 font-bold text-white' : 'text-slate-100 hover:bg-slate-800' }}">{{ $entry['name'] }}</a>
+                @else
+                    <span class="rounded-lg px-3 py-2 text-sm text-slate-400">{{ $entry['name'] }} · Setup pending</span>
+                @endif
+            @endforeach
+        </div>
+        <p class="mt-2 px-2 text-xs text-slate-400">Select any menu. Sidebar scrolls separately from the page.</p>
+    </nav>
+    @endif
+    <details class="mt-3" @if(!$isStudio) open @endif>
         <summary class="cursor-pointer rounded-lg px-2 py-2 text-xs font-bold uppercase tracking-wider text-slate-300">Vendor Main Menu</summary>
         <nav class="mt-1 space-y-1 text-sm" aria-label="Main vendor menu">
             <a href="{{ route('vendor.home') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800 {{ !$navBusiness ? 'bg-blue-700 font-semibold' : '' }}">Vendor Dashboard</a>
@@ -47,10 +113,28 @@
             @endforelse
         </nav>
     </div>
-    @if ($navBusiness && $navGroup)
+    @if ($navBusiness && $navGroup && !$isStudio)
         <div class="mt-4 border-t border-slate-700 pt-4">
             <p class="px-2 text-xs font-bold uppercase tracking-wider text-rose-300">{{ $navGroup['title'] }}</p>
             <a href="{{ route('vendor.business.workspace', $navBusiness->id) }}" class="mt-2 block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-800">Business Overview</a>
+            @if ($isStudio && Route::has('vendor.sublimation.orders.index'))
+                <nav aria-label="Sublimation quick links" class="mt-2 space-y-1 border-b border-slate-700 pb-3 text-sm">
+                    <a href="{{ route('vendor.sublimation.products.index', ['business' => $navBusiness->id] + ($navBranch ? ['branch' => $navBranch->id] : [])) }}"
+                       class="block rounded-lg px-3 py-2 hover:bg-slate-800 {{ request()->routeIs('vendor.sublimation.products.*') ? 'bg-slate-700 font-semibold' : '' }}">Product List &amp; Options</a>
+                    <a href="{{ route('vendor.sublimation.orders.index', ['business' => $navBusiness->id] + ($navBranch ? ['branch' => $navBranch->id] : [])) }}"
+                       class="block rounded-lg px-3 py-2 hover:bg-slate-800 {{ request()->routeIs('vendor.sublimation.orders.*') ? 'bg-slate-700 font-semibold' : '' }}">Order List &amp; Delivery</a>
+                </nav>
+            @endif
+            @if ($isRestaurant && $posSupportsType && $isApproved && $navBranch && Route::has('pos.menu-library.index'))
+                <nav aria-label="Outlet item management" class="mt-2 space-y-1 border-b border-slate-700 pb-3 text-sm">
+                    <a href="{{ route('pos.branches.show', ['branch' => $navBranch->id]) }}"
+                       class="block rounded-lg px-3 py-2 hover:bg-slate-800 {{ request()->routeIs('pos.branches.show') ? 'bg-slate-700 font-semibold' : '' }}">Outlet Dashboard</a>
+                    <a href="{{ route('pos.menu-library.index', ['branch' => $navBranch->id]) }}#item-list"
+                       class="block rounded-lg px-3 py-2 hover:bg-slate-800">Item List</a>
+                    <a href="{{ route('pos.menu-library.index', ['branch' => $navBranch->id]) }}#create-item"
+                       class="block rounded-lg px-3 py-2 hover:bg-slate-800">Create Item</a>
+                </nav>
+            @endif
             <nav aria-label="Current business menu" class="mt-1 space-y-1 text-sm">
                 @foreach ($navGroup['items'] as $item)
                     @php
@@ -95,4 +179,24 @@
         </div>
     @endif
     <p class="mt-5 border-t border-slate-700 pt-4 text-xs text-slate-400">Business permissions are checked by the server. Planned items are not active links.</p>
+    </div>
 </aside>
+<script>
+(() => {
+    const sidebar = document.getElementById('tidong-vendor-sidebar');
+    const button = document.getElementById('tidong-sidebar-toggle');
+    if (!sidebar || !button) return;
+    const apply = (collapsed) => {
+        sidebar.classList.toggle('tidong-nav-collapsed', collapsed);
+        button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        button.textContent = collapsed ? '☰' : 'Hide menu';
+        button.setAttribute('aria-label', collapsed ? 'Show navigation menu' : 'Hide navigation menu');
+    };
+    try { apply(sessionStorage.getItem('tidongVendorNavCollapsed') === '1'); } catch (_) { apply(false); }
+    button.addEventListener('click', () => {
+        const collapsed = !sidebar.classList.contains('tidong-nav-collapsed');
+        apply(collapsed);
+        try { sessionStorage.setItem('tidongVendorNavCollapsed', collapsed ? '1' : '0'); } catch (_) {}
+    });
+})();
+</script>

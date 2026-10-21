@@ -37,3 +37,6 @@ Route::post('/menu/{token}/request', [\App\Http\Controllers\RestaurantQrOrderCon
 
 // TIDONG additive multi-module integration (no existing routes removed).
 require __DIR__.'/tidong_integrated_web.php';
+
+// Customer personalized-gift catalogue and order tracking.
+require __DIR__.'/sublimation_customer.php';

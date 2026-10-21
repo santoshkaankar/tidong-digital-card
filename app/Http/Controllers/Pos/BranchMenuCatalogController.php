@@ -24,7 +24,17 @@ class BranchMenuCatalogController extends Controller
         $branchItems = DB::table('pos_menu_items')->where('branch_id',$branch)
             ->orderBy('name')->get();
         $attached = $branchItems->pluck('global_menu_item_id')->filter()->map(fn($id)=>(int)$id)->all();
-        return view('pos.branch-menu-catalog', compact('branchRecord','catalog','branchItems','attached'));
+        $navBusiness = (object) [
+            'id' => $branchRecord->business_id,
+            'name' => $branchRecord->business_name,
+            'business_type' => $branchRecord->business_type,
+            'status' => $branchRecord->business_status,
+        ];
+        $navBranch = (object) ['id' => $branchRecord->id, 'name' => $branchRecord->name];
+        $navBusinesses = DB::table('businesses')->where('vendor_id', $branchRecord->vendor_id)
+            ->whereNull('deleted_at')->orderBy('name')->get();
+        return view('pos.branch-menu-catalog', compact('branchRecord','catalog','branchItems','attached',
+            'navBusiness','navBranch','navBusinesses'));
     }
 
     public function attachGlobal(Request $request, int $branch): RedirectResponse

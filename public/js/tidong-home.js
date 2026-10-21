@@ -1,0 +1,9 @@
+document.addEventListener('DOMContentLoaded',()=>{
+const nav=document.getElementById('navbarNav');const toggle=document.querySelector('[data-bs-target="#navbarNav"]');
+if(toggle)toggle.addEventListener('click',()=>{if(window.bootstrap)return;const open=nav.classList.toggle('show');toggle.setAttribute('aria-expanded',String(open));});
+if(window.bootstrap){const el=document.getElementById('homeAdCarousel');if(el){const carousel=window.bootstrap.Carousel.getOrCreateInstance(el,{interval:4000,ride:'carousel'});try{const saved=Number.parseInt(sessionStorage.getItem('tidongSlide')||'0',10);if(Number.isInteger(saved)&&saved>=0&&saved<3)carousel.to(saved);el.addEventListener('slid.bs.carousel',e=>sessionStorage.setItem('tidongSlide',String(e.to)));}catch(e){}}return;}
+// Lightweight fallback when external Bootstrap JavaScript is unreachable.
+const car=document.getElementById('homeAdCarousel');if(car){const slides=Array.from(car.querySelectorAll('.carousel-item'));let idx=0;const show=n=>{idx=(n+slides.length)%slides.length;slides.forEach((slide,i)=>slide.classList.toggle('active',i===idx));};car.querySelector('.carousel-control-prev')?.addEventListener('click',()=>show(idx-1));car.querySelector('.carousel-control-next')?.addEventListener('click',()=>show(idx+1));}
+document.querySelectorAll('[data-bs-toggle="modal"][data-bs-target]').forEach(a=>a.addEventListener('click',e=>{const target=document.querySelector(a.getAttribute('data-bs-target'));if(!target)return;e.preventDefault();target.classList.add('show');target.setAttribute('aria-hidden','false');}));
+document.querySelectorAll('.modal').forEach(modal=>{modal.addEventListener('click',e=>{if(e.target===modal||e.target.closest('[data-bs-dismiss="modal"]')){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}});});
+});

@@ -1,11 +1,20 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Branch POS</title>@vite(['resources/css/app.css','resources/js/app.js'])</head>
-<body class="bg-slate-100 text-slate-800 p-4 sm:p-8"><main class="mx-auto max-w-6xl space-y-5">
+<body class="min-h-screen bg-slate-100 text-slate-800">
+<div class="mx-auto flex max-w-screen-2xl flex-col items-start gap-5 p-4 xl:flex-row xl:p-6">
+@include('vendor.partials.sidebar')
+<main class="w-full min-w-0 flex-1 space-y-5">
 <header class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-6 shadow-sm">
 <div><h1 class="text-2xl font-bold">{{ $branchRecord->business_name }} · {{ $branchRecord->name }}</h1>
 <p class="text-sm">Business: {{ $branchRecord->business_status }} · Business orders: {{ $branchRecord->business_accepting ? 'ON' : 'OFF' }} · Branch orders: {{ $branchRecord->branch_accepting ? 'ON' : 'OFF' }}</p></div>
 <div class="flex gap-2"><a href="{{ route('pos.home') }}" class="rounded-lg border px-4 py-2">All Branches</a><a href="{{ route('kds.branches.show', $branchRecord->id) }}" class="rounded-lg border px-4 py-2">Kitchen Screen</a></div>
 </header>
+<section aria-label="Outlet statistics" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-xl bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Total Items</p><p class="mt-1 text-3xl font-bold">{{ $stats['items'] }}</p></div>
+    <div class="rounded-xl bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Active Items</p><p class="mt-1 text-3xl font-bold">{{ $stats['active_items'] }}</p></div>
+    <div class="rounded-xl bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Total Orders</p><p class="mt-1 text-3xl font-bold">{{ $stats['orders'] }}</p><p class="text-xs text-slate-500">{{ $stats['active_orders'] }} active</p></div>
+    <div class="rounded-xl bg-white p-5 shadow-sm"><p class="text-sm text-slate-500">Recorded Order Value</p><p class="mt-1 text-3xl font-bold">₹{{ number_format($stats['order_value_paise'] / 100, 2) }}</p><p class="text-xs text-slate-500">Excludes cancelled orders; not confirmed payment revenue</p></div>
+</section>
 @if(session('success'))<p class="rounded-lg bg-green-50 p-4">{{ session('success') }}</p>@endif
 @if($errors->any())<div class="rounded-lg bg-red-50 p-4">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
 <section class="rounded-xl bg-white p-6 space-y-3">
@@ -14,19 +23,6 @@
 <input name="enabled" type="hidden" value="{{ $branchRecord->branch_accepting ? 0 : 1 }}">
 <button class="rounded-lg bg-slate-900 px-4 py-2 text-white">{{ $branchRecord->branch_accepting ? 'Stop New Branch Orders' : 'Enable Branch Orders' }}</button>
 </form><p class="text-sm text-slate-600">Requires approved Business, business orders ON, active Branch and at least one active Menu item.</p>
-</section>
-<section class="rounded-xl bg-white p-6 space-y-3"><h2 class="text-lg font-bold">Menu Management</h2>
-<form method="POST" action="{{ route('pos.menu.store', $branchRecord->id) }}" class="flex flex-wrap gap-3 items-end">@csrf
-<div><label class="block text-sm">Item name</label><input class="rounded-lg border p-2" name="name" required maxlength="255" placeholder="Masala Dosa"></div>
-<div><label class="block text-sm">Price (INR)</label><input class="rounded-lg border p-2" name="price" required placeholder="125.00" inputmode="decimal"></div>
-<button class="rounded-lg bg-blue-700 text-white px-4 py-2">Add Menu Item</button></form>
-<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b text-left"><th class="p-2">Item</th><th class="p-2">Price</th><th class="p-2">Status</th><th class="p-2">Action</th></tr></thead><tbody>
-@forelse($items as $item)
-<tr class="border-b"><td class="p-2"><div class="flex items-center gap-2">
-@if($item->photo_path)<img alt="{{ $item->name }}" loading="lazy" class="h-12 w-14 rounded object-cover" src="{{ str_starts_with($item->photo_path,'branch-menu/') ? asset('storage/'.$item->photo_path) : asset(ltrim($item->photo_path,'/')) }}">@endif
-<span>{{ $item->name }}</span></div></td><td class="p-2">₹{{ number_format($item->price_paise / 100, 2) }}</td><td class="p-2">{{ $item->is_active ? 'Active' : 'Off' }}</td><td class="p-2"><form method="POST" action="{{ route('pos.menu.availability', $item->id) }}">@csrf
-<input type="hidden" name="active" value="{{ $item->is_active ? 0 : 1 }}"><button class="rounded border px-3 py-1">{{ $item->is_active ? 'Disable' : 'Enable' }}</button></form></td></tr>
-@empty<tr><td colspan="4" class="p-2 text-slate-500">No Menu items yet.</td></tr>@endforelse</tbody></table></div>
 </section>
 <section class="rounded-xl bg-white p-6 space-y-4"><h2 class="text-lg font-bold">New Counter Order</h2>
 <p class="text-sm text-slate-600">Enter quantity for each item (0 means omit). Prices are calculated on the server. Orders remain unpaid.</p>
@@ -49,6 +45,7 @@
 </section>
 <section class="rounded-xl bg-white p-5"><h2 class="font-bold text-lg mb-2">Table-wise QR Menu</h2><p class="mb-3">Create a separate QR for each restaurant table. Print and place it on the table.</p><a class="inline-block rounded-lg bg-indigo-700 px-5 py-3 text-white" href="{{ route('pos.tables.index', $branchRecord->id) }}">Manage Tables & QR Codes</a> <a class="inline-block rounded-lg bg-emerald-700 px-5 py-3 text-white ml-2" href="{{ route('pos.qr.requests', $branchRecord->id) }}">Review QR Order Requests</a></section>
 </main>
+</div>
 <script>
 // Send only quantities > 0; the server re-validates everything and calculates all prices.
 for (const form of document.querySelectorAll('form[action$="/orders"]')) {
