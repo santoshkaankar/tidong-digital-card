@@ -1,0 +1,41 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+use App\Http\Middleware\EnsureManagedPlatformUser;
+
+Route::middleware([
+    'auth',
+    EnsureManagedPlatformUser::class . ':admin',
+])->group(function () {
+    Route::get('/', function () {
+        $stats = [
+            'users' => DB::table('users')->count(),
+            'vendors' => DB::table('vendors')
+                ->whereNull('deleted_at')
+                ->count(),
+            'businesses' => DB::table('businesses')
+                ->whereNull('deleted_at')
+                ->count(),
+        ];
+
+        return view('staff-admin.dashboard', compact('stats'));
+    })->name('staff-admin.home');
+});
+/*
+|--------------------------------------------------------------------------
+/*
+|--------------------------------------------------------------------------
+| Vendor Management
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', EnsureManagedPlatformUser::class . ':admin'])
+    ->prefix('vendors')
+    ->name('staff-admin.vendors.')
+    ->controller(\App\Http\Controllers\Admin\VendorManagementController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{vendor}', 'show')->whereNumber('vendor')->name('show');
+        Route::post('/{vendor}/approve', 'approve')->whereNumber('vendor')->name('approve');
+        Route::post('/{vendor}/reject', 'reject')->whereNumber('vendor')->name('reject');
+    });

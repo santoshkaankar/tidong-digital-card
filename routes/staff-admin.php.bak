@@ -1,0 +1,24 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+use App\Http\Middleware\EnsureManagedPlatformUser;
+
+Route::middleware([
+    'auth',
+    EnsureManagedPlatformUser::class . ':admin',
+])->group(function () {
+    Route::get('/', function () {
+        $stats = [
+            'users' => DB::table('users')->count(),
+            'vendors' => DB::table('vendors')
+                ->whereNull('deleted_at')
+                ->count(),
+            'businesses' => DB::table('businesses')
+                ->whereNull('deleted_at')
+                ->count(),
+        ];
+
+        return view('staff-admin.dashboard', compact('stats'));
+    })->name('staff-admin.home');
+});

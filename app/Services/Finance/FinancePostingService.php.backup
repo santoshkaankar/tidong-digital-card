@@ -1,0 +1,248 @@
+<?php
+
+namespace App\Services\Finance;
+
+use App\Models\FinanceAccount;
+use App\Models\FinanceLedgerEntry;
+use App\Models\FinanceTransaction;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
+use OverflowException;
+
+class FinancePostingService
+{
+    public function createAndPost(
+        array $transactionData,
+        array $entries,
+        ?int $actorUserId = null
+    ): FinanceTransaction {
+        if (count($entries) < 2) {
+            throw new InvalidArgumentException(
+                'A transaction must have at least two ledger entries.'
+            );
+        }
+
+        $currency = strtoupper(trim((string) ($transactionData['currency'] ?? '')));
+
+        if ($currency === '') {
+            throw new InvalidArgumentException('Transaction currency is required.');
+        }
+
+        return DB::transaction(function () use (
+            $transactionData,
+            $entries,
+            $actorUserId,
+            $currency
+        ) {
+            $reference = trim((string) ($transactionData['transaction_ref'] ?? ''));
+            $idempotencyKey = trim((string) ($transactionData['idempotency_key'] ?? ''));
+
+            if ($reference !== '' && FinanceTransaction::where('transaction_ref', $reference)->exists()) {
+                throw new InvalidArgumentException('This transaction reference already exists.');
+            }
+
+            if ($idempotencyKey !== '' && FinanceTransaction::where('idempotency_key', $idempotencyKey)->exists()) {
+                throw new InvalidArgumentException('This request has already been processed.');
+            }
+
+            $normalized = [];
+            $debitMinor = 0;
+            $creditMinor = 0;
+
+            foreach ($entries as $entry) {
+                $type = strtolower(trim((string) ($entry['entry_type'] ?? '')));
+
+                if (!in_array($type, ['debit', 'credit'], true)) {
+                    throw new InvalidArgumentException('Entry type must be debit or credit.');
+                }
+
+                $entryCurrency = strtoupper(trim((string) ($entry['currency'] ?? '')));
+
+                if ($entryCurrency !== $currency) {
+                    throw new InvalidArgumentException('Every entry must use the transaction currency.');
+                }
+
+                $minor = $this->toMinorUnits($entry['amount'] ?? null);
+
+                if ($minor <= 0) {
+                    throw new InvalidArgumentException('Every entry amount must be greater than zero.');
+                }
+
+                if ($type === 'debit') {
+                    $debitMinor = $this->safeAdd($debitMinor, $minor);
+                } else {
+                    $creditMinor = $this->safeAdd($creditMinor, $minor);
+                }
+
+                $ledgerId = filter_var($entry['ledger_id'] ?? null, FILTER_VALIDATE_INT);
+
+                if (!$ledgerId || $ledgerId < 1) {
+                    throw new InvalidArgumentException('Every entry must have a valid ledger ID.');
+                }
+
+                $normalized[] = [
+                    'ledger_id' => $ledgerId,
+                    'entry_type' => $type,
+                    'minor' => $minor,
+                    'currency' => $entryCurrency,
+                    'narration' => $entry['narration'] ?? null,
+                ];
+            }
+
+            if ($debitMinor <= 0 || $creditMinor <= 0) {
+                throw new InvalidArgumentException('Both debit and credit entries are required.');
+            }
+
+            if ($debitMinor !== $creditMinor) {
+                throw new InvalidArgumentException('Debit and credit totals must be equal.');
+            }
+
+            $ledgerIds = array_values(array_unique(array_column($normalized, 'ledger_id')));
+            sort($ledgerIds);
+
+            $accounts = FinanceAccount::query()
+                ->whereIn('id', $ledgerIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            if ($accounts->count() !== count($ledgerIds)) {
+                throw new InvalidArgumentException('One or more ledger accounts do not exist.');
+            }
+
+            $natures = [];
+
+            foreach ($accounts as $account) {
+                if ($account->status !== 'active') {
+                    throw new InvalidArgumentException('A ledger account is not active.');
+                }
+
+                if (strtoupper($account->currency) !== $currency) {
+                    throw new InvalidArgumentException('Ledger currency does not match transaction currency.');
+                }
+
+                $group = $account->group;
+
+                if (!$group || !$group->is_active) {
+                    throw new InvalidArgumentException('The ledger group is missing or inactive.');
+                }
+
+                $nature = strtolower((string) $group->nature);
+
+                if (!in_array($nature, ['asset', 'expense', 'liability', 'equity', 'income'], true)) {
+                    throw new InvalidArgumentException('The ledger group has an invalid accounting nature.');
+                }
+
+                $natures[$account->id] = $nature;
+            }
+
+            $transaction = new FinanceTransaction();
+            $transaction->transaction_ref = $reference !== ''
+                ? $reference
+                : 'FIN-' . strtoupper(bin2hex(random_bytes(8)));
+            $transaction->idempotency_key = $idempotencyKey !== '' ? $idempotencyKey : null;
+            $transaction->transaction_type = $transactionData['transaction_type'] ?? 'general';
+            $transaction->currency = $currency;
+            $transaction->amount = $this->fromMinorUnits($debitMinor);
+            $transaction->description = $transactionData['description'] ?? null;
+            $transaction->metadata = $transactionData['metadata'] ?? null;
+            $transaction->status = 'draft';
+            $transaction->created_by = $actorUserId;
+            $transaction->save();
+
+            foreach ($normalized as $entry) {
+                $account = $accounts->get($entry['ledger_id']);
+                $nature = $natures[$account->id];
+
+                $debitIncreasesBalance = in_array($nature, ['asset', 'expense'], true);
+                $isDebit = $entry['entry_type'] === 'debit';
+                $increase = ($isDebit === $debitIncreasesBalance);
+
+                $oldMinor = $this->toMinorUnits((string) $account->current_balance);
+                $newMinor = $increase
+                    ? $this->safeAdd($oldMinor, $entry['minor'])
+                    : $oldMinor - $entry['minor'];
+
+                $account->current_balance = $this->fromMinorUnits($newMinor);
+                $account->save();
+
+                $ledgerEntry = new FinanceLedgerEntry();
+                $ledgerEntry->transaction_id = $transaction->id;
+                $ledgerEntry->ledger_id = $account->id;
+                $ledgerEntry->entry_type = $entry['entry_type'];
+                $ledgerEntry->amount = $this->fromMinorUnits($entry['minor']);
+                $ledgerEntry->currency = $currency;
+                $ledgerEntry->balance_after = $this->fromMinorUnits($newMinor);
+                $ledgerEntry->narration = $entry['narration'];
+                $ledgerEntry->created_by = $actorUserId;
+                $ledgerEntry->save();
+            }
+
+            $transaction->status = 'posted';
+            $transaction->posted_at = now();
+            $transaction->save();
+
+            return $transaction->load('entries');
+        }, 3);
+    }
+
+    private function toMinorUnits(mixed $amount): int
+    {
+        if (!is_string($amount) && !is_int($amount)) {
+            throw new InvalidArgumentException('Amounts must be strings or integers, not floating-point values.');
+        }
+
+        $amount = trim((string) $amount);
+
+        if (!preg_match('/^\d+(?:\.\d{1,4})?$/', $amount)) {
+            throw new InvalidArgumentException('Amount must be a non-negative number with at most two decimal places.');
+        }
+
+        [$whole, $fraction] = array_pad(explode('.', $amount, 2), 2, '0');
+
+        $fraction = rtrim($fraction, '0');
+
+        if (strlen($fraction) > 2) {
+            throw new InvalidArgumentException('Amount must be a non-negative number with at most two decimal places.');
+        }
+
+        $fraction = str_pad($fraction, 2, '0');
+
+        $whole = ltrim($whole, '0');
+        $whole = $whole === '' ? '0' : $whole;
+
+        if (strlen($whole) > 16) {
+            throw new OverflowException('Amount is too large.');
+        }
+
+        $wholeMinor = (int) $whole;
+
+        if ($wholeMinor > intdiv(PHP_INT_MAX, 100)) {
+            throw new OverflowException('Amount is too large.');
+        }
+
+        return $this->safeAdd($wholeMinor * 100, (int) $fraction);
+    }
+
+    private function fromMinorUnits(int $minor): string
+    {
+        $whole = intdiv(abs($minor), 100);
+        $fraction = abs($minor) % 100;
+
+        return ($minor < 0 ? '-' : '') . $whole . '.' . str_pad((string) $fraction, 2, '0', STR_PAD_LEFT);
+    }
+
+    private function safeAdd(int $a, int $b): int
+    {
+        if ($b > 0 && $a > PHP_INT_MAX - $b) {
+            throw new OverflowException('Amount calculation overflow.');
+        }
+
+        if ($b < 0 && $a < PHP_INT_MIN - $b) {
+            throw new OverflowException('Amount calculation overflow.');
+        }
+
+        return $a + $b;
+    }
+}

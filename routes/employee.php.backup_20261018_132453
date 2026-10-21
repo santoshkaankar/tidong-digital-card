@@ -1,0 +1,29 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\EnsureManagedPlatformUser;
+use App\Http\Middleware\EnsurePermission;
+
+Route::middleware([
+    'auth',
+    EnsureManagedPlatformUser::class . ':platform_employee',
+])->group(function () {
+
+    Route::get('/', function () {
+        return view('employee.dashboard');
+    })->name('employee.home');
+
+    // Finance: view permission required
+    Route::get('/finance', function () {
+        return view('finance.index');
+    })
+        ->middleware(EnsurePermission::class . ':finance.view')
+        ->name('employee.finance.index');
+
+    // Finance management: manage permission required
+    Route::get('/finance/manage', function () {
+        return view('finance.manage');
+    })
+        ->middleware(EnsurePermission::class . ':finance.manage')
+        ->name('employee.finance.manage');
+});

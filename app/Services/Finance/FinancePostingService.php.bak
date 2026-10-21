@@ -1,0 +1,296 @@
+<?php
+
+namespace App\Services\Finance;
+
+use App\Models\FinanceAccount;
+use App\Models\FinanceLedgerEntry;
+use App\Models\FinanceTransaction;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
+use RuntimeException;
+
+class FinancePostingService
+{
+    /**
+     * Create and post a balanced financial transaction.
+     *
+     * Each entry must contain:
+     * ledger_id, entry_type (debit/credit), amount,
+     * currency, and optionally narration.
+     */
+    public function createAndPost(
+        array $transactionData,
+        array $entries,
+        ?int $actorUserId = null
+    ): FinanceTransaction {
+        if (count($entries) < 2) {
+            throw new InvalidArgumentException(
+                'A transaction must have at least two ledger entries.'
+            );
+        }
+
+        return DB::transaction(function () use (
+            $transactionData,
+            $entries,
+            $actorUserId
+        ) {
+            $normalizedEntries = [];
+            $debitTotal = '0.0000';
+            $creditTotal = '0.0000';
+            $currency = strtoupper(
+                trim((string) ($transactionData['currency'] ?? ''))
+            );
+
+            if ($currency === '') {
+                throw new InvalidArgumentException(
+                    'Transaction currency is required.'
+                );
+            }
+
+            foreach ($entries as $entry) {
+                $type = strtolower(
+                    trim((string) ($entry['entry_type'] ?? ''))
+                );
+
+                if (! in_array($type, ['debit', 'credit'], true)) {
+                    throw new InvalidArgumentException(
+                        'Entry type must be debit or credit.'
+                    );
+                }
+
+                $entryCurrency = strtoupper(
+                    trim((string) ($entry['currency'] ?? ''))
+                );
+
+                if ($entryCurrency !== $currency) {
+                    throw new InvalidArgumentException(
+                        'All entries must use the transaction currency.'
+                    );
+                }
+
+                $amount = $entry['amount'] ?? null;
+
+                if (
+                    ! is_numeric($amount) ||
+                    ! is_finite((float) $amount) ||
+                    (float) $amount <= 0
+                ) {
+                    throw new InvalidArgumentException(
+                        'Every entry amount must be greater than zero.'
+                    );
+                }
+
+                $amountInPaise = (int) round(
+                    (float) $amount * 100
+                );
+
+                if (abs(
+                    ((float) $amount * 100) - $amountInPaise
+                ) > 0.000001) {
+                    throw new InvalidArgumentException(
+                        'Amounts cannot contain fractions of a paise.'
+                    );
+                }
+
+                if ($type === 'debit') {
+                    $debitTotal += number_format(
+                        (float) $amount,
+                        4,
+                        '.',
+                        ''
+                    );
+                } else {
+                    $creditTotal += number_format(
+                        (float) $amount,
+                        4,
+                        '.',
+                        ''
+                    );
+                }
+
+                $normalizedEntries[] = [
+                    'ledger_id' => (int) ($entry['ledger_id'] ?? 0),
+                    'entry_type' => $type,
+                    'amount' => number_format(
+                        (float) $amount,
+                        4,
+                        '.',
+                        ''
+                    ),
+                    'currency' => $entryCurrency,
+                    'narration' => $entry['narration'] ?? null,
+                ];
+            }
+
+            // Use integer paise for the balancing check.
+            $debitPaise = 0;
+            $creditPaise = 0;
+
+            foreach ($normalizedEntries as $entry) {
+                $paise = (int) round(
+                    (float) $entry['amount'] * 100
+                );
+
+                if ($entry['entry_type'] === 'debit') {
+                    $debitPaise += $paise;
+                } else {
+                    $creditPaise += $paise;
+                }
+            }
+
+            if ($debitPaise <= 0 || $creditPaise <= 0) {
+                throw new InvalidArgumentException(
+                    'A transaction needs both debit and credit entries.'
+                );
+            }
+
+            if ($debitPaise !== $creditPaise) {
+                throw new InvalidArgumentException(
+                    'Debit total and credit total must be equal.'
+                );
+            }
+
+            $ledgerIds = array_values(array_unique(
+                array_column($normalizedEntries, 'ledger_id')
+            ));
+
+            if (in_array(0, $ledgerIds, true)) {
+                throw new InvalidArgumentException(
+                    'Every entry must have a valid ledger ID.'
+                );
+            }
+
+            sort($ledgerIds);
+
+            // Lock ledgers in a consistent order.
+            $accounts = FinanceAccount::query()
+                ->whereIn('id', $ledgerIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            if ($accounts->count() !== count($ledgerIds)) {
+                throw new InvalidArgumentException(
+                    'One or more ledger accounts do not exist.'
+                );
+            }
+
+            foreach ($accounts as $account) {
+                if ($account->status !== 'active') {
+                    throw new InvalidArgumentException(
+                        'A ledger account is not active.'
+                    );
+                }
+
+                if (strtoupper($account->currency) !== $currency) {
+                    throw new InvalidArgumentException(
+                        'Ledger currency does not match transaction currency.'
+                    );
+                }
+
+                $nature = strtolower(
+                    (string) $account->group()->value('nature')
+                );
+
+                if (! in_array(
+                    $nature,
+                    ['asset', 'expense', 'liability', 'equity', 'income'],
+                    true
+                )) {
+                    throw new InvalidArgumentException(
+                        'Ledger group nature must be asset, expense, liability, equity, or income.'
+                    );
+                }
+            }
+
+            $transaction = new FinanceTransaction();
+
+            $transaction->transaction_ref =
+                $transactionData['transaction_ref']
+                ?? ('FIN-' . strtoupper(bin2hex(random_bytes(8))));
+
+            $transaction->idempotency_key =
+                $transactionData['idempotency_key'] ?? null;
+
+            $transaction->transaction_type =
+                $transactionData['transaction_type'] ?? 'general';
+
+            $transaction->currency = $currency;
+            $transaction->amount = number_format(
+                $debitPaise / 100,
+                2,
+                '.',
+                ''
+            );
+
+            $transaction->description =
+                $transactionData['description'] ?? null;
+
+            $transaction->metadata =
+                $transactionData['metadata'] ?? null;
+
+            $transaction->status = 'draft';
+            $transaction->created_by = $actorUserId;
+            $transaction->save();
+
+            foreach ($normalizedEntries as $entry) {
+                $account = $accounts->get($entry['ledger_id']);
+
+                $nature = strtolower(
+                    (string) $account->group()->value('nature')
+                );
+
+                $debitIncreasesBalance = in_array(
+                    $nature,
+                    ['asset', 'expense'],
+                    true
+                );
+
+                $isDebit = $entry['entry_type'] === 'debit';
+
+                $increase = $isDebit === $debitIncreasesBalance;
+
+                $oldBalance = (float) $account->current_balance;
+                $amount = (float) $entry['amount'];
+
+                $newBalance = $increase
+                    ? $oldBalance + $amount
+                    : $oldBalance - $amount;
+
+                $account->current_balance = number_format(
+                    $newBalance,
+                    4,
+                    '.',
+                    ''
+                );
+
+                $account->save();
+
+                $ledgerEntry = new FinanceLedgerEntry();
+
+                $ledgerEntry->transaction_id = $transaction->id;
+                $ledgerEntry->ledger_id = $account->id;
+                $ledgerEntry->entry_type = $entry['entry_type'];
+                $ledgerEntry->amount = $entry['amount'];
+                $ledgerEntry->currency = $entry['currency'];
+                $ledgerEntry->balance_after = number_format(
+                    $newBalance,
+                    4,
+                    '.',
+                    ''
+                );
+                $ledgerEntry->narration = $entry['narration'];
+                $ledgerEntry->created_by = $actorUserId;
+                $ledgerEntry->save();
+            }
+
+            $transaction->status = 'posted';
+            $transaction->posted_at = now();
+            $transaction->save();
+
+            return $transaction->load('entries');
+        }, 3);
+    }
+}

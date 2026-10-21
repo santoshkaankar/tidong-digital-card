@@ -1,0 +1,1099 @@
+﻿
+========== database\migrations\2026_10_17_104007_create_digital_foundation_tables.php ==========
+
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('account_types', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 50)->unique();
+            $table->string('name');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('user_account_types', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
+            $table->foreignId('account_type_id')->constrained('account_types')->restrictOnDelete();
+            $table->string('status', 30)->default('active');
+            $table->timestamp('activated_at')->nullable();
+            $table->timestamps();
+
+            $table->unique(
+                ['user_id', 'account_type_id'],
+                'user_account_types_user_type_unique'
+            );
+        });
+
+        Schema::create('roles', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 80)->unique();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->boolean('is_system')->default(false);
+            $table->timestamps();
+        });
+
+        Schema::create('permissions', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 120)->unique();
+            $table->string('name');
+            $table->string('module', 80)->index();
+            $table->text('description')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('role_permissions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('role_id')->constrained()->restrictOnDelete();
+            $table->foreignId('permission_id')->constrained()->restrictOnDelete();
+            $table->timestamps();
+
+            $table->unique(['role_id', 'permission_id']);
+        });
+
+        Schema::create('user_role_assignments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
+            $table->foreignId('role_id')->constrained()->restrictOnDelete();
+
+            // Platform, vendor, business ya branch ke level par scope.
+            $table->string('scope_type', 30)->default('platform');
+            $table->unsignedBigInteger('scope_id')->nullable();
+
+            $table->foreignId('assigned_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+
+            $table->index(['user_id', 'is_active']);
+            $table->index(['scope_type', 'scope_id']);
+        });
+
+        Schema::create('vendors', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('user_id')
+                ->unique()
+                ->constrained('users')
+                ->restrictOnDelete();
+
+            $table->string('vendor_code', 40)->unique();
+            $table->string('display_name');
+            $table->string('status', 30)->default('pending')->index();
+            $table->timestamp('approved_at')->nullable();
+
+            $table->foreignId('approved_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('businesses', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('vendor_id')
+                ->constrained('vendors')
+                ->restrictOnDelete();
+
+            $table->string('business_type', 80)->index();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->string('status', 30)->default('pending')->index();
+            $table->boolean('is_accepting_orders')->default(false);
+
+            $table->json('settings')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['vendor_id', 'status']);
+        });
+
+        Schema::create('branches', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('business_id')
+                ->constrained('businesses')
+                ->restrictOnDelete();
+
+            $table->string('name');
+            $table->string('branch_code', 50);
+            $table->string('phone', 30)->nullable();
+            $table->string('email')->nullable();
+
+            $table->string('address_line')->nullable();
+            $table->string('country_code', 3)->default('IN');
+            $table->string('state')->nullable();
+            $table->string('city')->nullable();
+            $table->string('pincode', 15)->nullable();
+
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+
+            $table->string('status', 30)->default('active')->index();
+            $table->boolean('is_accepting_orders')->default(true);
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->unique(['business_id', 'branch_code']);
+        });
+
+        Schema::create('employee_assignments', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->restrictOnDelete();
+
+            $table->foreignId('role_id')
+                ->constrained()
+                ->restrictOnDelete();
+
+            $table->foreignId('business_id')
+                ->nullable()
+                ->constrained('businesses')
+                ->restrictOnDelete();
+
+            $table->foreignId('branch_id')
+                ->nullable()
+                ->constrained('branches')
+                ->restrictOnDelete();
+
+            $table->foreignId('assigned_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            $table->timestamp('starts_at');
+            $table->timestamp('ends_at')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+
+            $table->index(['user_id', 'is_active']);
+            $table->index(['business_id', 'branch_id']);
+        });
+
+        Schema::create('audit_logs', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('actor_user_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            $table->string('action', 120)->index();
+            $table->string('entity_type', 100)->index();
+            $table->unsignedBigInteger('entity_id')->nullable();
+
+            $table->string('reason', 500)->nullable();
+            $table->json('old_values')->nullable();
+            $table->json('new_values')->nullable();
+            $table->json('metadata')->nullable();
+
+            $table->string('ip_address', 45)->nullable();
+            $table->string('request_id', 100)->nullable();
+            $table->timestamp('created_at')->useCurrent();
+
+            $table->index(['entity_type', 'entity_id']);
+            $table->index('created_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('audit_logs');
+        Schema::dropIfExists('employee_assignments');
+        Schema::dropIfExists('branches');
+        Schema::dropIfExists('businesses');
+        Schema::dropIfExists('vendors');
+        Schema::dropIfExists('user_role_assignments');
+        Schema::dropIfExists('role_permissions');
+        Schema::dropIfExists('permissions');
+        Schema::dropIfExists('roles');
+        Schema::dropIfExists('user_account_types');
+        Schema::dropIfExists('account_types');
+    }
+};
+
+
+========== app\Models\User.php ==========
+
+<?php
+
+namespace App\Models;
+
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use App\Models\Authorization\EmployeeAssignment;
+use App\Models\Authorization\Role;
+use App\Models\Authorization\UserRoleAssignment;
+use App\Models\Identity\AccountType;
+use App\Models\Identity\UserAccountType;
+use App\Models\Vendor\Vendor;
+
+class User extends Authenticatable
+{
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable;
+
+    #[Fillable([
+        'name',
+        'email',
+        'password',
+    ])]
+    #[Hidden([
+        'password',
+        'remember_token',
+    ])]
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * User account types.
+     */
+    public function accountTypes()
+    {
+        return $this->belongsToMany(
+            AccountType::class,
+            'user_account_types',
+            'user_id',
+            'account_type_id'
+        )->withPivot([
+            'status',
+            'activated_at',
+        ])->withTimestamps();
+    }
+
+    /**
+     * User account-type assignment records.
+     */
+    public function userAccountTypes()
+    {
+        return $this->hasMany(UserAccountType::class);
+    }
+
+    /**
+     * User role assignments.
+     */
+    public function roleAssignments()
+    {
+        return $this->hasMany(UserRoleAssignment::class);
+    }
+
+    /**
+     * Assigned roles.
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(
+            Role::class,
+            'user_role_assignments',
+            'user_id',
+            'role_id'
+        )->withPivot([
+            'scope_type',
+            'scope_id',
+            'assigned_by',
+            'starts_at',
+            'expires_at',
+            'is_active',
+        ])->withTimestamps();
+    }
+
+    /**
+     * Employee assignment history.
+     */
+    public function employeeAssignments()
+    {
+        return $this->hasMany(EmployeeAssignment::class);
+    }
+
+    /**
+     * Vendor profile.
+     */
+    public function vendor()
+    {
+        return $this->hasOne(Vendor::class);
+    }
+
+    /**
+     * Users who assigned roles or employees.
+     */
+    public function assignmentsMade()
+    {
+        return $this->hasMany(
+            UserRoleAssignment::class,
+            'assigned_by'
+        );
+    }
+
+    /**
+     * Users who approved vendors.
+     */
+    public function approvedVendors()
+    {
+        return $this->hasMany(
+            Vendor::class,
+            'approved_by'
+        );
+    }
+
+    /**
+     * Users who assigned employees.
+     */
+    public function employeeAssignmentsMade()
+    {
+        return $this->hasMany(
+            EmployeeAssignment::class,
+            'assigned_by'
+        );
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+}
+
+========== app\Models\Identity\AccountType.php ==========
+
+<?php
+
+namespace App\Models\Identity;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class AccountType extends Model
+{
+    use HasFactory;
+
+    protected $table = 'account_types';
+
+    protected $fillable = [
+        'code',
+        'name',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'user_account_types',
+            'account_type_id',
+            'user_id'
+        )->withPivot([
+            'status',
+            'activated_at',
+        ])->withTimestamps();
+    }
+
+    public function userAccountTypes(): HasMany
+    {
+        return $this->hasMany(UserAccountType::class, 'account_type_id');
+    }
+}
+
+
+========== app\Models\Identity\UserAccountType.php ==========
+
+<?php
+
+namespace App\Models\Identity;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class UserAccountType extends Model
+{
+    use HasFactory;
+
+    protected $table = 'user_account_types';
+
+    protected $fillable = [
+        'user_id',
+        'account_type_id',
+        'status',
+        'activated_at',
+    ];
+
+    protected $casts = [
+        'activated_at' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function accountType(): BelongsTo
+    {
+        return $this->belongsTo(AccountType::class, 'account_type_id');
+    }
+}
+
+
+========== app\Models\Authorization\Role.php ==========
+
+<?php
+
+namespace App\Models\Authorization;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Role extends Model
+{
+    use HasFactory;
+
+    protected $table = 'roles';
+
+    protected $fillable = [
+        'code',
+        'name',
+        'description',
+        'is_system',
+    ];
+
+    protected $casts = [
+        'is_system' => 'boolean',
+    ];
+
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Permission::class,
+            'role_permissions',
+            'role_id',
+            'permission_id'
+        )->withTimestamps();
+    }
+
+    public function userAssignments(): HasMany
+    {
+        return $this->hasMany(
+            UserRoleAssignment::class,
+            'role_id'
+        );
+    }
+
+    public function employeeAssignments(): HasMany
+    {
+        return $this->hasMany(
+            EmployeeAssignment::class,
+            'role_id'
+        );
+    }
+}
+
+
+========== app\Models\Authorization\Permission.php ==========
+
+<?php
+
+namespace App\Models\Authorization;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+class Permission extends Model
+{
+    use HasFactory;
+
+    protected $table = 'permissions';
+
+    protected $fillable = [
+        'code',
+        'name',
+        'module',
+        'description',
+    ];
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Role::class,
+            'role_permissions',
+            'permission_id',
+            'role_id'
+        )->withTimestamps();
+    }
+}
+
+
+========== app\Models\Authorization\RolePermission.php ==========
+
+<?php
+
+namespace App\Models\Authorization;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class RolePermission extends Model
+{
+    use HasFactory;
+
+    protected $table = 'role_permissions';
+
+    protected $fillable = [
+        'role_id',
+        'permission_id',
+    ];
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function permission(): BelongsTo
+    {
+        return $this->belongsTo(Permission::class, 'permission_id');
+    }
+}
+
+
+========== app\Models\Authorization\UserRoleAssignment.php ==========
+
+<?php
+
+namespace App\Models\Authorization;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class UserRoleAssignment extends Model
+{
+    use HasFactory;
+
+    protected $table = 'user_role_assignments';
+
+    protected $fillable = [
+        'user_id',
+        'role_id',
+        'scope_type',
+        'scope_id',
+        'assigned_by',
+        'starts_at',
+        'expires_at',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'starts_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function assignedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
+}
+
+
+========== app\Models\Authorization\EmployeeAssignment.php ==========
+
+<?php
+
+namespace App\Models\Authorization;
+
+use App\Models\User;
+use App\Models\Vendor\Business;
+use App\Models\Vendor\Branch;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class EmployeeAssignment extends Model
+{
+    use HasFactory;
+
+    protected $table = 'employee_assignments';
+
+    protected $fillable = [
+        'user_id',
+        'role_id',
+        'business_id',
+        'branch_id',
+        'assigned_by',
+        'starts_at',
+        'ends_at',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class, 'business_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function assignedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
+}
+
+
+========== app\Models\Vendor\Vendor.php ==========
+
+<?php
+
+namespace App\Models\Vendor;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Vendor extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'vendors';
+
+    protected $fillable = [
+        'user_id',
+        'vendor_code',
+        'display_name',
+        'status',
+        'approved_at',
+        'approved_by',
+    ];
+
+    protected $casts = [
+        'approved_at' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function businesses(): HasMany
+    {
+        return $this->hasMany(Business::class, 'vendor_id');
+    }
+}
+
+
+========== app\Models\Vendor\Business.php ==========
+
+<?php
+
+namespace App\Models\Vendor;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Business extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'businesses';
+
+    protected $fillable = [
+        'vendor_id',
+        'business_type',
+        'name',
+        'slug',
+        'status',
+        'is_accepting_orders',
+        'settings',
+    ];
+
+    protected $casts = [
+        'is_accepting_orders' => 'boolean',
+        'settings' => 'array',
+    ];
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class, 'vendor_id');
+    }
+
+    public function branches(): HasMany
+    {
+        return $this->hasMany(Branch::class, 'business_id');
+    }
+}
+
+
+========== app\Models\Vendor\Branch.php ==========
+
+<?php
+
+namespace App\Models\Vendor;
+
+use App\Models\Authorization\EmployeeAssignment;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Branch extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'branches';
+
+    protected $fillable = [
+        'business_id',
+        'name',
+        'branch_code',
+        'phone',
+        'email',
+        'address_line',
+        'country_code',
+        'state',
+        'city',
+        'pincode',
+        'latitude',
+        'longitude',
+        'status',
+        'is_accepting_orders',
+    ];
+
+    protected $casts = [
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
+        'is_accepting_orders' => 'boolean',
+    ];
+
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class, 'business_id');
+    }
+
+    public function employeeAssignments(): HasMany
+    {
+        return $this->hasMany(
+            EmployeeAssignment::class,
+            'branch_id'
+        );
+    }
+}
+
+
+========== routes\admin.php ==========
+
+
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\EnsureSuperAdmin;
+
+Route::get('/', function () {
+    return response()->view('admin.dashboard');
+})
+    ->middleware(['auth', EnsureSuperAdmin::class])
+    ->name('home');
+
+
+========== app\Http\Controllers\Auth\CustomerAuthController.php ==========
+
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\Identity\AccountType;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+class CustomerAuthController extends Controller
+{
+    public function showRegister()
+    {
+        return view('auth.register');
+    }
+
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $customer = DB::transaction(function () use ($validated) {
+            $accountType = AccountType::query()
+                ->where('code', 'customer')
+                ->where('is_active', true)
+                ->first();
+
+            if (! $accountType) {
+                throw ValidationException::withMessages([
+                    'email' => 'Customer registration is temporarily unavailable.',
+                ]);
+            }
+
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+            ]);
+
+            $user->userAccountTypes()->create([
+                'account_type_id' => $accountType->id,
+                'status' => 'active',
+                'activated_at' => now(),
+            ]);
+
+            return $user;
+        });
+
+        Auth::login($customer);
+        $request->session()->regenerate();
+
+        return redirect()->route('customer.home');
+    }
+
+    public function showLogin()
+    {
+        return view('auth.login');
+    }
+
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            throw ValidationException::withMessages([
+                'email' => 'The email or password is incorrect.',
+            ]);
+        }
+
+        $request->session()->regenerate();
+
+        $user = $request->user();
+
+        $isSuperAdmin = $user->roleAssignments()
+            ->where('is_active', true)
+            ->where('scope_type', 'platform')
+            ->whereNull('scope_id')
+            ->where(function ($query) {
+                $query->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->whereHas('role', function ($query) {
+                $query->where('code', 'super_admin');
+            })
+            ->exists();
+
+        if ($isSuperAdmin) {
+            return redirect()->route('home');
+        }
+
+        $hasActiveCustomerAccount = $user->userAccountTypes()
+            ->where('status', 'active')
+            ->whereHas('accountType', function ($query) {
+                $query->where('code', 'customer')
+                    ->where('is_active', true);
+            })
+            ->exists();
+
+        if ($hasActiveCustomerAccount) {
+            return redirect()->route('customer.home');
+        }
+
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        throw ValidationException::withMessages([
+            'email' => 'Is account ko login ke liye abhi permission nahi hai.',
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
+    }
+}
+
+
+========== resources\views\admin\dashboard.blade.php ==========
+
+
+@extends('layouts.admin')
+
+@section('title', 'Dashboard')
+
+@section('page_heading', 'Dashboard')
+
+@section('content')
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-900">
+            Welcome, {{ auth()->user()->name }}!
+        </h1>
+
+        <p class="mt-2 text-slate-600">
+            à¤†à¤ªà¤•à¥‡ Digital Platform à¤•à¤¾ Super Admin Dashboardà¥¤
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Users & Employees</p>
+            <h3 class="mt-3 text-xl font-bold text-slate-900">User Management</h3>
+            <p class="mt-2 text-sm text-slate-600">
+                Users, Admins à¤”à¤° Employees à¤•à¤¾ à¤ªà¥à¤°à¤¬à¤‚à¤§à¤¨à¥¤
+            </p>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Marketplace</p>
+            <h3 class="mt-3 text-xl font-bold text-slate-900">Vendors & Businesses</h3>
+            <p class="mt-2 text-sm text-slate-600">
+                Vendors, Businesses à¤”à¤° Branches à¤•à¤¾ à¤ªà¥à¤°à¤¬à¤‚à¤§à¤¨à¥¤
+            </p>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Operations</p>
+            <h3 class="mt-3 text-xl font-bold text-slate-900">POS & KDS</h3>
+            <p class="mt-2 text-sm text-slate-600">
+                Orders à¤”à¤° business operations à¤•à¥‡ à¤²à¤¿à¤ à¤œà¤—à¤¹à¥¤
+            </p>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Finance</p>
+            <h3 class="mt-3 text-xl font-bold text-slate-900">Wallet & T-Coin</h3>
+            <p class="mt-2 text-sm text-slate-600">
+                Financial modules à¤•à¥‡ à¤²à¤¿à¤ à¤…à¤²à¤—-à¤…à¤²à¤— à¤ªà¥à¤°à¤¬à¤‚à¤§à¤¨à¥¤
+            </p>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Other Modules</p>
+            <h3 class="mt-3 text-xl font-bold text-slate-900">Game & Marriage Planner</h3>
+            <p class="mt-2 text-sm text-slate-600">
+                à¤‡à¤¨ modules à¤•à¥‡ à¤²à¤¿à¤ à¤†à¤—à¥‡ pages à¤¬à¤¨à¤¾à¤ à¤œà¤¾à¤à¤à¤—à¥‡à¥¤
+            </p>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Security</p>
+            <h3 class="mt-3 text-xl font-bold text-slate-900">Roles & Audit Logs</h3>
+            <p class="mt-2 text-sm text-slate-600">
+                Permissions à¤”à¤° activity history à¤•à¥‡ à¤²à¤¿à¤ à¤œà¤—à¤¹à¥¤
+            </p>
+        </div>
+
+    </div>
+@endsection
+

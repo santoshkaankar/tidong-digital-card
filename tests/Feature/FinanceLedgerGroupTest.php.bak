@@ -1,0 +1,188 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Authorization\Permission;
+use App\Models\Authorization\Role;
+use App\Models\Authorization\UserRoleAssignment;
+use App\Models\FinanceLedgerGroup;
+use App\Models\Identity\AccountType;
+use App\Models\Identity\UserAccountType;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+class FinanceLedgerGroupTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutMiddleware(
+            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class
+        );
+
+        DB::beginTransaction();
+    }
+
+    protected function tearDown(): void
+    {
+        if (DB::transactionLevel() > 0) {
+            DB::rollBack();
+        }
+
+        parent::tearDown();
+    }
+
+    private function makeEmployee(bool $withFinanceManage = true): User
+    {
+        $suffix = strtoupper(bin2hex(random_bytes(5)));
+
+        $user = User::factory()->create([
+            'name' => 'Finance Test ' . $suffix,
+            'email' => 'finance-test-' . strtolower($suffix) . '@example.test',
+        ]);
+
+        $accountType = AccountType::create([
+            'code' => 'platform_employee',
+            'name' => 'Platform Employee',
+            'is_active' => true,
+        ]);
+
+        UserAccountType::create([
+            'user_id' => $user->id,
+            'account_type_id' => $accountType->id,
+            'status' => 'active',
+            'activated_at' => now(),
+        ]);
+
+        $role = Role::create([
+            'code' => 'finance_test_' . strtolower($suffix),
+            'name' => 'Finance Test Role',
+            'description' => 'Automated test role',
+            'is_system' => false,
+        ]);
+
+        if ($withFinanceManage) {
+            $permission = new Permission();
+            $permission->code = 'finance.manage';
+            $permission->name = 'Manage Finance';
+            $permission->module = 'finance';
+            $permission->description = 'Manage finance';
+            $permission->save();
+
+            $role->permissions()->attach($permission->id);
+        }
+
+        UserRoleAssignment::create([
+            'user_id' => $user->id,
+            'role_id' => $role->id,
+            'scope_type' => 'platform',
+            'scope_id' => null,
+            'assigned_by' => null,
+            'starts_at' => now()->subMinute(),
+            'expires_at' => null,
+            'is_active' => true,
+        ]);
+
+        return $user;
+    }
+
+    public function test_authorized_employee_can_create_ledger_group(): void
+    {
+        $user = $this->makeEmployee();
+
+        $response = $this->actingAs($user)->post(
+            route('employee.finance.groups.store'),
+            [
+                'group_code' => 'test-assets',
+                'group_name' => 'Test Assets',
+                'nature' => 'asset',
+                'currency' => 'INR',
+                'description' => 'Automated test group',
+            ]
+        );
+
+        $response->assertRedirect(route('employee.finance.groups.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('finance_ledger_groups', [
+            'group_code' => 'TEST-ASSETS',
+            'group_name' => 'Test Assets',
+            'nature' => 'asset',
+            'currency' => 'INR',
+            'is_active' => 1,
+            'is_system' => 0,
+        ]);
+    }
+
+    public function test_duplicate_group_code_is_rejected(): void
+    {
+        $user = $this->makeEmployee();
+
+        FinanceLedgerGroup::create([
+            'group_code' => 'DUPLICATE-TEST',
+            'group_name' => 'Existing Group',
+            'nature' => 'asset',
+            'currency' => 'INR',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->from(
+            route('employee.finance.groups.index')
+        )->post(route('employee.finance.groups.store'), [
+            'group_code' => 'duplicate-test',
+            'group_name' => 'Another Group',
+            'nature' => 'asset',
+            'currency' => 'INR',
+        ]);
+
+        $response->assertRedirect(route('employee.finance.groups.index'));
+        $response->assertSessionHasErrors('group_code');
+
+        $this->assertDatabaseMissing('finance_ledger_groups', [
+            'group_name' => 'Another Group',
+        ]);
+    }
+
+    public function test_parent_with_different_nature_is_rejected(): void
+    {
+        $user = $this->makeEmployee();
+
+        $parent = FinanceLedgerGroup::create([
+            'group_code' => 'PARENT-ASSET-TEST',
+            'group_name' => 'Parent Asset Group',
+            'nature' => 'asset',
+            'currency' => 'INR',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->from(
+            route('employee.finance.groups.index')
+        )->post(route('employee.finance.groups.store'), [
+            'group_code' => 'CHILD-INCOME-TEST',
+            'group_name' => 'Child Income Group',
+            'parent_group_id' => $parent->id,
+            'nature' => 'income',
+            'currency' => 'INR',
+        ]);
+
+        $response->assertRedirect(route('employee.finance.groups.index'));
+        $response->assertSessionHasErrors('parent_group_id');
+
+        $this->assertDatabaseMissing('finance_ledger_groups', [
+            'group_code' => 'CHILD-INCOME-TEST',
+        ]);
+    }
+
+    public function test_employee_without_finance_manage_permission_is_forbidden(): void
+    {
+        $user = $this->makeEmployee(false);
+
+        $response = $this->actingAs($user)->get(
+            route('employee.finance.groups.index')
+        );
+
+        $response->assertForbidden();
+    }
+}

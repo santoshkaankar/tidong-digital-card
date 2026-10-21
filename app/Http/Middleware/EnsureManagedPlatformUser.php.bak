@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class EnsureManagedPlatformUser
+{
+    public function handle(
+        Request $request,
+        Closure $next,
+        string $requiredAccountType
+    ): Response {
+        $user = $request->user();
+
+        if (! $user) {
+            return redirect()->guest(route('login'));
+        }
+
+        $hasRequiredAccountType = $user->userAccountTypes()
+            ->where('status', 'active')
+            ->whereHas('accountType', function ($query) use ($requiredAccountType) {
+                $query->where('code', $requiredAccountType)
+                    ->where('is_active', true);
+            })
+            ->exists();
+
+        $hasValidPlatformRole = $user->roleAssignments()
+            ->where('is_active', true)
+            ->where('scope_type', 'platform')
+            ->whereNull('scope_id')
+            ->where(function ($query) {
+                $query->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->whereHas('role', function ($query) {
+                $query->where('code', '!=', 'super_admin');
+            })
+            ->exists();
+
+        if (! $hasRequiredAccountType || ! $hasValidPlatformRole) {
+            abort(403, 'Aapko is dashboard ko access karne ki permission nahi hai.');
+        }
+
+        return $next($request);
+    }
+}
