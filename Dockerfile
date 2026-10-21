@@ -1,6 +1,5 @@
-# TIDONG Laravel 13 - REVIEW CANDIDATE. Do NOT deploy before DB backup,
-# PostgreSQL migration checks, security tests and staging verification.
-# Separate asset and Composer builds. Nothing writes to production DB at build/start.
+# TIDONG Laravel 13 - Render Docker production image.
+# Each container start applies ONLY pending Laravel migrations before Apache runs.
 FROM node:22-bookworm-slim AS assets
 WORKDIR /build
 COPY package.json package-lock.json ./
@@ -59,8 +58,6 @@ RUN set -eux; \
     chmod -R u+rwX,g-rwx,o-rwx storage bootstrap/cache; \
     rm /usr/local/bin/composer
 
-# Use only the isolated application schema. Render may override these defaults.
-# Database credentials and DB_CONNECTION are intentionally NOT built into the image.
 ENV APP_ENV=production APP_DEBUG=false PORT=10000 \
     DB_SCHEMA=tidong_v2 DB_SSLMODE=require SESSION_SECURE_COOKIE=true
 EXPOSE 10000

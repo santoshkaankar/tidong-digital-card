@@ -1,42 +1,46 @@
 #!/bin/sh
-# Fail closed on common production misconfigurations. Never migrate or seed.
+# Render invokes this script on every successful image deployment/start.
+# ONLY pending migrations: never fresh/refresh/reset/rollback/seed.
 set -eu
 
-if [ "${APP_ENV:-}" != production ]; then
-  echo 'STARTUP_BLOCKED: APP_ENV must be production' >&2
+if [ "${APP_ENV:-}" != "production" ]; then
+  echo 'TIDONG STARTUP BLOCKED: APP_ENV must be production.' >&2
   exit 1
 fi
 case "${APP_DEBUG:-}" in
   false|0|off) ;;
-  *) echo 'STARTUP_BLOCKED: APP_DEBUG must be false' >&2; exit 1 ;;
+  *) echo 'TIDONG STARTUP BLOCKED: APP_DEBUG must be false.' >&2; exit 1 ;;
 esac
 if [ -z "${APP_KEY:-}" ]; then
-  echo 'STARTUP_BLOCKED: APP_KEY is missing' >&2
+  echo 'TIDONG STARTUP BLOCKED: APP_KEY is missing.' >&2
   exit 1
 fi
-if [ "${DB_CONNECTION:-}" != pgsql ]; then
-  echo 'STARTUP_BLOCKED: PostgreSQL configuration not confirmed' >&2
+if [ "${DB_CONNECTION:-}" != "pgsql" ]; then
+  echo 'TIDONG STARTUP BLOCKED: DB_CONNECTION=pgsql required for Supabase.' >&2
   exit 1
 fi
-# Fail closed if the isolated application schema is not explicitly selected.
-# The legacy production data remain in public during the transition.
-if [ "${DB_SCHEMA:-}" != 'tidong_v2' ]; then
-  echo 'STARTUP_BLOCKED: DB_SCHEMA must be tidong_v2' >&2
+if [ "${DB_SCHEMA:-}" != "tidong_v2" ]; then
+  echo 'TIDONG STARTUP BLOCKED: DB_SCHEMA must be tidong_v2 (protecting legacy public schema).' >&2
   exit 1
 fi
-if [ "${DB_SSLMODE:-}" != require ] && [ "${DB_SSLMODE:-}" != verify-full ]; then
-  echo 'STARTUP_BLOCKED: DB_SSLMODE must require encrypted connection' >&2
+case "${DB_SSLMODE:-}" in
+  require|verify-full) ;;
+  *) echo 'TIDONG STARTUP BLOCKED: DB_SSLMODE must require encrypted connection.' >&2; exit 1 ;;
+esac
+if [ "${SESSION_SECURE_COOKIE:-}" != "true" ]; then
+  echo 'TIDONG STARTUP BLOCKED: SESSION_SECURE_COOKIE must be true.' >&2
   exit 1
 fi
-if [ "${SESSION_SECURE_COOKIE:-}" != true ]; then
-  echo 'STARTUP_BLOCKED: SESSION_SECURE_COOKIE must be true' >&2
-  exit 1
-fi
-if [ "${PORT:-10000}" != 10000 ]; then
-  echo 'STARTUP_BLOCKED: Render PORT must be 10000 for this image' >&2
+if [ "${PORT:-10000}" != "10000" ]; then
+  echo 'TIDONG STARTUP BLOCKED: Render port must be 10000.' >&2
   exit 1
 fi
 
-# No php artisan migrate/seed/optimize here: production DB remains untouched.
-php artisan migrate --force
+echo 'TIDONG: Running ONLY pending Laravel migrations (migrate --force).'
+if php artisan migrate --force --no-interaction; then
+  echo 'TIDONG: Migration step completed. Starting Apache.'
+else
+  echo 'TIDONG: Migration failed. Apache not started; see Laravel DB error above.' >&2
+  exit 1
+fi
 exec apache2-foreground
