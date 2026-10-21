@@ -38,4 +38,5 @@ if [ "${PORT:-10000}" != 10000 ]; then
 fi
 
 # No php artisan migrate/seed/optimize here: production DB remains untouched.
+php artisan migrate --force
 exec apache2-foreground
