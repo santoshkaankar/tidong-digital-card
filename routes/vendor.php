@@ -45,5 +45,8 @@ Route::middleware(['auth', EnsureVendorAccount::class])
 // Private Sublimation Studio routes (kept isolated for this business type).
 require __DIR__.'/sublimation.php';
 
+// Outlet finance/stock opening: vendor-owner-only, review-gated.
+require __DIR__.'/vendor-opening.php';
+
 // Vendor-owned delivery dispatch (guarded by delivery module switch).
 require __DIR__.'/vendor-delivery.php';

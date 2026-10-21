@@ -59,11 +59,13 @@
         </section>
         <section class="rounded-2xl bg-white p-6 shadow-sm">
             <h2 class="text-lg font-semibold">Branch Administration</h2>
+            <p class="mt-2 text-sm text-slate-600">Opening balances and stock reconciliation belong to the outlet owner.</p>
             <div class="mt-3 space-y-3">
                 @forelse ($branches as $option)
                     <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
                         <div><p class="font-semibold">{{ $option->name }}</p><p class="text-xs text-slate-500">{{ $option->city ?: 'City not specified' }} · {{ $option->branch_code }}</p></div>
                         <div class="flex flex-wrap gap-2 text-sm">
+                            <a class="rounded-lg border px-3 py-2 text-blue-700" href="{{ route('vendor.opening.index', [$business->id, $option->id]) }}">Outlet Opening &amp; Stock</a>
                             <a class="rounded-lg border px-3 py-2 text-blue-700" href="{{ route('vendor.branch.edit', $option->id) }}">Request Branch Edit</a>
                             <a class="rounded-lg border px-3 py-2 text-blue-700" href="{{ route('vendor.branch.licenses.index', $option->id) }}">Licences</a>
                         </div>
