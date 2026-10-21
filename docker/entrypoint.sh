@@ -19,8 +19,8 @@ if [ "${DB_CONNECTION:-}" != "pgsql" ]; then
   echo 'TIDONG STARTUP BLOCKED: DB_CONNECTION=pgsql required for Supabase.' >&2
   exit 1
 fi
-if [ "${DB_SCHEMA:-}" != "tidong_v2" ]; then
-  echo 'TIDONG STARTUP BLOCKED: DB_SCHEMA must be tidong_v2 (protecting legacy public schema).' >&2
+if [ "${DB_SCHEMA:-}" != "public" ]; then
+  echo 'TIDONG STARTUP BLOCKED: DB_SCHEMA must be public.' >&2
   exit 1
 fi
 case "${DB_SSLMODE:-}" in
