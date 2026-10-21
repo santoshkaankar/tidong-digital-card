@@ -53,12 +53,16 @@ RUN set -eux; \
     php artisan package:discover --ansi; \
     sed "s/__PORT__/10000/g" /etc/apache2/sites-available/000-default.conf.template > /etc/apache2/sites-available/000-default.conf; \
     sed -i "s/^Listen 80$/Listen 10000/" /etc/apache2/ports.conf; \
+    sed -i 's/\r$//' /usr/local/bin/tidong-start; \
     chmod 0755 /usr/local/bin/tidong-start; \
     chown -R www-data:www-data storage bootstrap/cache /var/run/apache2 /var/lock/apache2 /var/log/apache2; \
     chmod -R u+rwX,g-rwx,o-rwx storage bootstrap/cache; \
     rm /usr/local/bin/composer
 
-ENV APP_ENV=production APP_DEBUG=false PORT=10000
+# Use only the isolated application schema. Render may override these defaults.
+# Database credentials and DB_CONNECTION are intentionally NOT built into the image.
+ENV APP_ENV=production APP_DEBUG=false PORT=10000 \
+    DB_SCHEMA=tidong_v2 DB_SSLMODE=require SESSION_SECURE_COOKIE=true
 EXPOSE 10000
 USER www-data
 ENTRYPOINT ["/usr/local/bin/tidong-start"]

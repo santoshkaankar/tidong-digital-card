@@ -1,0 +1,10 @@
+# Customer V1 static validation — 20 October 2026
+PHP syntax: PASS (17 changed PHP files checked using php -l, PHP 8.4.24)
+Contract checks: PASS (registration GET+POST closed via default-false config, auth+customer middleware, user-scoped address queries, row locking, CSRF in forms, vendor CTA retained)
+13 Laravel feature tests authored: NOT EXECUTED (no complete Laravel checkout/vendor/runner or isolated test DB in supplied ZIP)
+Files existing in source modified: 8; paths: routes/customer.php, routes/web.php, app/Models/User.php, app/Http/Middleware/EnsureCustomerAccount.php, app/Http/Controllers/Auth/CustomerAuthController.php, resources/views/auth/login.blade.php, resources/views/auth/register.blade.php, resources/views/customer/dashboard.blade.php
+New migration: additive 3 tables only, not run.
+Production/staging installation: NOT ATTEMPTED.
+No code execution against databases or external apps.
+
+LIMITATIONS: No browser integration, runtime Laravel tests, PostgreSQL/MySQL migration tests, load/concurrency testing or central admin UI; these must be checked by Master Integration Chat before install/deploy.

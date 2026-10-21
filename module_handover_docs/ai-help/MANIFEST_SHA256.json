@@ -1,0 +1,32 @@
+[
+  {
+    "path": "README_MASTER_HI.md",
+    "sha256": "6267c4fe758391a9dccda5788a13c6282f59ac3bcab6fcba9353eb368a07d27e",
+    "bytes": 2096
+  },
+  {
+    "path": "integration_private_not_for_ai/MASTER_INTEGRATION_SECURITY_CONTRACT.md",
+    "sha256": "db64fa8efe1cdc2a19061d7d7b12dd350b85bb142318c6323c21570b27036343",
+    "bytes": 3024
+  },
+  {
+    "path": "public_help/ANSWERING_RULES_PUBLIC.md",
+    "sha256": "66454141a029315d99da36e6ac87d8bab6fc1ce850c72c8d6cd76a98c200a697",
+    "bytes": 2484
+  },
+  {
+    "path": "public_help/WELCOME_HI.md",
+    "sha256": "8bc1b43c654b6ecff8dc55beebd0ae8cfab65f0c899e48b102aa8303ec006765",
+    "bytes": 1753
+  },
+  {
+    "path": "public_help/articles.json",
+    "sha256": "9223b6a747301dc9c39ec1efd2b76ef46a15b8869428eef13db686994ab699c4",
+    "bytes": 13092
+  },
+  {
+    "path": "tests/test_public_help.py",
+    "sha256": "f668630ad146f5e6642201c0caf0afe182b261330f86edbea47534b6ed0ec6b4",
+    "bytes": 1582
+  }
+]

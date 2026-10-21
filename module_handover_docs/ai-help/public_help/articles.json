@@ -1,0 +1,312 @@
+{
+  "version": "1.0.0",
+  "language": "en",
+  "answer_languages": [
+    "hi",
+    "en"
+  ],
+  "knowledge_scope": "how_to_only",
+  "production_ready": false,
+  "articles": [
+    {
+      "id": "general.signin",
+      "module": "general",
+      "audience": [
+        "all"
+      ],
+      "title": "How to sign in",
+      "questions": [
+        "How do I log in?",
+        "Login kaise kare?",
+        "लॉगिन कैसे करें?"
+      ],
+      "steps": [
+        "Open TIDONG and choose the available Sign In option.",
+        "Enter the credentials of your authorized account.",
+        "Select Sign In and follow any verification shown on screen.",
+        "After login, open the dashboard available to your account."
+      ],
+      "when_unavailable": "If you cannot sign in, use the official support or account-recovery option shown on the site. Do not share your password or verification codes in chat.",
+      "evidence": "generic_safe_guidance",
+      "release_state": "safe_generic"
+    },
+    {
+      "id": "delivery.partner.dashboard",
+      "module": "delivery",
+      "audience": [
+        "delivery_partner"
+      ],
+      "title": "Open your Delivery Partner Dashboard",
+      "questions": [
+        "Where are my deliveries?",
+        "Meri deliveries kaha dikhengi?",
+        "मेरी डिलीवरी कहाँ दिखेगी?"
+      ],
+      "steps": [
+        "Sign in with your approved Delivery Partner account.",
+        "Open Delivery Partner Dashboard.",
+        "Your assigned deliveries appear there with their current statuses.",
+        "If no delivery is assigned, the dashboard will display an empty-list message."
+      ],
+      "when_unavailable": "If the dashboard is unavailable or Delivery is disabled, contact your firm for operational questions; website support can assist with technical access only.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "delivery.partner.availability",
+      "module": "delivery",
+      "audience": [
+        "delivery_partner"
+      ],
+      "title": "Set your availability",
+      "questions": [
+        "How do I go online?",
+        "Online offline kaise kare?",
+        "ऑनलाइन ऑफलाइन कैसे करें?"
+      ],
+      "steps": [
+        "Sign in and open Delivery Partner Dashboard.",
+        "Find Availability near the top of the dashboard.",
+        "Choose Go Online or Go Offline, whichever is currently offered.",
+        "Check the displayed availability state after submitting."
+      ],
+      "when_unavailable": "When the option is unavailable or your account is not approved, contact the responsible firm.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "delivery.partner.accept_pickup",
+      "module": "delivery",
+      "audience": [
+        "delivery_partner"
+      ],
+      "title": "Accept and pick up a delivery",
+      "questions": [
+        "How do I accept delivery?",
+        "Pickup kaise mark kare?",
+        "डिलीवरी स्वीकार और पिकअप कैसे करें?"
+      ],
+      "steps": [
+        "Open an assigned delivery on Delivery Partner Dashboard.",
+        "For a new assignment, choose Accept or Decline as appropriate.",
+        "After accepting and physically collecting the parcel, choose Mark Picked Up.",
+        "Review the updated delivery status."
+      ],
+      "when_unavailable": "Buttons appear according to the delivery's state. Ask the firm to resolve an assignment issue.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "delivery.partner.complete",
+      "module": "delivery",
+      "audience": [
+        "delivery_partner"
+      ],
+      "title": "Mark a delivery as delivered",
+      "questions": [
+        "Delivery complete kaise kare?",
+        "How do I mark delivered?",
+        "डिलीवरी पूरी कैसे करें?"
+      ],
+      "steps": [
+        "Open the delivery after its status is Picked Up.",
+        "Confirm that the parcel has actually been handed to the recipient.",
+        "Ask the recipient for the verification PIN and enter it only in the website's designated field; do not paste it into AI chat.",
+        "Enter the recipient's name in Received by (name).",
+        "Choose Mark Delivered and check the result shown by the website."
+      ],
+      "when_unavailable": "If PIN verification fails or the button is not present, do not bypass the check; contact the responsible firm for assistance.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "delivery.partner.failed",
+      "module": "delivery",
+      "audience": [
+        "delivery_partner"
+      ],
+      "title": "Report an unsuccessful delivery",
+      "questions": [
+        "Delivery fail kaise kare?",
+        "How do I report failed delivery?",
+        "डिलीवरी फेल होने पर क्या करें?"
+      ],
+      "steps": [
+        "Open the relevant delivery in Picked Up status.",
+        "Enter the actual issue in Failure reason.",
+        "Choose Report Failed.",
+        "Follow your firm's instructions for safe physical return if the parcel remains with you."
+      ],
+      "when_unavailable": "Only the authorized firm can confirm a received return or decide the next dispatch action.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "delivery.vendor.invite",
+      "module": "delivery",
+      "audience": [
+        "vendor_owner",
+        "firm_authorized_employee"
+      ],
+      "title": "Invite a Delivery Partner",
+      "questions": [
+        "Partner ko invite kaise kare?",
+        "How to invite a delivery partner?",
+        "डिलीवरी पार्टनर कैसे जोड़ें?"
+      ],
+      "steps": [
+        "Open Business Delivery Management with your authorized firm account.",
+        "Find Invite Existing Authorized Partner Account.",
+        "Choose the business, enter the existing authorized account email and select vehicle type.",
+        "Choose Invite Partner.",
+        "Review the invitation status in Business Partner Verification & Approval."
+      ],
+      "when_unavailable": "Public self-registration is not part of this candidate flow. If the option is missing, request firm authorization or technical help as appropriate.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "delivery.vendor.approve",
+      "module": "delivery",
+      "audience": [
+        "vendor_owner",
+        "firm_authorized_employee"
+      ],
+      "title": "Screen and approve a partner for your firm",
+      "questions": [
+        "Partner approve kaise kare?",
+        "How to approve delivery partner?",
+        "पार्टनर अप्रूव कैसे करें?"
+      ],
+      "steps": [
+        "Open Business Delivery Management.",
+        "Find Business Partner Verification & Approval.",
+        "Complete the firm's required screening outside the assistant.",
+        "Only after screening, use the Screening completed confirmation and Attest.",
+        "Use Approve for Firm when it is offered. The same section also provides Suspend for Firm."
+      ],
+      "when_unavailable": "Approvals are firm decisions. Website administrators and support staff do not approve for a vendor.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "delivery.vendor.assign",
+      "module": "delivery",
+      "audience": [
+        "vendor_owner",
+        "firm_authorized_employee"
+      ],
+      "title": "Assign a delivery to a partner",
+      "questions": [
+        "Delivery assign kaise kare?",
+        "How do I dispatch delivery?",
+        "डिलीवरी असाइन कैसे करें?"
+      ],
+      "steps": [
+        "Open Business Delivery Management and find Assign Delivery.",
+        "Select your authorized Business, matching Branch and Approved Available Partner.",
+        "Fill in the delivery's required recipient and destination details directly in the secure website form; never send them in AI chat.",
+        "Review any delivery fee or earning fields shown on the website; these are snapshots, not a payout confirmation.",
+        "Select Assign Delivery and privately share any one-time recipient PIN only with the recipient using the approved method."
+      ],
+      "when_unavailable": "If the form or partner is unavailable, check that your firm has enabled the workflow and that the partner is available. This assistant cannot dispatch on your behalf.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "delivery.vendor.return",
+      "module": "delivery",
+      "audience": [
+        "vendor_owner",
+        "firm_authorized_employee"
+      ],
+      "title": "Confirm a physical return",
+      "questions": [
+        "Return confirm kaise kare?",
+        "How to confirm returned parcel?",
+        "पार्सल वापसी कैसे कन्फर्म करें?"
+      ],
+      "steps": [
+        "Open Authorized Business Deliveries.",
+        "Locate the failed delivery in your authorized business.",
+        "Only after physically receiving the parcel, tick Physical return received.",
+        "Choose Confirm Return and review the updated record."
+      ],
+      "when_unavailable": "Do not confirm a return that has not physically occurred. Firm staff handle reassignments and cancellations under their permissions.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "platform.modules.availability",
+      "module": "platform",
+      "audience": [
+        "super_admin",
+        "admin",
+        "admin_employee_with_permission"
+      ],
+      "title": "Turn an available website module on or off",
+      "questions": [
+        "Module on off kaise kare?",
+        "How to enable module?",
+        "मॉड्यूल चालू या बंद कैसे करें?"
+      ],
+      "steps": [
+        "Sign in with an account authorized for Module Management.",
+        "Open Module Management and find Installed Modules.",
+        "Locate the module that is already deployed and registered.",
+        "Use Turn ON or Turn OFF if the control appears for your account.",
+        "Check the updated status. Turning ON does not install code or grant anyone firm operations."
+      ],
+      "when_unavailable": "If the button is not visible, request a platform-authorized permission review. A module not installed must pass developer review before registration.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "platform.features.availability",
+      "module": "platform",
+      "audience": [
+        "super_admin",
+        "admin",
+        "admin_employee_with_permission"
+      ],
+      "title": "Turn an available website feature on or off",
+      "questions": [
+        "Feature kaise on kare?",
+        "How to switch a website option off?",
+        "वेबसाइट फीचर कैसे ऑन ऑफ करें?"
+      ],
+      "steps": [
+        "Open Module Management with an authorized platform account.",
+        "Find Website Feature Availability.",
+        "Locate the reviewed feature.",
+        "Choose Turn ON or Turn OFF if permitted.",
+        "Check the status; a feature remains unavailable when its parent module is off."
+      ],
+      "when_unavailable": "Feature availability is a technical switch and does not give website staff vendor business-operation rights.",
+      "evidence": "delivery_v3_ui_candidate",
+      "release_state": "candidate_only"
+    },
+    {
+      "id": "general.voice.help",
+      "module": "general",
+      "audience": [
+        "all"
+      ],
+      "title": "Use optional voice help",
+      "questions": [
+        "Bol kar website kaise chalaye?",
+        "Voice assistant kaise use kare?",
+        "वॉइस हेल्प कैसे इस्तेमाल करें?"
+      ],
+      "steps": [
+        "On a page where Voice Helper is enabled, choose the microphone or text command option.",
+        "Allow microphone permission only if you want voice recognition, then speak a supported navigation command.",
+        "Use text commands when the browser does not support speech recognition.",
+        "Use the mute control to keep notification sounds off, or enable them explicitly if wanted."
+      ],
+      "when_unavailable": "This is a browser helper, not a full conversational AI. It does not submit order, payment, approval or delivery status changes.",
+      "evidence": "voice_helper_v1_candidate",
+      "release_state": "candidate_only"
+    }
+  ]
+}

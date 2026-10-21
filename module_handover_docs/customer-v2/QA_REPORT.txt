@@ -1,0 +1,8 @@
+TIDONG Customer V2 QA REPORT - 2026-10-20
+Scope: Customer UI, services directory, role restrictions, read-only orders placeholder
+Static PHP syntax: PASS for all PHP files (includes .blade.php parser only, not Blade compilation)
+HTML/CSS: Authored for mobile-first responsive screens; browser QA PENDING.
+Security: Guard routes auth+EnsureCustomerAccount inherited from V1; read-only directory filters vendor+business+branch; input validation and pagination; test cases written.
+Code verification: Browser/E2E and Laravel Feature test execution NOT PERFORMED (no Laravel runtime/vendor/database in provided source snapshot).
+Migration: NONE. Database touched: NONE. Production changes: NONE.
+Master must diff current V1 files and run tests on pre-migrated digital_test_db using DatabaseTransactions.

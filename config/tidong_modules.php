@@ -22,14 +22,16 @@ return [
         'default_enabled' => true,
         'paths' => ['vendor/businesses/*/sublimation', 'vendor/businesses/*/sublimation/*'],
     ],
-    'game' => [
-        'name' => 'Virtual City Game (placeholder)', 'installed' => false,
-        'default_enabled' => false,
-        'paths' => ['game', 'game/*'],
-    ],
+'game' => ['name' => 'Virtual Life V10 (private preview)', 'installed' => true, 'default_enabled' => false, 'paths' => ['game', 'game/*']],
     'marriage_planner' => [
         'name' => 'Marriage Planner (placeholder)', 'installed' => false,
         'default_enabled' => false,
         'paths' => ['marriage-planner', 'marriage-planner/*'],
     ],
+    'customer' => ['name' => 'Customer Marketplace', 'installed' => true, 'default_enabled' => true, 'paths' => []],
+    'grocery' => ['name' => 'Grocery and Kirana', 'installed' => true, 'default_enabled' => false, 'paths' => []],
+    'legal_advisory' => ['name' => 'Legal and Professional Advisory', 'installed' => true, 'default_enabled' => false, 'paths' => []],
+    'affiliate' => ['name' => 'Affiliate Network (review)', 'installed' => true, 'default_enabled' => false, 'paths' => []],
+    'billing' => ['name' => 'Billing Invoice Foundation (draft only)', 'installed' => false, 'default_enabled' => false, 'paths' => []],
+    'ai_public_help' => ['name' => 'AI Public Help Corpus (draft only)', 'installed' => false, 'default_enabled' => false, 'paths' => []],
 ];

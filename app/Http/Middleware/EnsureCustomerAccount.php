@@ -17,6 +17,9 @@ class EnsureCustomerAccount
             return redirect()->route('login');
         }
 
+        // TIDONG CUSTOMER MODULE GATE: no cross-role access on disable.
+        abort_unless(config('tidong_customer.enabled', true)
+            && app(\App\Services\Platform\ModuleRegistry::class)->isEnabled('customer'), 403);
         $hasActiveCustomerAccount = $request->user()
             ->userAccountTypes()
             ->whereHas('accountType', function ($query) {

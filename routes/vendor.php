@@ -50,3 +50,6 @@ require __DIR__.'/vendor-opening.php';
 
 // Vendor-owned delivery dispatch (guarded by delivery module switch).
 require __DIR__.'/vendor-delivery.php';
+
+// TIDONG additive multi-module integration (no existing routes removed).
+require __DIR__.'/tidong_integrated_vendor.php';

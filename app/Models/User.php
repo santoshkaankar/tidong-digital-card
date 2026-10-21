@@ -145,6 +145,10 @@ class User extends Authenticatable
      * Check an active platform role permission, honoring the Super Admin
      * only when it also has the active platform_admin account type.
      */
+    /** Private customer profile, address book and audit relationships. */
+    public function customerProfile() { return $this->hasOne(\App\Models\Customer\CustomerProfile::class); }
+    public function customerAddresses() { return $this->hasMany(\App\Models\Customer\CustomerAddress::class); }
+    public function customerAccountAuditLogs() { return $this->hasMany(\App\Models\Customer\CustomerAccountAuditLog::class); }
     public function hasPlatformPermission(string $permissionCode): bool
     {
         $validRoles = $this->roleAssignments()

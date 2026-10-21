@@ -1,0 +1,14 @@
+TIDONG Affiliate V2 Master Review - QA
+Date: 2026-10-20
+PASS: PHP CLI syntax checking for all PHP files in this package.
+PASS: Static inspection: placement_parent_member_id + placement_leg unique slot constraint.
+PASS: Static inspection: every member insertion occurs after an affiliate_settings row-level lock.
+PASS: Static inspection: unreferred placement uses the locked root A-chain tail and never fabricates an actual referrer.
+PASS: Static inspection: a referred child filling the current A-chain tail advances the tail.
+PASS: Static inspection: payouts, withdrawals, T-Coin and fee collection still hard-disabled.
+PASS: Existing company logo retained, no external credentials included.
+NOT RUN: Laravel Feature/Database tests; Composer-installed runtime and test MySQL DB unavailable in this sandbox.
+NOT RUN: MySQL/PostgreSQL concurrent registration and load tests.
+NOT INTEGRATED: New customer signup controller, verification and cross-outlet order ingestion.
+NOT APPROVED: Referred leg spillover when the selected sponsor slot is already full.
+NO CHANGES: Local Windows project, digital_db, Render, Supabase, GitHub and live website.

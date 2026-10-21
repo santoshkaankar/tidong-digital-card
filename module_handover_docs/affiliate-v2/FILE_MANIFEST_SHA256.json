@@ -1,0 +1,17 @@
+{
+  "QA_RESULTS.txt": "14f6100cc8a8917b06ddcb582b6a3a5744130c35ba0218502a037ed489541f9b",
+  "README_FIRST_ENGLISH.md": "b0701aaa29be18fb9c3c5cfe65cbafee1b8d1671f7cfdd4bf78f1c9bdff000fc",
+  "app/Http/Controllers/Affiliate/AffiliateAdminController.php": "cc1cf90dfc5d2235c3f2549e5e83a2f80804efac8f768041b10391e95b72e093",
+  "app/Http/Controllers/Affiliate/AffiliateController.php": "8bfcae18226a70a1b622b566c0a13818f61c442c5da64760f2b07328bfaa9119",
+  "app/Services/Affiliate/AffiliateEstimateService.php": "91189d2e994a0fe698dc2e68c170a52dd3b1865358effb7dfdb28c28ca10fa7a",
+  "app/Services/Affiliate/AffiliateMembershipService.php": "2fbf2563143df8328c1e00cf8746aa3b885346e5d5270efcc9b10850acc724b9",
+  "database/migrations/2026_10_20_180000_create_affiliate_onboarding_tables.php": "6a324964b339f61c48a011a15c958df8e6b01a5e452df4d129c6cbc3615e1f45",
+  "database/migrations/2026_10_20_190000_add_affiliate_binary_placement.php": "2075ca8edfccfe1179841efd2b0349ca0bfbe40797f37c140af7838635c8997f",
+  "docs/MASTER_INTEGRATION_GUIDE.md": "e0a0d9fc6df1ef16ba05354c8cc5cef33168a46a7ce3c81c33ef79d4ee9a5a3b",
+  "docs/SECURITY_AND_FINANCE_BOUNDARIES.md": "34190037cdce8a81b0eb62ef2652108f93f6a476454f0d0af0b89916c683d94a",
+  "public/assets/tidong-official-logo.jpeg": "db967cfdd1f9882043404225ee683ed11c0180238e50f1be8f80b8b8521207cb",
+  "resources/views/affiliate/admin.blade.php": "d0ab7a7e99bc5adac444979164d9a9956768aba8cdcde9f33b49c2709fa6cf15",
+  "resources/views/affiliate/index.blade.php": "b35af426e6eba89875de01df8d3b924212ead16061d2592aafead1512055666a",
+  "routes/affiliate.php": "49d213c8d543ed57cb0d4a72d2625ce7f6cb6ed72f4345aa4f722136ce063515",
+  "tests/Feature/AffiliateModuleReviewTest.php": "6e16747910e0152f294f787219ee74fe9f69a7ce20d120c493d3ed5cebcbdb7a"
+}

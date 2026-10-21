@@ -1,0 +1,33 @@
+TIDONG Customer V1 (review-only)
+
+MODIFIED SNAPSHOT FILES (must review 3-way diff against live Master):
+ app/Models/User.php                        - 3 customer-owned relationships
+ app/Http/Controllers/Auth/CustomerAuthController.php - registration off by default (GET & POST)
+ app/Http/Middleware/EnsureCustomerAccount.php - customer module config switch and existing active account guard
+ routes/customer.php                         - customer account screens and auth+customer route protection
+ routes/web.php                              - registration throttling; other existing routes preserved
+ resources/views/auth/login.blade.php       - English login / hide signup link while closed
+ resources/views/auth/register.blade.php    - English registration when explicitly enabled
+ resources/views/customer/dashboard.blade.php - customer account dashboard, vendor link retained
+
+NEW FILES:
+ config/tidong_customer.php
+ app/Models/Customer/CustomerProfile.php
+ app/Models/Customer/CustomerAddress.php
+ app/Models/Customer/CustomerAccountAuditLog.php
+ app/Services/Customer/CustomerAudit.php
+ app/Http/Controllers/Customer/CustomerDashboardController.php
+ app/Http/Controllers/Customer/CustomerProfileController.php
+ app/Http/Controllers/Customer/CustomerAddressController.php
+ app/Http/Controllers/Customer/CustomerPreferencesController.php
+ app/Http/Controllers/Customer/CustomerSecurityController.php
+ database/migrations/2026_10_20_010000_create_customer_account_tables.php
+ resources/views/customer/layout.blade.php
+ resources/views/customer/profile.blade.php
+ resources/views/customer/preferences.blade.php
+ resources/views/customer/security.blade.php
+ resources/views/customer/addresses/index.blade.php
+ resources/views/customer/addresses/form.blade.php
+ tests/Feature/CustomerAccountModuleTest.php
+
+NO existing order/financial schema changed. NO old migrations rewritten. NO database run.

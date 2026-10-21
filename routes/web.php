@@ -34,3 +34,6 @@ Route::get('/menu/{token}', [\App\Http\Controllers\PublicQrMenuController::class
 
 Route::post('/menu/{token}/request', [\App\Http\Controllers\RestaurantQrOrderController::class, 'submit'])
     ->middleware('throttle:6,1')->name('qr.menu.submit');
+
+// TIDONG additive multi-module integration (no existing routes removed).
+require __DIR__.'/tidong_integrated_web.php';

@@ -134,3 +134,6 @@ Route::middleware(['auth', EnsureSuperAdmin::class])
 // Modular admin screens (no replacement of existing admin routes).
 $platformOperationsArea = 'admin';
 require __DIR__.'/platform-operations.php';
+
+// TIDONG additive multi-module integration (no existing routes removed).
+require __DIR__.'/tidong_integrated_admin.php';
