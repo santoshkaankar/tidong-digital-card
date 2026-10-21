@@ -1,74 +1,89 @@
-<x-guest-layout>
-    <!-- Back to Home Button -->
-<div class="mb-4">
-    <a href="{{ url('/') }}" class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
-        <i class="fas fa-arrow-left me-2"></i> &larr; Back to Home Page
-    </a>
-</div>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Login</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
 
-    <!-- Error Alert Box -->
-    @if ($errors->any())
-        <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded-xl font-medium text-center">
-            {{ $errors->first() }}
-        </div>
-    @endif
-
-    <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-900 tracking-wide">Welcome Back!</h2>
-        <p class="text-sm text-gray-600 mt-1 font-medium">Log in to manage your digital card & catalogs</p>
-    </div>
-
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
-
-        <!-- Email, Mobile, or Username -->
-        <div>
-            <label for="login" class="block font-semibold text-sm text-gray-800">Email, Mobile, or Username</label>
-            <input id="login" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="text" name="login" :value="old('login')" required autofocus autocomplete="username" placeholder="Enter email, mobile, or username" />
-            <x-input-error :messages="$errors->get('login')" class="mt-2 text-red-600" />
+    <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+        <div class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-slate-800">Welcome Back</h1>
+            <p class="mt-2 text-sm text-slate-500">
+                अपने अकाउंट में लॉगिन करें
+            </p>
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <label for="password" class="block font-semibold text-sm text-gray-800">Password</label>
-            <input id="password" class="block mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 px-3 text-gray-900 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20" type="password" name="password" required autocomplete="current-password" placeholder="••••••••" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-600" />
-        </div>
+        @if ($errors->any())
+            <div class="mb-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+                <p class="mb-2 font-semibold">Login नहीं हो पाया:</p>
+                <ul class="list-inside list-disc">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-        <!-- Remember Me & Forgot Password Links -->
-<div class="flex items-center justify-between mt-4">
-    <label for="remember_me" class="inline-flex items-center cursor-pointer">
-        <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="remember">
-        <span class="ms-2 text-sm text-gray-700 font-medium">{{ __('Remember me') }}</span>
-    </label>
+        <form method="POST" action="{{ route('login.store') }}" class="space-y-5">
+            @csrf
 
-    <div class="text-xs text-end">
-        <span class="text-gray-500 font-medium block">Forgot Password?</span>
-        <a class="text-blue-600 hover:text-blue-800 font-bold transition me-1" href="{{ route('password.request') }}">
-            Email
-        </a>
-        <span class="text-gray-400">|</span>
-        <a class="text-blue-600 hover:text-blue-800 font-bold transition ms-1" href="{{ route('password.mobile.form') }}">
-            Mobile
-        </a>
-    </div>
-</div>
+            <div>
+                <label for="email" class="mb-1 block text-sm font-medium text-slate-700">
+                    Email Address
+                </label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value="{{ old('email') }}"
+                    required
+                    autocomplete="email"
+                    class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                    placeholder="you@example.com"
+                >
+            </div>
 
-        <!-- Login Button -->
-        <div class="mt-6">
-            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition duration-200">
-                LOG IN
+            <div>
+                <label for="password" class="mb-1 block text-sm font-medium text-slate-700">
+                    Password
+                </label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    autocomplete="current-password"
+                    class="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                    placeholder="अपना Password लिखें"
+                >
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input
+                    id="remember"
+                    name="remember"
+                    type="checkbox"
+                    value="1"
+                    class="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                >
+                <label for="remember" class="text-sm text-slate-600">
+                    मुझे लॉगिन रखें
+                </label>
+            </div>
+
+            <button
+                type="submit"
+                class="w-full rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+                Login
             </button>
-        </div>
+        </form>
 
-        <!-- Register Link -->
-        <div class="text-center mt-6 text-sm text-gray-600 font-medium">
-            Don't have an account? 
-            <a href="{{ route('register') }}" class="font-bold text-blue-600 hover:text-blue-800 underline ms-1">
-                Register Now
-            </a>
-        </div>
-    </form>
-</x-guest-layout>
+        <p class="mt-6 text-center text-sm text-slate-600">Public registration is currently closed.</p>
+    </div>
+
+</body>
+</html>

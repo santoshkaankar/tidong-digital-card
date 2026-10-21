@@ -1,180 +1,36 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Member\CardController;
-use App\Http\Controllers\Vendor\CatalogController;
-use App\Http\Controllers\Customer\HubController;
-use App\Http\Middleware\DeviceIdentityMiddleware;
-use Illuminate\Support\Facades\View;
-use App\Http\Controllers\Restaurant\ProceedTiffinController;
-use App\Http\Controllers\Auth\MobilePasswordResetController;
-use App\Http\Controllers\Global\GlobalVoiceController;
-use App\Http\Controllers\Vendor\VendorDashboardController;
-use App\Http\Controllers\PincodeController;
+use App\Http\Controllers\Auth\CustomerAuthController;
 
-/*
-|--------------------------------------------------------------------------
-| 1. Root Route & Role Redirection
-|--------------------------------------------------------------------------
-*/
+// Homepage — पुराना homepage सुरक्षित रखा गया है
 Route::get('/', function () {
-    if (auth()->check()) {
-        $role = auth()->user()->role ?? 'customer';
-        return match($role) {
-            'admin' => Route::has('admin.dashboard') ? redirect()->route('admin.dashboard') : redirect('/admin/dashboard'),
-            'vendor', 'business' => Route::has('vendor.dashboard') ? redirect()->route('vendor.dashboard') : redirect('/vendor/businesses'),
-            'employee' => Route::has('employee.dashboard') ? redirect()->route('employee.dashboard') : redirect('/'),
-            default => Route::has('member.dashboard') ? redirect()->route('member.dashboard') : redirect('/member/dashboard')
-        };
-    }
     return view('welcome');
 });
 
-Route::get('/instruction/{slug}', function ($slug) {
-    if (View::exists('instructions.' . $slug)) {
-        return view('instructions.' . $slug);
-    }
-    abort(404);
-})->name('instruction.show');
+// Login और Registration — केवल वे लोग जो लॉगिन नहीं हैं
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [CustomerAuthController::class, 'showLogin'])
+        ->name('login');
 
-Route::get('/vendor/restaurant/customer-lookup', [ProceedTiffinController::class, 'customerLookup'])->name('vendor.restaurant.customer-lookup');
+    Route::post('/login', [CustomerAuthController::class, 'login'])
+        ->middleware('throttle:login')
+        ->name('login.store');
 
-// 1. Mobile Number form dikhane aur OTP bhejne ke liye
-Route::get('/forgot-password-mobile', [MobilePasswordResetController::class, 'showMobileForm'])->name('password.mobile.form');
-Route::post('/send-otp', [MobilePasswordResetController::class, 'sendOtp'])->name('password.send.otp');
+    Route::get('/register', [CustomerAuthController::class, 'showRegister'])
+        ->name('register');
 
-// 2. OTP aur naya Password enter karne ke liye
-Route::get('/verify-otp/{mobile}', [MobilePasswordResetController::class, 'showVerifyForm'])->name('password.verify.form');
-Route::post('/reset-password-mobile', [MobilePasswordResetController::class, 'resetPassword'])->name('password.reset.mobile');
-
-/*
-|--------------------------------------------------------------------------
-| 2. System Utility Routes
-|--------------------------------------------------------------------------
-*/
-Route::get('/fix-storage', function () {
-    Artisan::call('storage:link');
-    Artisan::call('view:clear');
-    Artisan::call('cache:clear');
-    Artisan::call('route:clear');
-    return 'Storage linked and caches cleared successfully!';
+    Route::post('/register', [CustomerAuthController::class, 'register'])
+        ->name('register.store');
 });
 
-Route::get('/change-language/{locale}', function ($locale) {
-    $supportedLocales = ['en', 'hi', 'es', 'fr', 'de', 'ja', 'zh', 'ar', 'ru', 'pt', 'it', 'ko', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'pa', 'ur'];
-    if (in_array($locale, $supportedLocales)) {
-        session(['locale' => $locale]);
-        app()->setLocale($locale);
-    }
-    return redirect()->back();
-})->name('change.language');
+// Logout — केवल लॉगिन किए हुए यूज़र
+Route::post('/logout', [CustomerAuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
-/*
-|--------------------------------------------------------------------------
-| 3. Auth & Public Cards Routes
-|--------------------------------------------------------------------------
-*/
-require __DIR__ . '/auth.php';
+// Public, read-only menu accessed using a secret per-table QR token.
+Route::get('/menu/{token}', [\App\Http\Controllers\PublicQrMenuController::class, 'show'])->name('qr.menu.show');
 
-Route::get('/card/v/{slug}', [CardController::class, 'showPublic'])->name('card.public');
-Route::get('/card/{slug}', [CardController::class, 'showPublic'])->name('card.show');
-Route::get('/search-locations', [CardController::class, 'searchLocations'])->name('search.locations');
-
-/*
-|--------------------------------------------------------------------------
-| 4. Role Group Inclusions
-|--------------------------------------------------------------------------
-*/
-require __DIR__ . '/admin.php';
-
-Route::prefix('member')->name('member.')->middleware(['auth', 'role:member,user,customer'])->group(function () {
-    require __DIR__ . '/member.php';
-});
-
-Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee'])->group(function () {
-    require __DIR__ . '/employee.php';
-});
-
-/*
-|--------------------------------------------------------------------------
-| 5. Industry Module Routes Inclusion
-|--------------------------------------------------------------------------
-*/
-require __DIR__ . '/payment.php';
-require __DIR__ . '/emporium.php';
-require __DIR__ . '/hotel.php';
-require __DIR__ . '/money_exchange.php';
-require __DIR__ . '/tourist_guide.php';
-require __DIR__ . '/restaurant.php';
-require __DIR__ . '/taxi.php';
-require __DIR__ . '/retail.php';
-require __DIR__ . '/shopping.php';
-require __DIR__ . '/delivery.php';
-require __DIR__ . '/hub.php';
-require __DIR__ . '/vendor.php';
-require __DIR__.'/game.php';
-
-/*
-|--------------------------------------------------------------------------
-| 6. Public Guest Orders & Hub Routes
-|--------------------------------------------------------------------------
-*/
-Route::get('/c/{slug}', [CatalogController::class, 'showPublicCatalog'])->name('catalogs.public');
-Route::post('/menu/{slug}/order', [CatalogController::class, 'placeOrder'])->name('menu.order');
-Route::get('/guest/order/{orderId}', [CatalogController::class, 'guestOrderStatus'])->name('guest.order.status');
-Route::post('/guest/order/vacate/{orderId}', [CatalogController::class, 'vacateGuestTable'])->name('guest.order.vacate');
-
-Route::middleware([DeviceIdentityMiddleware::class])->group(function () {
-    Route::get('/hub', [HubController::class, 'index'])->name('customer.hub');
-});
-
-/*
-|--------------------------------------------------------------------------
-| 7. Public Content & Policy Pages
-|--------------------------------------------------------------------------
-*/
-Route::view('/about-us', 'pages.about')->name('pages.about');
-Route::view('/terms-and-conditions', 'pages.terms')->name('pages.terms');
-Route::view('/privacy-policy', 'pages.privacy')->name('pages.privacy');
-Route::view('/contact-us', 'pages.contact')->name('pages.contact');
-Route::view('/affiliate-program', 'pages.affiliate')->name('pages.affiliate');
-Route::view('/royalty-program', 'pages.royalty')->name('pages.royalty');
-Route::view('/luckydrow', 'pages.luckydrow')->name('pages.luckydrow');
-Route::view('/tabs-business-system', 'pages.tabs-business')->name('pages.tabs-business');
-Route::view('/cancellation-policy', 'pages.cancellation-policy')->name('pages.cancellation');
-Route::view('/return-policy', 'pages.return-policy')->name('pages.return');
-Route::view('/refund-policy', 'pages.refund-policy')->name('pages.refund');
-
-/*
-|--------------------------------------------------------------------------
-| 8. Guidance Pages
-|--------------------------------------------------------------------------
-*/
-Route::prefix('guidance')->group(function () {
-    Route::get('/member', function () { return view('pages.guidance.member'); })->name('guidance.member');
-    Route::get('/restaurant', function () { return view('pages.guidance.restaurant'); })->name('guidance.restaurant');
-    Route::get('/vendor-deductions', function () { return view('pages.guidance.vendor-deductions'); })->name('guidance.vendor-deductions');
-    Route::get('/deductions', function () { return view('pages.guidance.deductions'); })->name('guidance.deductions');
-});
-
-Route::get('/city-game', function () {
-    return view('city-game');
-});
-/*
-|--------------------------------------------------------------------------
-| 9. Alias & Service Fallback Routes
-|--------------------------------------------------------------------------
-*/
-// Vendor Master Dashboard Alias Route
-Route::get('/vendor/dashboard', [VendorDashboardController::class, 'index'])->name('vendor.dashboard');
-
-// Quick Services Menu Links
-Route::get('/services/taxi', function () { return redirect()->route('customer.hub'); })->name('vendor.taxi.rides');
-Route::get('/services/forex', function () { return redirect()->route('customer.hub'); })->name('vendor.exchange.rates');
-Route::get('/services/guide', function () { return redirect()->route('customer.hub'); })->name('vendor.guide.bookings');
-
-Route::post('/global/voice-process', [GlobalVoiceController::class, 'processVoiceCommand'])->name('global.voice.process');
-
-Route::get('/pincode/search', [PincodeController::class, 'search'])->name('pincode.search');
+Route::post('/menu/{token}/request', [\App\Http\Controllers\RestaurantQrOrderController::class, 'submit'])
+    ->middleware('throttle:6,1')->name('qr.menu.submit');

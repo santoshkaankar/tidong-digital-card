@@ -3,222 +3,205 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Vendor\GlobalItem;
-use App\Models\Vendor\ItemCategory;
-use App\Models\Vendor\VendorCategory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class VendorManagementController extends Controller
 {
-    // ==========================================
-    // 1. VENDOR PROFILES MANAGEMENT
-    // ==========================================
+    private function basePath(): string
+    {
+        $segment = request()->segment(1);
+
+        abort_unless(
+            in_array($segment, ['admin', 'staff-admin', 'employee'], true),
+            404
+        );
+
+        return '/' . $segment . '/vendors';
+    }
+
+    private function vendorQuery()
+    {
+        return DB::table('vendors')
+            ->leftJoin('users', 'users.id', '=', 'vendors.user_id')
+            ->whereNull('vendors.deleted_at')
+            ->select(
+                'vendors.*',
+                'users.name as user_name',
+                'users.email as user_email'
+            );
+    }
 
     public function index(Request $request)
     {
-        $query = $request->input('query');
-        $vendor = null;
+        $query = $this->vendorQuery();
 
-        if ($query) {
-            $vendor = User::where('role', 'business')
-                        ->where(function($q) use ($query) {
-                            $q->where('email', $query)->orWhere('mobile', $query);
-                        })->first();
+        if ($request->filled('search')) {
+            $term = trim((string) $request->input('search'));
+
+            $query->where(function ($q) use ($term) {
+                $q->where('vendors.display_name', 'like', '%' . $term . '%')
+                    ->orWhere('vendors.vendor_code', 'like', '%' . $term . '%')
+                    ->orWhere('users.name', 'like', '%' . $term . '%')
+                    ->orWhere('users.email', 'like', '%' . $term . '%');
+            });
         }
 
-        return view('admin.vendors.manage', compact('vendor', 'query'));
+        if ($request->filled('status')) {
+            $query->where('vendors.status', $request->input('status'));
+        }
+
+        $vendors = $query
+            ->orderByDesc('vendors.id')
+            ->paginate(15)
+            ->withQueryString();
+
+        $basePath = $this->basePath();
+
+        return view('vendor-management.index', compact('vendors', 'basePath'));
     }
 
-    public function saveOrUpdate(Request $request)
+    public function show(int $vendor)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'mobile' => 'required|string',
-            'business_type' => 'nullable|string',
-        ]);
+        $vendorRecord = $this->vendorQuery()
+            ->where('vendors.id', $vendor)
+            ->first();
 
-        $vendor = User::updateOrCreate(
-            ['email' => $request->email],
-            [
-                'name' => $request->name,
-                'mobile' => $request->mobile,
-                'role' => 'business',
-                'business_type' => $request->business_type,
-                'status' => $request->status ?? 'approved',
-                'password' => $request->filled('password') ? Hash::make($request->password) : Hash::make(Str::random(8)),
-            ]
+        abort_unless($vendorRecord, 404);
+
+        $businesses = collect();
+
+        if (Schema::hasTable('businesses')) {
+            $businesses = DB::table('businesses')
+                ->where('vendor_id', $vendor)
+                ->whereNull('deleted_at')
+                ->orderByDesc('id')
+                ->get();
+        }
+
+        $basePath = $this->basePath();
+        $canApprove = request()->user()->hasPlatformPermission('vendors.approve');
+        $canReject = request()->user()->hasPlatformPermission('vendors.reject');
+
+        return view(
+            'vendor-management.show',
+            compact('vendorRecord', 'businesses', 'basePath', 'canApprove', 'canReject')
         );
-
-        return redirect()->route('admin.vendors.manage', ['query' => $vendor->email])
-                         ->with('success', 'Vendor profile successfully saved/updated!');
     }
 
-    // ==========================================
-    // 2. VENDOR CATEGORIES MANAGEMENT
-    // ==========================================
-
-    public function createVendorCategory()
+    public function approve(Request $request, int $vendor)
     {
-        $vendorCategories = VendorCategory::latest()->get();
-        return view('admin.vendors.vendor-categories', compact('vendorCategories'));
-    }
-
-    public function storeVendorCategory(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:vendor_categories,name',
+        $data = $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
-        VendorCategory::create([
-            'name' => trim($request->name),
-            'description' => $request->description,
+        return $this->changeStatus(
+            $request,
+            $vendor,
+            'approved',
+            $data['reason'] ?? null
+        );
+    }
+
+    public function reject(Request $request, int $vendor)
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:500'],
         ]);
 
-        return redirect()->back()->with('success', 'Vendor Category added successfully!');
+        return $this->changeStatus(
+            $request,
+            $vendor,
+            'rejected',
+            $data['reason']
+        );
     }
 
-    public function destroyVendorCategory($id)
-    {
-        VendorCategory::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Vendor Category deleted successfully!');
-    }
+    private function changeStatus(
+        Request $request,
+        int $vendorId,
+        string $newStatus,
+        ?string $reason
+    ) {
+        $actor = $request->user();
 
-    // ==========================================
-    // 3. GLOBAL ITEMS & ITEM CATEGORIES MANAGEMENT
-    // ==========================================
+        abort_unless($actor, 403);
 
-    public function indexGlobalItem()
-    {
-        $items = GlobalItem::latest()->get();
-        return view('admin.vendors.global-items-index', compact('items'));
-    }
+        DB::transaction(function () use (
+            $request,
+            $actor,
+            $vendorId,
+            $newStatus,
+            $reason
+        ) {
+            $vendor = DB::table('vendors')
+                ->where('id', $vendorId)
+                ->whereNull('deleted_at')
+                ->lockForUpdate()
+                ->first();
 
-    public function createGlobalItem()
-    {
-        $itemCategories = ItemCategory::all();
-        return view('admin.vendors.create-global-item', compact('itemCategories'));
-    }
+            abort_unless($vendor, 404);
 
-    public function storeItemCategory(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:item_categories,name',
-        ]);
-
-        ItemCategory::create(['name' => trim($request->name)]);
-        return redirect()->back()->with('success', 'Item Category added successfully!');
-    }
-
-    public function storeGlobalItem(Request $request)
-    {
-        $request->validate([
-            'category' => 'required|string|max:255',
-            'item_name' => 'required|string|max:255',
-            'item_pic' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'mrp' => 'required|numeric|min:0',
-        ]);
-
-        $imagePath = null;
-        if ($request->hasFile('item_pic')) {
-            $imagePath = $request->file('item_pic')->store('global-items', 'public');
-        }
-
-        GlobalItem::create([
-            'category' => trim($request->category),
-            'item_name' => trim($request->item_name),
-            'item_pic' => $imagePath,
-            'mrp' => $request->mrp,
-            'default_price' => $request->mrp,
-            'description' => $request->description,
-            'status' => 'approved', 
-        ]);
-
-        return redirect()->back()->with('success', 'Global item created successfully!');
-    }
-
-    /**
-     * Edit Global Item Form Display
-     */
-    public function editGlobalItem($id)
-    {
-        $item = GlobalItem::findOrFail($id);
-        $itemCategories = ItemCategory::all();
-        return view('admin.vendors.edit-global-item', compact('item', 'itemCategories'));
-    }
-
-    /**
-     * Update Global Item Data
-     */
-    public function updateGlobalItem(Request $request, $id)
-    {
-        $item = GlobalItem::findOrFail($id);
-
-        $request->validate([
-            'category' => 'required|string|max:255',
-            'item_name' => 'required|string|max:255',
-            'item_pic' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'mrp' => 'required|numeric|min:0',
-        ]);
-
-        if ($request->hasFile('item_pic')) {
-            if ($item->item_pic && Storage::disk('public')->exists($item->item_pic)) {
-                Storage::disk('public')->delete($item->item_pic);
+            if ($vendor->status !== 'pending') {
+                throw ValidationException::withMessages([
+                    'status' => 'Sirf pending Vendor ko approve ya reject kiya ja sakta hai.',
+                ]);
             }
-            $item->item_pic = $request->file('item_pic')->store('global-items', 'public');
-        }
 
-        $item->update([
-            'category' => trim($request->category),
-            'item_name' => trim($request->item_name),
-            'mrp' => $request->mrp,
-            'default_price' => $request->mrp,
-            'description' => $request->description,
-            'item_pic' => $item->item_pic,
-        ]);
+            $oldValues = ['status' => $vendor->status];
+            $newValues = ['status' => $newStatus];
 
-        return redirect()->route('admin.global.items.index')->with('success', 'Global item updated successfully!');
-    }
+            $update = [
+                'status' => $newStatus,
+                'updated_at' => now(),
+            ];
 
-    public function destroyGlobalItem($id)
-    {
-        $item = GlobalItem::findOrFail($id);
-        if ($item->item_pic && Storage::disk('public')->exists($item->item_pic)) {
-            Storage::disk('public')->delete($item->item_pic);
-        }
-        $item->delete();
+            if ($newStatus === 'approved') {
+                if (Schema::hasColumn('vendors', 'approved_at')) {
+                    $update['approved_at'] = now();
+                    $newValues['approved_at'] = now()->toDateTimeString();
+                }
 
-        return redirect()->back()->with('success', 'Global Item deleted successfully!');
-    }
+                if (Schema::hasColumn('vendors', 'approved_by')) {
+                    $update['approved_by'] = $actor->id;
+                    $newValues['approved_by'] = $actor->id;
+                }
+            }
 
-    // ==========================================
-    // 4. ITEM APPROVALS & MODERATION
-    // ==========================================
+            DB::table('vendors')
+                ->where('id', $vendorId)
+                ->update($update);
 
-    public function pendingItems()
-    {
-        $pendingItems = GlobalItem::where('status', 'pending')->get();
-        return view('admin.vendors.pending-items', compact('pendingItems'));
-    }
+            if (Schema::hasTable('audit_logs')) {
+                $available = Schema::getColumnListing('audit_logs');
 
-    public function approveItem($id)
-    {
-        $item = GlobalItem::findOrFail($id);
-        $item->update(['status' => 'approved']);
-        return redirect()->back()->with('success', 'Item approved successfully!');
-    }
+                $audit = [
+                    'actor_user_id' => $actor->id,
+                    'action' => 'vendor.' . $newStatus,
+                    'entity_type' => 'vendor',
+                    'entity_id' => $vendorId,
+                    'reason' => $reason,
+                    'old_values' => json_encode($oldValues),
+                    'new_values' => json_encode($newValues),
+                    'metadata' => json_encode([
+                        'vendor_code' => $vendor->vendor_code,
+                        'request_path' => $request->path(),
+                    ]),
+                    'ip_address' => $request->ip(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                $audit = array_intersect_key($audit, array_flip($available));
 
-    public function rejectItem($id)
-    {
-        $item = GlobalItem::findOrFail($id);
-        if ($item->item_pic && Storage::disk('public')->exists($item->item_pic)) {
-            Storage::disk('public')->delete($item->item_pic);
-        }
-        $item->delete();
-        return redirect()->back()->with('success', 'Item request rejected.');
+                if (isset($audit['action'], $audit['actor_user_id'])) {
+                    DB::table('audit_logs')->insert($audit);
+                }
+            }
+        });
+
+        return redirect()->route(request()->segment(1) . '.vendors.show', ['vendor' => $vendorId])
+            ->with('success', 'Vendor status successfully updated.');
     }
 }

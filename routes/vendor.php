@@ -1,46 +1,49 @@
 <?php
 
+use App\Http\Controllers\Vendor\BranchLicenseController;
+use App\Http\Controllers\Vendor\VendorOnboardingController;
+use App\Http\Controllers\Vendor\VendorWorkspaceController;
+use App\Http\Middleware\EnsureCustomerAccount;
+use App\Http\Middleware\EnsureVendorAccount;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Vendor\VendorCardController;
-use App\Http\Controllers\Vendor\VendorBusinessController;
-use App\Http\Controllers\Vendor\VendorDashboardController;
-use App\Http\Controllers\Vendor\VendorEmployeeController;
 
-Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function () {
-    // Master Dashboard
-    Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');
-    
-    // Business management routes
-    Route::get('/businesses', [VendorBusinessController::class, 'index'])->name('businesses.index');
-    Route::post('/businesses', [VendorBusinessController::class, 'store'])->name('businesses.store');
-    Route::get('/businesses/switch/{id}', [VendorBusinessController::class, 'switchBusiness'])->name('businesses.switch');
+// Customers can apply to be Vendors using their existing account.
+Route::middleware(['auth', EnsureCustomerAccount::class])->group(function () {
+    Route::get('/apply', [VendorOnboardingController::class, 'create'])
+        ->name('vendor.apply');
+    Route::post('/apply', [VendorOnboardingController::class, 'store'])
+        ->name('vendor.apply.store');
 });
 
-// Vendor Cards Routes
-Route::middleware(['web', 'auth', 'role:vendor,business'])->prefix('vendor/cards')->name('vendor.card.')->group(function () {
-    Route::get('/', [VendorCardController::class, 'index'])->name('index');
-    Route::get('/create', [VendorCardController::class, 'create'])->name('create');
-    Route::post('/save-master', [VendorCardController::class, 'storeMaster'])->name('master.save');
-    Route::post('/save-view', [VendorCardController::class, 'storeCardView'])->name('view.save');
-    Route::delete('/view/{id}', [VendorCardController::class, 'destroyCardView'])->name('view.delete');
-    Route::get('/pincode-lookup', [VendorCardController::class, 'getPincodeDetails'])->name('pincode.lookup');
+// Vendor-only area: all Business and Branch writes are owner-scoped.
+Route::middleware(['auth', EnsureVendorAccount::class])->group(function () {
+    Route::get('/', [VendorWorkspaceController::class, 'index'])->name('vendor.home');
+    Route::get('/businesses/{business}/workspace', [\App\Http\Controllers\Vendor\BusinessWorkspaceController::class, 'show'])
+        ->whereNumber('business')->name('vendor.business.workspace');
+    Route::post('/businesses', [VendorWorkspaceController::class, 'storeBusiness'])
+        ->name('vendor.businesses.store');
+    Route::post('/businesses/{business}/branches', [VendorWorkspaceController::class, 'storeBranch'])
+        ->whereNumber('business')
+        ->name('vendor.branches.store');
+    Route::get('/branches/{branch}/edit', [\App\Http\Controllers\Vendor\BranchChangeRequestController::class, 'edit'])
+        ->whereNumber('branch')->name('vendor.branch.edit');
+    Route::post('/branches/{branch}/request-change', [\App\Http\Controllers\Vendor\BranchChangeRequestController::class, 'submit'])
+        ->whereNumber('branch')->name('vendor.branch.changes.store');
+    Route::get('/branches/{branch}/licenses', [BranchLicenseController::class, 'index'])
+        ->whereNumber('branch')->name('vendor.branch.licenses.index');
+    Route::post('/branches/{branch}/licenses', [BranchLicenseController::class, 'store'])
+        ->whereNumber('branch')->name('vendor.branch.licenses.store');
+    Route::put('/branches/{branch}/licenses/{license}', [BranchLicenseController::class, 'update'])
+        ->whereNumber('branch')->whereNumber('license')->name('vendor.branch.licenses.update');
 });
 
-// Public Card Slug Route
-Route::get('/vcard/{slug}', [VendorCardController::class, 'show'])->name('vendor.card.public');
+// Private address dropdown for active Vendor users.
+Route::middleware(['auth', EnsureVendorAccount::class])
+    ->get('/address-options', [\App\Http\Controllers\Vendor\IndiaPostDirectoryController::class, 'options'])
+    ->middleware('throttle:60,1')->name('vendor.address.options');
 
-// Vendor Businesses Management (Multi-Business per Vendor)
-Route::middleware(['web', 'auth'])->prefix('businesses')->name('businesses.')->group(function () {
-    Route::get('/', [VendorBusinessController::class, 'index'])->name('index');
-    Route::post('/store', [VendorBusinessController::class, 'store'])->name('store');
-    Route::get('/switch/{id}', [VendorBusinessController::class, 'switchBusiness'])->name('switch');
-});
+// Private Sublimation Studio routes (kept isolated for this business type).
+require __DIR__.'/sublimation.php';
 
-Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function () {
-    // ... aapke baaki routes ...
-
-    // Employee Management Routes
-    Route::get('/employees', [App\Http\Controllers\Vendor\VendorEmployeeController::class, 'index'])->name('employees.index');
-    Route::post('/employees/store', [App\Http\Controllers\Vendor\VendorEmployeeController::class, 'store'])->name('employees.store');
-    Route::post('/employees/toggle/{id}', [App\Http\Controllers\Vendor\VendorEmployeeController::class, 'toggleStatus'])->name('employees.toggle');
-});
+// Vendor-owned delivery dispatch (guarded by delivery module switch).
+require __DIR__.'/vendor-delivery.php';

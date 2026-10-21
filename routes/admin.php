@@ -1,55 +1,136 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\RestaurantManagementController;
-use App\Http\Controllers\Admin\MemberManagementController;
-use App\Http\Controllers\Admin\EmployeeManagementController;
-use App\Http\Controllers\UpdateController;
+use Illuminate\Support\Facades\DB;
+use App\Http\Middleware\EnsureSuperAdmin;
+use App\Http\Controllers\Admin\UserManagementController;
 
-Route::middleware(['web', 'auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', EnsureSuperAdmin::class])->group(function () {
 
-    // 1. Dashboard & Core
-    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-    Route::delete('/delete/{id}', [AdminController::class, 'destroy'])->name('delete');
-    Route::post('/register-user', [AdminController::class, 'storeUser'])->name('store.user');
+    Route::get('/', function () {
+        $stats = [
+            'users' => DB::table('users')->count(),
 
-    // 2. Members Management
-    Route::get('/members/manage', [MemberManagementController::class, 'index'])->name('members.manage');
-    Route::post('/members/save', [MemberManagementController::class, 'saveOrUpdate'])->name('members.save');
-    Route::put('/members/{id}/update', [MemberManagementController::class, 'updateDetails'])->name('members.update.details');
-    Route::get('/members/search_member', [MemberManagementController::class, 'searchmember'])->name('members.search_member');
+            'customers' => DB::table('user_account_types')
+                ->join(
+                    'account_types',
+                    'account_types.id',
+                    '=',
+                    'user_account_types.account_type_id'
+                )
+                ->where('account_types.code', 'customer')
+                ->where('user_account_types.status', 'active')
+                ->count(),
 
-    // 3. Vendors Management
-    Route::get('/vendors/manage', [RestaurantManagementController::class, 'index'])->name('vendors.manage');
-    Route::post('/vendors/save', [RestaurantManagementController::class, 'saveOrUpdate'])->name('vendors.save');
-    Route::get('/vendor-categories', [RestaurantManagementController::class, 'createVendorCategory'])->name('vendor.categories');
-    Route::post('/vendor-categories', [RestaurantManagementController::class, 'storeVendorCategory'])->name('vendor.categories.store');
-    Route::delete('/vendor-categories/{id}', [RestaurantManagementController::class, 'destroyVendorCategory'])->name('vendor.categories.delete');
+            'vendors' => DB::table('vendors')
+                ->whereNull('deleted_at')
+                ->count(),
 
-    // 4. Global Master Items
-    Route::get('/global-items', [RestaurantManagementController::class, 'indexGlobalItem'])->name('global.items.index');
-    Route::get('/global-item/create', [RestaurantManagementController::class, 'createGlobalItem'])->name('global.item.create');
-    Route::post('/global-item', [RestaurantManagementController::class, 'storeGlobalItem'])->name('global.item.store');
-    Route::get('/global-item/edit/{id}', [RestaurantManagementController::class, 'editGlobalItem'])->name('global.item.edit');
-    Route::put('/global-item/update/{id}', [RestaurantManagementController::class, 'updateGlobalItem'])->name('global.item.update');
-    Route::delete('/global-item/delete/{id}', [RestaurantManagementController::class, 'destroyGlobalItem'])->name('global.item.delete');
-    Route::post('/item-category/store', [RestaurantManagementController::class, 'storeItemCategory'])->name('item.category.store');
+            'businesses' => DB::table('businesses')
+                ->whereNull('deleted_at')
+                ->count(),
 
-    // Item Moderation / Approvals (Vendor Request Approval System)
-    Route::get('/pending-items', [AdminController::class, 'pendingGlobalItems'])->name('pending.items');
-    Route::post('/item/approve/{id}', [AdminController::class, 'approveGlobalItem'])->name('item.approve');
-    Route::delete('/item/reject/{id}', [AdminController::class, 'rejectGlobalItem'])->name('item.reject');
+            'branches' => DB::table('branches')
+                ->whereNull('deleted_at')
+                ->count(),
 
-    // 5. Employees Management
-    Route::get('/employees/manage', [EmployeeManagementController::class, 'index'])->name('employees.manage');
-    Route::post('/employees/save', [EmployeeManagementController::class, 'saveOrUpdate'])->name('employees.save');
+            'pending_vendors' => DB::table('vendors')
+                ->whereNull('deleted_at')
+                ->where('status', 'pending')
+                ->count(),
 
-    // 6. Member Cards Admin Control
-    Route::get('/cards/manage', [AdminController::class, 'manageCardSearch'])->name('cards.manage');
-    Route::post('/cards/save-or-update', [AdminController::class, 'saveOrUpdateCard'])->name('cards.saveOrUpdate');
+            'pending_businesses' => DB::table('businesses')
+                ->whereNull('deleted_at')
+                ->where('status', 'pending')
+                ->count(),
+        ];
 
-    // 7. System & Updates
-    Route::get('/update', [UpdateController::class, 'showUploadForm'])->name('update');
-    Route::post('/update', [UpdateController::class, 'uploadUpdate'])->name('upload_update');
+        return view('admin.dashboard', compact('stats'));
+    })->name('home');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Users Management
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/users', [UserManagementController::class, 'index'])
+        ->name('admin.users.index');
+
+    Route::get('/users/create', [UserManagementController::class, 'create'])
+        ->name('admin.users.create');
+
+    Route::post('/users', [UserManagementController::class, 'store'])
+        ->name('admin.users.store');
+
+    Route::get('/users/{user}', [UserManagementController::class, 'show'])
+        ->name('admin.users.show');
+
+    Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])
+        ->name('admin.users.edit');
+
+    Route::put('/users/{user}', [UserManagementController::class, 'update'])
+        ->name('admin.users.update');
+
+    Route::post('/users/{user}/deactivate', [UserManagementController::class, 'deactivate'])
+        ->name('admin.users.deactivate');
+
+    Route::post('/users/{user}/activate', [UserManagementController::class, 'activate'])
+        ->name('admin.users.activate');
 });
+/*
+/*
+|--------------------------------------------------------------------------
+| Vendor Management
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', EnsureSuperAdmin::class])
+    ->prefix('vendors')
+    ->name('admin.vendors.')
+    ->controller(\App\Http\Controllers\Admin\VendorManagementController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{vendor}', 'show')->whereNumber('vendor')->name('show');
+        Route::post('/{vendor}/approve', 'approve')->whereNumber('vendor')->name('approve');
+        Route::post('/{vendor}/reject', 'reject')->whereNumber('vendor')->name('reject');
+    });
+
+/*
+| Business approval - permissions are checked per action.
+| Businesses remain order-disabled after approval.
+*/
+\Illuminate\Support\Facades\Route::middleware(['auth', EnsureSuperAdmin::class])
+    ->prefix('businesses')
+    ->name('admin.businesses.')
+    ->controller(\App\Http\Controllers\Admin\BusinessManagementController::class)
+    ->group(function () {
+        \Illuminate\Support\Facades\Route::get('/', 'index')->name('index');
+        \Illuminate\Support\Facades\Route::get('/{business}', 'show')->whereNumber('business')->name('show');
+        \Illuminate\Support\Facades\Route::post('/{business}/approve', 'approve')->whereNumber('business')->name('approve');
+        \Illuminate\Support\Facades\Route::post('/{business}/reject', 'reject')->whereNumber('business')->name('reject');
+    });
+
+// Platform-curated reusable items. No branch price is stored in this catalog.
+Route::middleware(['auth', EnsureSuperAdmin::class])
+    ->prefix('global-menu')->name('admin.global-menu.')
+    ->controller(\App\Http\Controllers\Admin\GlobalMenuCatalogController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::post('/{item}/availability', 'availability')->whereNumber('item')->name('availability');
+    });
+
+// Branch and licence edits require Super Admin review before taking effect.
+Route::middleware(['auth', EnsureSuperAdmin::class])
+    ->prefix('branch-changes')->name('admin.branch-changes.')
+    ->controller(\App\Http\Controllers\Admin\BranchChangeReviewController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{change}', 'show')->whereNumber('change')->name('show');
+        Route::post('/{change}/approve', 'approve')->whereNumber('change')->name('approve');
+        Route::post('/{change}/reject', 'reject')->whereNumber('change')->name('reject');
+    });
+
+// Modular admin screens (no replacement of existing admin routes).
+$platformOperationsArea = 'admin';
+require __DIR__.'/platform-operations.php';
