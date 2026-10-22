@@ -12,12 +12,9 @@ class VendorDeliveryAccess
         if (! in_array($permission, ['delivery.jobs.manage', 'delivery.partners.manage'], true)) {
             return false;
         }
-        // Platform identities NEVER acquire business privileges, including via accidental dual membership.
-        $isPlatform = DB::table('user_account_types as uat')
-            ->join('account_types as at', 'at.id', '=', 'uat.account_type_id')
-            ->where('uat.user_id', $actorId)->where('uat.status', 'active')
-            ->whereIn('at.code', ['admin', 'platform_admin', 'platform_employee'])->exists();
-        if ($isPlatform) return false;
+        // Account types AND platform-scoped staff roles deny business access.
+        // A dual-role account must never silently inherit Vendor operations.
+        if (app(DeliveryIdentity::class)->isPlatformStaff($actorId)) return false;
 
         $business = DB::table('businesses as b')
             ->join('vendors as v', 'v.id', '=', 'b.vendor_id')
@@ -87,11 +84,7 @@ class VendorDeliveryAccess
             abort_unless(DB::table('branches')->where('id', $branchId)
                 ->where('business_id', $businessId)->whereNull('deleted_at')->exists(), 422);
         }
-        $staffAccount = DB::table('user_account_types as uat')
-            ->join('account_types as at', 'at.id', '=', 'uat.account_type_id')
-            ->where('uat.user_id', $employeeId)->where('uat.status', 'active')
-            ->whereIn('at.code', ['platform_admin', 'admin', 'platform_employee'])->exists();
-        abort_if($staffAccount, 403);
+        abort_if(app(DeliveryIdentity::class)->isPlatformStaff($employeeId), 403);
         $assignment = DB::table('employee_assignments')->where('user_id', $employeeId)
             ->where('business_id', $businessId)->where('is_active', true)
             ->where('starts_at', '<=', now())

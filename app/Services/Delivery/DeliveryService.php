@@ -44,6 +44,9 @@ class DeliveryService
         return DB::transaction(function () use ($businessId, $userId, $vehicleType, $phone, $actorId): int {
             $partner = DB::table('delivery_partners')->where('user_id', $userId)->lockForUpdate()->first();
             if ($partner) {
+                if (app(DeliveryIdentity::class)->isIneligibleRider($userId)) {
+                    throw ValidationException::withMessages(['user_id' => 'This account is no longer eligible for delivery work.']);
+                }
                 $partnerId = (int) $partner->id;
             } else {
                 $partnerId = $this->onboard($userId, $vehicleType, $phone, $actorId);
@@ -74,23 +77,8 @@ class DeliveryService
             if (DB::table('delivery_partners')->where('user_id', $userId)->exists()) {
                 throw ValidationException::withMessages(['user_id' => 'A partner record already exists.']);
             }
-            // No platform staff or super-admin account can also become a delivery partner.
-            $platformIdentity = DB::table('user_account_types as uat')
-                ->join('account_types as at', 'at.id', '=', 'uat.account_type_id')
-                ->where('uat.user_id', $userId)
-                ->whereIn('at.code', ['admin', 'platform_admin', 'platform_employee', 'vendor'])
-                ->exists();
-            $staffRoles = DB::table('user_role_assignments as ura')
-                ->join('roles as r', 'r.id', '=', 'ura.role_id')
-                ->where('ura.user_id', $userId)->where('ura.is_active', true)
-                ->where('ura.scope_type', 'platform')->whereIn('r.code', [
-                    'super_admin', 'admin', 'admin_employee', 'operations_manager',
-                    'operations_employee', 'approval_manager', 'approval_employee',
-                    'support_manager', 'support_employee', 'delivery_manager',
-                    'accounts_manager', 'accounts_employee',
-                ])->exists();
-            if ($platformIdentity || $staffRoles) {
-                throw ValidationException::withMessages(['user_id' => 'Platform staff accounts cannot become delivery partners.']);
+            if (app(DeliveryIdentity::class)->isIneligibleRider($userId)) {
+                throw ValidationException::withMessages(['user_id' => 'Vendor and platform staff accounts cannot become delivery partners.']);
             }
             $id = DB::table('delivery_partners')->insertGetId([
                 'user_id' => $userId, 'vehicle_type' => $vehicleType, 'phone' => $phone,
@@ -143,11 +131,16 @@ class DeliveryService
                 throw ValidationException::withMessages(['partner' => 'Resolve outstanding business deliveries before suspension.']);
             }
             if ($status === 'active') {
-                $partner = DB::table('delivery_partners')->where('id', $partnerId)->first();
+                $partner = DB::table('delivery_partners')->where('id', $partnerId)->lockForUpdate()->first();
                 abort_unless($partner, 404);
+                if (app(DeliveryIdentity::class)->isIneligibleRider((int)$partner->user_id)) {
+                    throw ValidationException::withMessages(['partner' => 'This account can no longer be approved as a delivery partner.']);
+                }
                 $this->grantPartnerIdentity((int) $partner->user_id, $actorId);
+                // Approval by a second business must not force an intentionally offline rider online.
+                $availability = $partner->status === 'active' ? (bool)$partner->is_available : true;
                 DB::table('delivery_partners')->where('id', $partnerId)->update([
-                    'status' => 'active', 'is_available' => true,
+                    'status' => 'active', 'is_available' => $availability,
                     'verification_status' => 'verified', 'verified_by' => $actorId,
                     'verified_at' => now(), 'updated_at' => now(),
                 ]);
@@ -175,7 +168,7 @@ class DeliveryService
         $this->requireFeature('delivery.partner_progress');
         DB::transaction(function () use ($userId, $available): void {
             $partner = DB::table('delivery_partners')->where('user_id', $userId)->lockForUpdate()->first();
-            abort_unless($partner && $partner->status === 'active', 403);
+            abort_unless($partner && app(DeliveryIdentity::class)->hasActiveRiderCredentials($userId), 403);
             if (!$available && DB::table('delivery_jobs')->where('partner_id', $partner->id)
                 ->where(fn ($q) => $q->whereIn('status', ['assigned','accepted','picked_up'])
                     ->orWhere(fn ($failed) => $failed->where('status', 'failed')->whereNull('return_confirmed_at')))->exists()) {
@@ -244,7 +237,8 @@ class DeliveryService
             }
             $partner = DB::table('delivery_partners')->where('id', (int) $data['partner_id'])
                 ->where('status', 'active')->where('is_available', true)->lockForUpdate()->first();
-            if (! $partner || ! DB::table('delivery_business_partners')
+            if (! $partner || ! app(DeliveryIdentity::class)->hasActiveRiderCredentials((int)$partner->user_id)
+                || ! DB::table('delivery_business_partners')
                 ->where('business_id', (int)$data['business_id'])
                 ->where('partner_id', (int)$data['partner_id'])->where('status', 'active')->exists()) {
                 throw ValidationException::withMessages(['partner_id'=>'Select a partner approved by this business.']);
@@ -296,6 +290,11 @@ class DeliveryService
                 $partner = DB::table('delivery_partners')->where('id', $job->partner_id)
                     ->where('user_id', $actorId)->where('status', 'active')->first();
                 abort_unless($partner, 403);
+                abort_unless(app(DeliveryIdentity::class)->hasActiveRiderCredentials($actorId), 403);
+                abort_unless(DB::table('delivery_business_partners')
+                    ->where('business_id', (int)$job->business_id)
+                    ->where('partner_id', (int)$job->partner_id)
+                    ->where('status', 'active')->exists(), 403);
             }
             $allowed = $asPartner ? [
                 'assigned' => ['accepted', 'declined'],
@@ -434,7 +433,8 @@ class DeliveryService
             }
             $partner = DB::table('delivery_partners')->where('id', $partnerId)
                 ->where('status', 'active')->where('is_available', true)->first();
-            if (! $partner || (int)$job->partner_id === $partnerId
+            if (! $partner || ! app(DeliveryIdentity::class)->hasActiveRiderCredentials((int)$partner->user_id)
+                || (int)$job->partner_id === $partnerId
                 || ! DB::table('delivery_business_partners')->where('business_id', $job->business_id)
                     ->where('partner_id', $partnerId)->where('status', 'active')->exists()) {
                 throw ValidationException::withMessages(['partner_id'=>'Choose another partner approved for this business.']);
