@@ -39,6 +39,13 @@ class AppServiceProvider extends ServiceProvider
         // Route-level feature switch applies to all web module endpoints.
         app('router')->pushMiddlewareToGroup('web', \App\Http\Middleware\EnforceEnabledModule::class);
 
+        // Render/Cloudflare terminates TLS before PHP handles requests.
+        // Emit secure URLs for Vite CSS/JS, links, and form actions only in production.
+        // Do not force HTTPS on local XAMPP or during test runs.
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // XAMPP serves this Laravel application from /digital/public.
         // In local development, use APP_URL as the canonical root for
         // generated links, redirects, and POST form actions.
