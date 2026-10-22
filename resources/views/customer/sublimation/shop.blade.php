@@ -9,8 +9,9 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
 <main class="mx-auto max-w-6xl space-y-6 px-4 py-8">
     <header class="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 class="text-3xl font-bold">Personalized Gifts</h1>
-            <p class="text-sm text-slate-600">Custom printing requests, design review and order tracking.</p></div>
+        <div><h1 class="text-3xl font-bold">{{ $selectedBusinessName ?: 'Personalized Gifts' }}</h1>
+            <p class="text-sm text-slate-600">Custom printing requests, design review and order tracking.</p>
+            @if($selectedBusinessId)<a class="text-sm font-semibold text-rose-700 underline" href="{{ route('sublimation.shop') }}">View all studios</a>@endif</div>
         <div class="flex gap-3 text-sm font-semibold">
             <a href="{{ url('/') }}" class="rounded-lg border bg-white px-4 py-2">Home</a>
             @auth<a href="{{ route('customer.sublimation.orders') }}" class="rounded-lg bg-slate-900 px-4 py-2 text-white">My Orders</a>@endauth
@@ -23,7 +24,7 @@
     @endif
     <p class="rounded-xl border bg-white p-4 text-sm text-slate-600">No online payment is taken on this page. An order is a request to the studio, subject to design approval and fulfillment confirmation. Delivery charges, if any, must be confirmed separately.</p>
     @if ($products->isEmpty())
-        <p class="rounded-xl border bg-white p-6">No approved, order-enabled products are available yet. Studio products may still need prices or business approval.</p>
+        <p class="rounded-xl border bg-white p-6">No active, priced products are available from this studio right now. You can browse other studios.</p>
     @else
         <div class="grid gap-5 md:grid-cols-2">
         @foreach ($products as $product)
@@ -36,7 +37,7 @@
             </article>
         @endforeach
         </div>
-        <div>{{ $products->links() }}</div>
+        <div>{{ $products->withQueryString()->links() }}</div>
     @endif
 </main>
 </body>

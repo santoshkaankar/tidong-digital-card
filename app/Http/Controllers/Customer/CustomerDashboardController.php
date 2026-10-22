@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Services\Customer\CustomerMarketplace;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CustomerDashboardController extends Controller
 {
@@ -12,9 +14,16 @@ class CustomerDashboardController extends Controller
     {
         $user = $request->user();
 
+        $hasOrderTable = Schema::hasTable('sublimation_orders')
+            && Schema::hasColumn('sublimation_orders', 'customer_user_id');
+        $orderCount = $hasOrderTable ? DB::table('sublimation_orders')
+            ->where('customer_user_id', $user->id)->count() : 0;
+
         return view('customer.dashboard', [
             'hasVendor' => $user->vendor()->exists(),
-            'addressCount' => $user->customerAddresses()->count(),
+            'addressCount' => Schema::hasTable('customer_addresses')
+                ? $user->customerAddresses()->count() : 0,
+            'orderCount' => $orderCount,
             'categories' => $marketplace->categories(),
         ]);
     }

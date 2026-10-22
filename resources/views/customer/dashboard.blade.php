@@ -45,14 +45,14 @@
     <section class="td-section" aria-labelledby="quick-title">
         <div class="td-section-head"><div><p class="td-kicker">{{ __('ACCOUNT') }}</p><h2 id="quick-title">{{ __('Quick access') }}</h2></div></div>
         <div class="td-quick-grid">
-            <a href="{{ route('customer.orders.index') }}"><span aria-hidden="true">📦</span><b>{{ __('My Orders') }}</b></a>
+            <a href="{{ route('customer.orders.index') }}"><span aria-hidden="true">📦</span><b>{{ __('My Orders') }}</b><small>{{ $orderCount }} {{ __('linked orders') }}</small></a>
             <a href="{{ route('customer.addresses.index') }}"><span aria-hidden="true">📍</span><b>{{ __('Addresses') }}</b><small>{{ $addressCount }} {{ __('saved') }}</small></a>
             <a href="{{ route('customer.profile.edit') }}"><span aria-hidden="true">👤</span><b>{{ __('My Profile') }}</b></a>
             <a href="{{ route('customer.security.edit') }}"><span aria-hidden="true">🔒</span><b>{{ __('Security') }}</b></a>
         </div>
     </section>
     <section class="td-info-row">
-        <p>ℹ️ {{ __('Online customer ordering, payment and tracking are not connected yet. Existing internal orders are not displayed as yours.') }}</p>
+        <p>ℹ️ {{ __('Personalized gift order requests and status tracking are available for signed-in customers where stores accept orders. Online payment is not yet collected by this flow.') }}</p>
         @if($hasVendor)<a href="{{ route('vendor.home') }}">{{ __('Open Vendor Workspace') }} →</a>@else<a href="{{ route('vendor.apply') }}">{{ __('Become a Vendor') }} →</a>@endif
     </section>
 @endsection

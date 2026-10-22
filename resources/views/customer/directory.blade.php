@@ -14,11 +14,15 @@
             @foreach($businesses as $business)
                 <article class="td-store-card">
                     <span class="td-store-avatar" aria-hidden="true">{{ $definition['icon'] }}</span>
-                    <div><h2>{{ $business->name }}</h2><p>{{ __('Verified directory listing') }}</p><span class="td-store-state">● {{ __('Active business') }}</span></div>
+                    <div><h2>{{ $business->name }}</h2><p>{{ __('Approved, order-enabled store') }}</p><span class="td-store-state">● {{ __('Active business') }}</span>
+                        @if($service === 'sublimation' && \Illuminate\Support\Facades\Route::has('sublimation.shop'))
+                            <p><a class="td-text-link" href="{{ route('sublimation.shop', ['business' => $business->id]) }}">{{ __('Browse available products') }} →</a></p>
+                        @endif
+                    </div>
                 </article>
             @endforeach
         </div>
         <div class="td-pagination">{{ $businesses->links() }}</div>
     @endif
-    <p class="td-footnote">{{ __('Store directory only. Customer checkout, live products and order history are not connected yet; please do not use vendor-only ordering links.') }}</p>
+    <p class="td-footnote">{{ __('Only approved, active businesses are listed. Where an order catalogue is available, open it using the product link. Payment availability depends on the service.') }}</p>
 @endsection

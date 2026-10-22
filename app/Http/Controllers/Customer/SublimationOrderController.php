@@ -17,23 +17,38 @@ class SublimationOrderController extends Controller
 {
     private const TYPES = ['sublimation', 'custom_printing', 'printing'];
 
-    public function shop(): View
+    public function shop(Request $request): View
     {
         $this->enabled();
-        $products = $this->orderable()
+        $validated = $request->validate([
+            'business' => ['nullable', 'integer', 'min:1'],
+        ]);
+        $selectedBusinessId = isset($validated['business']) ? (int) $validated['business'] : null;
+        $query = $this->orderable();
+        if ($selectedBusinessId !== null) {
+            $query->where('b.id', $selectedBusinessId);
+        }
+        $products = $query
             ->select('p.id', 'p.name', 'p.category', 'p.sale_price_paise',
                 'b.name as business_name', 'br.name as branch_name')
             ->orderBy('p.name')->paginate(24);
-        return view('customer.sublimation.shop', compact('products'));
+        $selectedBusinessName = $selectedBusinessId !== null ? ($products->first()?->business_name) : null;
+        return view('customer.sublimation.shop', compact('products', 'selectedBusinessId', 'selectedBusinessName'));
     }
 
-    public function product(int $product): View
+    public function product(Request $request, int $product): View
     {
         $this->enabled();
         $item = $this->orderable()->where('p.id', $product)
             ->select('p.*', 'b.name as business_name', 'br.name as branch_name')->firstOrFail();
         $choices = json_decode($item->option_choices ?? '{}', true) ?: [];
-        return view('customer.sublimation.product', compact('item', 'choices'));
+        $savedAddresses = collect();
+        if ($request->user() && \Illuminate\Support\Facades\Schema::hasTable('customer_addresses')) {
+            $savedAddresses = DB::table('customer_addresses')
+                ->where('user_id', (int) $request->user()->id)
+                ->orderByDesc('is_default')->orderBy('id')->limit(10)->get();
+        }
+        return view('customer.sublimation.product', compact('item', 'choices', 'savedAddresses'));
     }
 
     public function order(Request $request, int $order): View
@@ -57,7 +72,8 @@ class SublimationOrderController extends Controller
             'size' => ['nullable', 'string', 'max:50'],
             'color' => ['nullable', 'string', 'max:50'],
             'fulfillment_method' => ['required', Rule::in(['pickup', 'delivery'])],
-            'delivery_address' => ['required_if:fulfillment_method,delivery', 'nullable', 'string', 'max:1000'],
+            'delivery_address_id' => ['nullable', 'integer', 'min:1'],
+            'delivery_address' => ['nullable', 'string', 'max:1000'],
         ]);
         $actor = (int) $request->user()->id;
         DB::transaction(function () use ($request, $actor, $data): void {
@@ -79,6 +95,32 @@ class SublimationOrderController extends Controller
                 }
                 if ($value !== '') $selected[$key] = $value;
             }
+            $deliveryAddress = null;
+            if ($data['fulfillment_method'] === 'delivery') {
+                $deliveryAddress = trim((string) ($data['delivery_address'] ?? ''));
+                if (!empty($data['delivery_address_id'])) {
+                    if (!\Illuminate\Support\Facades\Schema::hasTable('customer_addresses')) {
+                        throw ValidationException::withMessages(['delivery_address_id' => 'Saved addresses are not available yet. Enter a delivery address.']);
+                    }
+                    $saved = DB::table('customer_addresses')
+                        ->where('id', (int) $data['delivery_address_id'])
+                        ->where('user_id', $actor)->first();
+                    if (!$saved) {
+                        throw ValidationException::withMessages(['delivery_address_id' => 'The selected address does not belong to your account.']);
+                    }
+                    $deliveryAddress = implode(', ', array_filter([
+                        $saved->recipient_name, $saved->phone, $saved->address_line_1,
+                        $saved->address_line_2, $saved->city, $saved->state,
+                        $saved->postal_code, $saved->country_code,
+                    ], static fn ($part) => $part !== null && trim((string) $part) !== ''));
+                }
+                if ($deliveryAddress === '') {
+                    throw ValidationException::withMessages(['delivery_address' => 'Select a saved address or enter a delivery address.']);
+                }
+                if (mb_strlen($deliveryAddress) > 1000) {
+                    throw ValidationException::withMessages(['delivery_address' => 'The delivery address is too long.']);
+                }
+            }
             $quantity = (int) $data['quantity'];
             $unitCost = (int) $product->blank_cost_paise + (int) $product->print_cost_paise
                 + (int) $product->packing_cost_paise + (int) $product->other_cost_paise;
@@ -97,8 +139,7 @@ class SublimationOrderController extends Controller
                 'design_instructions' => $data['design_instructions'] ?? null,
                 'personalization_options' => $selected ? json_encode($selected, JSON_UNESCAPED_UNICODE) : null,
                 'fulfillment_method' => $data['fulfillment_method'],
-                'delivery_address' => $data['fulfillment_method'] === 'delivery'
-                    ? trim((string) $data['delivery_address']) : null,
+                'delivery_address' => $deliveryAddress,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
             DB::table('audit_logs')->insert([
