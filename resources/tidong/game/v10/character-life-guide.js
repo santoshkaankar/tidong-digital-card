@@ -3,7 +3,7 @@
 'use strict';
 const G=window.TidongLifeGuide,E=window.TidongLogic;
 if(!G)return;
-const gameKey='tidong.virtual-life.demo.v3',progressKey='tidong.character-life.chat02.v13.guide';
+const gameKey='tidong.virtual-life.demo.v2',progressKey='tidong.character-life.chat02.v13.guide';
 const isStudio=!!document.getElementById('world3d'),$=id=>document.getElementById(id);
 function state(){try{const s=JSON.parse(localStorage.getItem(gameKey));return E&&E.isValidState(s)?s:null;}catch(_){return null;}}
 let progress;try{progress=G.safeProgress(JSON.parse(sessionStorage.getItem(progressKey)));}catch(_){progress={done:[]};}
