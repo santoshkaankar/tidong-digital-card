@@ -28,6 +28,11 @@ return [
         'default_enabled' => false,
         'paths' => ['marriage-planner', 'marriage-planner/*'],
     ],
+    'partner_approvals' => [
+        'name' => 'Professional / Service Provider Application Reviews',
+        'installed' => true, 'default_enabled' => false,
+        'paths' => [],
+    ],
     'public_registration' => [
         'name' => 'Public Account Registration',
         'installed' => true, 'default_enabled' => false,

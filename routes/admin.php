@@ -137,3 +137,16 @@ require __DIR__.'/platform-operations.php';
 
 // TIDONG additive multi-module integration (no existing routes removed).
 require __DIR__.'/tidong_integrated_admin.php';
+
+
+// Unified verification hub. GET review stays visible when a feature is OFF;
+// every approval POST validates enabled status and independent proof again.
+Route::middleware(['auth', EnsureSuperAdmin::class])
+    ->prefix('approval-center')->name('admin.approval-center.')
+    ->controller(\App\Http\Controllers\Admin\PartnerApprovalCenterController::class)->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{type}', 'queue')->where('type', 'professional|service_provider')->name('queue');
+        Route::post('/{type}/{user}/decision', 'decide')
+            ->where('type', 'professional|service_provider')->whereNumber('user')
+            ->middleware('throttle:12,1')->name('decide');
+    });

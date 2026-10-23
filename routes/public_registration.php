@@ -23,3 +23,11 @@ Route::middleware('auth')->group(function (): void {
 // A signed, expiring email verification link also works after a fresh browser session.
 Route::get('/email/verify/{id}/{hash}', [PublicRegistrationController::class, 'verifyEmail'])
     ->middleware(['signed','throttle:6,1'])->name('verification.verify');
+
+
+// Applicant-only; server checks active role and email verification for each submission.
+Route::middleware(['auth'])->prefix('partner-application')->name('partner.application.')->group(function (): void {
+    Route::get('/', [\App\Http\Controllers\Partner\PartnerApplicationController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\Partner\PartnerApplicationController::class, 'store'])
+        ->middleware('throttle:5,1')->name('store');
+});
