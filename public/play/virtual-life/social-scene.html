@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1529">
+  <meta name="description" content="TIDONG Virtual Life: interactive, offline WebGL 3D Home Studio prototype.">
+  <title>TIDONG Virtual Life | Interactive 3D Home & Garden V6</title>
+  <link rel="stylesheet" href="studio3d.css">
+<script src="logic.js"></script><style>
+html,body,body.social-scene-only{height:100%;min-height:0;overflow:hidden;margin:0;background:#164b4b}
+.social-scene-only .shell,.social-scene-only .layout,.social-scene-only .scene-wrap{width:100%;height:100%;margin:0;padding:0;display:block;max-width:none;min-height:0;border:0;}
+.social-scene-only .header,.social-scene-only .hero-label,.social-scene-only .world-switch,.social-scene-only .movement-panel,.social-scene-only .bottom-nav,.social-scene-only .sidebar,.social-scene-only .footer{display:none!important}
+.social-scene-only .viewport{height:100%;min-height:0;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;overflow:hidden;}
+.social-scene-only #world3d{display:block;width:100%;height:100%;object-fit:fill}
+.social-scene-only .view-bottom,.social-scene-only .view-top{display:none!important}
+.social-scene-only .fallback{font-size:14px}
+</style></head>
+<body class="social-scene-only">
+<div class="shell">
+  <header class="header">
+    <a class="brand" href="index.html" aria-label="Go back to TIDONG Virtual Life"><img src="assets/TIDONG_Official_Logo.jpeg" alt="TIDONG official logo"><span><b>VIRTUAL LIFE</b><small>3D HOME & GARDEN · PLAYTEST 0.6</small></span></a>
+    <span class="demo-chip">INTERACTIVE 3D DEMO</span>
+  </header>
+  <main class="layout">
+    <section class="scene-wrap" aria-label="3D home experience">
+      <div class="hero-label"><span class="overline">YOUR SPACE, YOUR STORY</span><h1>A home, a garden, a life to explore.</h1><p>Explore a 3D home and a peaceful garden. Walk between activities, enjoy the scenery and decorate using your demo collection.</p></div>
+      <div class="viewport">
+        <canvas id="world3d" width="1100" height="730" aria-label="Interactive 3D virtual home scene" tabindex="0"></canvas>
+        <div class="view-top"><span class="dot"></span><span id="view-mode">3D HOME · SUNNY DAY</span></div>
+        <div class="view-bottom"><span id="status">Drag to look around. Scroll to zoom. Use arrow keys to walk.</span><span class="webgl-chip">WEBGL 3D</span></div>
+        <div class="fallback hidden" id="fallback"><h2>3D rendering is unavailable</h2><p>Your browser or device has WebGL disabled. You can still enjoy the original TIDONG game.</p><a href="index.html">Return to the playable 2.5D world</a></div>
+      </div>
+      <div class="world-switch" role="group" aria-label="Explore 3D places"><button type="button" class="world-button active" data-world="home">🏡 My 3D Home</button><button type="button" class="world-button" data-world="garden">🌿 Garden Walk</button></div>
+      <div class="movement-panel" aria-label="3D character movement">
+        <button type="button" data-move="left" aria-label="Walk left">←</button>
+        <button type="button" data-move="forward" aria-label="Walk forward">↑</button>
+        <button type="button" data-move="back" aria-label="Walk backward">↓</button>
+        <button type="button" data-move="right" aria-label="Walk right">→</button>
+        <button type="button" id="zoom-in" aria-label="Zoom in">＋</button><button type="button" id="zoom-out" aria-label="Zoom out">−</button><button type="button" id="reset-view" class="reset-btn">↺ Reset View</button>
+      </div>
+      <div class="bottom-nav"><a href="index.html" class="back-link">← Back to Virtual Life</a><a href="index.html#market" class="back-link">Explore the Virtual Market →</a></div>
+    </section>
+    <aside class="sidebar">
+      <div class="card">
+        <span class="overline">AT A GLANCE</span><h2>Welcome home.</h2>
+        <p>Your next world starts with one beautiful space. Move the camera, explore your room and arrange items from the demo marketplace.</p>
+        <div class="mini-grid"><div><b id="owned-count">0</b><span>Owned virtual items</span></div><div><b id="decor-count">0</b><span>Placed in home</span></div></div>
+        <p id="save-message" class="muted">This is a local single-player preview. Items are read from the original demo on this device.</p>
+      </div>
+      <div class="card">
+        <span class="overline">MAKE IT YOURS</span><h3>Set the mood</h3>
+        <div class="moods" role="group" aria-label="World lighting"><button type="button" class="mood active" data-light="day">☀ Day</button><button type="button" class="mood" data-light="sunset">◒ Sunset</button><button type="button" class="mood" data-light="night">☾ Night</button></div>
+        <span class="overline mini">CHANGE THE VIEW</span>
+        <div class="cameras" role="group" aria-label="Camera presets"><button type="button" class="camera active" data-camera="wide">Full Room</button><button type="button" class="camera" data-camera="close">Closer View</button><button type="button" class="camera" data-camera="top">Bird’s Eye</button></div>
+      </div>
+      <div class="card activity-card">
+        <span class="overline">ACTIVITIES AT HOME</span><h3>Little moments, big stories.</h3>
+        <p>Choose an everyday activity. Your character moves to the right spot in the scene. No coins are awarded here.</p>
+        <div class="activities" role="group" aria-label="Everyday character activities">
+          <button type="button" data-activity="relax">🛋 Relax</button>
+          <button type="button" data-activity="read">📚 Read</button>
+          <button type="button" data-activity="plant">🪴 Tend Plants</button>
+        </div>
+        <p class="activity-status" id="activity-status" aria-live="polite">Ready to explore your home.</p>
+        <label class="studio-style-label" for="studio-avatar-style">Avatar style</label>
+        <select id="studio-avatar-style" aria-label="3D avatar style">
+          <option value="mint">Mint</option><option value="coral">Coral</option><option value="sky">Sky</option><option value="violet">Violet</option>
+        </select>
+      </div>
+      <div class="card garden-card" id="garden-panel">
+        <span class="overline">EXPLORE OUTDOORS</span><h3>Discover the garden.</h3>
+        <p>Walk to three scenic places and complete a gentle exploration trail. This is an offline demo: no demo coins are spent or awarded.</p>
+        <div class="garden-actions" role="group" aria-label="Garden places">
+          <button type="button" data-garden="flowers">🌼 Water Flowers</button>
+          <button type="button" data-garden="pond">💧 Visit Pond</button>
+          <button type="button" data-garden="bench">🪑 Garden Bench</button>
+        </div>
+        <button type="button" id="garden-tour" class="tour-button">▶ Start Guided Garden Walk</button>
+        <div class="garden-progress"><span id="garden-progress">0 / 3 moments explored</span><button type="button" id="garden-reset" aria-label="Reset garden exploration progress">Reset visits</button></div>
+        <p id="garden-story" class="activity-status" role="status" aria-live="polite">Your first outdoor adventure is waiting.</p>
+      </div>
+      <div class="card furniture-card">
+        <span class="overline">FURNITURE STUDIO</span><h3>Arrange your favorites.</h3>
+        <p>Only furniture you already own in the offline demo may be displayed. Place, put away, or reorder items to update your 3D room.</p>
+        <p id="studio-hint" class="studio-hint" aria-live="polite">Open the original demo, enter the game and buy a home item to begin decorating.</p>
+        <div id="furniture-panel" class="furniture-panel" aria-label="Virtual home furniture inventory"></div>
+        <a class="back-link" href="index.html#market">Browse the Virtual Market →</a>
+      </div>
+      <div class="card control-card">
+        <span class="overline">MOVE & EXPLORE</span>
+        <div class="tip"><span>↔</span><p><b>Drag or swipe</b><small>Rotate the 3D camera</small></p></div>
+        <div class="tip"><span>⇳</span><p><b>Scroll or zoom buttons</b><small>Move closer or further away</small></p></div>
+        <div class="tip"><span>⌨</span><p><b>Arrow keys / WASD</b><small>Walk your character</small></p></div>
+      </div>
+      <div class="notice"><strong>Preview only. No real money.</strong><p>All T-Coins, purchases, owned items and lighting changes in this package are local demonstrations. No real INR, personal data, financial wallet, affiliate payouts or external brands are connected.</p></div>
+    </aside>
+  </main>
+  <footer class="footer">© TIDONG • A concept in progress, not a released product. <span>3D geometry preview · No multiplayer · No production integration</span></footer>
+</div>
+
+<script src="studio-logic.js"></script>
+<script src="world-logic.js"></script>
+<script src="social-studio3d.js"></script>
+</body>
+</html>
