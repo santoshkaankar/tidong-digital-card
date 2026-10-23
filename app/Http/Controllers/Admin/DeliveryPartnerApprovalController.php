@@ -21,7 +21,9 @@ final class DeliveryPartnerApprovalController extends Controller
                 'u.name','u.email','u.email_verified_at')
             ->orderByRaw("CASE WHEN dp.approved_at IS NULL THEN 0 ELSE 1 END")
             ->orderByDesc('dp.id')->paginate(25);
-        return view('admin.delivery.approvals', compact('partners'));
+        // One availability read for the page; the POST always re-checks this gate.
+        $approvalEnabled = app(FeatureRegistry::class)->isEnabled('delivery.partner_approval');
+        return view('admin.delivery.approvals', compact('partners', 'approvalEnabled'));
     }
 
     public function approve(Request $request, int $partner): RedirectResponse
