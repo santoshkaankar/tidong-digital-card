@@ -19,7 +19,15 @@ Route::middleware(['auth'])->group(function () use ($area): void {
     });
     Route::get('/delivery', [DeliveryManagementController::class, 'index'])
         ->middleware(Capability::class.':delivery.diagnostics.view')->name($area.'.delivery.index');
-    // NO platform routes for dispatch, business cancellations, partner approval, prices or payments.
+    // Platform-level identity screening only. Never grant vendor dispatch/business control.
+    Route::prefix('delivery-partner-approvals')->name($area.'.delivery-partner-approvals.')
+        ->controller(\App\Http\Controllers\Admin\DeliveryPartnerApprovalController::class)
+        ->middleware(Capability::class.':delivery.partners.approve')->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::post('/{partner}/approve', 'approve')->whereNumber('partner')->name('approve');
+            Route::post('/{partner}/reject', 'reject')->whereNumber('partner')->name('reject');
+        });
+    // NO platform routes for dispatch, business cancellations, prices or payments.
     Route::middleware(EnsurePlatformSupervisor::class)->prefix('employee-permissions')
         ->name($area.'.employee-permissions.')->group(function (): void {
             Route::get('/', [EmployeeCapabilityController::class, 'index'])->name('index');

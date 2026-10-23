@@ -1,11 +1,12 @@
-@php($pageTitle = ['design'=>'Design Approvals','production'=>'Production Queue','delivery'=>'Dispatch & Delivery'][request('queue')] ?? 'Order List & Delivery')
+@php($pageTitle = ['design'=>'Design Approvals','production'=>'Production Queue','delivery'=>'Dispatch & Delivery'][$queue] ?? 'Order List & Delivery')
 @include('vendor.sublimation.partials.page-start')
 <form class="no-print grid gap-3 rounded-2xl border bg-white p-4 md:grid-cols-4" method="GET" action="{{ route('vendor.sublimation.orders.index', $business->id) }}">
 <label class="text-sm font-semibold">Branch<select name="branch" class="mt-1 w-full rounded-lg border p-2">@foreach($branches as $option)<option value="{{ $option->id }}" @selected($branch && $branch->id == $option->id)>{{ $option->name }}</option>@endforeach</select></label>
-@if(in_array(request('queue'), ['design','production','delivery'], true))<input type="hidden" name="queue" value="{{ request('queue') }}">@endif
+@if(in_array($queue, ['design','production','delivery'], true))<input type="hidden" name="queue" value="{{ $queue }}">@endif
 <label class="text-sm font-semibold">Status<select name="status" class="mt-1 w-full rounded-lg border p-2"><option value="">All statuses</option>
-@foreach($statuses as $status)<option value="{{ $status }}" @selected(request('status')===$status)>{{ ucwords(str_replace('_',' ',$status)) }}</option>@endforeach</select></label>
-<label class="text-sm font-semibold">Search<input name="q" maxlength="100" value="{{ request('q') }}" placeholder="Order no, customer or product" class="mt-1 w-full rounded-lg border p-2"></label>
+@php($queueStatuses = ['design'=>['design_pending','approval_pending'], 'production'=>['approved','in_production'], 'delivery'=>['ready','dispatched','delivered']])
+@foreach($statuses as $status)@if(!isset($queueStatuses[$queue]) || in_array($status, $queueStatuses[$queue], true))<option value="{{ $status }}" @selected($status===$status)>{{ ucwords(str_replace('_',' ',$status)) }}</option>@endif @endforeach</select></label>
+<label class="text-sm font-semibold">Search<input name="q" maxlength="100" value="{{ $search }}" placeholder="Order no, customer or product" class="mt-1 w-full rounded-lg border p-2"></label>
 <div class="flex items-end"><button class="w-full rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white">Search / Filter</button></div>
 </form>
 <div class="no-print flex flex-wrap items-center justify-between gap-3"><p class="text-sm text-slate-600">{{ $orders->total() }} matching order(s)</p><a class="rounded-lg bg-rose-700 px-4 py-2 font-semibold text-white" href="{{ route('vendor.sublimation.orders.create', ['business'=>$business->id,'branch'=>$branch?->id]) }}">+ New Studio Job</a></div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -22,10 +23,10 @@ class SublimationStudioController extends Controller
     private const TRANSITIONS = [
         'design_pending' => ['approval_pending', 'cancelled'],
         'approval_pending' => ['design_pending', 'approved', 'cancelled'],
-        'approved' => ['in_production', 'cancelled'],
-        'in_production' => ['ready', 'cancelled'],
+        'approved' => ['design_pending', 'in_production', 'cancelled'],
+        'in_production' => ['design_pending', 'ready', 'cancelled'],
         'ready' => ['dispatched', 'delivered', 'cancelled'],
-        'dispatched' => ['delivered', 'cancelled'],
+        'dispatched' => ['delivered'],
         'delivered' => [],
         'cancelled' => [],
     ];
@@ -80,7 +81,7 @@ class SublimationStudioController extends Controller
             ->whereNull('deleted_at')->orderBy('name')->get();
         $id = $request->query('branch');
         if ($id === null || $id === '') return $branches->first();
-        abort_unless(ctype_digit((string) $id) && (int) $id > 0, 404);
+        abort_unless(is_string($id) && ctype_digit($id) && (int) $id > 0, 404);
         $branch = $branches->firstWhere('id', (int) $id);
         abort_unless($branch, 404);
         return $branch;
@@ -103,12 +104,13 @@ class SublimationStudioController extends Controller
         $branch = $this->branchForListing($request, $owned);
         $branches = DB::table('branches')->where('business_id', $owned->id)
             ->whereNull('deleted_at')->orderBy('name')->get();
-        $products = $branch ? DB::table('sublimation_products')
+        $acceptsStudioOrders = $owned->status === 'approved' && $branch && $branch->status === 'active';
+        $products = $acceptsStudioOrders ? DB::table('sublimation_products')
             ->where('business_id', $owned->id)->where('branch_id', $branch->id)
             ->where('is_active', true)->where('sale_price_paise', '>', 0)
             ->orderBy('name')->get() : collect();
         return view('vendor.sublimation.create-order', array_merge(
-            $this->studioNavigation($owned, $branch), compact('branches', 'products')
+            $this->studioNavigation($owned, $branch), compact('branches', 'products', 'acceptsStudioOrders')
         ));
     }
 
@@ -152,18 +154,22 @@ class SublimationStudioController extends Controller
         $query = DB::table('sublimation_orders')->where('business_id', $owned->id);
         if ($branch) $query->where('branch_id', $branch->id);
         else $query->whereRaw('1 = 0');
-        $queue = (string) $request->query('queue', '');
+        $queueInput = $request->query('queue', '');
+        $queue = is_string($queueInput) ? $queueInput : '';
         $queues = [
             'design' => ['design_pending', 'approval_pending'],
             'production' => ['approved', 'in_production'],
             'delivery' => ['ready', 'dispatched', 'delivered'],
         ];
         if (isset($queues[$queue])) $query->whereIn('status', $queues[$queue]);
-        else {
-            $status = (string) $request->query('status', '');
-            if ($status !== '' && array_key_exists($status, self::TRANSITIONS)) $query->where('status', $status);
+        // Status is an additional filter, even inside Design/Production/Delivery queues.
+        $statusInput = $request->query('status', '');
+        $status = is_string($statusInput) ? $statusInput : '';
+        if ($status !== '' && array_key_exists($status, self::TRANSITIONS)) {
+            $query->where('status', $status);
         }
-        $search = trim((string) $request->query('q', ''));
+        $searchInput = $request->query('q', '');
+        $search = is_string($searchInput) ? trim($searchInput) : '';
         if ($search !== '') {
             $term = '%'.addcslashes(substr($search, 0, 100), '%_\\').'%';
             $query->where(function ($q) use ($term): void {
@@ -174,7 +180,7 @@ class SublimationStudioController extends Controller
         $orders = $query->orderByDesc('id')->paginate(20)->withQueryString();
         $statuses = array_keys(self::TRANSITIONS);
         return view('vendor.sublimation.orders', array_merge(
-            $this->studioNavigation($owned, $branch), compact('branches', 'orders', 'statuses')
+            $this->studioNavigation($owned, $branch), compact('branches', 'orders', 'statuses', 'queue', 'status', 'search')
         ));
     }
 
@@ -190,14 +196,16 @@ class SublimationStudioController extends Controller
             ->whereIn('action', [
                 'sublimation.order.created', 'sublimation.order.customer_placed',
                 'sublimation.order.status_changed',
+                'sublimation.order.contact_updated',
             ])->orderBy('created_at')->orderBy('id')->get();
         $next = self::TRANSITIONS[$item->status] ?? [];
         if (($item->fulfillment_method ?? 'pickup') === 'delivery') {
             $next = array_values(array_diff($next, ['delivered']));
             if ($item->status === 'dispatched') $next = self::TRANSITIONS['dispatched'];
         } else $next = array_values(array_diff($next, ['dispatched']));
+        $mayEditContact = ! in_array($item->status, ['dispatched','delivered','cancelled'], true);
         return view('vendor.sublimation.order', array_merge(
-            $this->studioNavigation($owned, $branch), compact('item', 'choices', 'events', 'next')
+            $this->studioNavigation($owned, $branch), compact('item', 'choices', 'events', 'next', 'mayEditContact')
         ));
     }
 
@@ -347,15 +355,46 @@ class SublimationStudioController extends Controller
             'branch_id' => ['required', 'integer'],
             'product_id' => ['required', 'integer'],
             'customer_name' => ['required', 'string', 'max:160'],
-            'customer_mobile' => ['nullable', 'string', 'max:25'],
+            'customer_mobile' => ['required_if:fulfillment_method,delivery', 'nullable', 'string', 'max:25'],
+            'fulfillment_method' => ['sometimes', Rule::in(['pickup', 'delivery'])],
+            'delivery_address' => ['required_if:fulfillment_method,delivery', 'nullable', 'string', 'max:1000'],
             'quantity' => ['required', 'integer', 'min:1', 'max:10000'],
             'design_instructions' => ['nullable', 'string', 'max:3000'],
-            'due_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date', 'after_or_equal:today'],
             'size' => ['nullable', 'string', 'max:50'],
             'color' => ['nullable', 'string', 'max:50'],
+            'request_token' => ['required', 'uuid'],
         ]);
+        $data['fulfillment_method'] = $data['fulfillment_method'] ?? 'pickup';
+        if ($data['fulfillment_method'] === 'delivery') {
+            foreach (['customer_mobile', 'delivery_address'] as $field) {
+                if (! filled(trim((string) ($data[$field] ?? '')))) {
+                    throw ValidationException::withMessages([
+                        $field => 'A '.str_replace('_', ' ', $field).' is required for delivery.',
+                    ]);
+                }
+            }
+        }
+        $data['customer_mobile'] = $this->checkedPhone($data['customer_mobile'] ?? null,
+            $data['fulfillment_method'] === 'delivery');
+        // The key is unique across both customer and studio channels / all tenants.
+        $actor = (int) $request->user()->id;
+        $token = $data['request_token'];
+        $payload = $this->payloadHash($data);
+        if ($existing = DB::table('sublimation_orders')->where('request_token', $token)->first()) {
+            return $this->studioReplay($existing, $actor, $payload, $business);
+        }
         $branch = $this->ownedBranch($owned->id, (int) $data['branch_id']);
-        DB::transaction(function () use ($request, $owned, $branch, $data): void {
+        try {
+            $orderId = DB::transaction(function () use ($request, $owned, $branch, $data, $actor, $token, $payload): int {
+            // Lock policy records to prevent intake while a studio / branch is suspended.
+            $currentBusiness = DB::table('businesses')->where('id', $owned->id)->lockForUpdate()->first();
+            $currentBranch = DB::table('branches')->where('id', $branch->id)
+                ->where('business_id', $owned->id)->whereNull('deleted_at')->lockForUpdate()->first();
+            if (! $currentBusiness || $currentBusiness->status !== 'approved'
+                || ! $currentBranch || $currentBranch->status !== 'active') {
+                throw ValidationException::withMessages(['branch_id' => 'Studio is not accepting new manual jobs while business or branch is inactive.']);
+            }
             $product = DB::table('sublimation_products')
                 ->where('id', $data['product_id'])->where('business_id', $owned->id)
                 ->where('branch_id', $branch->id)->where('is_active', true)
@@ -375,8 +414,14 @@ class SublimationStudioController extends Controller
             $id = DB::table('sublimation_orders')->insertGetId([
                 'business_id' => $owned->id, 'branch_id' => $branch->id,
                 'product_id' => $product->id, 'order_no' => $number,
+                'request_token' => $token, 'request_actor_user_id' => $actor,
+                'request_payload_hash' => $payload,
                 'customer_name' => trim($data['customer_name']),
-                'customer_mobile' => $data['customer_mobile'] ?? null,
+                'customer_mobile' => filled($data['customer_mobile'] ?? null)
+                    ? trim((string) $data['customer_mobile']) : null,
+                'fulfillment_method' => $data['fulfillment_method'],
+                'delivery_address' => $data['fulfillment_method'] === 'delivery'
+                    ? trim((string) $data['delivery_address']) : null,
                 'product_name_snapshot' => $product->name,
                 'quantity' => $quantity,
                 'unit_cost_paise' => $unitCost,
@@ -392,11 +437,19 @@ class SublimationStudioController extends Controller
             $this->audit($request, 'sublimation.order.created', 'sublimation_order', $id, [
                 'business_id' => $owned->id, 'branch_id' => $branch->id,
                 'order_no' => $number, 'status' => 'design_pending',
+                'fulfillment_method' => $data['fulfillment_method'],
             ]);
-        });
+            return (int) $id;
+            });
+        } catch (QueryException $e) {
+            // Unique-index conflict from concurrent double-POST; never mask other DB errors.
+            $existing = DB::table('sublimation_orders')->where('request_token', $token)->first();
+            if (! $existing) throw $e;
+            return $this->studioReplay($existing, $actor, $payload, $business);
+        }
 
-        return redirect()->route('vendor.sublimation.orders.index', ['business' => $business, 'branch' => $branch->id])
-            ->with('success', 'Studio order saved. Open its details to manage production and delivery.');
+        return redirect()->route('vendor.sublimation.orders.show', ['business' => $business, 'order' => $orderId])
+            ->with('success', 'Studio order saved. Continue design approval and production from this job card.');
     }
 
     public function updateStatus(Request $request, int $business, int $order): RedirectResponse
@@ -408,8 +461,9 @@ class SublimationStudioController extends Controller
             'delivery_carrier' => ['nullable', 'string', 'max:120'],
             'delivery_tracking' => ['nullable', 'string', 'max:120'],
             'delivery_confirmation_note' => ['nullable', 'string', 'max:2000'],
+            'status_note' => ['nullable', 'string', 'max:1500'],
         ]);
-        $branchId = DB::transaction(function () use ($request, $owned, $order, $data): int {
+        DB::transaction(function () use ($request, $owned, $order, $data): void {
             $current = DB::table('sublimation_orders')
                 ->where('id', $order)->where('business_id', $owned->id)
                 ->lockForUpdate()->firstOrFail();
@@ -418,11 +472,26 @@ class SublimationStudioController extends Controller
                 throw ValidationException::withMessages(['status' => 'This status change is not allowed.']);
             }
             $method = $current->fulfillment_method ?? 'pickup';
+            // Cancellation and redesign need an auditable reason; no schema change is needed.
+            if (in_array($data['status'], ['cancelled', 'design_pending'], true)
+                && ! filled(trim((string) ($data['status_note'] ?? '')))) {
+                throw ValidationException::withMessages([
+                    'status_note' => 'Explain the cancellation or requested design changes.',
+                ]);
+            }
+            if ($data['status'] === 'approved' && ! filled(trim((string) ($data['approval_note'] ?? '')))) {
+                throw ValidationException::withMessages(['approval_note' => 'Record how design approval was obtained.']);
+            }
             if ($data['status'] === 'dispatched') {
                 if ($method !== 'delivery') {
                     throw ValidationException::withMessages(['status' => 'Pickup orders cannot be dispatched.']);
                 }
-                if (! filled($data['delivery_carrier'] ?? null)) {
+                // Legacy delivery contact must be repaired before handing a parcel to a rider.
+                $this->checkedPhone($current->customer_mobile ?? null, true);
+                if (! filled(trim((string) ($current->delivery_address ?? '')))) {
+                    throw ValidationException::withMessages(['status' => 'A delivery address is required before dispatch.']);
+                }
+                if (! filled(trim((string) ($data['delivery_carrier'] ?? '')))) {
                     throw ValidationException::withMessages(['delivery_carrier' => 'Carrier or local delivery person is required to dispatch.']);
                 }
             }
@@ -430,7 +499,7 @@ class SublimationStudioController extends Controller
                 if ($method === 'delivery' && $current->status !== 'dispatched') {
                     throw ValidationException::withMessages(['status' => 'Delivery orders must be dispatched before completing.']);
                 }
-                if (! filled($data['delivery_confirmation_note'] ?? null)) {
+                if (! filled(trim((string) ($data['delivery_confirmation_note'] ?? '')))) {
                     throw ValidationException::withMessages(['delivery_confirmation_note' => 'Record who received the item and how delivery/pickup was confirmed.']);
                 }
             }
@@ -445,7 +514,17 @@ class SublimationStudioController extends Controller
                 $updates['delivered_at'] = now();
                 $updates['delivery_confirmation_note'] = trim((string) $data['delivery_confirmation_note']);
             }
+            // Moving an approved job back to design is a new revision; previous approval
+            // remains in audit logs, while the active approval is invalidated.
+            if ($data['status'] === 'design_pending') {
+                $updates['approval_note'] = null;
+                $updates['design_approved_at'] = null;
+                $updates['design_approved_recorded_by'] = null;
+                $updates['approved_revision'] = null;
+                $updates['design_revision'] = (int) $current->design_revision + 1;
+            }
             if ($data['status'] === 'approved') {
+                $updates['approved_revision'] = (int) $current->design_revision;
                 $updates['approval_note'] = trim($data['approval_note']);
                 $updates['design_approved_at'] = now();
                 $updates['design_approved_recorded_by'] = $request->user()->id;
@@ -456,14 +535,85 @@ class SublimationStudioController extends Controller
                 ['status' => $data['status'], 'approval_note' => $updates['approval_note'] ?? null,
                  'delivery_carrier' => $updates['delivery_carrier'] ?? null,
                  'delivery_tracking' => $updates['delivery_tracking'] ?? null,
+                 'status_note' => filled($data['status_note'] ?? null)
+                     ? trim((string) $data['status_note']) : null,
+                 'design_revision' => $updates['design_revision'] ?? (int) $current->design_revision,
+                 'approved_revision' => $updates['approved_revision'] ?? null,
                  'delivered_at' => isset($updates['delivered_at']) ? now()->toDateTimeString() : null],
-                ['status' => $current->status]);
+                ['status' => $current->status,
+                 'prior_approval_note' => $data['status'] === 'design_pending' ? $current->approval_note : null,
+                 'prior_approved_at' => $data['status'] === 'design_pending' ? $current->design_approved_at : null,
+                 'prior_revision' => (int) $current->design_revision]);
 
-            return (int) $current->branch_id;
         });
 
         return redirect()->route('vendor.sublimation.orders.show', ['business' => $business, 'order' => $order])
             ->with('success', 'Order status updated. History preserved.');
+    }
+
+    /** An intentional manual update, limited to pre-dispatch and fully audited. */
+    public function updateContact(Request $request, int $business, int $order): RedirectResponse
+    {
+        $owned = $this->ownedBusiness($request, $business);
+        $data = $request->validate([
+            'customer_mobile' => ['nullable', 'string', 'max:25'],
+            'delivery_address' => ['nullable', 'string', 'max:1000'],
+        ]);
+        DB::transaction(function () use ($request, $owned, $order, $data): void {
+            $current = DB::table('sublimation_orders')->where('id', $order)
+                ->where('business_id', $owned->id)->lockForUpdate()->firstOrFail();
+            $this->ownedBranch($owned->id, (int) $current->branch_id);
+            if (in_array($current->status, ['dispatched', 'delivered', 'cancelled'], true)) {
+                throw ValidationException::withMessages(['delivery_address' => 'Contact and address are locked after dispatch, completion or cancellation.']);
+            }
+            $delivery = ($current->fulfillment_method ?? 'pickup') === 'delivery';
+            $mobile = $this->checkedPhone($data['customer_mobile'] ?? $current->customer_mobile, $delivery);
+            $address = $delivery ? trim((string) ($data['delivery_address'] ?? $current->delivery_address)) : null;
+            if ($delivery && $address === '') {
+                throw ValidationException::withMessages(['delivery_address' => 'Delivery address is required.']);
+            }
+            // No need to write a new audit entry when nothing changed.
+            if ($mobile === $current->customer_mobile && $address === $current->delivery_address) return;
+            DB::table('sublimation_orders')->where('id', $current->id)->where('business_id', $owned->id)
+                ->update(['customer_mobile' => $mobile, 'delivery_address' => $address, 'updated_at' => now()]);
+            $this->audit($request, 'sublimation.order.contact_updated', 'sublimation_order', $current->id,
+                ['customer_mobile' => $mobile, 'delivery_address' => $address],
+                ['customer_mobile' => $current->customer_mobile, 'delivery_address' => $current->delivery_address]);
+        });
+        return redirect()->route('vendor.sublimation.orders.show', ['business' => $business, 'order' => $order])
+            ->with('success', 'Contact and delivery address updated. Change logged.');
+    }
+
+    private function checkedPhone(mixed $raw, bool $required): ?string
+    {
+        $phone = trim((string) ($raw ?? ''));
+        if ($phone === '') {
+            if ($required) throw ValidationException::withMessages(['customer_mobile' => 'A valid contact phone is required for delivery.']);
+            return null;
+        }
+        $digits = preg_replace('/\D/', '', $phone);
+        if (! preg_match('/^\+?[0-9][0-9 ()-]{6,23}$/D', $phone) || strlen($digits) < 8 || strlen($digits) > 15) {
+            throw ValidationException::withMessages(['customer_mobile' => 'Use 8-15 phone digits, with optional +, spaces, brackets or hyphens.']);
+        }
+        return $phone;
+    }
+
+    private function payloadHash(array $data): string
+    {
+        ksort($data);
+        return hash('sha256', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+    }
+
+    private function studioReplay(object $existing, int $actor, string $hash, int $business): RedirectResponse
+    {
+        if ((int) $existing->request_actor_user_id !== $actor ||
+            (int) $existing->business_id !== $business ||
+            ! hash_equals((string) $existing->request_payload_hash, $hash) ||
+            $existing->customer_user_id !== null) {
+            throw ValidationException::withMessages(['request_token' => 'This request token has already been used. Refresh the form.']);
+        }
+        return redirect()->route('vendor.sublimation.orders.show', ['business' => $business, 'order' => $existing->id])
+            ->with('success', 'Request already received. Your existing job card is shown.');
     }
 
     private function ownedBusiness(Request $request, int $business): object

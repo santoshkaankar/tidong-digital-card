@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Platform\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -66,7 +67,7 @@ class SublimationOrderController extends Controller
         $data = $request->validate([
             'product_id' => ['required', 'integer', 'min:1'],
             'customer_name' => ['required', 'string', 'max:160'],
-            'customer_mobile' => ['required', 'string', 'min:8', 'max:25'],
+            'customer_mobile' => ['required', 'string', 'max:25'],
             'quantity' => ['required', 'integer', 'min:1', 'max:100'],
             'design_instructions' => ['nullable', 'string', 'max:3000'],
             'size' => ['nullable', 'string', 'max:50'],
@@ -74,9 +75,18 @@ class SublimationOrderController extends Controller
             'fulfillment_method' => ['required', Rule::in(['pickup', 'delivery'])],
             'delivery_address_id' => ['nullable', 'integer', 'min:1'],
             'delivery_address' => ['nullable', 'string', 'max:1000'],
+            'request_token' => ['required', 'uuid'],
         ]);
+        $mobile = $this->checkedPhone($data['customer_mobile']);
         $actor = (int) $request->user()->id;
-        DB::transaction(function () use ($request, $actor, $data): void {
+        $token = $data['request_token'];
+        ksort($data);
+        $hash = hash('sha256', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        if ($existing = DB::table('sublimation_orders')->where('request_token', $token)->first()) {
+            return $this->customerReplay($existing, $actor, $hash);
+        }
+        try {
+            DB::transaction(function () use ($request, $actor, $data, $token, $hash, $mobile): void {
             $product = $this->orderable()->where('p.id', (int) $data['product_id'])
                 ->select('p.*')->lockForUpdate()->first();
             if (! $product) {
@@ -128,8 +138,9 @@ class SublimationOrderController extends Controller
             $id = DB::table('sublimation_orders')->insertGetId([
                 'business_id' => $product->business_id, 'branch_id' => $product->branch_id,
                 'product_id' => $product->id, 'customer_user_id' => $actor,
+                'request_token' => $token, 'request_actor_user_id' => $actor, 'request_payload_hash' => $hash,
                 'order_no' => $number, 'customer_name' => trim($data['customer_name']),
-                'customer_mobile' => trim($data['customer_mobile']),
+                'customer_mobile' => $mobile,
                 'product_name_snapshot' => $product->name, 'quantity' => $quantity,
                 'unit_cost_paise' => $unitCost,
                 'unit_sale_paise' => (int) $product->sale_price_paise,
@@ -152,9 +163,38 @@ class SublimationOrderController extends Controller
                 ]),
                 'ip_address' => $request->ip(), 'created_at' => now(),
             ]);
-        });
+            });
+        } catch (QueryException $e) {
+            // Unique request-token collisions from concurrent retries replay the same order.
+            $existing = DB::table('sublimation_orders')->where('request_token', $token)->first();
+            if (! $existing) {
+                throw $e;
+            }
+            return $this->customerReplay($existing, $actor, $hash);
+        }
         return redirect()->route('customer.sublimation.orders')
             ->with('success', 'Order request received. Studio review and design approval are still required.');
+    }
+
+    private function checkedPhone(string $value): string
+    {
+        $phone = trim($value);
+        $digits = preg_replace('/\D/', '', $phone);
+        if (! preg_match('/^\+?[0-9][0-9 ()-]{6,23}$/D', $phone) || strlen($digits) < 8 || strlen($digits) > 15) {
+            throw ValidationException::withMessages(['customer_mobile' => 'Use 8-15 phone digits, with optional +, spaces, brackets or hyphens.']);
+        }
+        return $phone;
+    }
+
+    private function customerReplay(object $existing, int $actor, string $hash): RedirectResponse
+    {
+        if ((int) $existing->request_actor_user_id !== $actor ||
+            (int) $existing->customer_user_id !== $actor ||
+            ! hash_equals((string) $existing->request_payload_hash, $hash)) {
+            throw ValidationException::withMessages(['request_token' => 'This request token has already been used. Refresh the form.']);
+        }
+        return redirect()->route('customer.sublimation.orders')
+            ->with('success', 'This order request was already received.');
     }
 
     public function orders(Request $request): View

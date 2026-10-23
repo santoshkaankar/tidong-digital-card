@@ -17,6 +17,7 @@ use Tests\TestCase;
 /** Additive, isolated DB-transaction tests; DO NOT run on main or production DB. */
 class DeliveryIdentityIsolationRegressionTest extends TestCase
 {
+    use \Tests\Support\ApprovesDeliveryPartnerForTest;
     protected function setUp(): void
     {
         parent::setUp();
@@ -90,7 +91,9 @@ class DeliveryIdentityIsolationRegressionTest extends TestCase
         $partnerId = $service->inviteToBusiness($businessId, (int)$rider->id,
             'bike', null, (int)$owner->id);
         $service->verifyForBusiness($businessId, $partnerId, (int)$owner->id);
+        $this->approvePlatformDeliveryForTest($partnerId);
         $service->setRosterStatus($businessId, $partnerId, 'active', (int)$owner->id);
+        $service->setAvailability((int)$rider->id,true);
         return $partnerId;
     }
 

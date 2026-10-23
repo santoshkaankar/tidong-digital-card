@@ -80,7 +80,7 @@ class SublimationStudioWorkflowTest extends TestCase
             ->assertSessionHasNoErrors();
         $product = DB::table('sublimation_products')->where('business_id', $business)->firstOrFail();
         $this->post(route('vendor.sublimation.orders.store', $business), [
-            'branch_id' => $branch, 'product_id' => $product->id,
+            'request_token' => (string) Str::uuid(), 'branch_id' => $branch, 'product_id' => $product->id,
             'customer_name' => 'Gift Customer', 'quantity' => 2,
             'design_instructions' => 'Birthday name',
         ])->assertSessionHasNoErrors();
@@ -127,7 +127,7 @@ class SublimationStudioWorkflowTest extends TestCase
         $product = DB::table('sublimation_products')->where('business_id', $business)
             ->where('name', 'Custom Logo Mouse Pad')->firstOrFail();
         $this->actingAs($owner)->post(route('vendor.sublimation.orders.store', $business), [
-            'branch_id' => $branch, 'product_id' => $product->id,
+            'request_token' => (string) Str::uuid(), 'branch_id' => $branch, 'product_id' => $product->id,
             'customer_name' => 'Test Customer', 'quantity' => 1,
         ])->assertNotFound();
         $payload = $this->addProduct($business, $branch);
@@ -140,7 +140,7 @@ class SublimationStudioWorkflowTest extends TestCase
             'id' => $product->id, 'is_active' => true, 'sale_price_paise' => 18000,
         ]);
         $this->post(route('vendor.sublimation.orders.store', $business), [
-            'branch_id' => $branch, 'product_id' => $product->id,
+            'request_token' => (string) Str::uuid(), 'branch_id' => $branch, 'product_id' => $product->id,
             'customer_name' => 'Test Customer', 'quantity' => 1,
         ])->assertSessionHasNoErrors();
         $this->assertDatabaseHas('sublimation_orders', [
@@ -155,7 +155,7 @@ class SublimationStudioWorkflowTest extends TestCase
         $product = DB::table('sublimation_products')->where('business_id', $business)->firstOrFail();
         [, $otherBusiness, $otherBranch] = $this->studio();
         $this->post(route('vendor.sublimation.orders.store', $business), [
-            'branch_id' => $otherBranch, 'product_id' => $product->id,
+            'request_token' => (string) Str::uuid(), 'branch_id' => $otherBranch, 'product_id' => $product->id,
             'customer_name' => 'Test', 'quantity' => 1,
         ])->assertNotFound();
         $this->assertDatabaseMissing('sublimation_orders', ['business_id' => $business]);

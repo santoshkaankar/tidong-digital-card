@@ -39,7 +39,18 @@ class DeliveryIdentity
             ->where('uat.user_id', $userId)->where('at.code', 'vendor')->exists();
     }
 
-    /** All three checks are required, even for direct service calls outside web middleware. */
+    /** The platform step is not vendor approval and cannot be inferred from status=active. */
+    public function isPlatformApproved(int $userId): bool
+    {
+        $partner = DB::table('delivery_partners')->where('user_id', $userId)->first();
+        if (! $partner || ! $partner->approved_by || ! $partner->approved_at) return false;
+        return DB::table('audit_logs')->where('entity_type', 'delivery_partner')
+            ->where('entity_id', $partner->id)
+            ->where('action', 'delivery.partner.platform_approved')
+            ->where('actor_user_id', $partner->approved_by)->exists();
+    }
+
+    /** All rider checks include platform approval; business roster checked at job boundary. */
     public function hasActiveRiderCredentials(int $userId): bool
     {
         if ($this->isIneligibleRider($userId)) return false;
@@ -60,7 +71,9 @@ class DeliveryIdentity
             ->exists();
         if (! $role) return false;
 
+        // Platform approval and business authorization are separate steps.
+        // Never trust a vendor-created 'active' flag as platform approval.
         return DB::table('delivery_partners')->where('user_id', $userId)
-            ->where('status', 'active')->exists();
+            ->where('status', 'active')->exists() && $this->isPlatformApproved($userId);
     }
 }

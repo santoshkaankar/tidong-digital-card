@@ -1,12 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vendor Details</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-100 text-slate-800">
+@extends(request()->segment(1) === 'admin' ? 'layouts.admin' : 'layouts.platform-ops')
+@section('title', 'Vendor Details')
+@section('page_heading', 'Vendor Details')
+@section('content')
 <div class="mx-auto max-w-4xl p-4 sm:p-8">
     <a href="{{ route(request()->segment(1) . '.vendors.index') }}" class="text-blue-700 underline">← Back to Vendors</a>
 
@@ -85,5 +80,4 @@
         @endforelse
     </div>
 </div>
-</body>
-</html>
+@endsection

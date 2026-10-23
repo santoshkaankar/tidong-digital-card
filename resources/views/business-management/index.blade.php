@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Business Approvals - Digital Platform</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="min-h-screen bg-slate-100 p-4 text-slate-800 sm:p-8">
-<main class="mx-auto max-w-6xl space-y-6">
+@extends(request()->segment(1) === 'admin' ? 'layouts.admin' : 'layouts.platform-ops')
+@section('title', 'Business Approvals')
+@section('page_heading', 'Business Approvals')
+@section('content')
+<div class="mx-auto max-w-6xl space-y-6">
     <header class="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-white p-6 shadow-sm">
         <div>
             <h1 class="text-2xl font-bold">Business Approvals</h1>
@@ -64,6 +59,5 @@
     </section>
     <div>{{ $businesses->links() }}</div>
     <p class="text-sm text-slate-600">Approving a Business never enables orders automatically. POS and Branch setup are separate steps.</p>
-</main>
-</body>
-</html>
+</div>
+@endsection

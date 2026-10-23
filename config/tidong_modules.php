@@ -28,6 +28,11 @@ return [
         'default_enabled' => false,
         'paths' => ['marriage-planner', 'marriage-planner/*'],
     ],
+    'public_registration' => [
+        'name' => 'Public Account Registration',
+        'installed' => true, 'default_enabled' => false,
+        'paths' => ['register'],
+    ],
     'customer' => ['name' => 'Customer Marketplace', 'installed' => true, 'default_enabled' => true, 'paths' => []],
     'grocery' => ['name' => 'Grocery and Kirana', 'installed' => true, 'default_enabled' => false, 'paths' => []],
     'legal_advisory' => ['name' => 'Legal and Professional Advisory', 'installed' => true, 'default_enabled' => false, 'paths' => []],

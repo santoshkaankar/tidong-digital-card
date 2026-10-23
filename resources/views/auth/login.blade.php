@@ -80,7 +80,8 @@
             >
                 Login
             </button>
-        </form>
+        <p class="mt-3 text-center text-sm"><a href="{{ route('password.request') }}" class="font-semibold text-teal-700 underline">Forgot Password?</a></p>
+</form>
 
         <p class="mt-6 text-center text-sm text-slate-600"><a href="{{ route('register') }}" class="font-semibold text-indigo-600 hover:underline">Create a Customer Account</a></p>
     </div>

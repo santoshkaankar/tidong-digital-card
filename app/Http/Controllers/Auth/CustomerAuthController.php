@@ -91,6 +91,12 @@ return redirect()->route('customer.home');
             return redirect()->route($dashboard);
         }
 
+        // Keep pending Delivery / Professional / Service Provider users on their own status page.
+        if (app(DashboardRedirector::class)->hasActiveAccountType($user, 'professional')
+            || app(DashboardRedirector::class)->hasActiveAccountType($user, 'service_provider')
+            || app(DashboardRedirector::class)->hasActiveAccountType($user, 'delivery')) {
+            return redirect()->route('registration.status');
+        }
         // Reject all other account types and invalid/inactive accounts.
         $this->logoutSession($request);
 

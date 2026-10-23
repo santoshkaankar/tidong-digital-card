@@ -1,12 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vendor Management</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-100 text-slate-800">
+@extends(request()->segment(1) === 'admin' ? 'layouts.admin' : 'layouts.platform-ops')
+@section('title', 'Vendor Management')
+@section('page_heading', 'Vendor Management')
+@section('content')
 <div class="mx-auto max-w-7xl p-4 sm:p-8">
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -77,5 +72,4 @@
 
     <div class="mt-5">{{ $vendors->links() }}</div>
 </div>
-</body>
-</html>
+@endsection

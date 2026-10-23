@@ -92,9 +92,9 @@ class PlatformVendorPermissionTest extends TestCase
         $this->actingAs($user)->post('/staff-admin/vendors/999999999/approve')->assertForbidden();
     }
 
-    public function test_super_admin_can_pass_permission_check_for_staff_vendor_index(): void
+    public function test_super_admin_can_open_own_vendor_index(): void
     {
         $user = $this->makeAdmin([], true);
-        $this->actingAs($user)->get(route('staff-admin.vendors.index'))->assertOk();
+        $this->actingAs($user)->get(route('admin.vendors.index'))->assertOk();
     }
 }

@@ -69,7 +69,7 @@ class SublimationCustomerFulfillmentTest extends TestCase
         [, $business, $branch, $product] = $this->setupStudio();
         $customer = $this->customer();
         $this->actingAs($customer)->post(route('sublimation.orders.place'), [
-            'product_id'=>$product, 'customer_name'=>'Buyer One', 'customer_mobile'=>'9999999999',
+            'request_token'=>(string) Str::uuid(), 'product_id'=>$product, 'customer_name'=>'Buyer One', 'customer_mobile'=>'9999999999',
             'quantity'=>2, 'fulfillment_method'=>'delivery',
             'delivery_address'=>'Sample Road, Jaipur', 'design_instructions'=>'Print my name',
         ])->assertRedirect(route('customer.sublimation.orders'));
@@ -88,7 +88,7 @@ class SublimationCustomerFulfillmentTest extends TestCase
         [$vendorUser, , , $product] = $this->setupStudio();
         $customer = $this->customer();
         $this->actingAs($customer)->post(route('sublimation.orders.place'), [
-            'product_id'=>$product, 'customer_name'=>'Buyer Two', 'customer_mobile'=>'9999999999',
+            'request_token'=>(string) Str::uuid(), 'product_id'=>$product, 'customer_name'=>'Buyer Two', 'customer_mobile'=>'9999999999',
             'quantity'=>1, 'fulfillment_method'=>'delivery', 'delivery_address'=>'Sample Road, Jaipur',
         ])->assertRedirect(route('customer.sublimation.orders'));
         $order = DB::table('sublimation_orders')->where('customer_user_id', $customer->id)->firstOrFail();
@@ -115,11 +115,11 @@ class SublimationCustomerFulfillmentTest extends TestCase
         $this->actingAs($customer)->get(route('sublimation.products.show', $product))
             ->assertOk()->assertSee('Choose size')->assertSee('Choose color');
         $this->post(route('sublimation.orders.place'), [
-            'product_id'=>$product, 'customer_name'=>'Gift Buyer', 'customer_mobile'=>'9999999999',
+            'request_token'=>(string) Str::uuid(), 'product_id'=>$product, 'customer_name'=>'Gift Buyer', 'customer_mobile'=>'9999999999',
             'quantity'=>2, 'size'=>'XL', 'color'=>'White', 'fulfillment_method'=>'pickup',
         ])->assertSessionHasErrors('size');
         $this->post(route('sublimation.orders.place'), [
-            'product_id'=>$product, 'customer_name'=>'Gift Buyer', 'customer_mobile'=>'9999999999',
+            'request_token'=>(string) Str::uuid(), 'product_id'=>$product, 'customer_name'=>'Gift Buyer', 'customer_mobile'=>'9999999999',
             'quantity'=>2, 'size'=>'L', 'color'=>'White', 'fulfillment_method'=>'pickup',
         ])->assertRedirect(route('customer.sublimation.orders'));
         $order = DB::table('sublimation_orders')->where('customer_user_id', $customer->id)->firstOrFail();
@@ -137,7 +137,7 @@ class SublimationCustomerFulfillmentTest extends TestCase
         [$vendor, $business, , $product] = $this->setupStudio();
         $customer = $this->customer();
         $this->actingAs($customer)->post(route('sublimation.orders.place'), [
-            'product_id'=>$product, 'customer_name'=>'Buyer A', 'customer_mobile'=>'9999999999',
+            'request_token'=>(string) Str::uuid(), 'product_id'=>$product, 'customer_name'=>'Buyer A', 'customer_mobile'=>'9999999999',
             'quantity'=>1, 'fulfillment_method'=>'pickup',
         ]);
         $order = DB::table('sublimation_orders')->where('customer_user_id', $customer->id)->firstOrFail();

@@ -1,5 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Branch Change Approvals</title>@vite(['resources/css/app.css','resources/js/app.js'])</head>
-<body class="bg-slate-100 p-4 text-slate-800 sm:p-8"><main class="mx-auto max-w-6xl space-y-5">
+@extends(request()->segment(1) === 'admin' ? 'layouts.admin' : 'layouts.platform-ops')
+@section('title', 'Branch Change Approvals')
+@section('page_heading', 'Branch Change Approvals')
+@section('content')
+<div class="mx-auto max-w-6xl space-y-5">
 @php
     // Navigation uses the same secured route prefix as this review page.
     $dashboardRoute = str_starts_with($baseName, 'admin.') ? 'home'
@@ -18,4 +21,5 @@
 @forelse($records as $item)<tr class="border-t"><td class="p-3">#{{ $item->id }}</td><td class="p-3">{{ $item->vendor->display_name }}</td><td class="p-3">{{ $item->branch->business->name }} / {{ $item->branch->name }}</td><td class="p-3">{{ str_replace('_',' ', $item->change_type) }}</td><td class="p-3">{{ ucfirst($item->status) }}</td><td class="p-3"><a class="text-blue-700 underline" href="{{ route($baseName.'show',$item->id) }}">Review</a></td></tr>
 @empty <tr><td colspan="6" class="p-5 text-slate-600">No requests found.</td></tr> @endforelse</tbody></table></div>
 {{ $records->links() }}
-</main></body></html>
+</div>
+@endsection

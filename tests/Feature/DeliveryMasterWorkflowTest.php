@@ -15,6 +15,7 @@ use Tests\TestCase;
 /** Isolated migrated digital_test_db required. No destructive database operations. */
 class DeliveryMasterWorkflowTest extends TestCase
 {
+    use \Tests\Support\ApprovesDeliveryPartnerForTest;
     protected function setUp(): void { parent::setUp(); DB::beginTransaction(); }
     protected function tearDown(): void
     {
@@ -77,7 +78,9 @@ class DeliveryMasterWorkflowTest extends TestCase
         Role::firstOrCreate(['code'=>'delivery_partner'], ['name'=>'Delivery Partner','is_system'=>true]);
         $id=$service->inviteToBusiness($business,(int)$rider->id,'bike',null,(int)$owner->id);
         $service->verifyForBusiness($business,$id,(int)$owner->id);
+        $this->approvePlatformDeliveryForTest($id);
         $service->setRosterStatus($business,$id,'active',(int)$owner->id);
+        $service->setAvailability((int)$rider->id,true);
         return [$rider,$id];
     }
     private function data(int $business,int $branch,int $partner): array
@@ -86,6 +89,16 @@ class DeliveryMasterWorkflowTest extends TestCase
             'recipient_name'=>'Recipient','recipient_phone'=>'9999999999',
             'dropoff_address'=>'A long enough delivery address in Kota',
             'delivery_fee_paise'=>1500,'partner_earning_paise'=>800];
+    }
+    private function expectVendorDeniedBeforePlatformApproval(DeliveryService $service, int $business,
+        int $partnerId, int $ownerId): void
+    {
+        try {
+            $service->setRosterStatus($business,$partnerId,'active',$ownerId);
+            $this->fail('Vendor must not activate before Admin approval.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('partner',$e->errors());
+        }
     }
     public function test_vendor_only_can_verify_activate_and_assign_partner(): void
     {
@@ -97,7 +110,11 @@ class DeliveryMasterWorkflowTest extends TestCase
         try { $service->setRosterStatus($business,$id,'active',(int)$owner->id); $this->fail(); }
         catch (ValidationException $e) { $this->assertTrue(true); }
         $service->verifyForBusiness($business,$id,(int)$owner->id);
+        // Even a verified Vendor cannot promote a rider without platform approval.
+        $this->expectVendorDeniedBeforePlatformApproval($service,$business,$id,(int)$owner->id);
+        $this->approvePlatformDeliveryForTest($id);
         $service->setRosterStatus($business,$id,'active',(int)$owner->id);
+        $service->setAvailability((int)$rider->id,true);
         $job=$service->createJob($this->data($business,$branch,$id),(int)$owner->id);
         $this->assertDatabaseHas('delivery_jobs',['id'=>$job,'business_id'=>$business]);
         $this->assertDatabaseHas('delivery_business_partners', ['business_id'=>$business, 'partner_id'=>$id,'status'=>'active']);

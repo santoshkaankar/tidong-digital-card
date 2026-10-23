@@ -27,6 +27,8 @@ Route::middleware(['auth', EnsureVendorAccount::class])->prefix('businesses/{bus
         Route::patch('/products/{product}', [SublimationStudioController::class, 'updateProduct'])
             ->whereNumber('product')->name('vendor.sublimation.products.update');
         Route::post('/orders', [SublimationStudioController::class, 'storeOrder'])->name('vendor.sublimation.orders.store');
+        Route::patch('/orders/{order}/contact', [SublimationStudioController::class, 'updateContact'])
+            ->whereNumber('order')->name('vendor.sublimation.orders.contact');
         Route::post('/orders/{order}/status', [SublimationStudioController::class, 'updateStatus'])
             ->whereNumber('order')->name('vendor.sublimation.orders.status');
     });

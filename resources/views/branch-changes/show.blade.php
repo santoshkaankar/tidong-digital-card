@@ -1,5 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Review Branch Request #{{ $record->id }}</title>@vite(['resources/css/app.css','resources/js/app.js'])</head>
-<body class="bg-slate-100 p-4 text-slate-800 sm:p-8"><main class="mx-auto max-w-5xl space-y-5">
+@extends(request()->segment(1) === 'admin' ? 'layouts.admin' : 'layouts.platform-ops')
+@section('title', 'Review Branch Request')
+@section('page_heading', 'Review Branch Request')
+@section('content')
+<div class="mx-auto max-w-5xl space-y-5">
 @php
     $dashboardRoute = str_starts_with($baseName, 'admin.') ? 'home'
         : (str_starts_with($baseName, 'staff-admin.') ? 'staff-admin.home' : 'employee.home');
@@ -30,4 +33,5 @@
 <button onclick="return confirm('Reject this request without applying changes?')" class="mt-3 rounded-lg bg-red-700 px-5 py-3 text-white">Reject Request</button></form>
 </section>
 @else <p class="rounded-xl bg-white p-4">Reviewed: {{ $record->reviewed_at?->format('d M Y H:i') ?? '—' }} · {{ $record->review_reason }}</p> @endif
-</main></body></html>
+</div>
+@endsection

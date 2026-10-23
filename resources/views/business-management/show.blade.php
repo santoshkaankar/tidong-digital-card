@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Review Business - Digital Platform</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="min-h-screen bg-slate-100 p-4 text-slate-800 sm:p-8">
-<main class="mx-auto max-w-5xl space-y-6">
+@extends(request()->segment(1) === 'admin' ? 'layouts.admin' : 'layouts.platform-ops')
+@section('title', 'Review Business')
+@section('page_heading', 'Review Business')
+@section('content')
+<div class="mx-auto max-w-5xl space-y-6">
     <header class="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-white p-6 shadow-sm">
         <div>
             <p class="text-sm text-slate-500">Business #{{ $businessRecord->id }}</p>
@@ -88,6 +83,5 @@
         </section>
     @endif
     <p class="text-sm text-slate-600">Transactions and orders are not created by this page.</p>
-</main>
-</body>
-</html>
+</div>
+@endsection

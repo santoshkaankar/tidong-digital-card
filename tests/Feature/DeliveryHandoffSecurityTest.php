@@ -14,6 +14,7 @@ use Tests\TestCase;
 /** Requires migrated isolated digital_test_db; never resets production data. */
 class DeliveryHandoffSecurityTest extends TestCase
 {
+    use \Tests\Support\ApprovesDeliveryPartnerForTest;
     protected function setUp(): void { parent::setUp(); DB::beginTransaction(); }
     protected function tearDown(): void
     {
@@ -60,7 +61,10 @@ class DeliveryHandoffSecurityTest extends TestCase
         $delivery = app(DeliveryService::class);
         $partnerId = $delivery->inviteToBusiness($business,(int)$rider->id,'bike',null,(int)$vendor->id);
         $delivery->verifyForBusiness($business,$partnerId,(int)$vendor->id);
+        $this->approvePlatformDeliveryForTest($partnerId);
         $delivery->setRosterStatus($business,$partnerId,'active',(int)$vendor->id);
+        app(\App\Services\Platform\FeatureRegistry::class)->setEnabled('delivery.partner_progress', true, (int)$admin->id);
+        $delivery->setAvailability((int)$rider->id, true);
         $jobId = $delivery->createJob([
             'business_id'=>$business,'branch_id'=>$branch,'partner_id'=>$partnerId,
             'recipient_name'=>'Recipient','recipient_phone'=>'9999999999',

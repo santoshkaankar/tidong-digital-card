@@ -35,8 +35,8 @@ class DashboardRedirector
             && $this->hasValidRole($user, 'delivery_partner')
             && app(ModuleRegistry::class)->isEnabled('delivery')
             && Schema::hasTable('delivery_partners')
-            && DB::table('delivery_partners')->where('user_id', $user->id)
-                ->where('status', 'active')->exists()
+            && app(\App\Services\Delivery\DeliveryIdentity::class)
+                ->hasActiveRiderCredentials((int)$user->id)
         ) {
             return 'delivery.home';
         }

@@ -27,7 +27,7 @@ return new class extends Migration {
             $t->string('category', 40);
             $t->string('verification_status', 30)->default('pending');
             $t->timestamps();
-            $t->unique(['professional_id','category']);
+            $t->unique(['professional_id','category'], 'legal_qualification_prof_category_uniq');
         });
         Schema::create('legal_engagements', function (Blueprint $t) {
             $t->id();

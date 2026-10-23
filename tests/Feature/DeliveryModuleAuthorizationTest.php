@@ -90,7 +90,7 @@ class DeliveryModuleAuthorizationTest extends TestCase
     public function test_uninstalled_module_cannot_be_registered_and_unknown_feature_cannot_be_toggled(): void
     {
         $admin = $this->actor('admin','admin');
-        $this->actingAs($admin)->post(route('staff-admin.modules.register','game'))
+        $this->actingAs($admin)->post(route('staff-admin.modules.register','uninstalled_test_module'))
             ->assertSessionHasErrors('module');
         $this->actingAs($admin)->post(route('staff-admin.modules.features.toggle','unreviewed.random'),
             ['enabled'=>1])->assertSessionHasErrors('feature');

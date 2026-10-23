@@ -136,9 +136,14 @@ class DeliveryService
                 if (app(DeliveryIdentity::class)->isIneligibleRider((int)$partner->user_id)) {
                     throw ValidationException::withMessages(['partner' => 'This account can no longer be approved as a delivery partner.']);
                 }
+                // Admin or individually authorized Admin Employee MUST approve first.
+                // A vendor may approve their own roster but cannot approve platform identity.
+                if (! app(DeliveryIdentity::class)->isPlatformApproved((int)$partner->user_id)) {
+                    throw ValidationException::withMessages(['partner' => 'Platform approval is required before vendor activation.']);
+                }
                 $this->grantPartnerIdentity((int) $partner->user_id, $actorId);
                 // Approval by a second business must not force an intentionally offline rider online.
-                $availability = $partner->status === 'active' ? (bool)$partner->is_available : true;
+                $availability = $partner->status === 'active' ? (bool)$partner->is_available : false; // Rider must explicitly go online.
                 DB::table('delivery_partners')->where('id', $partnerId)->update([
                     'status' => 'active', 'is_available' => $availability,
                     'verification_status' => 'verified', 'verified_by' => $actorId,

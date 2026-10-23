@@ -10,7 +10,7 @@ class TidongHomepageTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('One platform.', false)
+            ->assertSee('Digital Hub', false)
             ->assertSee(route('login'), false)
             ->assertSee('Restaurant POS', false)
             ->assertSee('Kitchen Display', false)

@@ -71,6 +71,6 @@ class PlatformCapability
 
     public const CAPABILITIES = [
         'modules.view', 'modules.register', 'modules.toggle',
-        'features.toggle', 'delivery.diagnostics.view',
+        'features.toggle', 'delivery.diagnostics.view', 'delivery.partners.approve',
     ];
 }

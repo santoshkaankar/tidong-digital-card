@@ -17,10 +17,10 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:login')
         ->name('login.store');
 
-    Route::get('/register', [CustomerAuthController::class, 'showRegister'])
+    Route::get('/register', [\App\Http\Controllers\Auth\PublicRegistrationController::class, 'show'])
         ->name('register');
 
-    Route::post('/register', [CustomerAuthController::class, 'register'])
+    Route::post('/register', [\App\Http\Controllers\Auth\PublicRegistrationController::class, 'store'])
         ->name('register.store');
 });
 
@@ -40,3 +40,9 @@ require __DIR__.'/tidong_integrated_web.php';
 
 // Customer personalized-gift catalogue and order tracking.
 require __DIR__.'/sublimation_customer.php';
+
+// Registration-only additive routes.
+require __DIR__.'/public_registration.php';
+
+// Public Terms and Conditions: adapted from owner-supplied legacy page.
+Route::view('/terms-and-conditions', 'pages.terms')->name('pages.terms');
