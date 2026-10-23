@@ -12,11 +12,11 @@ const STEPS=Object.freeze([
 {id:'rest',name:'Rest',hint:'Rest at home to restore energy.'}
 ]);
 function summary(state,engine,now=Date.now()){
-if(!engine||typeof engine.isValidState!=='function'||typeof engine.canPlay!=='function'||!engine.isValidState(state))return {phase:'welcome',spent:0,remaining:TARGET,full:false,coins:null,message:'Enter the offline demo. Registration is not needed to preview.'};
+if(!engine||typeof engine.isValidState!=='function'||!engine.isValidState(state))return {phase:'welcome',spent:0,remaining:TARGET,full:false,coins:null,message:'Enter the offline demo. Registration is not needed to preview.'};
 const spent=Number.isSafeInteger(state.starterSpent)&&state.starterSpent>=0?state.starterSpent:0;
 const remaining=Math.max(0,TARGET-spent);
-const subscribed=typeof engine.isSubscribed==='function'?engine.isSubscribed(state,now):!!state.subscribed;
-const full=!!engine.canPlay(state,now);
+const subscribed=!!state.subscribed;
+const full=typeof engine.canPlay==='function'?!!engine.canPlay(state,now):(subscribed&&spent>=TARGET);
 return {phase:!subscribed?'subscription':!full?'shopping':'life',spent,remaining,full,coins:state.coins,message:!subscribed?'Activate the demo annual subscription.':!full?'Limited movement, neighbour observation and starter shopping only. Daily life remains locked.':'Character Life unlocked in this offline demo.'};
 }
 function safeProgress(data){if(!data||!Array.isArray(data.done))return {done:[]};return {done:[...new Set(data.done.filter(x=>typeof x==='string'&&STEPS.some(s=>s.id===x)))].slice(0,STEPS.length)};}
