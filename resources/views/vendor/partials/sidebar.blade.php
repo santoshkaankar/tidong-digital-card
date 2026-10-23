@@ -11,6 +11,7 @@
     $navGroupCode = $navBusiness ? ($navTypeGroups[$navBusiness->business_type] ?? 'services') : null;
     $navGroup = $navGroupCode ? ($navGroups[$navGroupCode] ?? null) : null;
     $isRestaurant = $navGroupCode === 'restaurant';
+    $isProceedTiffin = $navGroupCode === 'tiffin';
     $posSupportsType = $navBusiness && in_array($navBusiness->business_type, ['restaurant', 'cafe'], true);
     $isStudio = $navGroupCode === 'sublimation';
     $isApproved = $navBusiness && $navBusiness->status === 'approved';
@@ -147,6 +148,14 @@
                                 'studio-prices' => '#studio-prices', 'studio-orders' => '#studio-new-job',
                                 'studio-jobs' => '#studio-job-cards',
                             ];
+                            if (array_key_exists($key, $anchors)) $href = $url.$anchors[$key];
+                        }
+                        if ($isProceedTiffin && $navBranch && $isApproved && $key
+                            && Route::has('vendor.proceed-tiffin.index')
+                            && app(\App\Services\Platform\ModuleRegistry::class)->isEnabled('proceed_tiffin')) {
+                            $url = route('vendor.proceed-tiffin.index', ['business' => $navBusiness->id, 'branch' => $navBranch->id]);
+                            $anchors = ['proceed-tiffin' => '', 'tiffin-items' => '#tiffin-items',
+                                'tiffin-meals' => '#tiffin-meals', 'tiffin-orders' => '#tiffin-orders'];
                             if (array_key_exists($key, $anchors)) $href = $url.$anchors[$key];
                         }
                         if ($isRestaurant && $posSupportsType && $isApproved && $navBranch && $key) {

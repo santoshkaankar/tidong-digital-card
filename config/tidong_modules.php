@@ -28,6 +28,11 @@ return [
         'default_enabled' => false,
         'paths' => ['marriage-planner', 'marriage-planner/*'],
     ],
+    'proceed_tiffin' => [
+        'name' => 'Proceed Tiffin / Everyday Thali',
+        'installed' => true, 'default_enabled' => false,
+        'paths' => ['vendor/businesses/*/branches/*/proceed-tiffin', 'vendor/businesses/*/branches/*/proceed-tiffin/*'],
+    ],
     'public_registration' => [
         'name' => 'Public Account Registration',
         'installed' => true, 'default_enabled' => false,
