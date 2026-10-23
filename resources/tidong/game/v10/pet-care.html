@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08222b"><title>Pet Care • TIDONG Virtual Life</title>
+<meta name="description" content="A free, private, offline virtual pet activity from the TIDONG Virtual Life game playtest.">
+<style>
+*{box-sizing:border-box}body{font:16px/1.5 system-ui,sans-serif;margin:0;background:linear-gradient(135deg,#dff7ee,#e9f5ff);color:#133042}
+main{max-width:780px;margin:24px auto;padding:0 18px}header{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+a{color:#07536e}h1{font-size:clamp(1.7rem,5vw,2.7rem);margin:20px 0 6px}.muted{color:#526777}
+.card{background:#fff;border:1px solid #c6dfda;border-radius:20px;padding:24px;box-shadow:0 12px 35px #2343a118}
+.pet{text-align:center;font-size:clamp(90px,22vw,150px);line-height:1.3;transition:transform .2s;user-select:none}
+.pet.happy{transform:scale(1.06)}.indicators{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.meter{background:#f0f8f5;border-radius:13px;padding:12px}.meter strong{display:block}.meter progress{display:block;width:100%;height:18px;margin-top:10px;accent-color:#078c76}
+.buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:22px 0}
+button{border:0;border-radius:13px;background:#087d84;color:#fff;padding:15px 12px;font-size:1rem;font-weight:750;cursor:pointer;min-height:52px}
+button:hover{background:#075e67}button:focus-visible,a:focus-visible{outline:3px solid #f1a631;outline-offset:3px}
+button.secondary{background:#355d6b}#message{background:#e8fbf2;border-radius:12px;padding:12px;color:#0a5545;min-height:49px}
+small{display:block;margin-top:15px;color:#50667a}
+@media(max-width:500px){.indicators{grid-template-columns:1fr}.card{padding:17px}.buttons{gap:8px}}
+</style></head><body><main>
+<header><strong>🐾 TIDONG Virtual Life</strong><a href="index.html">← Back to Game</a></header>
+<h1>Care for Your Puppy</h1><p class="muted">Feed, play, rest and clean up together. A simple child-friendly offline activity—no real money, chat, ads or purchases.</p>
+<section class="card" aria-label="Virtual pet care">
+<div class="pet" id="pet" role="img" aria-label="Happy puppy">🐶</div>
+<div class="indicators">
+<div class="meter"><strong>🍎 Hunger</strong><progress id="food" max="100" value="55"></progress></div>
+<div class="meter"><strong>💛 Happiness</strong><progress id="joy" max="100" value="55"></progress></div>
+<div class="meter"><strong>💤 Energy</strong><progress id="energy" max="100" value="55"></progress></div>
+</div><div class="buttons">
+<button type="button" data-action="feed">🍎 Give Food</button>
+<button type="button" data-action="play">🎾 Play Together</button>
+<button type="button" data-action="rest">🛏️ Let Puppy Rest</button>
+<button type="button" data-action="clean">🧼 Clean &amp; Care</button>
+</div><p id="message" role="status" aria-live="polite">Your puppy is happy to see you!</p>
+<button type="button" id="restart" class="secondary">↺ Start Fresh</button>
+<small>This playtest stays in this browser only. No game wallet, affiliate income or public profile is involved.</small>
+</section></main>
+<script src="pet-care-logic.js"></script><script src="pet-care.js"></script>
+</body></html>

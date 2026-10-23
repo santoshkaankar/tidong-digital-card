@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict');
+const pet=require('../../resources/tidong/game/v10/pet-care-logic.js');
+let s=pet.fresh();assert.equal(s.food,55);assert.equal(s.joy,55);
+s=pet.act(s,'feed').state;assert.equal(s.food,77);
+s=pet.act(s,'play').state;assert.equal(s.joy,77);
+s=pet.act(s,'rest').state;assert.equal(s.energy,64);
+assert.deepEqual(pet.act({food:1,joy:1,energy:5,care:0},'play').state,{food:1,joy:1,energy:5,care:0});
+assert.equal(pet.act({food:200,joy:-10,energy:50,care:0},'feed').state.food,100);
+assert.deepEqual(pet.safe({food:'1'}),pet.fresh());
+console.log('Pet care tests passed');
