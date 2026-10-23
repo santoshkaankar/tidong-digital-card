@@ -52,3 +52,11 @@ Route::view('/about-us', 'pages.public-site', ['page' => 'about'])->name('pages.
 Route::view('/services', 'pages.public-site', ['page' => 'services'])->name('pages.services');
 Route::view('/help', 'pages.public-site', ['page' => 'help'])->name('pages.help');
 Route::view('/contact', 'pages.public-site', ['page' => 'contact'])->name('pages.contact');
+
+// Only the information categories present in the archived homepage footer.
+// These pages use static Blade content; they do not require registration or login.
+Route::view('/features', 'pages.public-site', ['page' => 'features'])->name('pages.features');
+Route::view('/user-guides', 'pages.public-site', ['page' => 'guides'])->name('pages.guides');
+Route::view('/sponsored-ads', 'pages.public-site', ['page' => 'ads'])->name('pages.ads');
+Route::view('/terms-overview', 'pages.public-site', ['page' => 'terms'])->name('pages.terms-overview');
+Route::view('/privacy-overview', 'pages.public-site', ['page' => 'privacy'])->name('pages.privacy');

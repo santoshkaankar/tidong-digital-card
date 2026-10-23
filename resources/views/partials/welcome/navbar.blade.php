@@ -3,12 +3,12 @@
   <a class="navbar-brand fw-bold fs-4 text-primary" href="{{ url('/') }}"><i class="fas fa-layer-group me-2"></i>TIDONG<span class="text-dark">®</span> Digital</a>
   <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
   <div class="collapse navbar-collapse justify-content-end" id="navbarNav"><ul class="navbar-nav align-items-center gap-3">
-   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#quick-services">Services</a></li>
-   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#features">Features</a></li>
-   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#ads-section">Sponsored Ads</a></li>
+   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.services') }}">Services</a></li>
+   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.features') }}">Features</a></li>
+   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.ads') }}">Sponsored Ads</a></li>
    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.about') }}">About Us</a></li>
-   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.help') }}">Help</a></li>
-   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#footer-contact">Contact</a></li>
+   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.guides') }}">User Guides</a></li>
+   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.contact') }}">Contact</a></li>
    @auth
     <li class="nav-item"><a href="{{ $dashboardRoute }}" class="btn btn-primary btn-sm px-3 rounded-pill"><i class="fas fa-columns me-1"></i> Dashboard</a></li>
     <li class="nav-item"><span class="nav-link text-dark">{{ auth()->user()->name }}</span></li>
