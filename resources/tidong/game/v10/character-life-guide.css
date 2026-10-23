@@ -1,0 +1,25 @@
+/* TIDONG Character Life CHAT02 V13 responsive first-play guide */
+.tidong-guide-launch{position:fixed;right:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:1300;border:1px solid #adf6df;background:#14564f;color:#f4fffa;border-radius:999px;padding:13px 17px;font:800 14px system-ui,sans-serif;box-shadow:0 7px 30px #031b24a8;cursor:pointer;min-height:46px}
+.tidong-guide-launch:focus-visible,.tidong-guide button:focus-visible{outline:3px solid #ffcf63;outline-offset:2px}
+.tidong-guide{position:fixed;right:16px;bottom:76px;z-index:1301;width:min(410px,calc(100vw - 32px));max-height:min(75vh,680px);overflow:auto;border:1px solid #6aaba4;background:#091d2cf7;color:#eafff9;border-radius:16px;padding:17px;box-shadow:0 20px 65px #0009;font:14px/1.5 system-ui,sans-serif;overscroll-behavior:contain}
+.tidong-guide.hidden{display:none}.tidong-guide *{box-sizing:border-box}
+.tidong-guide-head{display:flex;gap:12px;justify-content:space-between;align-items:flex-start}
+.tidong-guide-head h2{font:800 clamp(17px,2.3vw,21px)/1.22 system-ui,sans-serif;margin:4px 0 12px;color:white}
+.tidong-guide-head small{font-size:10px;letter-spacing:1px;color:#a9e8cc}
+.tidong-guide-close{flex:0 0 40px;width:40px;height:40px;cursor:pointer;color:white;background:#254252;border:1px solid #688b9e;border-radius:10px}
+.tidong-guide p,.tidong-guide li{color:#d2e8e6;line-height:1.6}.tidong-guide p{margin:8px 0 12px}
+.tidong-guide-goal{background:#132f3b;border:1px solid #466974;border-radius:11px;padding:11px;margin:10px 0 14px;display:grid;grid-template-columns:1fr auto;gap:6px}
+.tidong-guide-goal strong{color:#fff;font-variant-numeric:tabular-nums}.tidong-guide-goal small{grid-column:1/-1;color:#bbdad9}
+.tidong-guide-track{grid-column:1/-1;background:#06151e;height:8px;border-radius:9px;overflow:hidden}
+.tidong-guide-track>div{height:100%;width:0;background:linear-gradient(90deg,#26a181,#b4f59b);transition:width .2s}
+.tidong-guide h3{font-size:15px;color:#fff;margin:12px 0 6px}
+.tidong-guide-btn{display:block;width:100%;min-height:44px;padding:10px 12px;margin:8px 0;border-radius:10px;cursor:pointer;color:white;background:#145f56;border:1px solid #59bba6;font-weight:700;text-align:left}
+.tidong-guide-btn:hover:not(:disabled){background:#1e796c}.tidong-guide-btn:disabled{opacity:.5;cursor:not-allowed}
+.tidong-guide-steps{margin:12px 0;padding:0;list-style:none;display:grid;gap:7px}
+.tidong-guide-steps li{padding:8px 10px;border:1px solid #345260;border-radius:9px;display:grid;gap:2px;background:#102b38}
+.tidong-guide-steps li b{color:white}.tidong-guide-steps li span{font-size:12px}
+.tidong-guide-steps li.done{border-color:#3aa989;background:#123e37}
+.tidong-guide-success{background:#18493b;border-radius:9px;padding:10px}
+.tidong-guide-footer{font-size:11px!important;color:#a2c9c3!important;border-top:1px solid #3f626c;padding-top:8px;margin:12px 0 0}
+@media(max-width:600px){.tidong-guide-launch{bottom:max(9px,env(safe-area-inset-bottom));right:9px;font-size:12px;padding:10px 13px}.tidong-guide{right:8px;width:calc(100vw - 16px);bottom:60px;max-height:70vh;padding:14px}}
+@media(prefers-reduced-motion:reduce){.tidong-guide-track>div{transition:none}}
