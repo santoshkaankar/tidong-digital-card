@@ -46,3 +46,9 @@ require __DIR__.'/public_registration.php';
 
 // Public Terms and Conditions: adapted from owner-supplied legacy page.
 Route::view('/terms-and-conditions', 'pages.terms')->name('pages.terms');
+
+// Lightweight public information pages: readable without login or database access.
+Route::view('/about-us', 'pages.public-site', ['page' => 'about'])->name('pages.about');
+Route::view('/services', 'pages.public-site', ['page' => 'services'])->name('pages.services');
+Route::view('/help', 'pages.public-site', ['page' => 'help'])->name('pages.help');
+Route::view('/contact', 'pages.public-site', ['page' => 'contact'])->name('pages.contact');

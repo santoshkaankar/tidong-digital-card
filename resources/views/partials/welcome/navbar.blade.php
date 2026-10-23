@@ -6,6 +6,8 @@
    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#quick-services">Services</a></li>
    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#features">Features</a></li>
    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#ads-section">Sponsored Ads</a></li>
+   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.about') }}">About Us</a></li>
+   <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('pages.help') }}">Help</a></li>
    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="#footer-contact">Contact</a></li>
    @auth
     <li class="nav-item"><a href="{{ $dashboardRoute }}" class="btn btn-primary btn-sm px-3 rounded-pill"><i class="fas fa-columns me-1"></i> Dashboard</a></li>
