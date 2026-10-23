@@ -29,6 +29,7 @@
             <div><dt class="text-sm text-slate-500">Status</dt><dd class="font-semibold">{{ ucfirst($vendorRecord->status) }}</dd></div>
             <div><dt class="text-sm text-slate-500">Account Holder</dt><dd>{{ $vendorRecord->user_name ?? '—' }}</dd></div>
             <div><dt class="text-sm text-slate-500">Email</dt><dd>{{ $vendorRecord->user_email ?? '—' }}</dd></div>
+            <div><dt class="text-sm text-slate-500">1. Email Verification</dt><dd class="font-semibold {{ $vendorRecord->user_email_verified_at ? 'text-emerald-700' : 'text-amber-800' }}">{{ $vendorRecord->user_email_verified_at ? 'Verified' : 'Pending — email link required' }}</dd></div>
             <div><dt class="text-sm text-slate-500">Approved At</dt><dd>{{ $vendorRecord->approved_at ?? '—' }}</dd></div>
             <div><dt class="text-sm text-slate-500">Approved By (User ID)</dt><dd>{{ $vendorRecord->approved_by ?? '—' }}</dd></div>
         </dl>
@@ -43,8 +44,12 @@
                     <label class="mb-2 block text-sm" for="approve-reason">Optional note</label>
                     <textarea id="approve-reason" name="reason" maxlength="500"
                               class="w-full rounded-lg border p-3"></textarea>
-                    <button class="mt-3 rounded-lg bg-green-700 px-5 py-3 font-semibold text-white">
-                        Approve
+                    @if(! $vendorRecord->user_email_verified_at)
+                    <p class="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Approval locked: this vendor must verify their registered email first. Do not bypass the email ownership check.</p>
+                    @endif
+                    <button type="submit" @disabled(! $vendorRecord->user_email_verified_at)
+                        class="mt-3 min-h-11 rounded-lg px-5 py-3 font-semibold {{ $vendorRecord->user_email_verified_at ? 'bg-green-700 text-white hover:bg-green-800' : 'cursor-not-allowed border border-amber-500 bg-amber-100 text-amber-900' }}">
+                        {{ $vendorRecord->user_email_verified_at ? 'Approve Vendor' : 'Email Verification Required' }}
                     </button>
                 </form>
 

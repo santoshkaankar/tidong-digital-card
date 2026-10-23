@@ -30,7 +30,8 @@ class VendorManagementController extends Controller
             ->select(
                 'vendors.*',
                 'users.name as user_name',
-                'users.email as user_email'
+                'users.email as user_email',
+                'users.email_verified_at as user_email_verified_at'
             );
     }
 
@@ -148,6 +149,18 @@ class VendorManagementController extends Controller
                 throw ValidationException::withMessages([
                     'status' => 'Sirf pending Vendor ko approve ya reject kiya ja sakta hai.',
                 ]);
+            }
+
+            // Email ownership verification comes before a pending Vendor is approved.
+            // Already-approved Vendor records are not modified.
+            if ($newStatus === 'approved') {
+                $verified = DB::table('users')->where('id', $vendor->user_id)
+                    ->whereNotNull('email_verified_at')->exists();
+                if (! $verified) {
+                    throw ValidationException::withMessages([
+                        'email' => 'Vendor must verify their registered email before approval.',
+                    ]);
+                }
             }
 
             $oldValues = ['status' => $vendor->status];

@@ -53,7 +53,12 @@
                         <div>{{ $vendor->user_name ?? '—' }}</div>
                         <div class="text-slate-500">{{ $vendor->user_email ?? '' }}</div>
                     </td>
-                    <td class="p-3">{{ ucfirst($vendor->status) }}</td>
+                    <td class="p-3">
+                        <span class="font-semibold">{{ ucfirst($vendor->status) }}</span>
+                        @if($vendor->status === 'pending' && ! $vendor->user_email_verified_at)
+                            <div class="text-xs text-amber-800">Email verification pending</div>
+                        @endif
+                    </td>
                     <td class="p-3">
                         <a class="font-semibold text-blue-700 underline"
                            href="{{ route(request()->segment(1) . '.vendors.show', ['vendor' => $vendor->id]) }}">View details</a>
