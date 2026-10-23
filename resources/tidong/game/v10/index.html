@@ -7,7 +7,7 @@
   <meta name="description" content="TIDONG Virtual Life — a standalone interactive game concept prototype.">
   <title>TIDONG Virtual Life — Playtest V10</title>
   <link rel="stylesheet" href="styles.css">
-</head>
+<link rel="stylesheet" href="character-life-guide.css"></head>
 <body>
   <main class="app" id="app">
     <header class="topbar">
@@ -38,5 +38,5 @@
   <div class="modal-backdrop hidden" id="shop-modal" role="dialog" aria-modal="true" aria-labelledby="shop-title"><div class="modal shop-modal"><div class="modal-top"><div><p class="eyebrow">THE VIRTUAL MARKETPLACE</p><h2 id="shop-title">Find your next favorite thing.</h2></div><button type="button" class="icon-button" id="shop-close" aria-label="Close shop">✕</button></div><div class="filters" id="filters"><button type="button" class="filter active" data-filter="All">All Items</button><button type="button" class="filter" data-filter="Essentials">Essentials</button><button type="button" class="filter" data-filter="Fashion">Fashion</button><button type="button" class="filter" data-filter="Home">Home</button><button type="button" class="filter" data-filter="Luxury">Luxury</button></div><div class="products" id="products"></div><p class="shop-footnote">Digital items are virtual-only. 1 T-Coin = ₹1 price reference; no real-money purchase is possible in this demo.</p></div></div>
   <div class="modal-backdrop hidden" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title"><div class="modal confirm"><p class="eyebrow">CONFIRM VIRTUAL PURCHASE</p><div id="confirm-emoji" class="art-icon">🛍️</div><h2 id="confirm-title">Virtual item</h2><p id="confirm-desc"></p><div class="confirm-price" id="confirm-price"></div><p class="fine">This will use demonstration T-Coins only. No actual INR will be charged. Virtual items are not physical products.</p><div class="confirm-actions"><button id="confirm-cancel" type="button" class="btn-secondary">Cancel</button><button id="confirm-buy" type="button" class="btn-main">Buy virtual item</button></div></div></div>
   <script src="logic.js"></script><script src="world-logic.js"></script><script src="launch-tools.js"></script><script src="game.js"></script>
-</body>
+<script src="character-life-guide-logic.js"></script><script src="character-life-guide.js"></script></body>
 </html>
