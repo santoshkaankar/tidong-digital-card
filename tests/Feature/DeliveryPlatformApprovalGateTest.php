@@ -132,4 +132,27 @@ class DeliveryPlatformApprovalGateTest extends TestCase
             $this->fail('Forged old status must be denied.');
         } catch (ValidationException $e) { $this->assertArrayHasKey('partner',$e->errors()); }
     }
+    public function test_approval_page_highlights_missing_email_instead_of_silent_disabled_button(): void
+    {
+        extract($this->scenario());
+        DB::table('delivery_partners')->where('id', $partner)->update(['phone' => '9999999999']);
+        $this->actingAs($admin)->get(route('admin.delivery-partner-approvals.index'))
+            ->assertOk()
+            ->assertSee('Approval locked')
+            ->assertSee('Email verification required')
+            ->assertSee('Approval Locked')
+            ->assertSee('disabled');
+        $this->assertNull(DB::table('delivery_partners')->where('id',$partner)->value('approved_at'));
+    }
+
+    public function test_approval_button_becomes_enabled_only_after_email_verification(): void
+    {
+        extract($this->scenario());
+        DB::table('delivery_partners')->where('id', $partner)->update(['phone' => '9999999999']);
+        DB::table('users')->where('id', $rider->id)->update(['email_verified_at' => now()]);
+        $this->actingAs($admin)->get(route('admin.delivery-partner-approvals.index'))
+            ->assertOk()
+            ->assertSee('Ready for platform approval')
+            ->assertSee('Approve Profile');
+    }
 }
