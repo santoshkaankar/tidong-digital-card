@@ -46,6 +46,9 @@
     resizeInput();
     const thread = document.getElementById('food-ai-thread');
     let busy = false;
+    // Memory exists only in this open page: never localStorage, cookies or DB.
+    const chatHistory = [];
+    let chatStarted = false;
     const addBubble = (body, who) => {
         const wrapper = document.createElement('div');
         wrapper.className = who === 'user' ? 'flex justify-end' : 'flex justify-start';
@@ -74,6 +77,11 @@
         send.disabled = true;
         const payload = new FormData(form);
         payload.set('message', question);
+        payload.set('chat_started', chatStarted ? '1' : '0');
+        chatHistory.slice(-6).forEach((turn, i) => {
+            payload.append(`chat_history[${i}][role]`, turn.role);
+            payload.append(`chat_history[${i}][content]`, turn.content);
+        });
         addBubble(question, 'user');
         message.value = '';
         resizeInput();
@@ -92,6 +100,10 @@
                 throw new Error(data && data.message ? data.message : 'जवाब उपलब्ध नहीं है।');
             }
             pending.textContent = data.answer;
+            chatHistory.push({role: 'user', content: question.slice(0, 400)});
+            chatHistory.push({role: 'assistant', content: data.answer.slice(0, 600)});
+            if (chatHistory.length > 6) chatHistory.splice(0, chatHistory.length - 6);
+            chatStarted = true;
             if (window.speechSynthesis) {
                 const listen = document.createElement('button');
                 listen.type = 'button';
