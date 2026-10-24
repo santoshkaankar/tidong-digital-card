@@ -17,6 +17,13 @@ class ProfessionalWorkTransparencyStructureTest extends TestCase
         $this->assertContains('auth', $professional->gatherMiddleware());
     }
 
+    public function test_professional_write_requires_active_vendor(): void
+    {
+        $controller = file_get_contents(app_path('Http/Controllers/LegalAdvisory/ProfessionalPortalController.php'));
+        $this->assertStringContainsString("where('status', 'approved')", $controller);
+        $this->assertStringContainsString("where('professional_id', $profile->id)", $controller);
+    }
+
     public function test_work_update_table_migration_exists(): void
     {
         $files = glob(database_path('migrations/*create_legal_work_updates_table.php'));
