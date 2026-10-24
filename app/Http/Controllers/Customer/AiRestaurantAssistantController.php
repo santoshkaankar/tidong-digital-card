@@ -25,7 +25,7 @@ final class AiRestaurantAssistantController extends Controller
     public function newChat(Request $request): \Illuminate\Http\RedirectResponse
     {
         $this->guard();
-        $request->session()->forget('tidong_ai_food_history');
+        $request->session()->forget(['tidong_ai_food_history', 'tidong_ai_food_started']);
         return redirect()->route('customer.ai-restaurant.index');
     }
 
@@ -87,6 +87,20 @@ final class AiRestaurantAssistantController extends Controller
                 $history[] = ['role' => 'assistant', 'content' => $answer];
                 $request->session()->put('tidong_ai_food_history', array_slice($history, -6));
             }
+        }
+
+        // Greeting is scoped to this chat, not to every message or every request.
+        // Preserve the actual answer to a first-turn question.
+        $firstTurn = ! (bool) $request->session()->get('tidong_ai_food_started', false);
+        if ($firstTurn) {
+            $answer = 'नमस्ते! '.preg_replace('/^\\s*(?:नमस्ते[!।, ]*|नमस्कार[!।, ]*)/u', '', $answer);
+            $request->session()->put('tidong_ai_food_started', true);
+        } elseif (preg_match('/^\\s*(good\\s*morning|गुड\\s*मॉर्निंग|सुप्रभात)[!?.। ]*$/iu', $question)) {
+            $answer = 'गुड मॉर्निंग!';
+        } elseif (preg_match('/^\\s*(good\\s*evening|गुड\\s*इवनिंग|शुभ संध्या)[!?.। ]*$/iu', $question)) {
+            $answer = 'गुड इवनिंग!';
+        } elseif (preg_match('/^\\s*(नमस्ते|नमस्कार)[!?.। ]*$/u', $question)) {
+            $answer = 'नमस्ते!';
         }
 
         if ($request->expectsJson()) {
