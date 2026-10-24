@@ -17,6 +17,17 @@ class GlobalCatalogMasterController extends Controller {
             ? DB::table($type==='variant_values'?'global_catalog_variant_attributes':$table)->orderBy('name')->get() : collect();
         return view('admin.global-catalog-master',compact('type','records','parents')+['title'=>self::TYPES[$type]]);
     }
+    public function update(Request $request,string $type,int $record) {
+        $table=$this->table($type);
+        $data=$request->validate(['name'=>['required','string','max:150'],'code'=>['nullable','string','max:50'],'is_active'=>['required','boolean']]);
+        $existing=DB::table($table)->where('id',$record)->first();
+        abort_unless($existing,404);
+        $duplicate=DB::table($table)->where('id','!=',$record)->where('parent_id',$existing->parent_id)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($data['name']))])->exists();
+        if ($duplicate) return back()->withErrors(['name'=>'Name already exists in this group.']);
+        DB::table($table)->where('id',$record)->update(['name'=>trim($data['name']),'code'=>$data['code']??null,'is_active'=>(bool)$data['is_active'],'updated_at'=>now()]);
+        return back()->with('success','Global record updated.');
+    }
     public function store(Request $request,string $type) {
         $table=$this->table($type);
         $rules=['name'=>['required','string','min:1','max:150'],'code'=>['nullable','string','max:50'],
