@@ -117,7 +117,7 @@
         <div class="mt-4 border-t border-slate-700 pt-4">
             <p class="px-2 text-xs font-bold uppercase tracking-wider text-rose-300">{{ $navGroup['title'] }}</p>
             <a href="{{ route('vendor.business.workspace', $navBusiness->id) }}" class="mt-2 block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-800">Business Overview</a>
-            @if (Route::has('vendor.sublimation.orders.index'))
+            @if ($isStudio && Route::has('vendor.sublimation.orders.index'))
                 <nav aria-label="Sublimation quick links" class="mt-2 space-y-1 border-b border-slate-700 pb-3 text-sm">
                     <a href="{{ route('vendor.sublimation.products.index', ['business' => $navBusiness->id] + ($navBranch ? ['branch' => $navBranch->id] : [])) }}"
                        class="block rounded-lg px-3 py-2 hover:bg-slate-800 {{ request()->routeIs('vendor.sublimation.products.*') ? 'bg-slate-700 font-semibold' : '' }}">Product List &amp; Options</a>
