@@ -3,10 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#dc243b">
+    <meta name="theme-color" content="#ffffff">
     <title>@yield('title', __('Customer')) | TIDONG</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('css/tidong-customer-v2.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/tidong-customer-web.css') }}?v=1">
 </head>
 <body class="td-customer-shell min-h-screen text-slate-900">
     <a href="#main-content" class="td-skip">{{ __('Skip to main content') }}</a>
@@ -80,7 +81,7 @@
         window.addEventListener('resize', () => { if (window.innerWidth > 900 && document.body.classList.contains('td-menu-open')) setOpen(false); });
     })();
     </script>
-    <nav class="td-bottom-nav" aria-label="{{ __('Mobile navigation') }}">
+    <nav class="td-bottom-nav" aria-label="{{ __('Mobile navigation') }}" hidden>
         <a href="{{ route('customer.home') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.home')])><span aria-hidden="true">🏠</span><span>{{ __('Home') }}</span></a>
         <a href="{{ route('customer.explore.index') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.explore.*')])><span aria-hidden="true">🧭</span><span>{{ __('Explore') }}</span></a>
         <a href="{{ route('customer.orders.index') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.orders.*')])><span aria-hidden="true">📦</span><span>{{ __('Orders') }}</span></a>
