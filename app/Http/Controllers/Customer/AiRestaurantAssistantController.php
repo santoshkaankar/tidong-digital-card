@@ -25,7 +25,7 @@ final class AiRestaurantAssistantController extends Controller
     public function newChat(Request $request): \Illuminate\Http\RedirectResponse
     {
         $this->guard();
-        $request->session()->forget(['tidong_ai_food_history', 'tidong_ai_food_started']);
+        // Conversation history lives only in the open browser page; nothing to clear server-side.
         return redirect()->route('customer.ai-restaurant.index');
     }
 
@@ -34,6 +34,10 @@ final class AiRestaurantAssistantController extends Controller
         $this->guard();
         $data = $request->validate([
             'message' => ['required', 'string', 'min:2', 'max:400'],
+            'chat_history' => ['nullable', 'array', 'max:6'],
+            'chat_history.*.role' => ['required_with:chat_history', 'in:user,assistant'],
+            'chat_history.*.content' => ['required_with:chat_history', 'string', 'max:600'],
+            'chat_started' => ['nullable', 'in:0,1'],
             'latitude' => ['nullable', 'required_with:longitude', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'required_with:latitude', 'numeric', 'between:-180,180'],
         ]);
@@ -84,21 +88,17 @@ final class AiRestaurantAssistantController extends Controller
                     RateLimiter::hit($userKey, 86400);
                     RateLimiter::hit($globalKey, 86400);
                 }
-                $history = (array) $request->session()->get('tidong_ai_food_history', []);
+                $history = (array) ($data['chat_history'] ?? []);
                 $result = $assistant->answer($question, $restaurants, $history);
                 $answer = $result['text'];
-                $history[] = ['role' => 'user', 'content' => $question];
-                $history[] = ['role' => 'assistant', 'content' => $answer];
-                $request->session()->put('tidong_ai_food_history', array_slice($history, -6));
             }
         }
 
         // Greeting is scoped to this chat, not to every message or every request.
         // Preserve the actual answer to a first-turn question.
-        $firstTurn = ! (bool) $request->session()->get('tidong_ai_food_started', false);
+        $firstTurn = ($data['chat_started'] ?? '0') !== '1';
         if ($firstTurn) {
             $answer = 'नमस्ते! '.preg_replace('/^\\s*(?:नमस्ते[!।, ]*|नमस्कार[!।, ]*)/u', '', $answer);
-            $request->session()->put('tidong_ai_food_started', true);
         } elseif (preg_match('/^\\s*(good\\s*morning|गुड\\s*मॉर्निंग|सुप्रभात)[!?.। ]*$/iu', $question)) {
             $answer = 'गुड मॉर्निंग!';
         } elseif (preg_match('/^\\s*(good\\s*evening|गुड\\s*इवनिंग|शुभ संध्या)[!?.। ]*$/iu', $question)) {
