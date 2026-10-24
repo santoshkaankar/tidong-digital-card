@@ -3,7 +3,7 @@
 @section('content')
 <section class="mx-auto flex min-h-[70vh] max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
 <header class="flex items-center justify-between border-b border-slate-100 p-4"><h1 class="text-lg font-bold">TIDONG AI</h1><form method="POST" action="{{ route('customer.ai-restaurant.new-chat') }}">@csrf<button type="submit" class="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold">＋ New Chat</button></form></header>
-<div class="flex-1 space-y-4 p-4" aria-live="polite">
+<div id="food-ai-thread" class="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
 @if($answer !== null)
 <div class="flex justify-end"><p class="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-rose-700 p-3 text-white">{{ $message }}</p></div>
 <div class="flex items-start gap-2"><p id="food-ai-answer" class="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-slate-100 p-3">{{ $answer }}</p><button id="food-ai-speak" type="button" aria-label="जवाब सुनें" class="min-h-11 min-w-11">🔊</button></div>
@@ -33,18 +33,63 @@
     const locationButton = document.getElementById('food-ai-location');
     const form = document.getElementById('food-ai-form');
     const send = document.getElementById('food-ai-send');
-    form.addEventListener('submit', event => {
-        if (!message.value.trim()) {
-            event.preventDefault();
+    const thread = document.getElementById('food-ai-thread');
+    let busy = false;
+    const addBubble = (body, who) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = who === 'user' ? 'flex justify-end' : 'flex justify-start';
+        const bubble = document.createElement('p');
+        bubble.className = who === 'user'
+            ? 'max-w-[85%] whitespace-pre-wrap rounded-2xl bg-rose-700 p-3 text-white'
+            : 'max-w-[85%] whitespace-pre-wrap rounded-2xl bg-slate-100 p-3 text-slate-900';
+        bubble.textContent = body;
+        wrapper.appendChild(bubble);
+        thread.appendChild(wrapper);
+        thread.scrollTop = thread.scrollHeight;
+        return bubble;
+    };
+    form.addEventListener('submit', async event => {
+        if (!window.fetch || !window.FormData) return; // Native form fallback.
+        event.preventDefault();
+        if (busy) return;
+        const question = message.value.trim();
+        if (question.length < 2) {
             status.classList.remove('sr-only');
-            status.textContent = 'कृपया सवाल लिखें।';
+            status.textContent = 'कम से कम दो अक्षरों का सवाल लिखें।';
             message.focus();
             return;
         }
+        busy = true;
         send.disabled = true;
-        send.textContent = '…';
+        const payload = new FormData(form);
+        payload.set('message', question);
+        addBubble(question, 'user');
+        message.value = '';
+        const pending = addBubble('जवाब तैयार हो रहा है…', 'assistant');
         status.classList.remove('sr-only');
         status.textContent = 'जवाब तैयार हो रहा है…';
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: payload,
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await response.json();
+            if (!response.ok || !data || typeof data.answer !== 'string') {
+                throw new Error(data && data.message ? data.message : 'जवाब उपलब्ध नहीं है।');
+            }
+            pending.textContent = data.answer;
+            status.textContent = 'जवाब आ गया।';
+        } catch (error) {
+            pending.textContent = 'जवाब नहीं मिल पाया। सवाल दोबारा भेज सकते हैं।';
+            message.value = question;
+            status.textContent = 'नेटवर्क या सर्वर की समस्या है। दोबारा भेजें।';
+        } finally {
+            busy = false;
+            send.disabled = false;
+            thread.scrollTop = thread.scrollHeight;
+        }
     });
     message.addEventListener('keydown', event => {
         if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
