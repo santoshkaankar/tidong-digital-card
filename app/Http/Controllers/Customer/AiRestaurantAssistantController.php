@@ -21,6 +21,13 @@ final class AiRestaurantAssistantController extends Controller
         ]);
     }
 
+    public function newChat(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $this->guard();
+        $request->session()->forget('tidong_ai_food_history');
+        return redirect()->route('customer.ai-restaurant.index');
+    }
+
     public function ask(Request $request, AiRestaurantAssistantService $assistant): View
     {
         $this->guard();
