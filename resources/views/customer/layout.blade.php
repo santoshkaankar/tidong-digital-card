@@ -16,6 +16,7 @@
                 <img src="{{ asset('images/brand/tidong-official-logo.jpg') }}" alt="TIDONG" width="178" height="55">
                 <span class="td-brand-tag">{{ __('Customer') }}</span>
             </a>
+            <button type="button" class="td-menu-toggle" id="td-menu-toggle" aria-controls="td-customer-sidebar" aria-expanded="false" aria-label="{{ __('Open menu') }}">☰ <span>{{ __('Menu') }}</span></button>
             <div class="td-top-actions">
                 <a class="td-top-account" href="{{ route('customer.profile.edit') }}">{{ __('Hi, :name', ['name' => \Illuminate\Support\Str::limit(auth()->user()->name, 22)]) }}</a>
                 <form action="{{ route('logout') }}" method="POST">@csrf
@@ -24,8 +25,10 @@
             </div>
         </div>
     </header>
+    <button type="button" class="td-sidebar-backdrop" id="td-sidebar-backdrop" aria-label="{{ __('Close menu') }}" hidden></button>
     <div class="td-workspace">
-        <aside class="td-side" aria-label="{{ __('Customer menu') }}">
+        <aside class="td-side" id="td-customer-sidebar" aria-label="{{ __('Customer menu') }}">
+            <button type="button" class="td-side-close" id="td-side-close" aria-label="{{ __('Close menu') }}">✕</button>
             <div class="td-side-title">{{ __('My TIDONG') }}</div>
             <nav class="td-side-nav">
                 <a href="{{ route('customer.home') }}" @class(['td-side-link','is-current'=>request()->routeIs('customer.home')])>🏠 <span>{{ __('Home') }}</span></a>
@@ -54,6 +57,29 @@
             @yield('content')
         </main>
     </div>
+    <script>
+    (() => {
+        const menu = document.getElementById('td-menu-toggle');
+        const side = document.getElementById('td-customer-sidebar');
+        const backdrop = document.getElementById('td-sidebar-backdrop');
+        const close = document.getElementById('td-side-close');
+        if (!menu || !side || !backdrop || !close) return;
+        let lastFocus = null;
+        function setOpen(open) {
+            document.body.classList.toggle('td-menu-open', open);
+            menu.setAttribute('aria-expanded', String(open));
+            backdrop.hidden = !open;
+            if (open) { lastFocus = document.activeElement; close.focus(); }
+            else if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+        }
+        menu.addEventListener('click', () => setOpen(!document.body.classList.contains('td-menu-open')));
+        close.addEventListener('click', () => setOpen(false));
+        backdrop.addEventListener('click', () => setOpen(false));
+        side.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('td-menu-open')) setOpen(false); });
+        window.addEventListener('resize', () => { if (window.innerWidth > 900 && document.body.classList.contains('td-menu-open')) setOpen(false); });
+    })();
+    </script>
     <nav class="td-bottom-nav" aria-label="{{ __('Mobile navigation') }}">
         <a href="{{ route('customer.home') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.home')])><span aria-hidden="true">🏠</span><span>{{ __('Home') }}</span></a>
         <a href="{{ route('customer.explore.index') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.explore.*')])><span aria-hidden="true">🧭</span><span>{{ __('Explore') }}</span></a>
