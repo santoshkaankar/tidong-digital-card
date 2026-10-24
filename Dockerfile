@@ -21,7 +21,7 @@ RUN set -eux; \
     docker-php-ext-configure gd --with-freetype --with-jpeg; \
     docker-php-ext-install -j "$(nproc)" \
       pdo_pgsql pgsql pdo_mysql bcmath mbstring intl zip gd opcache; \
-    a2enmod rewrite headers; \
+    a2enmod rewrite headers deflate expires; \
     rm -rf /var/lib/apt/lists/*
 
 FROM php-base AS deps
