@@ -47,8 +47,12 @@
                 <a href="{{ route('admin.users.index') }}" class="block rounded-lg px-4 py-2 hover:bg-slate-800">Users Management</a>
                 <a href="{{ route('admin.vendors.index') }}" class="block rounded-lg px-4 py-2 hover:bg-slate-800">Vendors Management</a>
                 <a href="{{ route('admin.businesses.index') }}" class="block rounded-lg px-4 py-2 hover:bg-slate-800">Businesses Approval</a>
-                <a href="{{ route('admin.branch-changes.index') }}" class="block rounded-lg px-4 py-2 hover:bg-slate-800">Branch Change Approvals</a>
                 <a href="{{ route('admin.global-menu.index') }}" class="block rounded-lg px-4 py-2 hover:bg-slate-800">Global Item Master</a>
+
+                <p class="px-4 pb-1 pt-5 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                    Approvals & Verification
+                </p>
+                <a href="{{ route('admin.approval-center.index') }}" class="block rounded-lg border border-emerald-700/40 bg-slate-800 px-4 py-3 font-semibold text-emerald-200 hover:bg-slate-700">✓ Approval & Verification Center</a>
 
                 <p class="px-4 pb-1 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
                     Platform Technical Controls

@@ -33,6 +33,11 @@ class LegalQualificationReviewController extends Controller
             abort_unless($profile,404);
             // No self-approval, including users who also have a platform role.
             abort_if((int)$profile->user_id === (int)$request->user()->id,403);
+            if ($data['decision'] === 'verified') {
+                abort_unless(DB::table('users')->where('id', $profile->user_id)
+                    ->whereNotNull('email_verified_at')->exists(), 422,
+                    'Verify professional email before credential approval.');
+            }
             $now=now();
             DB::table('legal_professional_qualifications')->where('id',$item->id)->update([
                 'verification_status'=>$data['decision'],

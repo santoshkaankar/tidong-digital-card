@@ -179,7 +179,11 @@ final class PublicRegistrationController extends Controller
         $intent = $type === 'customer' && DB::getSchemaBuilder()->hasTable('registration_affiliate_intents')
             ? DB::table('registration_affiliate_intents')->where('user_id', $user->id)->first()
             : null;
-        return view('auth.registration-status', compact('user','type','intent'));
+        $partnerApplication = in_array($type, ['professional', 'service_provider'], true)
+            && DB::getSchemaBuilder()->hasTable('partner_approval_applications')
+            ? DB::table('partner_approval_applications')->where('user_id', $user->id)
+                ->where('account_type', $type)->first() : null;
+        return view('auth.registration-status', compact('user','type','intent','partnerApplication'));
     }
 
     public function sendVerification(Request $request): RedirectResponse
