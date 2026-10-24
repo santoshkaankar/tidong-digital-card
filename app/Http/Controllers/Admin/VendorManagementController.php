@@ -85,7 +85,11 @@ class VendorManagementController extends Controller
         $canApprove = request()->user()->hasPlatformPermission('vendors.approve');
         $canReject = request()->user()->hasPlatformPermission('vendors.reject');
 
-        $vendorModules = app(\App\Services\Platform\ModuleRegistry::class)->overview();
+        $registry = app(\App\Services\Platform\ModuleRegistry::class);
+        $vendorModules = array_map(function ($module) use ($registry, $vendor) {
+            $module['enabled'] = $registry->isEnabledForVendor($module['code'], $vendor);
+            return $module;
+        }, array_filter($registry->overview(), fn ($module) => $module['installed']));
         return view(
             'vendor-management.show',
             compact('vendorRecord', 'businesses', 'basePath', 'canApprove', 'canReject', 'vendorModules')
