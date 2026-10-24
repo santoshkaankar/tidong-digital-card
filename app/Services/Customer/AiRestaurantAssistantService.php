@@ -94,6 +94,10 @@ final class AiRestaurantAssistantService
     private function freeCatalogueAnswer(string $message, array $restaurants): array
     {
         $query = mb_strtolower(trim($message));
+        $calendar = TidongCalendarAnswers::answer($message);
+        if ($calendar !== null) {
+            return ['text' => $calendar, 'ai_available' => false, 'free_mode' => true];
+        }
         // Free, instant conversational replies do not require GPS or a paid API.
         if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
             return ['text' => 'नमस्ते! बताइए, मैं आपकी किस काम में सहायता कर सकती हूँ?', 'ai_available' => false, 'free_mode' => true];
