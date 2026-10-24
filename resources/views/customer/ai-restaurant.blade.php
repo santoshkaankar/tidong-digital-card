@@ -163,15 +163,15 @@
             recognition = new VoiceRecognition();
             recognition.lang = 'hi-IN';
             recognition.interimResults = true;
-            recognition.maxAlternatives = 1;
+            recognition.maxAlternatives = 3;
             recognition.onstart = () => setMicState('listening', '🔴 सुन रहा हूँ… बोलिए। बंद करने के लिए लाल माइक दबाएँ।');
             recognition.onspeechstart = () => { if (listening) status.textContent = '🔴 आपकी आवाज़ सुन रहा हूँ…'; };
             recognition.onresult = e => {
                 let transcript = '';
-                for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+                for (let i = 0; i < e.results.length; i++) {\n                    const alternatives = Array.from(e.results[i]);\n                    const named = alternatives.find(item => /(?:tidong|टिडोंग|टेडोंग|टीडोंग)/iu.test(item.transcript));\n                    transcript += (named || alternatives[0]).transcript;\n                }\n                // Browser Hindi speech recognition sometimes hears the product name as 'मैडम'.\n                // Correct only the opening form of address, never words inside the question.\n                transcript = transcript.replace(/^\\s*मैडम(?=[,，।! ]|$)/u, 'टिडोंग');
                 message.value = transcript.trim();
                 resizeInput();
-                if (listening) status.textContent = '🔴 सुन रहा हूँ… ' + message.value;
+                if (listening) status.textContent = '🔴 सुन रहा हूँ… ' + message.value + ' (भेजने से पहले जाँचें)';
             };
             recognition.onerror = e => {
                 const labels = { 'not-allowed': 'माइक की अनुमति नहीं मिली। Browser Settings देखें।', 'no-speech': 'आवाज़ नहीं मिली। फिर से माइक दबाएँ।', 'audio-capture': 'माइक्रोफोन उपलब्ध नहीं है।', 'network': 'आवाज़ पहचान के लिए नेटवर्क उपलब्ध नहीं है।' };
