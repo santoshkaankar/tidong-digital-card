@@ -43,8 +43,14 @@ class LegalAdvisoryController extends Controller
             'ended' => 'Professional के साथ यह कार्य-संबंध समाप्त हो चुका है।',
             default => 'कार्य-संबंध की स्थिति: '.preg_replace('/[^a-z_]/', '', (string) $record->status),
         };
+        $updates = DB::table('legal_work_updates')
+            ->where('engagement_id', $record->id)->orderByDesc('recorded_at')
+            ->limit(30)->get(['work_type', 'period', 'status', 'description',
+                'evidence_reference', 'recorded_at']);
         return response()->json([
             'engagement_id' => $record->id,
+            'work_updates' => $updates,
+            'evidence_notice' => 'Work updates are self-reported by the assigned professional. An evidence reference is not independent verification.',
             'scope' => $record->scope,
             'business_id' => $record->business_id,
             'branch_id' => $record->branch_id,
