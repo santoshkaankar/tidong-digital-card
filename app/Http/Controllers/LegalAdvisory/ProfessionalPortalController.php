@@ -42,6 +42,7 @@ class ProfessionalPortalController extends Controller
         abort_unless($item, 404);
         $permissions = json_decode($item->permissions ?? '[]', true);
         abort_unless(is_array($permissions) && in_array('compliance_view', $permissions, true), 403);
+        abort_unless(DB::table('vendors')->where('id', $item->vendor_id)->where('status', 'approved')->whereNull('deleted_at')->exists(), 403);
         $id = DB::table('legal_work_updates')->insertGetId([
             'engagement_id' => $item->id,
             'professional_user_id' => $request->user()->id,
