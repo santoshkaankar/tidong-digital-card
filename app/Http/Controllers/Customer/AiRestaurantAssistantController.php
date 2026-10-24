@@ -53,7 +53,7 @@ final class AiRestaurantAssistantController extends Controller
         // Answer conversational questions without forcing location. Coordinates are
         // required only for factual nearby restaurant discovery.
         $question = trim((string) $data['message']);
-        $nearbyIntent = (bool) preg_match('/near(?:by|est)?|restaurant|restaurants|restro|hotel|cafe|food near|around me|पास|नजदीक|नज़दीक|रेस्टोरेंट|आसपास|लोकेशन|location|मेरे यहाँ|मेरे पास/iu', $question);
+        $nearbyIntent = (bool) preg_match('/(near\\s*(?:me|by)|nearest|nearby|around\\s*me|close\\s*by|पास\\s*(?:के|में|वाला|वाले)|नजदीक|नज़दीक|आसपास|लोकेशन|location|मेरे यहाँ|मेरे पास)/iu', $question);
         // Never expose professional work records from a customer AI chat.
         // This endpoint has no verified professional assignment or outlet-scoped
         // report reader. Admin enabling the transparency feature is NOT permission.
