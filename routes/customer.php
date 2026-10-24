@@ -18,6 +18,8 @@ Route::middleware(['auth', EnsureCustomerAccount::class])
         Route::get('/explore/{service}', [CustomerExploreController::class, 'service'])
             ->where('service', '[a-z_]+')->name('explore.service');
         Route::get('/orders', CustomerOrdersController::class)->name('orders.index');
+        Route::get('/assistant/food', [\App\Http\Controllers\Customer\AiRestaurantAssistantController::class, 'index'])->name('ai-restaurant.index');
+        Route::post('/assistant/food', [\App\Http\Controllers\Customer\AiRestaurantAssistantController::class, 'ask'])->middleware('throttle:4,1')->name('ai-restaurant.ask');
         Route::get('/profile', [CustomerProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [CustomerProfileController::class, 'update'])->middleware('throttle:12,1')->name('profile.update');
         Route::get('/preferences', [CustomerPreferencesController::class, 'edit'])->name('preferences.edit');

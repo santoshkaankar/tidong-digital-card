@@ -38,5 +38,10 @@ return [
     'legal_advisory' => ['name' => 'Legal and Professional Advisory', 'installed' => true, 'default_enabled' => false, 'paths' => []],
     'affiliate' => ['name' => 'Affiliate Network (review)', 'installed' => true, 'default_enabled' => false, 'paths' => []],
     'billing' => ['name' => 'Billing Invoice Foundation (draft only)', 'installed' => false, 'default_enabled' => false, 'paths' => []],
+    'ai_restaurant_assistant' => [
+        'name' => 'TIDONG AI – Restaurant Voice Assistant (read-only beta)',
+        'installed' => true, 'default_enabled' => false,
+        'paths' => [],
+    ],
     'ai_public_help' => ['name' => 'AI Public Help Corpus (draft only)', 'installed' => false, 'default_enabled' => false, 'paths' => []],
 ];
