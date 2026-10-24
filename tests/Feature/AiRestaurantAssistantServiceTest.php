@@ -20,6 +20,15 @@ class AiRestaurantAssistantServiceTest extends TestCase
         $this->assertSame('ai_restaurant_assistant', $feature['module']);
     }
 
+    public function test_vendor_progress_route_requires_auth_and_vendor_middleware(): void
+    {
+        $route = app('router')->getRoutes()->getByName('vendor.legal.ai-progress');
+        $this->assertNotNull($route);
+        $this->assertContains('auth', $route->gatherMiddleware());
+        $this->assertContains(\\App\\Http\\Middleware\\EnsureVendorAccount::class, $route->gatherMiddleware());
+        $this->assertSame(['GET', 'HEAD'], $route->methods());
+    }
+
     public function test_missing_api_key_never_calls_external_provider(): void
     {
         config()->set('tidong_ai_restaurant.api_key', '');
