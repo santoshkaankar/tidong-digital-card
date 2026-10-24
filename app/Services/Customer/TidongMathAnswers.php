@@ -26,7 +26,7 @@ final class TidongMathAnswers
             };
             if ($result === null) return 'शून्य से भाग या शेषफल निकालना संभव नहीं है।';
             if (!is_finite($result)) return 'इस गणना का परिणाम बहुत बड़ा है।';
-            return 'उत्तर: '.rtrim(rtrim(number_format($result, 6, '.', ''), '0'), '.');
+            return 'उत्तर: '.($result == 0 ? '0' : ($result == 0 ? '0' : rtrim(rtrim(number_format($result, 6, '.', ''), '0'), '.')));
         }
         if (preg_match('/^\s*(\d+(?:\.\d+)?)\s*(?:का|of)?\s*(\d+(?:\.\d+)?)\s*(?:%|प्रतिशत|percent)\s*(?:कितना|क्या|होगा)?\s*$/iu', $q, $m)) {
             $result = (float)$m[1] * (float)$m[2] / 100;
