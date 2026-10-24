@@ -87,8 +87,58 @@ final class AiRestaurantAssistantService
         })->all();
     }
 
+    /**
+     * No-paid-API mode: match words only against approved live restaurant/menu
+     * catalogue. Never fabricate an item, price, availability or completed order.
+     */
+    private function freeCatalogueAnswer(string $message, array $restaurants): array
+    {
+        $query = mb_strtolower(trim($message));
+        $matches = [];
+        foreach ($restaurants as $restaurant) {
+            $names = [(string) ($restaurant['restaurant'] ?? ''), (string) ($restaurant['outlet'] ?? '')];
+            $matchingItems = [];
+            foreach ((array) ($restaurant['menu'] ?? []) as $item) {
+                $name = trim((string) ($item['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                if (mb_stripos($query, mb_strtolower($name)) !== false) {
+                    $matchingItems[] = $name.' ₹'.(string) ($item['price_rupees'] ?? '—');
+                }
+            }
+            $named = false;
+            foreach ($names as $name) {
+                if ($name !== '' && mb_stripos($query, mb_strtolower($name)) !== false) {
+                    $named = true;
+                    break;
+                }
+            }
+            if ($matchingItems !== [] || $named) {
+                $matches[] = trim((string) ($restaurant['restaurant'] ?? 'Restaurant'))
+                    .' ('.(string) ($restaurant['outlet'] ?? 'Outlet').'): '
+                    .($matchingItems !== [] ? implode(', ', array_slice($matchingItems, 0, 5)) : 'मेन्यू नीचे देखें।');
+            }
+        }
+
+        if ($matches !== []) {
+            $text = "उपलब्ध रेस्टोरेंट डेटा में यह मिला:\n".implode("\n", array_slice($matches, 0, 5));
+        } else {
+            $text = 'पास के उपलब्ध रेस्टोरेंट और उनके मेन्यू नीचे देखें। '
+                .'आप किसी आइटम का पूरा नाम लिखकर उसकी कीमत पूछ सकते हैं।';
+        }
+        $text .= "\nयह मुफ्त कैटलॉग सहायता है; ऑर्डर या भुगतान नहीं किया गया है।";
+        return ['text' => $text, 'ai_available' => false, 'free_mode' => true];
+    }
+
     public function answer(string $message, array $restaurants, array $history = []): array
     {
+        // Free catalogue-based replies are always the default. No external request,
+        // API key or paid tokens are needed for this path.
+        if (! (bool) config('tidong_ai_restaurant.paid_provider_enabled', false)) {
+            return $this->freeCatalogueAnswer($message, $restaurants);
+        }
+
         $key = (string) config('tidong_ai_restaurant.api_key', '');
         if ($key === '') {
             return [
