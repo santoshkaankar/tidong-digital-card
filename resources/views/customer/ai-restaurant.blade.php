@@ -1,9 +1,9 @@
 @extends('customer.layout')
 @section('title', __('TIDONG AI'))
 @section('content')
-<section class="mx-auto flex min-h-[70vh] max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
+<section class="mx-auto flex h-[calc(100dvh-10rem)] min-h-[420px] max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
 <header class="flex items-center justify-between border-b border-slate-100 p-4"><h1 class="text-lg font-bold">TIDONG AI</h1><form method="POST" action="{{ route('customer.ai-restaurant.new-chat') }}">@csrf<button type="submit" class="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold">＋ New Chat</button></form></header>
-<div id="food-ai-thread" class="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
+<div id="food-ai-thread" class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
 @if($answer !== null)
 <div class="flex justify-end"><p class="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-rose-700 p-3 text-white">{{ $message }}</p></div>
 <div class="flex items-start gap-2"><p id="food-ai-answer" class="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-slate-100 p-3">{{ $answer }}</p><button id="food-ai-speak" type="button" aria-label="जवाब सुनें" class="min-h-11 min-w-11">🔊</button></div>
@@ -14,12 +14,12 @@
 @csrf
 <input type="hidden" name="latitude" id="food-ai-lat" value="{{ old('latitude', $latitude) }}">
 <input type="hidden" name="longitude" id="food-ai-lng" value="{{ old('longitude', $longitude) }}">
-<div class="flex items-end gap-2 rounded-2xl border border-slate-300 p-2">
-<button type="button" id="food-ai-location" title="लोकेशन" aria-label="लोकेशन" class="min-h-11 min-w-11">📍</button>
+<div class="flex items-end gap-1 rounded-2xl border border-slate-300 px-2 py-1.5 focus-within:border-rose-400">
+<button type="button" id="food-ai-location" title="लोकेशन" aria-label="लोकेशन" class="h-8 w-8 shrink-0 rounded-full text-sm" >📍</button>
 <label for="food-ai-message" class="sr-only">सवाल लिखें</label>
-<textarea id="food-ai-message" name="message" maxlength="400" minlength="2" rows="1" required placeholder="सवाल पूछें…" class="min-h-11 flex-1 resize-y border-0 p-2 text-base focus:outline-none">{{ old('message', '') }}</textarea>
-<button type="button" id="food-ai-mic" title="बोलकर पूछें" aria-label="बोलकर पूछें" class="min-h-11 min-w-11">🎙️</button>
-<button type="submit" id="food-ai-send" title="भेजें" aria-label="भेजें" class="min-h-11 min-w-11 rounded-xl bg-rose-700 text-white">➤</button>
+<textarea id="food-ai-message" name="message" maxlength="400" minlength="2" rows="1" required placeholder="सवाल पूछें…" class="max-h-28 min-h-9 min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-1.5 text-sm focus:outline-none">{{ old('message', '') }}</textarea>
+<button type="button" id="food-ai-mic" title="बोलकर पूछें" aria-label="बोलकर पूछें" class="h-8 w-8 shrink-0 rounded-full text-base" >🎙️</button>
+<button type="submit" id="food-ai-send" title="भेजें" aria-label="भेजें" class="h-8 w-8 shrink-0 rounded-full bg-rose-700 text-sm text-white">➤</button>
 </div><p id="food-ai-status" role="status" aria-live="polite" class="sr-only"></p>
 </form>
 </section>
@@ -33,6 +33,12 @@
     const locationButton = document.getElementById('food-ai-location');
     const form = document.getElementById('food-ai-form');
     const send = document.getElementById('food-ai-send');
+    const resizeInput = () => {
+        message.style.height = 'auto';
+        message.style.height = Math.min(message.scrollHeight, 112) + 'px';
+    };
+    message.addEventListener('input', resizeInput);
+    resizeInput();
     const thread = document.getElementById('food-ai-thread');
     let busy = false;
     const addBubble = (body, who) => {
@@ -65,6 +71,7 @@
         payload.set('message', question);
         addBubble(question, 'user');
         message.value = '';
+        resizeInput();
         const pending = addBubble('जवाब तैयार हो रहा है…', 'assistant');
         status.classList.remove('sr-only');
         status.textContent = 'जवाब तैयार हो रहा है…';
@@ -98,6 +105,7 @@
         } catch (error) {
             pending.textContent = 'जवाब नहीं मिल पाया। सवाल दोबारा भेज सकते हैं।';
             message.value = question;
+            resizeInput();
             status.textContent = 'नेटवर्क या सर्वर की समस्या है। दोबारा भेजें।';
         } finally {
             busy = false;
@@ -135,7 +143,7 @@
             recognition.lang = 'hi-IN';
             recognition.interimResults = false;
             recognition.maxAlternatives = 1;
-            recognition.onresult = e => { message.value = e.results[0][0].transcript; status.textContent = 'बात समझने के लिए लिखा गया है। जाँचकर जवाब पाएँ दबाएँ।'; };
+            recognition.onresult = e => { message.value = e.results[0][0].transcript; resizeInput(); message.focus(); status.textContent = 'बात समझने के लिए लिखा गया है। जाँचकर जवाब पाएँ दबाएँ।'; };
             recognition.onerror = () => { status.textContent = 'आवाज़ साफ नहीं मिली। कृपया लिखकर पूछें।'; };
             try { recognition.start(); status.textContent = 'बोलिए, मैं सुन रहा हूँ…'; } catch (_) { status.textContent = 'माइक्रोफोन शुरू नहीं हुआ।'; }
         });
