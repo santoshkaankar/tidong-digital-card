@@ -29,6 +29,18 @@ class AiRestaurantAssistantServiceTest extends TestCase
         $this->assertSame(['GET', 'HEAD'], $route->methods());
     }
 
+    public function test_location_help_is_answered_before_nearby_permission_prompt(): void
+    {
+        $source = file_get_contents(app_path('Http/Controllers/Customer/AiRestaurantAssistantController.php'));
+        $this->assertNotFalse($source);
+        $this->assertStringContainsString('locationHelpIntent', $source);
+        $this->assertStringContainsString('ब्राउज़र की Site Settings', $source);
+        $this->assertLessThan(
+            strpos($source, 'elseif ($restaurants === [] && $nearbyIntent'),
+            strpos($source, 'elseif ($locationHelpIntent)')
+        );
+    }
+
     public function test_missing_api_key_never_calls_external_provider(): void
     {
         config()->set('tidong_ai_restaurant.api_key', '');
