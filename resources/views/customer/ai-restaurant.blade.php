@@ -2,7 +2,7 @@
 @section('title', __('TIDONG AI'))
 @section('content')
 <section class="mx-auto flex min-h-[70vh] max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
-<header class="flex items-center justify-between border-b border-slate-100 p-4"><h1 class="text-lg font-bold">TIDONG AI</h1><a href="{{ route('customer.ai-restaurant.index') }}" class="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold">＋ New Chat</a></header>
+<header class="flex items-center justify-between border-b border-slate-100 p-4"><h1 class="text-lg font-bold">TIDONG AI</h1><form method="POST" action="{{ route('customer.ai-restaurant.new-chat') }}">@csrf<button type="submit" class="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold">＋ New Chat</button></form></header>
 <div class="flex-1 space-y-4 p-4" aria-live="polite">
 @if($answer !== null)
 <div class="flex justify-end"><p class="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-rose-700 p-3 text-white">{{ $message }}</p></div>
