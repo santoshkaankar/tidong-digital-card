@@ -21,6 +21,61 @@ class LegalAdvisoryController extends Controller
         return view('vendor.legal-advisory.index', compact('engagements'));
     }
 
+    /**
+     * Read-only, owner-scoped factual engagement status. No filing completion
+     * can be inferred from an invitation or accepted engagement.
+     */
+    public function aiProgress(Request $request, int $engagement)
+    {
+        abort_unless(Feature::enabled('module')
+            && app(\App\Services\Platform\FeatureRegistry::class)->isEnabled('ai.professional_work_transparency'), 404);
+        $vendor = $request->user()->vendor()->firstOrFail();
+        $record = DB::table('legal_engagements as e')
+            ->join('legal_professional_profiles as p', 'p.id', '=', 'e.professional_id')
+            ->where('e.id', $engagement)->where('e.vendor_id', $vendor->id)
+            ->select('e.id', 'e.scope', 'e.business_id', 'e.branch_id',
+                'e.category', 'e.status', 'e.accepted_at', 'e.ended_at',
+                'p.display_name as professional_name')->first();
+        abort_unless($record, 404);
+        $status = match ($record->status) {
+            'invited' => 'Professional को निमंत्रण भेजा गया है; स्वीकार करने की पुष्टि नहीं है।',
+            'active', 'accepted' => 'Professional ने काम स्वीकार किया है।',
+            'ended' => 'Professional के साथ यह कार्य-संबंध समाप्त हो चुका है।',
+            default => 'कार्य-संबंध की स्थिति: '.preg_replace('/[^a-z_]/', '', (string) $record->status),
+        };
+        $updates = DB::table('legal_work_updates')
+            ->where('engagement_id', $record->id)->orderByDesc('recorded_at')
+            ->limit(30)->get(['work_type', 'period', 'status', 'description',
+                'evidence_reference', 'recorded_at']);
+        return response()->json([
+            'engagement_id' => $record->id,
+            'work_updates' => $updates,
+            'evidence_notice' => 'Work updates are self-reported by the assigned professional. An evidence reference is not independent verification.',
+            'scope' => $record->scope,
+            'business_id' => $record->business_id,
+            'branch_id' => $record->branch_id,
+            'professional' => $record->professional_name,
+            'category' => $record->category,
+            'status' => $record->status,
+            'answer' => $status.' Filing, Accounting या दस्तावेज़ पूरे होने का सत्यापित रिकॉर्ड इस सुविधा में उपलब्ध नहीं है; इसलिए उन्हें Completed नहीं बताया जा सकता।',
+        ]);
+    }
+
+    public function progressPage(Request $request, int $engagement)
+    {
+        abort_unless(Feature::enabled('module')
+            && app(\App\Services\Platform\FeatureRegistry::class)->isEnabled('ai.professional_work_transparency'), 404);
+        $vendor = $request->user()->vendor()->firstOrFail();
+        $record = DB::table('legal_engagements as e')
+            ->join('legal_professional_profiles as p', 'p.id', '=', 'e.professional_id')
+            ->where('e.id', $engagement)->where('e.vendor_id', $vendor->id)
+            ->select('e.*', 'p.display_name as professional_name')->first();
+        abort_unless($record, 404);
+        $updates = DB::table('legal_work_updates')->where('engagement_id', $record->id)
+            ->orderByDesc('recorded_at')->limit(100)->get();
+        return view('vendor.legal-advisory.progress', compact('record', 'updates'));
+    }
+
     public function invite(Request $request)
     {
         abort_unless(Feature::enabled('hiring'), 404);

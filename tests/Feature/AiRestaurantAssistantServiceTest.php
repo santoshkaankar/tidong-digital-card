@@ -12,6 +12,23 @@ use Tests\TestCase;
  */
 class AiRestaurantAssistantServiceTest extends TestCase
 {
+    public function test_professional_transparency_is_default_off_and_never_grants_report_access(): void
+    {
+        $feature = config('tidong_features')['ai.professional_work_transparency'] ?? null;
+        $this->assertIsArray($feature);
+        $this->assertFalse($feature['default_enabled']);
+        $this->assertSame('ai_restaurant_assistant', $feature['module']);
+    }
+
+    public function test_vendor_progress_route_requires_auth_and_vendor_middleware(): void
+    {
+        $route = app('router')->getRoutes()->getByName('vendor.legal.ai-progress');
+        $this->assertNotNull($route);
+        $this->assertContains('auth', $route->gatherMiddleware());
+        $this->assertContains(\App\Http\Middleware\EnsureVendorAccount::class, $route->gatherMiddleware());
+        $this->assertSame(['GET', 'HEAD'], $route->methods());
+    }
+
     public function test_missing_api_key_never_calls_external_provider(): void
     {
         config()->set('tidong_ai_restaurant.api_key', '');
@@ -71,7 +88,7 @@ class AiRestaurantAssistantServiceTest extends TestCase
             'menu' => [['name' => 'Paneer', 'price_rupees' => '120.00']],
         ]]);
         $this->assertStringNotContainsString('Pizza ₹', $answer['text']);
-        $this->assertStringContainsString('ऑर्डर या भुगतान नहीं किया गया', $answer['text']);
+        $this->assertStringContainsString('इस चैट से ऑर्डर या भुगतान पूरा नहीं कर सकता', $answer['text']);
         Http::assertNothingSent();
     }
 
