@@ -50,10 +50,14 @@ final class AiRestaurantAssistantController extends Controller
             )
             : [];
 
-        if ($latitude === null || $longitude === null) {
-            $answer = 'नज़दीकी रेस्टोरेंट बताने के लिए नीचे “मेरी लोकेशन लें” दबाकर अनुमति दें। बिना आपकी अनुमति के लोकेशन नहीं ली जाएगी।';
-        } elseif ($restaurants === []) {
-            $answer = 'आपकी बताई लोकेशन के 12 किमी के दायरे में अभी ऑर्डर स्वीकार करने वाला कोई स्वीकृत रेस्टोरेंट नहीं मिला।';
+        // Answer conversational questions without forcing location. Coordinates are
+        // required only for factual nearby restaurant discovery.
+        $question = trim((string) $data['message']);
+        $nearbyIntent = (bool) preg_match('/near(?:by|est)?|restaurant|restaurants|restro|hotel|cafe|food near|around me|पास|नजदीक|नज़दीक|रेस्टोरेंट|आसपास|लोकेशन|location|मेरे यहाँ|मेरे पास/iu', $question);
+        if ($restaurants === [] && $nearbyIntent && ($latitude === null || $longitude === null)) {
+            $answer = 'आपके पास कौन-से रेस्टोरेंट हैं, यह बताने के लिए एक बार लोकेशन अनुमति दें। बाकी सवाल आप बिना लोकेशन के भी पूछ सकते हैं।';
+        } elseif ($restaurants === [] && $nearbyIntent) {
+            $answer = 'आपकी लोकेशन के 12 किमी में अभी ऑर्डर लेने वाला कोई स्वीकृत रेस्टोरेंट नहीं मिला। दूसरे सवाल पूछ सकते हैं।';
         } else {
             $userKey = 'tidong-ai-food:user:'.$request->user()->id.':'.now()->format('Ymd');
             $globalKey = 'tidong-ai-food:global:'.now()->format('Ymd');
@@ -61,14 +65,14 @@ final class AiRestaurantAssistantController extends Controller
             $dailyGlobal = (int) config('tidong_ai_restaurant.daily_platform_requests', 250);
             if (RateLimiter::tooManyAttempts($userKey, $dailyUser)
                 || RateLimiter::tooManyAttempts($globalKey, $dailyGlobal)) {
-                $answer = 'आज की AI बातचीत की सीमा पूरी हो गई है। वास्तविक रेस्टोरेंट सूची और मेन्यू नीचे देख सकते हैं।';
+                $answer = 'आज की AI बातचीत की सीमा पूरी हो गई है।';
             } else {
                 RateLimiter::hit($userKey, 86400);
                 RateLimiter::hit($globalKey, 86400);
                 $history = (array) $request->session()->get('tidong_ai_food_history', []);
-                $result = $assistant->answer($data['message'], $restaurants, $history);
+                $result = $assistant->answer($question, $restaurants, $history);
                 $answer = $result['text'];
-                $history[] = ['role' => 'user', 'content' => $data['message']];
+                $history[] = ['role' => 'user', 'content' => $question];
                 $history[] = ['role' => 'assistant', 'content' => $answer];
                 $request->session()->put('tidong_ai_food_history', array_slice($history, -6));
             }
