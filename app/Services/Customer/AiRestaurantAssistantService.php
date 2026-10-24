@@ -105,7 +105,7 @@ final class AiRestaurantAssistantService
             return ['text' => 'आपका स्वागत है! TIDONG की सेवाओं, ऑर्डर प्रक्रिया या अपने अकाउंट के बारे में अगला सवाल पूछिए।', 'ai_available' => false, 'free_mode' => true];
         }
         // Detect the user's topic before responding. This assistant only has
-        // restaurant catalogue facts; never pretend to know unrelated modules.
+        // verified restaurant catalogue facts; other modules receive navigation guidance only.
         if (preg_match('/(print|printing|printer|sublimation|photo|फोटो|प्रिंट|छपाई|टी.?शर्ट|मग)/iu', $query)) {
             return ['text' => 'प्रिंटिंग या गिफ्ट चाहिए? Explore में Sublimation देखें। पक्की कीमत और स्टॉक स्टोर में देखें।', 'ai_available' => false, 'free_mode' => true];
         }
@@ -114,6 +114,34 @@ final class AiRestaurantAssistantService
         }
         if (preg_match('/(order|ऑर्डर|बुक|खरीद|मंगवा|मंगाना)/iu', $query) && !preg_match('/(price|कीमत|रेट|menu|मेन्यू)/iu', $query)) {
             return ['text' => 'ऑर्डर के लिए Explore में स्टोर चुनें और Checkout करें। यह चैट भुगतान नहीं करती।', 'ai_available' => false, 'free_mode' => true];
+        }
+        // Short topic-specific guidance; never claim access to a private order or account.
+        if (preg_match('/(refund|रिफंड|पैसे वापस|money back|return|वापसी)/iu', $query)) {
+            return ['text' => 'रिफंड की जानकारी My Orders में देखें। ऑर्डर का विवरण खोलें; पात्रता स्टोर की नीति पर निर्भर है।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(cancel|cancellation|कैंसल|कैंसिल|रद्द)/iu', $query)) {
+            return ['text' => 'ऑर्डर रद्द करने के विकल्प My Orders में देखें। रद्द होना ऑर्डर की स्थिति पर निर्भर है।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(delivery|डिलीवरी|डेलिवरी|tracking|ट्रैक|कहाँ पहुँचा|kab aayega)/iu', $query)) {
+            return ['text' => 'डिलीवरी की जानकारी My Orders में ऑर्डर खोलकर देखें। मुझे यहाँ लाइव ट्रैकिंग नहीं दिखती।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(grocery|groceries|ग्रॉसरी|ग्रोसरी|किराना|राशन|सब्जी|सब्ज़ी)/iu', $query)) {
+            return ['text' => 'ग्रॉसरी के लिए Explore में Grocery चुनें। उपलब्ध सामान और कीमत स्टोर में देखें।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(address|पता बदल|एड्रेस|पिनकोड|pincode)/iu', $query)) {
+            return ['text' => 'अपना डिलीवरी पता Addresses में जोड़ें या बदलें।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(password|पासवर्ड|security|सिक्योरिटी|otp|ओटीपी)/iu', $query)) {
+            return ['text' => 'पासवर्ड और सुरक्षा के लिए Account में Security खोलें। OTP या पासवर्ड यहाँ साझा न करें।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(profile|प्रोफाइल|प्रोफ़ाइल|account|अकाउंट|खाता)/iu', $query)) {
+            return ['text' => 'नाम और अकाउंट जानकारी बदलने के लिए Profile खोलें।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(payment|भुगतान|upi|यूपीआई|cod|कैश ऑन डिलीवरी)/iu', $query)) {
+            return ['text' => 'भुगतान के उपलब्ध तरीके Checkout पर देखें। इस चैट में भुगतान न करें।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(restaurant|restro|रेस्टोरेंट|खाना|food|खाने|मेन्यू|menu)/iu', $query) && $restaurants === []) {
+            return ['text' => 'रेस्टोरेंट और मेन्यू के लिए Explore में Food देखें। पास के विकल्प पूछने पर लोकेशन दे सकते हैं।', 'ai_available' => false, 'free_mode' => true];
         }
         if ($restaurants === []) {
             return ['text' => 'रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग, डिलीवरी, ऑर्डर या अकाउंट—आप किस बारे में पूछ रहे हैं?', 'ai_available' => false, 'free_mode' => true];
