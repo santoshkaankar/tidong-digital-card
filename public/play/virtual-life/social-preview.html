@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#081e25"><meta name="description" content="TIDONG Virtual Life Social Neighborhood, interactive isolated multiplayer playtest preview.">
+<title>TIDONG | Your Social Neighborhood · Game Preview</title>
+<link rel="stylesheet" href="social-preview.css">
+</head>
+<body>
+<div class="application">
+<header class="topbar">
+  <a class="identity" href="index.html" aria-label="TIDONG Virtual Life Home"><img src="assets/TIDONG_Official_Logo.jpeg" alt="TIDONG"><span><strong>TIDONG <i>VIRTUAL LIFE</i></strong><small>EXPLORE · CONNECT · BELONG</small></span></a>
+  <div class="header-pill"><span class="pulse"></span><span id="server-status">GUIDED PREVIEW · OFFLINE</span></div>
+  <a class="back" href="studio3d.html">← 3D Home</a>
+</header>
+<main>
+  <div class="introduction"><div><div class="eyebrow">SOCIAL WORLD · GAME CHAT 05</div><h1>Life feels better <em>together.</em></h1><p>Walk into your neighborhood. Meet people, share invitations and talk through your own avatar.</p></div><div class="introduction-stat"><b id="player-count">03</b><span>sample neighbors</span></div></div>
+  <div class="columns">
+    <section class="world-card" aria-label="Interactive 3D scene">
+      <div class="world-heading"><span><span class="loc-dot"></span> <b id="world-heading">GREENWOOD NEIGHBORHOOD</b></span><span id="mode-tag">3D WEBGL SCENE</span></div>
+      <div class="stage">
+        <iframe title="Existing TIDONG 3D scene" id="scene" src="social-scene.html" allow="autoplay" loading="eager"></iframe>
+        <div class="scene-top-left"><span class="scene-chip">◉ LIVE 3D VIEW</span><span class="scene-chip secondary" id="scene-people">3 demo avatars</span></div>
+        <div class="floating-welcome"><b>🏡 Welcome to Greenwood</b><span>Meet neighbors in this interactive prototype.</span></div>
+        <div class="scene-hint">Drag to rotate · Scroll to zoom · WASD to walk</div>
+      </div>
+      <div class="world-toolbar">
+        <div class="segmented" role="group" aria-label="Choose scene"><button class="active" type="button" data-place="garden">🌿 Garden</button><button type="button" data-place="home">🏡 Home</button></div>
+        <div class="world-controls" role="group" aria-label="Move avatar"><button type="button" data-move="left" aria-label="Move left">←</button><button type="button" data-move="forward" aria-label="Move forward">↑</button><button type="button" data-move="back" aria-label="Move back">↓</button><button type="button" data-move="right" aria-label="Move right">→</button></div>
+        <button class="voice-button" type="button" id="voice-toggle" disabled>🎙 Voice: Off</button>
+      </div>
+      <div class="world-caption"><span>✦ Original TIDONG 3D geometry adapted for this preview</span><span id="voice-status">Microphone is OFF by default</span></div>
+    </section>
+    <aside class="social-panel" aria-label="Social interactions">
+      <div class="panel-head"><div><span class="eyebrow">YOUR COMMUNITY</span><h2>Social hub <span>✦</span></h2></div><div class="small-avatar">🙂</div></div>
+      <div class="connect-form"><label for="player-name">Your player name</label><div class="connect-row"><input id="player-name" maxlength="24" autocomplete="nickname" value="Explorer" placeholder="Choose a name"><button type="button" id="connect-btn">Join playtest</button></div><div class="connect-notice" id="connect-notice">Try a live two-window session with the local playtest server. Sample cards below are fictional.</div></div>
+      <div class="tabbar" role="tablist" aria-label="Community views"><button id="tab-people" role="tab" aria-selected="true" class="active" data-tab="people" type="button">Neighbors</button><button id="tab-friends" role="tab" aria-selected="false" data-tab="friends" type="button">Friends</button><button id="tab-invites" role="tab" aria-selected="false" data-tab="invites" type="button">Invites <span id="invite-count">0</span></button></div>
+      <div class="tab-content" id="social-list" aria-live="polite"></div>
+      <div class="talk-panel"><div class="talk-icon">♫</div><div><b>Talk naturally</b><p>Consent-first voice, avatar lip movement and individual mute controls.</p></div><span class="lock-icon">🔒</span></div>
+      <div class="privacy-line"><span>◈</span> Block, decline and disconnect are always available in live playtest.</div>
+    </aside>
+  </div>
+  <section class="feature-strip" aria-label="Social systems preview"><div><span>🤝</span><b>Real friendships</b><p>Friend requests &amp; acceptance</p></div><div><span>💌</span><b>Home invitations</b><p>Visits and garden meetups</p></div><div><span>🎤</span><b>Talk in character</b><p>Permission-based WebRTC voice</p></div><div><span>🙂</span><b>Lip sync</b><p>Voice-level mouth animation</p></div></section>
+  <p class="legal">PLAYTEST ONLY — Sample neighbors are fictional. Connected players use a local, unauthenticated development server. There are no real game accounts, T-Coin transactions, approved game-service entitlements or production multiplayer in this preview. Microphone data is never recorded by this page.</p>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div class="modal hidden" id="consent-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-card"><div class="modal-icon">🎙</div><h3 id="modal-title">Voice request</h3><p id="modal-description">Another player wants to talk. Your microphone remains off unless you accept.</p><div class="modal-actions"><button id="modal-decline" type="button">Decline</button><button class="accept" id="modal-accept" type="button">Accept &amp; enable mic</button></div></div></div>
+<script src="social-preview.js"></script>
+</div>
+</body>
+</html>
