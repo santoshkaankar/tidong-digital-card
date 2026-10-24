@@ -98,6 +98,7 @@ class AiRestaurantAssistantServiceTest extends TestCase
 
     public function test_provider_failure_returns_safe_read_only_fallback(): void
     {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', true);
         config()->set('tidong_ai_restaurant.api_key', 'test-only-no-real-secret');
         Http::fake(['api.openai.com/v1/responses' => Http::response(['error' => 'service unavailable'], 503)]);
 
