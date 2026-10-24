@@ -81,12 +81,5 @@
         window.addEventListener('resize', () => { if (window.innerWidth > 900 && document.body.classList.contains('td-menu-open')) setOpen(false); });
     })();
     </script>
-    <nav class="td-bottom-nav" aria-label="{{ __('Mobile navigation') }}" hidden>
-        <a href="{{ route('customer.home') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.home')])><span aria-hidden="true">🏠</span><span>{{ __('Home') }}</span></a>
-        <a href="{{ route('customer.explore.index') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.explore.*')])><span aria-hidden="true">🧭</span><span>{{ __('Explore') }}</span></a>
-        <a href="{{ route('customer.orders.index') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.orders.*')])><span aria-hidden="true">📦</span><span>{{ __('Orders') }}</span></a>
-        <a href="{{ route('customer.addresses.index') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.addresses.*')])><span aria-hidden="true">📍</span><span>{{ __('Addresses') }}</span></a>
-        <a href="{{ route('customer.profile.edit') }}" @class(['td-bottom-item','is-current'=>request()->routeIs('customer.profile.*','customer.preferences.*','customer.security.*')])><span aria-hidden="true">👤</span><span>{{ __('Account') }}</span></a>
-    </nav>
 </body>
 </html>
