@@ -88,7 +88,7 @@ class AiRestaurantAssistantServiceTest extends TestCase
             'menu' => [['name' => 'Paneer', 'price_rupees' => '120.00']],
         ]]);
         $this->assertStringNotContainsString('Pizza ₹', $answer['text']);
-        $this->assertStringContainsString('ऑर्डर या भुगतान नहीं किया गया', $answer['text']);
+        $this->assertStringContainsString('इस चैट से ऑर्डर या भुगतान पूरा नहीं कर सकता', $answer['text']);
         Http::assertNothingSent();
     }
 
