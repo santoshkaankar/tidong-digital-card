@@ -10,7 +10,7 @@
             @if($categories['sublimation']['available'] ?? false)
                 <a href="{{ route('customer.explore.service', 'sublimation') }}" class="td-button td-button-white">{{ __('Explore gifts') }} <span aria-hidden="true">→</span></a>
             @else
-                <span class="td-service-status">{{ __('Personalized gifts are not available yet.') }}</span>
+                <span class="td-service-status">{{ __('No approved active gift store is accepting orders yet.') }}</span>
             @endif
         </div>
         <div class="td-hero-art" aria-hidden="true">
@@ -31,10 +31,10 @@
                         <span class="td-service-status">{{ __('Explore stores') }}</span>
                     </a>
                 @else
-                    <div class="td-service-tile td-tone-{{ $category['tone'] }} td-inactive" aria-label="{{ __($category['title']) }}: {{ __('Not available yet') }}">
+                    <div class="td-service-tile td-tone-{{ $category['tone'] }} td-inactive" aria-label="{{ __($category['title']) }}: {{ __('No approved active store is accepting orders yet') }}">
                         <span class="td-service-icon" aria-hidden="true">{{ $category['icon'] }}</span>
                         <strong>{{ __($category['title']) }}</strong>
-                        <span class="td-service-status">{{ __('Not available yet') }}</span>
+                        <span class="td-service-status">{{ __('No approved active store is accepting orders yet') }}</span>
                     </div>
                 @endif
             @endforeach
@@ -42,9 +42,9 @@
     </section>
     <section class="td-feature-row" aria-label="{{ __('Discover TIDONG') }}">
         <div class="td-feature-card td-feature-food"><div><span class="td-small-tag">🍽️ {{ __('RESTAURANT') }}</span><h2>{{ __('Food made easier') }}</h2><p>{{ __('Find active restaurants when they become available.') }}</p>
-            @if($categories['restaurant']['available'] ?? false)<a href="{{ route('customer.explore.service', 'restaurant') }}">{{ __('Explore restaurants') }} →</a>@else<span>{{ __('Coming soon') }}</span>@endif</div><span aria-hidden="true" class="td-feature-emoji">🍕</span></div>
+            @if($categories['restaurant']['available'] ?? false)<a href="{{ route('customer.explore.service', 'restaurant') }}">{{ __('Explore restaurants') }} →</a>@else<span>{{ __('No approved active store yet') }}</span>@endif</div><span aria-hidden="true" class="td-feature-emoji">🍕</span></div>
         <div class="td-feature-card td-feature-gift"><div><span class="td-small-tag">💝 {{ __('SUBLIMATION') }}</span><h2>{{ __('Gifts with a personal touch') }}</h2><p>{{ __('Mugs, T-shirts, photo frames and memories.') }}</p>
-            @if($categories['sublimation']['available'] ?? false)<a href="{{ route('customer.explore.service', 'sublimation') }}">{{ __('Explore stores') }} →</a>@else<span>{{ __('Coming soon') }}</span>@endif</div><span aria-hidden="true" class="td-feature-emoji">📸</span></div>
+            @if($categories['sublimation']['available'] ?? false)<a href="{{ route('customer.explore.service', 'sublimation') }}">{{ __('Explore stores') }} →</a>@else<span>{{ __('No approved active store yet') }}</span>@endif</div><span aria-hidden="true" class="td-feature-emoji">📸</span></div>
     </section>
     <section class="td-section" aria-labelledby="quick-title">
         <div class="td-section-head"><div><p class="td-kicker">{{ __('ACCOUNT') }}</p><h2 id="quick-title">{{ __('Quick access') }}</h2></div></div>
