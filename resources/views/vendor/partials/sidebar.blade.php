@@ -54,10 +54,10 @@
         $studioRoot = ['business' => $navBusiness->id] + ($navBranch ? ['branch' => $navBranch->id] : []);
         $studioMenus = [
             ['name' => 'Studio Dashboard', 'route' => 'vendor.sublimation.index', 'current' => 'vendor.sublimation.index'],
-            ['name' => 'Create Item', 'route' => 'vendor.sublimation.products.create', 'current' => 'vendor.sublimation.products.create'],
             ['name' => 'Item List', 'route' => 'vendor.sublimation.products.index', 'current' => 'vendor.sublimation.products.index'],
-            ['name' => 'New Studio Order', 'route' => 'vendor.sublimation.orders.create', 'current' => 'vendor.sublimation.orders.create'],
+            ['name' => 'Create Item', 'route' => 'vendor.sublimation.products.create', 'current' => 'vendor.sublimation.products.create'],
             ['name' => 'Order List', 'route' => 'vendor.sublimation.orders.index', 'current' => 'vendor.sublimation.orders.index'],
+            ['name' => 'New Studio Order', 'route' => 'vendor.sublimation.orders.create', 'current' => 'vendor.sublimation.orders.create'],
             ['name' => 'Design Approvals', 'route' => 'vendor.sublimation.orders.index', 'query' => ['queue' => 'design']],
             ['name' => 'Production Queue', 'route' => 'vendor.sublimation.orders.index', 'query' => ['queue' => 'production']],
             ['name' => 'Dispatch & Delivery', 'route' => 'vendor.sublimation.orders.index', 'query' => ['queue' => 'delivery']],
@@ -86,7 +86,7 @@
         <p class="mt-2 px-2 text-xs text-slate-400">Select any menu. Sidebar scrolls separately from the page.</p>
     </nav>
     @endif
-    <details class="mt-3" @if(!$isStudio) open @endif>
+    <details class="mt-3" open>
         <summary class="cursor-pointer rounded-lg px-2 py-2 text-xs font-bold uppercase tracking-wider text-slate-300">Vendor Main Menu</summary>
         <nav class="mt-1 space-y-1 text-sm" aria-label="Main vendor menu">
             <a href="{{ route('vendor.home') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800 {{ !$navBusiness ? 'bg-blue-700 font-semibold' : '' }}">Vendor Dashboard</a>
@@ -117,7 +117,7 @@
         <div class="mt-4 border-t border-slate-700 pt-4">
             <p class="px-2 text-xs font-bold uppercase tracking-wider text-rose-300">{{ $navGroup['title'] }}</p>
             <a href="{{ route('vendor.business.workspace', $navBusiness->id) }}" class="mt-2 block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-800">Business Overview</a>
-            @if ($isStudio && Route::has('vendor.sublimation.orders.index'))
+            @if (Route::has('vendor.sublimation.orders.index'))
                 <nav aria-label="Sublimation quick links" class="mt-2 space-y-1 border-b border-slate-700 pb-3 text-sm">
                     <a href="{{ route('vendor.sublimation.products.index', ['business' => $navBusiness->id] + ($navBranch ? ['branch' => $navBranch->id] : [])) }}"
                        class="block rounded-lg px-3 py-2 hover:bg-slate-800 {{ request()->routeIs('vendor.sublimation.products.*') ? 'bg-slate-700 font-semibold' : '' }}">Product List &amp; Options</a>
