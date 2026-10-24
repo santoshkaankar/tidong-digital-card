@@ -137,6 +137,16 @@
                             <select data-address-district required disabled class="mt-1 w-full rounded-lg border bg-white p-3"><option value="">Choose a state first</option></select></div>
                         <div><label class="block text-sm font-medium">Post Office / Area</label>
                             <select data-address-office name="india_post_office_id" required disabled class="mt-1 w-full rounded-lg border bg-white p-3"><option value="">Choose a district first</option></select></div>
+                        <div data-address-manual class="hidden md:col-span-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                            <p class="font-semibold text-amber-900">Postal directory is not loaded yet — enter verified address details manually.</p>
+                            <p class="mt-1 text-sm text-amber-800">This outlet will be saved without a post-office reference. You can update the address once the directory is restored.</p>
+                            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                <label class="text-sm font-medium">State <input data-manual-state name="state" disabled maxlength="100" class="mt-1 w-full rounded-lg border bg-white p-3" placeholder="State"></label>
+                                <label class="text-sm font-medium">District <input data-manual-district name="district" disabled maxlength="150" class="mt-1 w-full rounded-lg border bg-white p-3" placeholder="District"></label>
+                                <label class="text-sm font-medium">Post Office / Area <input data-manual-office name="post_office" disabled maxlength="180" class="mt-1 w-full rounded-lg border bg-white p-3" placeholder="Area name"></label>
+                                <label class="text-sm font-medium">PIN Code <input data-manual-pin name="manual_pincode" disabled maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="mt-1 w-full rounded-lg border bg-white p-3" placeholder="6 digit PIN"></label>
+                            </div>
+                        </div>
                         <div><label class="block text-sm font-medium">PIN Code</label>
                             <input data-address-pin name="pincode" readonly required maxlength="6" class="mt-1 w-full rounded-lg border bg-slate-50 p-3" placeholder="Auto from Post Office"></div>
                         <div><label class="block text-sm font-medium">Town / City (optional)</label>
@@ -191,9 +201,27 @@
     const district = form.querySelector('[data-address-district]');
     const office = form.querySelector('[data-address-office]');
     const pin = form.querySelector('[data-address-pin]');
+    const manual = form.querySelector('[data-address-manual]');
+    const manualInputs = [...manual.querySelectorAll('input')];
+    const useManual = (active) => {
+      manual.classList.toggle('hidden', !active);
+      manualInputs.forEach(input => { input.disabled = !active; input.required = active; });
+      [state, district, office, pin].forEach(input => { input.required = !active; });
+      if (active) {
+        state.disabled = true;
+        district.disabled = true;
+        office.disabled = true;
+        pin.disabled = true;
+      }
+    };
     try {
-      fill(state, 'Select State', await fetchOptions(form, {level:'states'}));
-    } catch (_) { fill(state, 'Directory unavailable: check Seeder', []); }
+      const states = await fetchOptions(form, {level:'states'});
+      fill(state, states.length ? 'Select State' : 'Directory empty — manual address below', states);
+      useManual(states.length === 0);
+    } catch (_) {
+      fill(state, 'Directory unavailable — manual address below', []);
+      useManual(true);
+    }
     state.addEventListener('change', async () => {
       fill(district,'Select District',[]);
       fill(office,'Select Post Office',[]);
