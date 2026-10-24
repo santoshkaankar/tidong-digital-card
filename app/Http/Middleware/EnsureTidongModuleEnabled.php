@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class EnsureTidongModuleEnabled {
     public function handle(Request $request, Closure $next, string $module): Response {
         $registry = app(ModuleRegistry::class);
+        abort_unless($registry->installed($module), 404);
         if ($request->user()) {
             $vendorId = DB::table('vendors')->where('user_id', $request->user()->id)
                 ->whereNull('deleted_at')->value('id');
