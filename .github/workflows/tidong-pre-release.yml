@@ -83,8 +83,10 @@ jobs:
           tools: composer:v2
       - name: Install locked PHP dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
-      - name: Generate disposable test key
-        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+      - name: Prepare disposable .env and test key
+        run: |
+          printf '# Disposable GitHub Actions test environment only\n' > .env
+          echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - name: Build disposable database
         run: php artisan migrate --force --no-interaction
       - name: Inspect Laravel route registration
