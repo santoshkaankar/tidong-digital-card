@@ -57,7 +57,7 @@ final class AiRestaurantAssistantController extends Controller
         // Never expose professional work records from a customer AI chat.
         // This endpoint has no verified professional assignment or outlet-scoped
         // report reader. Admin enabling the transparency feature is NOT permission.
-        $professionalWorkIntent = (bool) preg_match('/(ca|c\\.a\\.|chartered accountant|professional|accountant|gst filing|tax filing|audit report|सीए|प्रोफेशनल|अकाउंटेंट|फाइलिंग|जीएसटी|ऑडिट|मेरे काम की रिपोर्ट)/iu', $question);
+        $professionalWorkIntent = (bool) preg_match('/(\\bca\\b|c\\.a\\.|chartered accountant|professional|accountant|gst filing|tax filing|audit report|सीए|प्रोफेशनल|अकाउंटेंट|फाइलिंग|जीएसटी|ऑडिट|मेरे काम की रिपोर्ट)/iu', $question);
         if ($professionalWorkIntent) {
             $answer = app(FeatureRegistry::class)->isEnabled('ai.professional_work_transparency')
                 ? 'आप अपने आउटलेट से जुड़े Professional के काम की प्रगति पूछ रहे हैं। इस Customer AI चैट में आपके Outlet और Professional Assignment की सत्यापित जाँच तथा रिपोर्ट पढ़ने की सुविधा अभी उपलब्ध नहीं है। इसलिए मैं कोई प्रगति या Completed होने का दावा नहीं करूँगा। अधिकृत Outlet Dashboard में उपलब्ध रिकॉर्ड देखें।'
