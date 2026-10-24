@@ -20,6 +20,18 @@
             <span class="td-spark td-spark-a">✦</span><span class="td-spark td-spark-b">♡</span>
         </div>
     </section>
+    @if(app(\App\Services\Platform\ModuleRegistry::class)->isEnabled('ai_restaurant_assistant') && app(\App\Services\Platform\FeatureRegistry::class)->isEnabled('ai.restaurant_assistant'))
+    <section class="rounded-2xl border border-rose-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="td-ai-shortcut-title">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-rose-700">🎙️ TIDONG AI</p>
+                <h2 id="td-ai-shortcut-title" class="mt-1 text-xl font-bold text-slate-900">{{ __('Ask about nearby restaurants and menus') }}</h2>
+                <p class="mt-1 text-sm text-slate-600">{{ __('Type your question or use the microphone. Location is optional until you want nearby results.') }}</p>
+            </div>
+            <a href="{{ route('customer.ai-restaurant.index') }}" class="inline-flex min-h-11 items-center rounded-xl bg-rose-700 px-5 py-3 font-bold text-white hover:bg-rose-800">{{ __('Open TIDONG AI') }} →</a>
+        </div>
+    </section>
+    @endif
     <section class="td-section" aria-labelledby="services-title">
         <div class="td-section-head"><div><p class="td-kicker">{{ __('ALL IN ONE PLACE') }}</p><h2 id="services-title">{{ __('Explore businesses & services') }}</h2></div><a href="{{ route('customer.explore.index') }}" class="td-text-link">{{ __('View all') }} →</a></div>
         <div class="td-service-grid">
