@@ -4,9 +4,9 @@
     <div class="td-page-heading"><span class="td-kicker">{{ __('DISCOVER TIDONG') }}</span><h1>{{ __('All businesses & services') }}</h1><p>{{ __('Explore active services. More are being developed for a better customer experience.') }}</p></div>
     <div class="td-service-grid td-service-grid-full">
         @foreach($categories as $key => $category)
-            @if($category['available'])
+            @if($category['directory_enabled'] ?? false)
                 <a href="{{ route('customer.explore.service', $key) }}" class="td-service-tile td-tone-{{ $category['tone'] }}">
-                    <span class="td-service-icon" aria-hidden="true">{{ $category['icon'] }}</span><strong>{{ __($category['title']) }}</strong><span class="td-service-status">{{ __($category['description']) }} · {{ $category['business_count'] }} {{ __('stores') }}</span>
+                    <span class="td-service-icon" aria-hidden="true">{{ $category['icon'] }}</span><strong>{{ __($category['title']) }}</strong><span class="td-service-status">{{ __($category['description']) }} · {{ $category['business_count'] }} {{ __('approved stores') }}</span>
                 </a>
             @else
                 <div class="td-service-tile td-tone-{{ $category['tone'] }} td-inactive">
