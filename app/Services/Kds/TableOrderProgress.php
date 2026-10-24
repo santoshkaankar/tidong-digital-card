@@ -29,7 +29,10 @@ final class TableOrderProgress
             if ($action === 'add') {
                 $this->pos->ensureCanOrder($branch);
             }
-            if (in_array($order->status,['cancelled'],true) || ($action === 'add' && $order->status === 'served')) {
+            // Closed/settled bills cannot gain charges via an item-counter action.
+            // Preparation/serving never changes paid amounts.
+            if ($order->status === 'cancelled'
+                || ($action === 'add' && ($order->status === 'served' || $order->payment_status !== 'unpaid'))) {
                 throw ValidationException::withMessages(['order'=>'This order is already closed.']);
             }
             $item = DB::table('pos_order_items')->where('id',$itemId)
