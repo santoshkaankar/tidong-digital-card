@@ -58,7 +58,8 @@ class AiRestaurantAssistantServiceTest extends TestCase
         Http::fake();
         foreach (['मुझे मैरिज होम देखना है शादी के लिए', 'मैरिज प्लानर चाहिए', 'मैरिज एनिवर्सरी देखना है'] as $question) {
             $answer = app(AiRestaurantAssistantService::class)->answer($question, []);
-            $this->assertStringContainsString('शादी', $answer['text']);
+            $this->assertStringContainsString('TIDONG', $answer['text']);
+            $this->assertStringContainsString('पंजीकृत व्यवसाय', $answer['text']);
         }
         $tracking = app(AiRestaurantAssistantService::class)->answer('मेरे ऑर्डर का क्या हुआ डिलीवरी होगा नहीं होगा', []);
         $this->assertStringContainsString('निजी ऑर्डर', $tracking['text']);
