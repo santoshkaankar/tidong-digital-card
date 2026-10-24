@@ -94,6 +94,19 @@ final class AiRestaurantAssistantService
     private function freeCatalogueAnswer(string $message, array $restaurants): array
     {
         $query = mb_strtolower(trim($message));
+        // Free, instant conversational replies do not require GPS or a paid API.
+        if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
+            return ['text' => 'नमस्ते! मैं TIDONG की मुफ्त रेस्टोरेंट सहायता हूँ। आप मेन्यू, कीमत या पास के रेस्टोरेंट के बारे में पूछ सकते हैं।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(तुम कौन|आप कौन|who are you|क्या कर सकते|what can you do)/iu', $query)) {
+            return ['text' => 'मैं TIDONG की मुफ्त रेस्टोरेंट सहायता हूँ। उपलब्ध रेस्टोरेंट, मेन्यू और कीमत की जानकारी दे सकता हूँ। आसपास के विकल्प बताने के लिए आपकी अनुमति से लोकेशन चाहिए।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(धन्यवाद|शुक्रिया|thank you|thanks)/iu', $query)) {
+            return ['text' => 'आपका स्वागत है! रेस्टोरेंट या मेन्यू से जुड़ा अगला सवाल पूछिए।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if ($restaurants === []) {
+            return ['text' => 'मैं अभी मुफ्त रेस्टोरेंट और मेन्यू सहायता दे सकता हूँ, सामान्य AI के सभी विषयों का जवाब नहीं। आप किसी खाने, मेन्यू या कीमत के बारे में पूछिए। पास के रेस्टोरेंट खोजने के लिए लोकेशन साझा कर सकते हैं।', 'ai_available' => false, 'free_mode' => true];
+        }
         $matches = [];
         foreach ($restaurants as $restaurant) {
             $names = [(string) ($restaurant['restaurant'] ?? ''), (string) ($restaurant['outlet'] ?? '')];
