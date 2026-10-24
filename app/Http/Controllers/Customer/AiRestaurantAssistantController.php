@@ -74,12 +74,16 @@ final class AiRestaurantAssistantController extends Controller
             $globalKey = 'tidong-ai-food:global:'.now()->format('Ymd');
             $dailyUser = (int) config('tidong_ai_restaurant.daily_user_requests', 20);
             $dailyGlobal = (int) config('tidong_ai_restaurant.daily_platform_requests', 250);
-            if (RateLimiter::tooManyAttempts($userKey, $dailyUser)
-                || RateLimiter::tooManyAttempts($globalKey, $dailyGlobal)) {
-                $answer = 'आज की AI बातचीत की सीमा पूरी हो गई है।';
+            $paidEnabled = (bool) config('tidong_ai_restaurant.paid_provider_enabled', false)
+                && (string) config('tidong_ai_restaurant.api_key', '') !== '';
+            if ($paidEnabled && (RateLimiter::tooManyAttempts($userKey, $dailyUser)
+                || RateLimiter::tooManyAttempts($globalKey, $dailyGlobal))) {
+                $answer = 'बाहरी AI की आज की सीमा पूरी है। सामान्य ग्राहक सहायता जारी है; My Orders या Explore में संबंधित जानकारी देखें।';
             } else {
-                RateLimiter::hit($userKey, 86400);
-                RateLimiter::hit($globalKey, 86400);
+                if ($paidEnabled) {
+                    RateLimiter::hit($userKey, 86400);
+                    RateLimiter::hit($globalKey, 86400);
+                }
                 $history = (array) $request->session()->get('tidong_ai_food_history', []);
                 $result = $assistant->answer($question, $restaurants, $history);
                 $answer = $result['text'];
