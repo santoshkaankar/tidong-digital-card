@@ -21,7 +21,7 @@ class ProfessionalWorkTransparencyStructureTest extends TestCase
     {
         $controller = file_get_contents(app_path('Http/Controllers/LegalAdvisory/ProfessionalPortalController.php'));
         $this->assertStringContainsString("where('status', 'approved')", $controller);
-        $this->assertStringContainsString("where('professional_id', $profile->id)", $controller);
+        $this->assertStringContainsString('where(\'professional_id\', $profile->id)', $controller);
     }
 
     public function test_work_update_table_migration_exists(): void
