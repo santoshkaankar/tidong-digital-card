@@ -52,6 +52,19 @@ class AiRestaurantAssistantServiceTest extends TestCase
         );
     }
 
+    public function test_free_taxi_and_travel_requests_get_relevant_safe_guidance(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        Http::fake();
+        foreach (['हम घूमना चाहते हैं कोई व्यवस्था है', 'टैक्सी टैक्सी घूमने के बारे में', 'taxi booking'] as $question) {
+            $reply = app(AiRestaurantAssistantService::class)->answer($question, []);
+            $this->assertStringContainsString('टैक्सी', $reply['text']);
+            $this->assertStringContainsString('कहाँ से कहाँ', $reply['text']);
+            $this->assertFalse($reply['ai_available']);
+        }
+        Http::assertNothingSent();
+    }
+
     public function test_missing_api_key_never_calls_external_provider(): void
     {
         config()->set('tidong_ai_restaurant.api_key', '');

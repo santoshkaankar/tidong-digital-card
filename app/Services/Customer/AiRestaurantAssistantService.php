@@ -104,6 +104,9 @@ final class AiRestaurantAssistantService
         if (preg_match('/(धन्यवाद|शुक्रिया|thank you|thanks)/iu', $query)) {
             return ['text' => 'आपका स्वागत है! TIDONG की सेवाओं, ऑर्डर प्रक्रिया या अपने अकाउंट के बारे में अगला सवाल पूछिए।', 'ai_available' => false, 'free_mode' => true];
         }
+        if (preg_match('/(टैक्सी|टेक्सी|taxi|cab|कैब|घूमने|घूमना|घूमना चाहते|सैर|यात्रा|travel|trip|tour|पर्यटन|सफर)/iu', $query)) {
+            return ['text' => 'आप घूमने या टैक्सी की व्यवस्था पूछ रहे हैं। कहाँ से कहाँ जाना चाहते हैं? TIDONG पर सत्यापित सेवा उपलब्ध होने पर ही उसकी जानकारी दी जा सकती है; अभी इस चैट में टैक्सी बुकिंग की पुष्टि नहीं है।', 'ai_available' => false, 'free_mode' => true];
+        }
         // Detect the user's topic before responding. This assistant only has
         // verified restaurant catalogue facts; other modules receive navigation guidance only.
         if (preg_match('/(print|printing|printer|sublimation|photo|फोटो|प्रिंट|छपाई|टी.?शर्ट|मग)/iu', $query)) {
