@@ -8,7 +8,7 @@
         <button type="submit">{{ __('Search') }}</button>
     </form>
     @if($businesses->isEmpty())
-        <div class="td-empty"><span aria-hidden="true">🏬</span><h2>{{ __('No active stores found') }}</h2><p>{{ __('Try another search. Only approved businesses accepting orders appear here.') }}</p></div>
+        <div class="td-empty"><span aria-hidden="true">🏬</span><h2>{{ __('No order-ready stores available yet') }}</h2><p>{{ $term !== '' ? __('No approved, order-ready store matched your search. Try a different name.') : __('Businesses may already be approved, but an active outlet and order activation are required before customers can browse or order.') }}</p></div>
     @else
         <div class="td-store-grid">
             @foreach($businesses as $business)

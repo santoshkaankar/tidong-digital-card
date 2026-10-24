@@ -5,7 +5,7 @@
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
         <span class="text-xs font-bold uppercase tracking-wider text-rose-700">{{ __('TIDONG AI') }}</span>
         <h1 id="food-ai-title" class="mt-2 text-2xl font-bold text-slate-900">{{ __('बोलकर रेस्टोरेंट और मेन्यू पूछें') }}</h1>
-        <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('हिन्दी में बोलिए या लिखिए। लोकेशन केवल आपकी अनुमति से मिलेगी। अभी यह रेस्टोरेंट और मेन्यू की जानकारी देता है; अपने आप ऑर्डर या भुगतान नहीं करता।') }}</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('हिन्दी में बोलिए या लिखिए। नजदीकी परिणाम के लिए Location की अनुमति दें। केवल Approved, Active और Order-Ready Restaurant का वास्तविक Menu दिखाई देगा; यहाँ से Order या Payment नहीं होता।') }}</p>
         <div class="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-700" role="status">💬 TIDONG AI: नमस्ते! बोलकर या लिखकर खाने और रेस्टोरेंट के बारे में पूछिए।</div>
         <form method="POST" action="{{ route('customer.ai-restaurant.ask') }}" id="food-ai-form" class="mt-5 space-y-3">
             @csrf
