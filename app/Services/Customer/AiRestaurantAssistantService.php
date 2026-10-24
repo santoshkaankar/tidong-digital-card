@@ -94,6 +94,10 @@ final class AiRestaurantAssistantService
     private function freeCatalogueAnswer(string $message, array $restaurants): array
     {
         $query = mb_strtolower(trim($message));
+        $math = TidongMathAnswers::answer($message);
+        if ($math !== null) {
+            return ['text' => $math, 'ai_available' => false, 'free_mode' => true];
+        }
         $calendar = TidongCalendarAnswers::answer($message);
         if ($calendar !== null) {
             return ['text' => $calendar, 'ai_available' => false, 'free_mode' => true];
