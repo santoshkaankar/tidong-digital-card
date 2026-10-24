@@ -92,6 +92,14 @@ class VendorManagementController extends Controller
         );
     }
 
+    public function setModule(Request $request, int $vendor, string $code)
+    {
+        abort_unless(DB::table('vendors')->where('id', $vendor)->whereNull('deleted_at')->exists(), 404);
+        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+        app(\App\Services\Platform\ModuleRegistry::class)->setVendorEnabled($code, $vendor, (bool) $data['enabled'], (int) $request->user()->id);
+        return back()->with('success', 'Vendor service updated.');
+    }
+
     public function approve(Request $request, int $vendor)
     {
         $data = $request->validate([
