@@ -96,7 +96,7 @@ final class AiRestaurantAssistantService
         $query = mb_strtolower(trim($message));
         // Free, instant conversational replies do not require GPS or a paid API.
         if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
-            return ['text' => 'नमस्ते! रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग, ऑर्डर या अकाउंट—किसमें मदद चाहिए?', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'नमस्ते! बताइए, मैं आपकी किस काम में सहायता कर सकती हूँ?', 'ai_available' => false, 'free_mode' => true];
         }
         if (preg_match('/(तुम कौन|आप कौन|who are you|क्या कर सकते|what can you do)/iu', $query)) {
             return ['text' => 'मैं TIDONG की मुफ्त ग्राहक सहायता हूँ। आप खाने, ग्रॉसरी, प्रिंटिंग, ऑर्डर या अकाउंट पर पूछ सकते हैं।', 'ai_available' => false, 'free_mode' => true];
@@ -153,7 +153,7 @@ final class AiRestaurantAssistantService
             return ['text' => 'ऑर्डर के लिए Explore में स्टोर चुनें और Checkout करें। यह चैट भुगतान नहीं करती।', 'ai_available' => false, 'free_mode' => true];
         }
         if ($restaurants === []) {
-            return ['text' => 'रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग, डिलीवरी, ऑर्डर या अकाउंट—आप किस बारे में पूछ रहे हैं?', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'मैं आपका सवाल पूरी तरह समझ नहीं पाई। कृपया थोड़ा और बताइए कि आपको क्या जानकारी या सहायता चाहिए। मैं उसी विषय पर जवाब दूँगी।', 'ai_available' => false, 'free_mode' => true];
         }
         $matches = [];
         foreach ($restaurants as $restaurant) {
