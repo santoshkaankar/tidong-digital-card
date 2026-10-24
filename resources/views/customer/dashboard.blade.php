@@ -7,7 +7,11 @@
             <span class="td-hero-eyebrow">🎁 {{ __('FEATURED: PERSONALIZED GIFTS') }}</span>
             <h1 id="hero-title">{{ __('Create something') }} <em>{{ __('special.') }}</em></h1>
             <p>{{ __('Explore personalized gifts, photo printing and more—all from your TIDONG home.') }}</p>
-            <a href="{{ route('customer.explore.service', 'sublimation') }}" class="td-button td-button-white">{{ __('Explore gifts') }} <span aria-hidden="true">→</span></a>
+            @if($categories['sublimation']['available'] ?? false)
+                <a href="{{ route('customer.explore.service', 'sublimation') }}" class="td-button td-button-white">{{ __('Explore gifts') }} <span aria-hidden="true">→</span></a>
+            @else
+                <span class="td-service-status">{{ __('Personalized gifts are not available yet.') }}</span>
+            @endif
         </div>
         <div class="td-hero-art" aria-hidden="true">
             <div class="td-floating td-mug">☕<small>LOVE</small></div>
@@ -52,7 +56,11 @@
         </div>
     </section>
     <section class="td-info-row">
-        <p>ℹ️ {{ __('Personalized gift order requests and status tracking are available for signed-in customers where stores accept orders. Online payment is not yet collected by this flow.') }}</p>
+        @if($hasCustomerOrderLink)
+            <p>ℹ️ {{ __('My Orders shows verified grocery and personalized gift orders linked to your account. Available payment options depend on the active store and checkout.') }}</p>
+        @else
+            <p>ℹ️ {{ __('Order history becomes available when stores link purchases to your verified account. Guest and walk-in orders are not linked automatically.') }}</p>
+        @endif
         @if($hasVendor)<a href="{{ route('vendor.home') }}">{{ __('Open Vendor Workspace') }} →</a>@else<a href="{{ route('vendor.apply') }}">{{ __('Become a Vendor') }} →</a>@endif
     </section>
 @endsection
