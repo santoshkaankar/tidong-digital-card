@@ -12,6 +12,14 @@ use Tests\TestCase;
  */
 class AiRestaurantAssistantServiceTest extends TestCase
 {
+    public function test_professional_transparency_is_default_off_and_never_grants_report_access(): void
+    {
+        $feature = config('tidong_features.ai.professional_work_transparency');
+        $this->assertIsArray($feature);
+        $this->assertFalse($feature['default_enabled']);
+        $this->assertSame('ai_restaurant_assistant', $feature['module']);
+    }
+
     public function test_missing_api_key_never_calls_external_provider(): void
     {
         config()->set('tidong_ai_restaurant.api_key', '');
