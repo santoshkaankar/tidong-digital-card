@@ -19,7 +19,7 @@
 <label for="food-ai-message" class="sr-only">सवाल लिखें</label>
 <textarea id="food-ai-message" name="message" maxlength="400" minlength="2" rows="1" required placeholder="सवाल पूछें…" class="min-h-11 flex-1 resize-y border-0 p-2 text-base focus:outline-none">{{ old('message', '') }}</textarea>
 <button type="button" id="food-ai-mic" title="बोलकर पूछें" aria-label="बोलकर पूछें" class="min-h-11 min-w-11">🎙️</button>
-<button type="submit" title="भेजें" aria-label="भेजें" class="min-h-11 min-w-11 rounded-xl bg-rose-700 text-white">➤</button>
+<button type="submit" id="food-ai-send" title="भेजें" aria-label="भेजें" class="min-h-11 min-w-11 rounded-xl bg-rose-700 text-white">➤</button>
 </div><p id="food-ai-status" role="status" aria-live="polite" class="sr-only"></p>
 </form>
 </section>
@@ -31,6 +31,27 @@
     const lat = document.getElementById('food-ai-lat');
     const lng = document.getElementById('food-ai-lng');
     const locationButton = document.getElementById('food-ai-location');
+    const form = document.getElementById('food-ai-form');
+    const send = document.getElementById('food-ai-send');
+    form.addEventListener('submit', event => {
+        if (!message.value.trim()) {
+            event.preventDefault();
+            status.classList.remove('sr-only');
+            status.textContent = 'कृपया सवाल लिखें।';
+            message.focus();
+            return;
+        }
+        send.disabled = true;
+        send.textContent = '…';
+        status.classList.remove('sr-only');
+        status.textContent = 'जवाब तैयार हो रहा है…';
+    });
+    message.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            form.requestSubmit(send);
+        }
+    });
     locationButton.addEventListener('click', () => {
         if (!navigator.geolocation) { status.textContent = 'यह Browser लोकेशन नहीं दे सकता।'; return; }
         status.textContent = 'लोकेशन की अनुमति माँगी जा रही है…';
@@ -40,6 +61,9 @@
             { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
         );
     });
+    if (!navigator.geolocation) {
+        status.textContent = 'लोकेशन उपलब्ध नहीं है; लिखकर सवाल भेज सकते हैं।';
+    }
     const VoiceRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const mic = document.getElementById('food-ai-mic');
     if (!VoiceRecognition) {
