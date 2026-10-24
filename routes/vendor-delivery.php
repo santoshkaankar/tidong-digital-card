@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 // Authenticated users still require firm-scoped permissions inside the service.
 // Platform staff accounts are explicitly denied, regardless of other roles.
-Route::middleware(['auth'])->prefix('delivery')->name('vendor.delivery.')->group(function (): void {
+Route::middleware(['auth', \App\Http\Middleware\EnsureTidongModuleEnabled::class.':delivery'])->prefix('delivery')->name('vendor.delivery.')->group(function (): void {
     Route::get('/', [VendorDeliveryController::class, 'index'])->name('index');
     Route::post('/partners/invite', [VendorDeliveryController::class, 'invite'])->name('partners.invite');
     Route::post('/businesses/{business}/partners/{partner}/verify', [VendorDeliveryController::class, 'verify'])
