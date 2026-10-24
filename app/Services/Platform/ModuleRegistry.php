@@ -38,7 +38,7 @@ class ModuleRegistry
     /** Vendor overrides are opt-out: no row means the service is available. */
     public function isEnabledForVendor(string $code, int $vendorId): bool
     {
-        if (! $this->isEnabled($code)) {
+        if (! $this->installed($code)) {
             return false;
         }
         if (! Schema::hasTable('vendor_module_overrides')) {
