@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Kds;
 use App\Http\Controllers\Controller;
 use App\Services\Pos\PosOrderService;
 use App\Services\Kds\TableOrderProgress;
+use App\Services\Kds\FreeKitchenAssistant;
+use App\Services\Platform\FeatureRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,7 +42,8 @@ class KdsController extends Controller
             ->orderBy('po.placed_at')->limit(100)->get();
         $items = DB::table('pos_order_items')->whereIn('order_id', $orders->pluck('id'))
             ->orderBy('id')->get()->groupBy('order_id');
-        return view('kds.branch', compact('branchRecord', 'orders', 'items'));
+        $freeAiEnabled = app(FeatureRegistry::class)->isEnabled('kds.free_assistant');
+        return view('kds.branch', compact('branchRecord', 'orders', 'items', 'freeAiEnabled'));
     }
 
     public function itemProgress(Request $request, int $item, TableOrderProgress $progress): RedirectResponse
@@ -55,6 +58,40 @@ class KdsController extends Controller
     {
         return response()->json($progress->table($request,$branch,$table),200,
             ['Cache-Control'=>'no-store, private']);
+    }
+
+    /** Safe Free Mode: answer a question about this vendor's single existing order. */
+    public function freeAsk(Request $request, int $order, FreeKitchenAssistant $assistant): RedirectResponse
+    {
+        abort_unless(app(FeatureRegistry::class)->isEnabled('kds.free_assistant'), 404);
+        $data = $request->validate(['question'=>['required','string','min:2','max:300']]);
+        $row = DB::table('pos_orders as o')
+            ->leftJoin('restaurant_dining_tables as t','t.id','=','o.dining_table_id')
+            ->where('o.id', $order)
+            ->select('o.id','o.branch_id','o.status','t.label as table_label')->first();
+        abort_unless($row, 404);
+        $branch = $this->pos->ownedBranch($request, (int) $row->branch_id);
+        $this->pos->ensureApproved($branch);
+        abort_if($row->status === 'cancelled', 422, 'Cancelled order.');
+
+        $items = DB::table('pos_order_items')->where('order_id',$order)->orderBy('id')->get();
+        $snapshot = [
+            'table'=>$row->table_label ?: 'Counter',
+            'items'=>$items->map(fn ($i) => [
+                'name'=>(string)$i->name_snapshot,
+                'ordered'=>(int)$i->quantity,
+                'added'=>(int)$i->added_quantity,
+                'ready'=>(int)$i->ready_quantity,
+                'served'=>(int)$i->served_quantity,
+                'remaining_to_prepare'=>max(0,(int)$i->quantity-(int)$i->ready_quantity),
+            ])->all(),
+        ];
+        $reply=$assistant->answer($data['question'],$snapshot);
+        return back()->with('free_kds_reply',[
+            'order_id'=>$order,'reply'=>$reply['reply'],
+            'resolved'=>$reply['resolved'],
+            'needs_confirmation'=>$reply['needs_confirmation'],
+        ]);
     }
 
     public function updateStatus(Request $request, int $order): RedirectResponse

@@ -7,7 +7,24 @@
 <article class="rounded-xl bg-white p-5 shadow-sm space-y-3"><h2 class="font-bold">{{ $order->order_number }}</h2>
 <p class="font-semibold">{{ ucfirst($order->status) }} · {{ $order->dining_table_label ?: 'Counter' }} · {{ ucfirst($order->order_origin) }}</p>
 <p class="text-xs text-slate-500">{{ $order->placed_at }} · Payment: {{ $order->payment_status }}</p>
-<ul class="list-disc pl-5 text-sm">@foreach($items->get($order->id, collect()) as $item)<li>{{ $item->quantity }} × {{ $item->name_snapshot }}</li>@endforeach</ul>
+<ul class="space-y-2 text-sm">
+@foreach($items->get($order->id, collect()) as $item)
+<li class="rounded-lg bg-slate-50 px-3 py-2">{{ $item->name_snapshot }}
+<span class="block text-xs text-slate-600">कुल {{ $item->quantity }} · अतिरिक्त {{ $item->added_quantity }} · तैयार {{ $item->ready_quantity }} · परोसे {{ $item->served_quantity }}</span></li>
+@endforeach
+</ul>
+@if($freeAiEnabled)
+<form method="POST" action="{{ route('kds.orders.free-ask', $order->id) }}" class="rounded-xl border border-slate-200 p-3 space-y-2">
+@csrf
+<label class="block font-semibold text-sm" for="free-kds-{{ $order->id }}">TIDONG AI · Free Kitchen</label>
+<input id="free-kds-{{ $order->id }}" name="question" required minlength="2" maxlength="300" class="w-full rounded-lg border p-2" placeholder="टेबल 5 की कितनी चपाती पहुँची?">
+<button class="rounded-lg bg-slate-900 px-4 py-2 text-white font-semibold text-sm" type="submit">पूछें · API ₹0</button>
+<p class="text-xs text-slate-500">यह Free Mode केवल रिकॉर्ड देखकर जवाब देता है। आवाज़ से ऑर्डर अपने आप नहीं बदलेगा।</p>
+</form>
+@if(($kdsReply = session('free_kds_reply')) && ($kdsReply['order_id'] ?? null) == $order->id)
+<p class="rounded-lg bg-blue-50 p-3 text-sm" role="status">{{ $kdsReply['reply'] }}</p>
+@endif
+@endif
 @if($order->customer_note)<p class="rounded-lg bg-amber-50 p-3 text-sm">Note: {{ $order->customer_note }}</p>@endif
 @php $next = ['received'=>'preparing','preparing'=>'ready','ready'=>'served'][$order->status] ?? null; @endphp
 @if($next)<form method="POST" action="{{ route('kds.orders.status', $order->id) }}">@csrf<input type="hidden" name="status" value="{{ $next }}"><button class="rounded-lg bg-blue-700 px-5 py-2 text-white">Mark {{ ucfirst($next) }}</button></form>@endif
