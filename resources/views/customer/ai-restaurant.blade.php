@@ -1,6 +1,11 @@
 @extends('customer.layout')
 @section('title', __('TIDONG AI'))
 @section('content')
+<style>
+@keyframes tidongMicPulse { 0%,100% { box-shadow:0 0 0 0 rgba(190,24,93,.25); } 55% { box-shadow:0 0 0 9px rgba(190,24,93,0); } }
+#food-ai-mic.td-mic-listening { animation:tidongMicPulse 1.7s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { #food-ai-mic.td-mic-listening { animation:none; outline:3px solid #fda4af; outline-offset:3px; } }
+</style>
 <section class="mx-auto flex h-[calc(100dvh-10rem)] min-h-[420px] max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
 <header class="flex items-center justify-between border-b border-slate-100 p-4"><h1 class="text-lg font-bold">TIDONG AI</h1><form method="POST" action="{{ route('customer.ai-restaurant.new-chat') }}">@csrf<button type="submit" class="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold">＋ New Chat</button></form></header>
 <div id="food-ai-thread" class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
@@ -138,6 +143,7 @@
     const setMicState = (state, label) => {
         listening = state === 'listening';
         mic.setAttribute('aria-pressed', String(listening));
+        mic.classList.toggle('td-mic-listening', listening);
         mic.classList.toggle('bg-rose-700', listening);
         mic.classList.toggle('text-white', listening);
         mic.classList.toggle('ring-4', listening);
