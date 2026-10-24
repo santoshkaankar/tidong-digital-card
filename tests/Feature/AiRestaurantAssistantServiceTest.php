@@ -14,7 +14,7 @@ class AiRestaurantAssistantServiceTest extends TestCase
 {
     public function test_professional_transparency_is_default_off_and_never_grants_report_access(): void
     {
-        $feature = config('tidong_features.ai.professional_work_transparency');
+        $feature = config('tidong_features')['ai.professional_work_transparency'] ?? null;
         $this->assertIsArray($feature);
         $this->assertFalse($feature['default_enabled']);
         $this->assertSame('ai_restaurant_assistant', $feature['module']);
