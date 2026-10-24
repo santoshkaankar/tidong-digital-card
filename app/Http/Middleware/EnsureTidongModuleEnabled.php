@@ -6,12 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 final class EnsureTidongModuleEnabled {
-    public function handle(Request $request, Closure $next, string $module): Response {
+    public function handle(Request $request, Closure $next, string $module, string $scope = 'global'): Response {
         $registry = app(ModuleRegistry::class);
         abort_unless($registry->installed($module), 404);
-        if ($request->user()) {
+        if ($scope === 'vendor' && $request->user()) {
             $vendorId = DB::table('vendors')->where('user_id', $request->user()->id)
                 ->whereNull('deleted_at')->value('id');
+            abort_unless($vendorId, 403);
             if ($vendorId) {
                 abort_unless($registry->isEnabledForVendor($module, (int) $vendorId), 403);
                 return $next($request);
