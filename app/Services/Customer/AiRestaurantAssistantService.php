@@ -98,6 +98,15 @@ final class AiRestaurantAssistantService
         if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
             return ['text' => 'नमस्ते! बताइए, मैं आपकी किस काम में सहायता कर सकती हूँ?', 'ai_available' => false, 'free_mode' => true];
         }
+        if (preg_match('/(रट्टू|तोते|एक ही जवाब|बार बार वही|बार-बार वही|repeat|repeating|रट लगा)/iu', $query)) {
+            return ['text' => 'आप सही कह रहे हैं, एक ही जवाब बार-बार देना उपयोगी नहीं है। माफ कीजिए। आप जो पूछेंगे, उसी विषय पर सीधे जवाब देने की कोशिश करूँगी।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(पहले ज्यादा ठीक|पहले बेहतर|पहले अच्छा|पहले सही|जवाब खराब|सही जवाब नहीं|गोलमोल जवाब|बेकार जवाब|not helpful|worse than before)/iu', $query)) {
+            return ['text' => 'आपकी प्रतिक्रिया समझ गई। मेरे जवाब स्पष्ट और विषय से जुड़े होने चाहिए, एक जैसे नहीं। कृपया बताइए किस बात का सही जवाब चाहिए; मैं उसी पर ध्यान दूँगी।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(क्या कर रहे हो|क्या कर रही हो|क्या कर रहे हैं|क्या चल रहा है|कैसे हो|कैसी हो|how are you|what are you doing)/iu', $query)) {
+            return ['text' => 'मैं यहाँ आपकी मदद के लिए हूँ। बताइए, क्या जानना चाहते हैं?', 'ai_available' => false, 'free_mode' => true];
+        }
         if (preg_match('/(तुम कौन|आप कौन|who are you|क्या कर सकते|what can you do)/iu', $query)) {
             return ['text' => 'मैं TIDONG की मुफ्त ग्राहक सहायता हूँ। आप खाने, ग्रॉसरी, प्रिंटिंग, ऑर्डर या अकाउंट पर पूछ सकते हैं।', 'ai_available' => false, 'free_mode' => true];
         }

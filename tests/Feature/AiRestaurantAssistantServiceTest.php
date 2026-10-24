@@ -52,6 +52,22 @@ class AiRestaurantAssistantServiceTest extends TestCase
         );
     }
 
+    public function test_free_ai_handles_small_talk_and_feedback_without_repeating_fallback(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        $examples = [
+            ['हाँ भाई क्या कर रहे हो', 'मैं यहाँ आपकी मदद के लिए हूँ'],
+            ['रट्टू तोते हो क्या', 'एक ही जवाब बार-बार'],
+            ['इससे तो पहले ज्यादा ठीक जवाब दे पा रहे थे', 'आपकी प्रतिक्रिया समझ गई'],
+        ];
+        foreach ($examples as [$question, $expected]) {
+            $answer = $assistant->answer($question, []);
+            $this->assertStringContainsString($expected, $answer['text']);
+            $this->assertStringNotContainsString('सवाल पूरी तरह समझ नहीं', $answer['text']);
+        }
+    }
+
     public function test_unknown_question_asks_clarification_without_irrelevant_service_list(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
