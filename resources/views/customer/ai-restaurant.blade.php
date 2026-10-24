@@ -114,7 +114,13 @@
                     window.speechSynthesis.cancel();
                     const utterance = new SpeechSynthesisUtterance(data.answer);
                     utterance.lang = 'hi-IN';
+                    const hindiVoice = window.speechSynthesis.getVoices().find(v => /^hi[-_]/i.test(v.lang));
+                    if (hindiVoice) utterance.voice = hindiVoice;
+                    utterance.onstart = () => { listen.textContent = '⏹'; status.textContent = 'जवाब सुनाया जा रहा है…'; };
+                    utterance.onend = () => { listen.textContent = '🔊'; status.textContent = 'जवाब सुनाया गया।'; };
+                    utterance.onerror = () => { listen.textContent = '🔊'; status.textContent = 'आवाज़ नहीं चल पाई। Android Text-to-Speech और Media Volume जाँचें।'; };
                     window.speechSynthesis.speak(utterance);
+                    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
                 });
                 pending.parentElement.appendChild(listen);
             }
