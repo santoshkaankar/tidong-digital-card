@@ -41,3 +41,12 @@ body.td-customer-shell{background:#f7f8fb!important;color:#17243a}
  .td-top-account{display:none!important}
 }
 @media(prefers-reduced-motion:reduce){.td-service-tile,.td-quick-grid>a{transition:none!important}}
+
+/* Website layout polish: remove obsolete app spacing and decorative hero rings. */
+.td-workspace{padding-bottom:36px!important}
+.td-hero:before,.td-hero:after{display:none!important}
+.td-hero-text{width:100%!important;padding:26px 28px!important}
+.td-side{border-radius:8px!important}
+.td-feature-card{min-height:155px!important}
+@media(max-width:900px){.td-workspace{padding:0 0 30px!important}.td-side{border-radius:0 10px 10px 0!important}}
+@media(max-width:520px){.td-hero-text{padding:20px!important}.td-service-tile{align-items:flex-start!important;text-align:left!important;min-height:116px!important;padding:14px!important}.td-service-icon{width:42px!important;height:42px!important;font-size:22px!important}.td-quick-grid a{align-items:flex-start!important;text-align:left!important;padding:15px!important;min-height:88px!important}.td-quick-grid span{font-size:22px!important}}
