@@ -25,7 +25,7 @@ class AiRestaurantAssistantServiceTest extends TestCase
         $route = app('router')->getRoutes()->getByName('vendor.legal.ai-progress');
         $this->assertNotNull($route);
         $this->assertContains('auth', $route->gatherMiddleware());
-        $this->assertContains(\\App\\Http\\Middleware\\EnsureVendorAccount::class, $route->gatherMiddleware());
+        $this->assertContains(\App\Http\Middleware\EnsureVendorAccount::class, $route->gatherMiddleware());
         $this->assertSame(['GET', 'HEAD'], $route->methods());
     }
 
