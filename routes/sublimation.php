@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 // Included from routes/vendor.php, which is already mounted under /vendor.
 // Platform employees are blocked, and the controller enforces Vendor + Business + Branch ownership.
-Route::middleware(['auth', EnsureVendorAccount::class, \App\Http\Middleware\EnsureTidongModuleEnabled::class.':sublimation'])->prefix('businesses/{business}/sublimation')
+Route::middleware(['auth', EnsureVendorAccount::class, \App\Http\Middleware\EnsureTidongModuleEnabled::class.':sublimation,vendor'])->prefix('businesses/{business}/sublimation')
     ->where(['business' => '[0-9]+'])->group(function (): void {
         Route::get('/', [SublimationStudioController::class, 'index'])->name('vendor.sublimation.index');
         Route::get('/products', [SublimationStudioController::class, 'products'])->name('vendor.sublimation.products.index');
