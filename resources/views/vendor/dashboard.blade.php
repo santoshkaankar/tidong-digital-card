@@ -33,6 +33,16 @@
         </div>
     @endif
 
+    <section class="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="vendor-setup-title">
+        <h2 id="vendor-setup-title" class="text-xl font-bold text-slate-900">Get your store ready — step by step</h2>
+        <p class="mt-2 text-sm text-slate-600">Business approval is only the first step. Customers see a store once its outlet is set up and ordering is separately enabled.</p>
+        <ol class="mt-4 grid gap-3 text-sm md:grid-cols-3">
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">1. Choose your business</strong><span class="mt-1 block text-slate-600">Open its dashboard below. Approved businesses can move to outlet setup.</span><a class="mt-2 inline-block font-semibold text-blue-700 underline" href="#vendor-businesses">View my businesses →</a></li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">2. Add an outlet</strong><span class="mt-1 block text-slate-600">Enter outlet name and address in the outlet form below that business. Each outlet has its own setup.</span><a class="mt-2 inline-block font-semibold text-blue-700 underline" href="#vendor-businesses">Go to outlet setup →</a></li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">3. Prepare to accept orders</strong><span class="mt-1 block text-slate-600">Add menu or products, licences and required settings. Ordering stays OFF until separately activated.</span></li>
+        </ol>
+    </section>
+
     @if ($vendor->status !== 'approved')
         <section class="rounded-xl bg-white p-6 shadow-sm">
             <h2 class="text-lg font-semibold">Application status: {{ ucfirst($vendor->status) }}</h2>
@@ -99,12 +109,12 @@
                         <h3 class="text-lg font-bold">{{ $business->name }}</h3>
                         <a href="{{ route('vendor.business.workspace', $business->id) }}" class="mt-3 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white">Open Business Dashboard</a>
                         <p class="text-sm text-slate-600">{{ $business->business_type }} | Status: {{ ucfirst($business->status) }}</p>
-                        <p class="text-sm text-slate-600">Accepting orders: {{ $business->is_accepting_orders ? 'Yes' : 'No' }}</p>
+                        <p class="text-sm font-semibold {{ $business->is_accepting_orders ? 'text-emerald-700' : 'text-amber-700' }}">Customer ordering: {{ $business->is_accepting_orders ? 'ON' : 'OFF — setup required' }}</p>
                         @if (in_array($business->business_type, ['sublimation', 'custom_printing', 'printing'], true))
                             <a href="{{ route('vendor.sublimation.index', $business->id) }}" class="mt-3 inline-block rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white">Open Sublimation Studio</a>
                         @endif
                     </div>
-                    <div class="text-sm text-slate-500">{{ $business->branches->count() }} Branch(es)</div>
+                    <div class="text-sm font-semibold {{ $business->branches->isEmpty() ? 'text-amber-700' : 'text-emerald-700' }}">{{ $business->branches->isEmpty() ? 'Next step: Add your first outlet' : $business->branches->count().' outlet(s) registered' }}</div>
                 </div>
                 @if ($business->branches->isNotEmpty())
                     <ul class="mt-4 list-inside list-disc text-sm">
@@ -114,6 +124,8 @@
                     </ul>
                 @endif
                 @if ($vendor->status === 'approved' && in_array($business->status, ['pending', 'approved'], true))
+                    <h4 class="mt-5 border-t pt-4 text-base font-bold text-slate-900">Add outlet to {{ $business->name }}</h4>
+                    <p class="mt-1 text-sm text-slate-600">Complete the outlet details below. Creating an outlet does not automatically accept customer orders.</p>
                     <form method="POST" action="{{ route('vendor.branches.store', $business->id) }}"
                           class="mt-5 grid gap-3 border-t pt-4 md:grid-cols-3" data-address-form data-address-url="{{ route('vendor.address.options') }}">
                         @csrf
