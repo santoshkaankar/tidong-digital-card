@@ -8,6 +8,7 @@ use App\Services\Platform\FeatureRegistry;
 use App\Services\Platform\ModuleRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 final class AiRestaurantAssistantController extends Controller
@@ -39,7 +40,15 @@ final class AiRestaurantAssistantController extends Controller
 
         $latitude = isset($data['latitude']) ? (float) $data['latitude'] : null;
         $longitude = isset($data['longitude']) ? (float) $data['longitude'] : null;
-        $restaurants = $assistant->nearby($latitude, $longitude);
+        // Short-lived, rounded-coordinate cache avoids repeating the same catalogue
+        // queries on every chat turn. No location means no database lookup.
+        $restaurants = ($latitude !== null && $longitude !== null)
+            ? Cache::remember(
+                'tidong-ai:nearby:v1:'.round($latitude, 3).':'.round($longitude, 3),
+                now()->addSeconds(45),
+                fn () => $assistant->nearby($latitude, $longitude)
+            )
+            : [];
 
         if ($latitude === null || $longitude === null) {
             $answer = 'नज़दीकी रेस्टोरेंट बताने के लिए नीचे “मेरी लोकेशन लें” दबाकर अनुमति दें। बिना आपकी अनुमति के लोकेशन नहीं ली जाएगी।';
