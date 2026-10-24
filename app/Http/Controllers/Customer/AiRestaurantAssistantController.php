@@ -53,6 +53,7 @@ final class AiRestaurantAssistantController extends Controller
         // Answer conversational questions without forcing location. Coordinates are
         // required only for factual nearby restaurant discovery.
         $question = trim((string) $data['message']);
+        $locationHelpIntent = (bool) preg_match('/(लोकेशन|location|gps|जीपीएस).*(कैसे|देने|दें|देना|allow|enable|permission|अनुमति|चालू|on|share)|(?:कैसे|देने|दें|देना|allow|enable|permission|अनुमति|चालू|share).*(लोकेशन|location|gps|जीपीएस)/iu', $question);
         $nearbyIntent = (bool) preg_match('/(near\\s*(?:me|by)|nearest|nearby|around\\s*me|close\\s*by|पास\\s*(?:के|में|वाला|वाले)|नजदीक|नज़दीक|आसपास|लोकेशन|location|मेरे यहाँ|मेरे पास)/iu', $question);
         // Never expose professional work records from a customer AI chat.
         // This endpoint has no verified professional assignment or outlet-scoped
@@ -62,6 +63,8 @@ final class AiRestaurantAssistantController extends Controller
             $answer = app(FeatureRegistry::class)->isEnabled('ai.professional_work_transparency')
                 ? 'आप अपने आउटलेट से जुड़े Professional के काम की प्रगति पूछ रहे हैं। इस Customer AI चैट में आपके Outlet और Professional Assignment की सत्यापित जाँच तथा रिपोर्ट पढ़ने की सुविधा अभी उपलब्ध नहीं है। इसलिए मैं कोई प्रगति या Completed होने का दावा नहीं करूँगा। अधिकृत Outlet Dashboard में उपलब्ध रिकॉर्ड देखें।'
                 : 'Professional के काम की विस्तृत प्रगति AI से साझा करने की सुविधा अभी Admin द्वारा चालू नहीं है। आप अपने अधिकृत Outlet Dashboard में उपलब्ध स्थिति देख सकते हैं।';
+        } elseif ($locationHelpIntent) {
+            $answer = 'पास के रेस्टोरेंट खोजने के लिए चैट में 📍 लोकेशन बटन दबाएँ। ब्राउज़र अनुमति माँगे तो Allow करें। अनुमति नहीं दिखे तो ब्राउज़र की Site Settings में Location को Allow करें। सामान्य सवालों के लिए लोकेशन जरूरी नहीं है।';
         } elseif ($restaurants === [] && $nearbyIntent && ($latitude === null || $longitude === null)) {
             $answer = 'आपके पास कौन-से रेस्टोरेंट हैं, यह बताने के लिए एक बार लोकेशन अनुमति दें। बाकी सवाल आप बिना लोकेशन के भी पूछ सकते हैं।';
         } elseif ($restaurants === [] && $nearbyIntent) {
