@@ -19,6 +19,15 @@ return [
                 ['label' => 'Restaurant Reports', 'key' => null],
             ],
         ],
+        'tiffin' => [
+            'title' => 'Proceed Tiffin & Everyday Thali',
+            'items' => [
+                ['label' => 'Proceed Tiffin (Day) / Thali (Everyday)', 'key' => 'proceed-tiffin'],
+                ['label' => 'Single Item List', 'key' => 'tiffin-items'],
+                ['label' => 'Prepare Tiffin / Thali', 'key' => 'tiffin-meals'],
+                ['label' => 'Today Orders', 'key' => 'tiffin-orders'],
+            ],
+        ],
         'sublimation' => [
             'title' => 'Sublimation Studio',
             'items' => [
@@ -95,7 +104,7 @@ return [
     ],
     'type_groups' => [
         'restaurant' => 'restaurant', 'cafe' => 'restaurant', 'cloud_kitchen' => 'restaurant',
-        'bakery' => 'restaurant', 'tiffin' => 'restaurant',
+        'bakery' => 'restaurant', 'tiffin' => 'tiffin',
         'sublimation' => 'sublimation', 'custom_printing' => 'sublimation', 'printing' => 'sublimation',
         'retail' => 'retail', 'grocery' => 'retail', 'shopping' => 'retail', 'pharmacy' => 'retail',
         'wholesale' => 'distribution', 'wholesaler' => 'distribution', 'distributor' => 'distribution',

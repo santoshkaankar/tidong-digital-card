@@ -45,6 +45,9 @@ Route::middleware(['auth', EnsureVendorAccount::class])
 // Private Sublimation Studio routes (kept isolated for this business type).
 require __DIR__.'/sublimation.php';
 
+// Separate outlet-only food workflow (disabled by default until owner review).
+require __DIR__.'/proceed_tiffin.php';
+
 // Outlet finance/stock opening: vendor-owner-only, review-gated.
 require __DIR__.'/vendor-opening.php';
 
