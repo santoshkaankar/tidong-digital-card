@@ -1,57 +1,27 @@
 @extends('customer.layout')
 @section('title', __('TIDONG AI'))
 @section('content')
-<section class="mx-auto max-w-4xl space-y-5" aria-labelledby="food-ai-title">
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-        <span class="text-xs font-bold uppercase tracking-wider text-rose-700">{{ __('TIDONG AI') }}</span>
-        <h1 id="food-ai-title" class="mt-2 text-2xl font-bold text-slate-900">{{ __('बोलकर रेस्टोरेंट और मेन्यू पूछें') }}</h1>
-        <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('हिन्दी में बोलिए या लिखिए। नजदीकी परिणाम के लिए Location की अनुमति दें। केवल Approved, Active और Order-Ready Restaurant का वास्तविक Menu दिखाई देगा; यहाँ से Order या Payment नहीं होता।') }}</p>
-        <div class="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-700" role="status">💬 TIDONG AI: नमस्ते! बोलकर या लिखकर खाने और रेस्टोरेंट के बारे में पूछिए।</div>
-        <form method="POST" action="{{ route('customer.ai-restaurant.ask') }}" id="food-ai-form" class="mt-5 space-y-3">
-            @csrf
-            <input type="hidden" name="latitude" id="food-ai-lat" value="{{ old('latitude', $latitude) }}">
-            <input type="hidden" name="longitude" id="food-ai-lng" value="{{ old('longitude', $longitude) }}">
-            <div class="mb-2 flex flex-wrap gap-2" role="group" aria-label="Chat input mode"><button id="food-ai-text-mode" type="button" aria-pressed="true" class="min-h-11 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">⌨️ Text</button><button id="food-ai-voice-mode" type="button" aria-pressed="false" class="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">🎙️ Voice</button></div>
-            <label class="block text-sm font-semibold text-slate-800" for="food-ai-message">{{ __('आप क्या खाना चाहते हैं?') }}</label>
-            <textarea id="food-ai-message" name="message" maxlength="400" minlength="2" rows="3" required
-                class="w-full rounded-xl border border-slate-300 p-3 text-base focus:border-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                placeholder="उदाहरण: मेरे पास पनीर और रोटी किस रेस्टोरेंट में मिलेगी?">{{ old('message', $message) }}</textarea>
-            <div class="flex flex-wrap gap-2">
-                <button type="button" id="food-ai-location" class="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900">{{ __('📍 मेरी लोकेशन लें') }}</button>
-                <button type="button" id="food-ai-mic" class="min-h-11 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{{ __('🎙️ बोलकर पूछें') }}</button>
-                <button type="submit" class="min-h-11 rounded-xl bg-rose-700 px-5 py-2 font-semibold text-white hover:bg-rose-800">{{ __('➤ Send') }}</button>
-            </div>
-            <p id="food-ai-status" class="text-sm text-slate-600" aria-live="polite">{{ $latitude !== null ? __('लोकेशन चुनी गई है।') : __('लोकेशन अभी साझा नहीं की गई है।') }}</p>
-        </form>
-    </div>
-    @if($answer !== null)
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm" aria-live="polite"><div class="mb-3 flex justify-end"><p class="max-w-[85%] rounded-2xl bg-rose-700 p-3 text-sm text-white">{{ $message }}</p></div>
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-lg font-bold">{{ __('TIDONG AI का जवाब') }}</h2>
-                <button type="button" id="food-ai-speak" class="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold">{{ __('🔊 जवाब सुनें') }}</button>
-            </div>
-            <p id="food-ai-answer" class="mt-3 max-w-[95%] rounded-2xl bg-white p-4 whitespace-pre-wrap text-base leading-7 shadow-sm">{{ $answer }}</p>
-        </div>
-    @endif
-    @if(count($restaurants))
-        <h2 class="text-xl font-bold text-slate-900">{{ __('आपकी लोकेशन के पास उपलब्ध रेस्टोरेंट') }}</h2>
-        <div class="grid gap-4 sm:grid-cols-2">
-            @foreach($restaurants as $restaurant)
-                <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <h3 class="font-bold text-slate-900">{{ $restaurant['restaurant'] }}</h3>
-                    <p class="mt-1 text-sm text-slate-600">{{ $restaurant['outlet'] }} · {{ $restaurant['distance_km'] }} km</p>
-                    <div class="mt-3 space-y-1.5">
-                        @forelse($restaurant['menu'] as $item)
-                            <div class="flex justify-between gap-2 border-b border-slate-100 py-1 text-sm"><span>{{ $item['name'] }}</span><strong class="whitespace-nowrap">₹{{ $item['price_rupees'] }}</strong></div>
-                        @empty
-                            <p class="text-sm text-slate-500">{{ __('अभी मेन्यू प्रकाशित नहीं है।') }}</p>
-                        @endforelse
-                    </div>
-                </article>
-            @endforeach
-        </div>
-    @endif
-    <p class="text-sm text-slate-600">{{ __('ऑर्डर करने से पहले उपलब्धता, कुल राशि, डिलीवरी और भुगतान अलग Checkout में पुष्टि करना आवश्यक होगा।') }}</p>
+<section class="mx-auto flex min-h-[70vh] max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
+<header class="flex items-center justify-between border-b border-slate-100 p-4"><h1 class="text-lg font-bold">TIDONG AI</h1><a href="{{ route('customer.ai-restaurant.index') }}" class="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold">＋ New Chat</a></header>
+<div class="flex-1 space-y-4 p-4" aria-live="polite">
+@if($answer !== null)
+<div class="flex justify-end"><p class="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-rose-700 p-3 text-white">{{ $message }}</p></div>
+<div class="flex items-start gap-2"><p id="food-ai-answer" class="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-slate-100 p-3">{{ $answer }}</p><button id="food-ai-speak" type="button" aria-label="जवाब सुनें" class="min-h-11 min-w-11">🔊</button></div>
+@endif
+@if($errors->any())<p role="alert" class="text-red-700">{{ $errors->first() }}</p>@endif
+</div>
+<form method="POST" action="{{ route('customer.ai-restaurant.ask') }}" id="food-ai-form" class="border-t border-slate-100 p-3">
+@csrf
+<input type="hidden" name="latitude" id="food-ai-lat" value="{{ old('latitude', $latitude) }}">
+<input type="hidden" name="longitude" id="food-ai-lng" value="{{ old('longitude', $longitude) }}">
+<div class="flex items-end gap-2 rounded-2xl border border-slate-300 p-2">
+<button type="button" id="food-ai-location" title="लोकेशन" aria-label="लोकेशन" class="min-h-11 min-w-11">📍</button>
+<label for="food-ai-message" class="sr-only">सवाल लिखें</label>
+<textarea id="food-ai-message" name="message" maxlength="400" minlength="2" rows="1" required placeholder="सवाल पूछें…" class="min-h-11 flex-1 resize-y border-0 p-2 text-base focus:outline-none">{{ old('message', '') }}</textarea>
+<button type="button" id="food-ai-mic" title="बोलकर पूछें" aria-label="बोलकर पूछें" class="min-h-11 min-w-11">🎙️</button>
+<button type="submit" title="भेजें" aria-label="भेजें" class="min-h-11 min-w-11 rounded-xl bg-rose-700 text-white">➤</button>
+</div><p id="food-ai-status" role="status" aria-live="polite" class="sr-only"></p>
+</form>
 </section>
 <script>
 (() => {
@@ -72,19 +42,6 @@
     });
     const VoiceRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const mic = document.getElementById('food-ai-mic');
-    const textMode = document.getElementById('food-ai-text-mode');
-    const voiceMode = document.getElementById('food-ai-voice-mode');
-    textMode.addEventListener('click', () => {
-        textMode.setAttribute('aria-pressed', 'true');
-        voiceMode.setAttribute('aria-pressed', 'false');
-        message.focus();
-    });
-    voiceMode.addEventListener('click', () => {
-        voiceMode.setAttribute('aria-pressed', 'true');
-        textMode.setAttribute('aria-pressed', 'false');
-        if (!mic.disabled) mic.click();
-        else { status.textContent = 'इस Browser में Mic उपलब्ध नहीं है। Text से पूछें।'; message.focus(); }
-    });
     if (!VoiceRecognition) {
         mic.disabled = true;
         mic.textContent = '🎙️ इस Browser में उपलब्ध नहीं';
