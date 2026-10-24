@@ -104,6 +104,17 @@ final class AiRestaurantAssistantService
         if (preg_match('/(धन्यवाद|शुक्रिया|thank you|thanks)/iu', $query)) {
             return ['text' => 'आपका स्वागत है! रेस्टोरेंट या मेन्यू से जुड़ा अगला सवाल पूछिए।', 'ai_available' => false, 'free_mode' => true];
         }
+        // Detect the user's topic before responding. This assistant only has
+        // restaurant catalogue facts; never pretend to know unrelated modules.
+        if (preg_match('/(print|printing|printer|sublimation|photo|फोटो|प्रिंट|छपाई|टी.?शर्ट|मग)/iu', $query)) {
+            return ['text' => 'आप प्रिंटिंग के बारे में पूछ रहे हैं। अभी इस चैट में प्रिंटिंग के प्रोडक्ट, रेट या ऑर्डर की जानकारी उपलब्ध नहीं है। फिलहाल मैं रेस्टोरेंट और खाने के मेन्यू में मदद कर सकता हूँ। प्रिंटिंग की जानकारी जुड़ने पर उससे जुड़े सवालों का भी जवाब दे पाऊँगा।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(weather|temperature|news|politics|cricket|मौसम|तापमान|समाचार|खबर|क्रिकेट|राजनीति)/iu', $query)) {
+            return ['text' => 'आपने रेस्टोरेंट से अलग विषय पूछा है। उसकी ताज़ा और भरोसेमंद जानकारी अभी मेरे पास नहीं है, इसलिए अनुमान लगाकर जवाब नहीं दूँगा। फिलहाल आप मुझसे रेस्टोरेंट, खाने और मेन्यू के बारे में पूछ सकते हैं।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(order|ऑर्डर|बुक|खरीद|मंगवा|मंगाना)/iu', $query) && !preg_match('/(price|कीमत|रेट|menu|मेन्यू)/iu', $query)) {
+            return ['text' => 'आप ऑर्डर करने के बारे में पूछ रहे हैं। मैं उपलब्ध रेस्टोरेंट और मेन्यू की जानकारी दे सकता हूँ, लेकिन इस चैट से ऑर्डर या भुगतान पूरा नहीं कर सकता। ऑर्डर के लिए रेस्टोरेंट के सामान्य चेकआउट का उपयोग करें।', 'ai_available' => false, 'free_mode' => true];
+        }
         if ($restaurants === []) {
             return ['text' => 'मैं अभी मुफ्त रेस्टोरेंट और मेन्यू सहायता दे सकता हूँ, सामान्य AI के सभी विषयों का जवाब नहीं। आप किसी खाने, मेन्यू या कीमत के बारे में पूछिए। पास के रेस्टोरेंट खोजने के लिए लोकेशन साझा कर सकते हैं।', 'ai_available' => false, 'free_mode' => true];
         }
