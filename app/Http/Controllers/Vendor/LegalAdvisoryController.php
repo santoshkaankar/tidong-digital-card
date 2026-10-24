@@ -28,7 +28,7 @@ class LegalAdvisoryController extends Controller
     public function aiProgress(Request $request, int $engagement)
     {
         abort_unless(Feature::enabled('module')
-            && app(\\App\\Services\\Platform\\FeatureRegistry::class)->isEnabled('ai.professional_work_transparency'), 404);
+            && app(\App\Services\Platform\FeatureRegistry::class)->isEnabled('ai.professional_work_transparency'), 404);
         $vendor = $request->user()->vendor()->firstOrFail();
         $record = DB::table('legal_engagements as e')
             ->join('legal_professional_profiles as p', 'p.id', '=', 'e.professional_id')
