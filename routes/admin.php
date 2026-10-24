@@ -91,6 +91,7 @@ Route::middleware(['auth', EnsureSuperAdmin::class])
     ->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/{vendor}', 'show')->whereNumber('vendor')->name('show');
+        Route::post('/{vendor}/modules/{code}', 'setModule')->whereNumber('vendor')->where('code', '[A-Za-z0-9_.-]+')->name('modules.set');
         Route::post('/{vendor}/approve', 'approve')->whereNumber('vendor')->name('approve');
         Route::post('/{vendor}/reject', 'reject')->whereNumber('vendor')->name('reject');
     });

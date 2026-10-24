@@ -66,6 +66,29 @@
         @endif
     </div>
 
+    @if(request()->segment(1) === 'admin')
+    <section class="mt-6 rounded-xl bg-white p-5 shadow-sm" aria-label="Vendor service permissions">
+        <h2 class="text-xl font-bold">Vendor Services</h2>
+        <p class="mt-2 text-sm text-slate-600">Services are available by default unless disabled for this vendor. Platform-wide safety restrictions still apply.</p>
+        <div class="mt-4 space-y-3">
+            @foreach($vendorModules as $module)
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+                    <div><strong>{{ $module['name'] }}</strong><p class="text-xs text-slate-500">{{ $module['code'] }}</p></div>
+                    <form method="POST" action="{{ route('admin.vendors.modules.set', ['vendor' => $vendorRecord->id, 'code' => $module['code']]) }}">
+                        @csrf
+                        <label class="sr-only" for="service-{{ $module['code'] }}">Service status</label>
+                        <select id="service-{{ $module['code'] }}" name="enabled" class="rounded-lg border px-3 py-2">
+                            <option value="1" {{ $module['enabled'] ? 'selected' : '' }}>ON</option>
+                            <option value="0" {{ !$module['enabled'] ? 'selected' : '' }}>OFF</option>
+                        </select>
+                        <button type="submit" class="rounded-lg bg-blue-700 px-3 py-2 text-white">Save</button>
+                    </form>
+                </div>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
     <div class="mt-6 rounded-xl bg-white p-5 shadow-sm">
         <h2 class="text-xl font-bold">Businesses</h2>
         @forelse($businesses as $business)

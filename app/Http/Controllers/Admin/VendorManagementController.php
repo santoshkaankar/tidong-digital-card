@@ -85,10 +85,23 @@ class VendorManagementController extends Controller
         $canApprove = request()->user()->hasPlatformPermission('vendors.approve');
         $canReject = request()->user()->hasPlatformPermission('vendors.reject');
 
+        $registry = app(\App\Services\Platform\ModuleRegistry::class);
+        $vendorModules = array_map(function ($module) use ($registry, $vendor) {
+            $module['enabled'] = $registry->isEnabledForVendor($module['code'], $vendor);
+            return $module;
+        }, array_filter($registry->overview(), fn ($module) => $module['installed'] && in_array($module['code'], ['delivery', 'pos', 'kds', 'sublimation', 'grocery', 'legal_advisory'], true)));
         return view(
             'vendor-management.show',
-            compact('vendorRecord', 'businesses', 'basePath', 'canApprove', 'canReject')
+            compact('vendorRecord', 'businesses', 'basePath', 'canApprove', 'canReject', 'vendorModules')
         );
+    }
+
+    public function setModule(Request $request, int $vendor, string $code)
+    {
+        abort_unless(DB::table('vendors')->where('id', $vendor)->whereNull('deleted_at')->exists(), 404);
+        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+        app(\App\Services\Platform\ModuleRegistry::class)->setVendorEnabled($code, $vendor, (bool) $data['enabled'], (int) $request->user()->id);
+        return back()->with('success', 'Vendor service updated.');
     }
 
     public function approve(Request $request, int $vendor)
