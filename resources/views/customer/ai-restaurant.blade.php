@@ -168,7 +168,14 @@
             recognition.onspeechstart = () => { if (listening) status.textContent = '🔴 आपकी आवाज़ सुन रहा हूँ…'; };
             recognition.onresult = e => {
                 let transcript = '';
-                for (let i = 0; i < e.results.length; i++) {\n                    const alternatives = Array.from(e.results[i]);\n                    const named = alternatives.find(item => /(?:tidong|टिडोंग|टेडोंग|टीडोंग)/iu.test(item.transcript));\n                    transcript += (named || alternatives[0]).transcript;\n                }\n                // Browser Hindi speech recognition sometimes hears the product name as 'मैडम'.\n                // Correct only the opening form of address, never words inside the question.\n                transcript = transcript.replace(/^\\s*मैडम(?=[,，।! ]|$)/u, 'टिडोंग');
+                for (let i = 0; i < e.results.length; i++) {
+                    const alternatives = Array.from(e.results[i]);
+                    const named = alternatives.find(item => /(?:tidong|टिडोंग|टेडोंग|टीडोंग)/iu.test(item.transcript));
+                    transcript += (named || alternatives[0]).transcript;
+                }
+                // Browser Hindi speech recognition sometimes hears the product name as 'मैडम'.
+                // Correct only the opening form of address, never words inside the question.
+                transcript = transcript.replace(/^\\s*मैडम(?=[,，।! ]|$)/u, 'टिडोंग');
                 message.value = transcript.trim();
                 resizeInput();
                 if (listening) status.textContent = '🔴 सुन रहा हूँ… ' + message.value + ' (भेजने से पहले जाँचें)';
