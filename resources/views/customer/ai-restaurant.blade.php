@@ -80,6 +80,20 @@
                 throw new Error(data && data.message ? data.message : 'जवाब उपलब्ध नहीं है।');
             }
             pending.textContent = data.answer;
+            if (window.speechSynthesis) {
+                const listen = document.createElement('button');
+                listen.type = 'button';
+                listen.className = 'min-h-11 min-w-11 rounded-full border border-slate-200';
+                listen.setAttribute('aria-label', 'जवाब सुनें');
+                listen.textContent = '🔊';
+                listen.addEventListener('click', () => {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(data.answer);
+                    utterance.lang = 'hi-IN';
+                    window.speechSynthesis.speak(utterance);
+                });
+                pending.parentElement.appendChild(listen);
+            }
             status.textContent = 'जवाब आ गया।';
         } catch (error) {
             pending.textContent = 'जवाब नहीं मिल पाया। सवाल दोबारा भेज सकते हैं।';
