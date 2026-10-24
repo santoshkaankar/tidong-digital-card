@@ -41,6 +41,20 @@ class GlobalCatalogMasterController extends Controller {
         $exists=DB::table($table)->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($data['name']))])
             ->where('parent_id',$parent)->exists();
         if($exists) return back()->withErrors(['name'=>'This name already exists in the selected group.'])->withInput();
+        if ($type==='item_categories' && $parent !== null) {
+            $cursor=$parent;
+            $seen=[];
+            while ($cursor !== null) {
+                if (isset($seen[$cursor])) return back()->withErrors(['parent_id'=>'Invalid category hierarchy.'])->withInput();
+                $seen[$cursor]=true;
+                $ancestor=DB::table($table)->where('id',$cursor)->first();
+                if (!$ancestor) return back()->withErrors(['parent_id'=>'Parent category not found.'])->withInput();
+                if (mb_strtolower(trim($ancestor->name))===mb_strtolower(trim($data['name']))) {
+                    return back()->withErrors(['name'=>'A category cannot share a name with its ancestor.'])->withInput();
+                }
+                $cursor=$ancestor->parent_id;
+            }
+        }
         DB::table($table)->insert(['name'=>trim($data['name']),'code'=>$data['code']??null,
             'owner_name'=>$type==='brands'?($data['owner_name']??null):null,'parent_id'=>$parent,
             'is_active'=>$request->boolean('is_active',true),'created_by_user_id'=>$request->user()->id,
