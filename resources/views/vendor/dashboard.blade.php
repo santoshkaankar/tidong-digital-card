@@ -17,7 +17,7 @@
             <p class="mt-2 font-semibold">Approval: {{ ucfirst($vendor->status) }}</p>
         </div>
         <div class="flex gap-3">
-            <a href="{{ route('customer.home') }}" class="rounded-lg border px-4 py-2">Customer Dashboard</a>
+            <a href="{{ route('customer.home') }}" class="rounded-lg border px-4 py-2">Customer View (separate)</a>
             <form method="POST" action="{{ route('logout') }}">@csrf
                 <button class="rounded-lg border px-4 py-2" type="submit">Logout</button>
             </form>
