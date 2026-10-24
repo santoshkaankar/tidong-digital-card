@@ -96,27 +96,27 @@ final class AiRestaurantAssistantService
         $query = mb_strtolower(trim($message));
         // Free, instant conversational replies do not require GPS or a paid API.
         if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
-            return ['text' => 'नमस्ते! मैं TIDONG की मुफ्त रेस्टोरेंट सहायता हूँ। आप मेन्यू, कीमत या पास के रेस्टोरेंट के बारे में पूछ सकते हैं।', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'नमस्ते! मैं TIDONG की मुफ्त TIDONG ग्राहक सहायता हूँ। आप रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग, ऑर्डर और अपने अकाउंट से जुड़े सवाल पूछ सकते हैं। उपलब्धता या कीमत तभी बताऊँगा जब सत्यापित डेटा होगा।', 'ai_available' => false, 'free_mode' => true];
         }
         if (preg_match('/(तुम कौन|आप कौन|who are you|क्या कर सकते|what can you do)/iu', $query)) {
-            return ['text' => 'मैं TIDONG की मुफ्त रेस्टोरेंट सहायता हूँ। उपलब्ध रेस्टोरेंट, मेन्यू और कीमत की जानकारी दे सकता हूँ। आसपास के विकल्प बताने के लिए आपकी अनुमति से लोकेशन चाहिए।', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'मैं TIDONG की मुफ्त TIDONG ग्राहक सहायता हूँ। मैं रेस्टोरेंट, ग्रॉसरी, पर्सनलाइज्ड गिफ्ट/प्रिंटिंग, ऑर्डर प्रक्रिया और अकाउंट इस्तेमाल करने में मार्गदर्शन दे सकता हूँ। अभी सीधे सत्यापित कीमतें केवल उपलब्ध रेस्टोरेंट कैटलॉग से बता सकता हूँ। पास के रेस्टोरेंट के लिए आपकी अनुमति से लोकेशन चाहिए।', 'ai_available' => false, 'free_mode' => true];
         }
         if (preg_match('/(धन्यवाद|शुक्रिया|thank you|thanks)/iu', $query)) {
-            return ['text' => 'आपका स्वागत है! रेस्टोरेंट या मेन्यू से जुड़ा अगला सवाल पूछिए।', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'आपका स्वागत है! TIDONG की सेवाओं, ऑर्डर प्रक्रिया या अपने अकाउंट के बारे में अगला सवाल पूछिए।', 'ai_available' => false, 'free_mode' => true];
         }
         // Detect the user's topic before responding. This assistant only has
         // restaurant catalogue facts; never pretend to know unrelated modules.
         if (preg_match('/(print|printing|printer|sublimation|photo|फोटो|प्रिंट|छपाई|टी.?शर्ट|मग)/iu', $query)) {
-            return ['text' => 'आप प्रिंटिंग के बारे में पूछ रहे हैं। अभी इस चैट में प्रिंटिंग के प्रोडक्ट, रेट या ऑर्डर की जानकारी उपलब्ध नहीं है। फिलहाल मैं रेस्टोरेंट और खाने के मेन्यू में मदद कर सकता हूँ। प्रिंटिंग की जानकारी जुड़ने पर उससे जुड़े सवालों का भी जवाब दे पाऊँगा।', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'आप प्रिंटिंग के बारे में पूछ रहे हैं। अभी इस चैट में प्रिंटिंग के प्रोडक्ट, रेट या ऑर्डर की जानकारी उपलब्ध नहीं है। TIDONG में पर्सनलाइज्ड गिफ्ट और प्रिंटिंग की सेवाएँ हो सकती हैं। Customer Explore में Sublimation/Printing देखें। इस चैट में अभी किसी प्रिंटिंग आइटम की वास्तविक कीमत या स्टॉक का सत्यापित डेटा नहीं है, इसलिए अनुमान नहीं दूँगा।', 'ai_available' => false, 'free_mode' => true];
         }
         if (preg_match('/(weather|temperature|news|politics|cricket|मौसम|तापमान|समाचार|खबर|क्रिकेट|राजनीति)/iu', $query)) {
-            return ['text' => 'आपने रेस्टोरेंट से अलग विषय पूछा है। उसकी ताज़ा और भरोसेमंद जानकारी अभी मेरे पास नहीं है, इसलिए अनुमान लगाकर जवाब नहीं दूँगा। फिलहाल आप मुझसे रेस्टोरेंट, खाने और मेन्यू के बारे में पूछ सकते हैं।', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'आपने रेस्टोरेंट से अलग विषय पूछा है। उसकी ताज़ा और भरोसेमंद जानकारी अभी मेरे पास नहीं है, इसलिए अनुमान लगाकर जवाब नहीं दूँगा। मैं TIDONG की सेवाओं और सामान्य इस्तेमाल में मदद कर सकता हूँ, लेकिन बिना ताज़ा स्रोत के बाहरी खबर या मौसम नहीं बताऊँगा।', 'ai_available' => false, 'free_mode' => true];
         }
         if (preg_match('/(order|ऑर्डर|बुक|खरीद|मंगवा|मंगाना)/iu', $query) && !preg_match('/(price|कीमत|रेट|menu|मेन्यू)/iu', $query)) {
-            return ['text' => 'आप ऑर्डर करने के बारे में पूछ रहे हैं। मैं उपलब्ध रेस्टोरेंट और मेन्यू की जानकारी दे सकता हूँ, लेकिन इस चैट से ऑर्डर या भुगतान पूरा नहीं कर सकता। ऑर्डर के लिए रेस्टोरेंट के सामान्य चेकआउट का उपयोग करें।', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'आप ऑर्डर करने के बारे में पूछ रहे हैं। आप TIDONG पर उपलब्ध स्टोर से ऑर्डर कर सकते हैं। Customer Explore से स्टोर चुनकर सामान्य Checkout इस्तेमाल करें। यह चैट स्वयं ऑर्डर या भुगतान पूरा नहीं करती और आपकी निजी Order Status नहीं पढ़ सकती।', 'ai_available' => false, 'free_mode' => true];
         }
         if ($restaurants === []) {
-            return ['text' => 'मैं अभी मुफ्त रेस्टोरेंट और मेन्यू सहायता दे सकता हूँ, सामान्य AI के सभी विषयों का जवाब नहीं। आप किसी खाने, मेन्यू या कीमत के बारे में पूछिए। पास के रेस्टोरेंट खोजने के लिए लोकेशन साझा कर सकते हैं।', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'मैं अभी मुफ्त TIDONG ग्राहक सहायता दे सकता हूँ, सामान्य AI के सभी विषयों का जवाब नहीं। आप किसी खाने, मेन्यू या कीमत के बारे में पूछिए। पास के रेस्टोरेंट खोजने के लिए लोकेशन साझा कर सकते हैं।', 'ai_available' => false, 'free_mode' => true];
         }
         $matches = [];
         foreach ($restaurants as $restaurant) {
