@@ -114,6 +114,16 @@ final class AiRestaurantAssistantService
                     break;
                 }
             }
+            // When a customer names a restaurant, show its real menu prices rather
+            // than only telling them to look elsewhere. Never invent menu entries.
+            if ($named && $matchingItems === []) {
+                foreach (array_slice((array) ($restaurant['menu'] ?? []), 0, 5) as $item) {
+                    $itemName = trim((string) ($item['name'] ?? ''));
+                    if ($itemName !== '') {
+                        $matchingItems[] = $itemName.' ₹'.(string) ($item['price_rupees'] ?? '—');
+                    }
+                }
+            }
             if ($matchingItems !== [] || $named) {
                 $matches[] = trim((string) ($restaurant['restaurant'] ?? 'Restaurant'))
                     .' ('.(string) ($restaurant['outlet'] ?? 'Outlet').'): '
