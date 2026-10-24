@@ -58,6 +58,9 @@ class ModuleRegistry
             throw ValidationException::withMessages(['module' => 'Vendor controls are not installed.']);
         }
         DB::transaction(function () use ($code, $vendorId, $enabled, $actorId): void {
+            if (! DB::table('vendors')->where('id', $vendorId)->whereNull('deleted_at')->exists()) {
+                throw ValidationException::withMessages(['vendor' => 'Vendor not found.']);
+            }
             DB::table('vendor_module_overrides')->updateOrInsert(
                 ['vendor_id' => $vendorId, 'module_code' => $code],
                 ['is_enabled' => $enabled, 'updated_by' => $actorId, 'updated_at' => now()]
