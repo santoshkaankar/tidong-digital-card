@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Kds;
 
 use App\Http\Controllers\Controller;
 use App\Services\Pos\PosOrderService;
+use App\Services\Kds\TableOrderProgress;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +43,20 @@ class KdsController extends Controller
         return view('kds.branch', compact('branchRecord', 'orders', 'items'));
     }
 
+    public function itemProgress(Request $request, int $item, TableOrderProgress $progress): RedirectResponse
+    {
+        $data=$request->validate(['action'=>['required','in:add,ready,served'],
+            'quantity'=>['required','integer','min:1','max:100']]);
+        $progress->change($request,$item,$data['action'],(int)$data['quantity']);
+        return back()->with('success','Updated the existing order and recorded the change.');
+    }
+
+    public function tableSummary(Request $request, int $branch, int $table, TableOrderProgress $progress): JsonResponse
+    {
+        return response()->json($progress->table($request,$branch,$table),200,
+            ['Cache-Control'=>'no-store, private']);
+    }
+
     public function updateStatus(Request $request, int $order): RedirectResponse
     {
         $data = $request->validate(['status' => ['required', 'in:preparing,ready,served']]);
@@ -52,6 +68,16 @@ class KdsController extends Controller
             $next = ['received' => 'preparing', 'preparing' => 'ready', 'ready' => 'served'];
             if (($next[$row->status] ?? null) !== $data['status']) {
                 throw ValidationException::withMessages(['status' => 'Invalid Kitchen status transition.']);
+            }
+            if ($data['status'] === 'ready') {
+                DB::table('pos_order_items')->where('order_id',$order)->update([
+                    'ready_quantity'=>DB::raw('quantity'),'updated_at'=>now(),
+                ]);
+            } elseif ($data['status'] === 'served') {
+                DB::table('pos_order_items')->where('order_id',$order)->update([
+                    'ready_quantity'=>DB::raw('quantity'),
+                    'served_quantity'=>DB::raw('quantity'),'updated_at'=>now(),
+                ]);
             }
             DB::table('pos_orders')->where('id', $order)->update([
                 'status' => $data['status'], 'updated_at' => now(),

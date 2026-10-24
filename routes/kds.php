@@ -10,4 +10,6 @@ Route::middleware(['auth', EnsureVendorAccount::class])
         Route::get('/', 'index')->name('kds.home');
         Route::get('/branches/{branch}', 'showBranch')->whereNumber('branch')->name('kds.branches.show');
         Route::post('/orders/{order}/status', 'updateStatus')->whereNumber('order')->name('kds.orders.status');
+        Route::post('/items/{item}/progress', 'itemProgress')->whereNumber('item')->middleware('throttle:20,1')->name('kds.items.progress');
+        Route::get('/branches/{branch}/tables/{table}/summary', 'tableSummary')->whereNumber('branch')->whereNumber('table')->middleware('throttle:30,1')->name('kds.tables.summary');
     });
