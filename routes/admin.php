@@ -146,4 +146,5 @@ Route::middleware(['auth', EnsureSuperAdmin::class])
     ->group(function () {
         Route::get('/{type}', 'index')->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('index');
         Route::post('/{type}', 'store')->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('store');
+        Route::put('/{type}/{record}', 'update')->where('type','brands|item_categories|units|variant_attributes|variant_values')->whereNumber('record')->name('update');
     });
