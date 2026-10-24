@@ -202,12 +202,46 @@ final class AiRestaurantAssistantService
         return ['text' => $text, 'ai_available' => false, 'free_mode' => true];
     }
 
+    /**
+     * Resolve short follow-up questions using the last customer topic, not a
+     * previous assistant reply. Do not carry a topic across an explicit switch.
+     */
+    private function freeFollowUp(string $message, array $history): ?array
+    {
+        $question = mb_strtolower(trim($message));
+        if (! preg_match('/(उसकी|उसका|उसके|इसकी|इसका|उनकी|कितनी फीस|फीस कितनी|कितना खर्च|कितने पैसे|कहाँ मिलेगा|कहाँ मिलेंगे|कब मिलेगा|how much|what about it)/iu', $question)) {
+            return null;
+        }
+        // Explicit new topics must be handled by their own intent rules.
+        if (preg_match('/(रेस्टोरेंट|ग्रोसरी|ग्रॉसरी|किराना|प्रिंट|टैक्सी|कैब|मैरिज|शादी|विवाह|सीए|अकाउंटेंट|chartered accountant|restaurant|grocery|taxi|wedding|refund|रिफंड|ऑर्डर|order)/iu', $question)) {
+            return null;
+        }
+        foreach (array_reverse(array_slice($history, -6)) as $turn) {
+            if (! is_array($turn) || ($turn['role'] ?? null) !== 'user' || ! is_string($turn['content'] ?? null)) {
+                continue;
+            }
+            $prior = mb_strtolower($turn['content']);
+            if (preg_match('/(सीए|चार्टर्ड अकाउंटेंट|chartered accountant|accountant|अकाउंटेंट)/iu', $prior)) {
+                return ['text' => 'आप चार्टर्ड अकाउंटेंट (CA) के बारे में पूछ रहे हैं। उनकी फीस काम और शहर के अनुसार बदलती है। GST, ITR, ऑडिट या किस काम के लिए CA चाहिए? मेरे पास अभी सत्यापित CA की फीस या उपलब्धता का रिकॉर्ड नहीं है।', 'ai_available' => false, 'free_mode' => true];
+            }
+            if (preg_match('/(मैरिज|शादी|विवाह|wedding|banquet|बैंक्वेट)/iu', $prior)) {
+                return ['text' => 'आप शादी के लिए मैरिज गार्डन या आयोजन की बात कर रहे हैं। खर्च शहर, तारीख, मेहमानों और सुविधाओं पर निर्भर करेगा। किस शहर में और लगभग कितने मेहमानों के लिए चाहिए? यहाँ अभी सत्यापित कीमत उपलब्ध नहीं है।', 'ai_available' => false, 'free_mode' => true];
+            }
+            if (preg_match('/(टैक्सी|कैब|taxi|cab|सफर|यात्रा)/iu', $prior)) {
+                return ['text' => 'आप पिछली टैक्सी या यात्रा की बात कर रहे हैं। किराया दूरी, वाहन और तारीख पर निर्भर है। कहाँ से कहाँ जाना है? यहाँ अभी सत्यापित किराया उपलब्ध नहीं है।', 'ai_available' => false, 'free_mode' => true];
+            }
+            // A different customer topic ends contextual carry-over.
+            break;
+        }
+        return null;
+    }
+
     public function answer(string $message, array $restaurants, array $history = []): array
     {
         // Free catalogue-based replies are always the default. No external request,
         // API key or paid tokens are needed for this path.
         if (! (bool) config('tidong_ai_restaurant.paid_provider_enabled', false)) {
-            return $this->freeCatalogueAnswer($message, $restaurants);
+            return $this->freeFollowUp($message, $history) ?? $this->freeCatalogueAnswer($message, $restaurants);
         }
 
         $key = (string) config('tidong_ai_restaurant.api_key', '');
