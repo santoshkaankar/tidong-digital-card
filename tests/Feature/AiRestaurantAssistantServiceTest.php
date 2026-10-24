@@ -42,6 +42,26 @@ class AiRestaurantAssistantServiceTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_free_mode_restaurant_name_shows_real_menu_and_never_calls_provider(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        config()->set('tidong_ai_restaurant.api_key', 'unused-test-key');
+        Http::fake();
+
+        $answer = app(AiRestaurantAssistantService::class)->answer('Test Cafe ka menu?', [[
+            'restaurant' => 'Test Cafe', 'outlet' => 'North Branch',
+            'menu' => [
+                ['name' => 'Paneer', 'price_rupees' => '120.00'],
+                ['name' => 'Dal', 'price_rupees' => '90.00'],
+            ],
+        ]]);
+
+        $this->assertTrue($answer['free_mode']);
+        $this->assertStringContainsString('Paneer ₹120.00', $answer['text']);
+        $this->assertStringContainsString('Dal ₹90.00', $answer['text']);
+        Http::assertNothingSent();
+    }
+
     public function test_free_mode_never_fabricates_unknown_food_or_order(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);

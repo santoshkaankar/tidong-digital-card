@@ -26,6 +26,7 @@ Route::middleware(['auth', EnsureCustomerAccount::class])
         Route::put('/security/password', [CustomerSecurityController::class, 'updatePassword'])->middleware('throttle:5,1')->name('security.password');
 
         Route::get('/assistant/food', [\App\Http\Controllers\Customer\AiRestaurantAssistantController::class, 'index'])->name('ai-restaurant.index');
+        Route::post('/assistant/food/new-chat', [\App\Http\Controllers\Customer\AiRestaurantAssistantController::class, 'newChat'])->name('ai-restaurant.new-chat');
         Route::post('/assistant/food', [\App\Http\Controllers\Customer\AiRestaurantAssistantController::class, 'ask'])->middleware('throttle:4,1')->name('ai-restaurant.ask');
 
         Route::get('/addresses', [CustomerAddressController::class, 'index'])->name('addresses.index');
