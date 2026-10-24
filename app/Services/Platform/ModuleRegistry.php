@@ -35,6 +35,36 @@ class ModuleRegistry
         return $row ? (bool) $row->is_enabled : $fallback;
     }
 
+    /** Vendor overrides are opt-out: no row means the service is available. */
+    public function isEnabledForVendor(string $code, int $vendorId): bool
+    {
+        if (! $this->isEnabled($code)) {
+            return false;
+        }
+        if (! Schema::hasTable('vendor_module_overrides')) {
+            return true;
+        }
+        $override = DB::table('vendor_module_overrides')
+            ->where('vendor_id', $vendorId)->where('module_code', $code)->first();
+        return $override ? (bool) $override->is_enabled : true;
+    }
+
+    public function setVendorEnabled(string $code, int $vendorId, bool $enabled, int $actorId): void
+    {
+        if (! $this->installed($code)) {
+            throw ValidationException::withMessages(['module' => 'Module is not installed.']);
+        }
+        if (! Schema::hasTable('vendor_module_overrides')) {
+            throw ValidationException::withMessages(['module' => 'Vendor controls are not installed.']);
+        }
+        DB::transaction(function () use ($code, $vendorId, $enabled, $actorId): void {
+            DB::table('vendor_module_overrides')->updateOrInsert(
+                ['vendor_id' => $vendorId, 'module_code' => $code],
+                ['is_enabled' => $enabled, 'updated_by' => $actorId, 'updated_at' => now()]
+            );
+        });
+    }
+
     public function overview(): array
     {
         $records = Schema::hasTable('platform_modules')
