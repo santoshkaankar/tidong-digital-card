@@ -30,6 +30,9 @@
             <nav class="td-side-nav">
                 <a href="{{ route('customer.home') }}" @class(['td-side-link','is-current'=>request()->routeIs('customer.home')])>🏠 <span>{{ __('Home') }}</span></a>
                 <a href="{{ route('customer.explore.index') }}" @class(['td-side-link','is-current'=>request()->routeIs('customer.explore.*')])>🧭 <span>{{ __('Explore') }}</span></a>
+                @if(app(\\App\\Services\\Platform\\ModuleRegistry::class)->isEnabled('ai_restaurant_assistant') && app(\\App\\Services\\Platform\\FeatureRegistry::class)->isEnabled('ai.restaurant_assistant'))
+                    <a href="{{ route('customer.ai-restaurant.index') }}" @class(['td-side-link','is-current'=>request()->routeIs('customer.ai-restaurant.*')])>🎙️ <span>{{ __('AI Food Assistant') }}</span></a>
+                @endif
                 <a href="{{ route('customer.orders.index') }}" @class(['td-side-link','is-current'=>request()->routeIs('customer.orders.*')])>📦 <span>{{ __('My Orders') }}</span></a>
                 <a href="{{ route('customer.addresses.index') }}" @class(['td-side-link','is-current'=>request()->routeIs('customer.addresses.*')])>📍 <span>{{ __('Addresses') }}</span></a>
                 <a href="{{ route('customer.profile.edit') }}" @class(['td-side-link','is-current'=>request()->routeIs('customer.profile.*')])>👤 <span>{{ __('Profile') }}</span></a>
