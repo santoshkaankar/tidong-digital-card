@@ -107,6 +107,12 @@ final class AiRestaurantAssistantService
         if (preg_match('/(टैक्सी|टेक्सी|taxi|cab|कैब|घूमने|घूमना|घूमना चाहते|सैर|यात्रा|travel|trip|tour|पर्यटन|सफर)/iu', $query)) {
             return ['text' => 'आप घूमने या टैक्सी की व्यवस्था पूछ रहे हैं। कहाँ से कहाँ जाना चाहते हैं? TIDONG पर सत्यापित सेवा उपलब्ध होने पर ही उसकी जानकारी दी जा सकती है; अभी इस चैट में टैक्सी बुकिंग की पुष्टि नहीं है।', 'ai_available' => false, 'free_mode' => true];
         }
+        if (preg_match('/(मैरिज|मेरिज|marriage|wedding|शादी|विवाह|एनिवर्सरी|anniversary|मैरिज होम|मैरिज प्लानर|wedding planner|event planner|बैंक्वेट|banquet|मंडप|वेडिंग|हवाई बुक)/iu', $query)) {
+            return ['text' => 'आप शादी, मैरिज होम, एनिवर्सरी या इवेंट प्लानिंग की व्यवस्था पूछ रहे हैं। किस शहर में और किस तारीख के लिए चाहिए? इस चैट में अभी किसी वेन्यू, प्लानर या सेवा की उपलब्धता और बुकिंग सत्यापित नहीं है।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(लाइव ट्रैकिंग|live tracking|ट्रैकिंग देख|tracking देख|डिलीवरी होगा|डिलीवरी होगी|मेरे ऑर्डर का क्या|मेरे आर्डर का क्या|ऑर्डर का क्या हुआ|आर्डर का क्या हुआ)/iu', $query)) {
+            return ['text' => 'आप अपने ऑर्डर की असली स्थिति और डिलीवरी जानना चाहते हैं। इस AI चैट को अभी आपके निजी ऑर्डर या लाइव डिलीवरी रिकॉर्ड पढ़ने की अनुमति नहीं है, इसलिए मैं स्थिति का अनुमान नहीं लगाऊँगा। My Orders में संबंधित ऑर्डर खोलकर उपलब्ध स्थिति देखें; जानकारी न मिले तो सपोर्ट से संपर्क करें।', 'ai_available' => false, 'free_mode' => true];
+        }
         // Detect the user's topic before responding. This assistant only has
         // verified restaurant catalogue facts; other modules receive navigation guidance only.
         if (preg_match('/(print|printing|printer|sublimation|photo|फोटो|प्रिंट|छपाई|टी.?शर्ट|मग)/iu', $query)) {
