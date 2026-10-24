@@ -1,6 +1,11 @@
 @extends('customer.layout')
 @section('title', __('TIDONG AI'))
 @section('content')
+<style>
+@keyframes tidongMicPulse { 0%,100% { box-shadow:0 0 0 0 rgba(190,24,93,.25); } 55% { box-shadow:0 0 0 9px rgba(190,24,93,0); } }
+#food-ai-mic.td-mic-listening { animation:tidongMicPulse 1.7s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { #food-ai-mic.td-mic-listening { animation:none; outline:3px solid #fda4af; outline-offset:3px; } }
+</style>
 <section class="mx-auto flex h-[calc(100dvh-10rem)] min-h-[420px] max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
 <header class="flex items-center justify-between border-b border-slate-100 p-4"><h1 class="text-lg font-bold">TIDONG AI</h1><form method="POST" action="{{ route('customer.ai-restaurant.new-chat') }}">@csrf<button type="submit" class="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold">＋ New Chat</button></form></header>
 <div id="food-ai-thread" class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
@@ -18,9 +23,9 @@
 <button type="button" id="food-ai-location" title="लोकेशन" aria-label="लोकेशन" class="h-8 w-8 shrink-0 rounded-full text-sm" >📍</button>
 <label for="food-ai-message" class="sr-only">सवाल लिखें</label>
 <textarea id="food-ai-message" name="message" maxlength="400" minlength="2" rows="1" required placeholder="सवाल पूछें…" class="max-h-28 min-h-9 min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-1.5 text-sm focus:outline-none">{{ old('message', '') }}</textarea>
-<button type="button" id="food-ai-mic" title="बोलकर पूछें" aria-label="बोलकर पूछें" class="h-8 w-8 shrink-0 rounded-full text-base" >🎙️</button>
+<button type="button" id="food-ai-mic" title="बोलकर पूछें" aria-label="बोलकर पूछें" class="h-10 w-10 shrink-0 rounded-full text-base transition-colors" aria-pressed="false">🎙️</button>
 <button type="submit" id="food-ai-send" title="भेजें" aria-label="भेजें" class="h-8 w-8 shrink-0 rounded-full bg-rose-700 text-sm text-white">➤</button>
-</div><p id="food-ai-status" role="status" aria-live="polite" class="sr-only"></p>
+</div><p id="food-ai-status" role="status" aria-live="polite" class="mt-2 text-xs text-slate-600"></p>
 </form>
 </section>
 <script>
@@ -133,19 +138,50 @@
     }
     const VoiceRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const mic = document.getElementById('food-ai-mic');
+    let recognition = null;
+    let listening = false;
+    const setMicState = (state, label) => {
+        listening = state === 'listening';
+        mic.setAttribute('aria-pressed', String(listening));
+        mic.classList.toggle('td-mic-listening', listening);
+        mic.classList.toggle('bg-rose-700', listening);
+        mic.classList.toggle('text-white', listening);
+        mic.classList.toggle('ring-4', listening);
+        mic.classList.toggle('ring-rose-200', listening);
+        mic.textContent = listening ? '🔴' : '🎙️';
+        mic.title = listening ? 'सुनना बंद करें' : 'बोलकर पूछें';
+        mic.setAttribute('aria-label', mic.title);
+        status.textContent = label;
+    };
     if (!VoiceRecognition) {
         mic.disabled = true;
-        mic.textContent = '🎙️ इस Browser में उपलब्ध नहीं';
-        mic.title = 'लिखकर पूछना उपलब्ध है';
+        mic.title = 'इस Browser में माइक्रोफोन उपलब्ध नहीं';
+        status.textContent = 'इस Browser में आवाज़ पहचान उपलब्ध नहीं है। लिखकर पूछें।';
     } else {
         mic.addEventListener('click', () => {
-            const recognition = new VoiceRecognition();
+            if (listening && recognition) { recognition.stop(); setMicState('idle', 'सुनना बंद किया।'); return; }
+            recognition = new VoiceRecognition();
             recognition.lang = 'hi-IN';
-            recognition.interimResults = false;
+            recognition.interimResults = true;
             recognition.maxAlternatives = 1;
-            recognition.onresult = e => { message.value = e.results[0][0].transcript; resizeInput(); message.focus(); status.textContent = 'बात समझने के लिए लिखा गया है। जाँचकर जवाब पाएँ दबाएँ।'; };
-            recognition.onerror = () => { status.textContent = 'आवाज़ साफ नहीं मिली। कृपया लिखकर पूछें।'; };
-            try { recognition.start(); status.textContent = 'बोलिए, मैं सुन रहा हूँ…'; } catch (_) { status.textContent = 'माइक्रोफोन शुरू नहीं हुआ।'; }
+            recognition.onstart = () => setMicState('listening', '🔴 सुन रहा हूँ… बोलिए। बंद करने के लिए लाल माइक दबाएँ।');
+            recognition.onspeechstart = () => { if (listening) status.textContent = '🔴 आपकी आवाज़ सुन रहा हूँ…'; };
+            recognition.onresult = e => {
+                let transcript = '';
+                for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+                message.value = transcript.trim();
+                resizeInput();
+                if (listening) status.textContent = '🔴 सुन रहा हूँ… ' + message.value;
+            };
+            recognition.onerror = e => {
+                const labels = { 'not-allowed': 'माइक की अनुमति नहीं मिली। Browser Settings देखें।', 'no-speech': 'आवाज़ नहीं मिली। फिर से माइक दबाएँ।', 'audio-capture': 'माइक्रोफोन उपलब्ध नहीं है।', 'network': 'आवाज़ पहचान के लिए नेटवर्क उपलब्ध नहीं है।' };
+                setMicState('idle', labels[e.error] || 'आवाज़ पहचान नहीं हो सकी। फिर कोशिश करें।');
+            };
+            recognition.onend = () => {
+                if (listening) setMicState('idle', message.value.trim() ? 'आवाज़ लिख दी गई है। जाँचकर भेजें।' : 'सुनना बंद हुआ। दोबारा माइक दबाएँ।');
+            };
+            try { recognition.start(); status.textContent = 'माइक शुरू हो रहा है…'; }
+            catch (_) { setMicState('idle', 'माइक शुरू नहीं हुआ। फिर कोशिश करें।'); }
         });
     }
     const speak = document.getElementById('food-ai-speak');
