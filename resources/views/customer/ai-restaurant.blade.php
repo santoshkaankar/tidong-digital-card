@@ -126,10 +126,26 @@
             }
             status.textContent = 'जवाब आ गया।';
         } catch (error) {
-            pending.textContent = 'जवाब नहीं मिल पाया। सवाल दोबारा भेज सकते हैं।';
+            const failedMessage = error && error.message ? String(error.message) : '';
+            pending.textContent = 'जवाब अभी नहीं मिला। आपका सवाल सुरक्षित है।';
             message.value = question;
             resizeInput();
-            status.textContent = 'नेटवर्क या सर्वर की समस्या है। दोबारा भेजें।';
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'ml-2 min-h-11 rounded-xl border border-rose-300 px-3 text-sm font-semibold text-rose-700';
+            retry.textContent = '↻ फिर भेजें';
+            retry.setAttribute('aria-label', 'वही सवाल दोबारा भेजें');
+            pending.parentElement.appendChild(retry);
+            retry.addEventListener('click', () => {
+                if (busy) return;
+                retry.disabled = true;
+                pending.parentElement.remove();
+                const previousQuestion = thread.querySelector('.flex.justify-end:last-of-type');
+                if (previousQuestion && previousQuestion.textContent === question) previousQuestion.remove();
+                message.value = question;
+                form.requestSubmit(send);
+            });
+            status.textContent = 'कनेक्शन या सर्वर से जवाब नहीं मिला। फिर भेजें दबाएँ।';
         } finally {
             busy = false;
             send.disabled = false;
