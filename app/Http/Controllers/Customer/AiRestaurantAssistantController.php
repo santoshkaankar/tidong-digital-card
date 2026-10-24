@@ -28,7 +28,7 @@ final class AiRestaurantAssistantController extends Controller
         return redirect()->route('customer.ai-restaurant.index');
     }
 
-    public function ask(Request $request, AiRestaurantAssistantService $assistant): View
+    public function ask(Request $request, AiRestaurantAssistantService $assistant): View|\Illuminate\Http\JsonResponse
     {
         $this->guard();
         $data = $request->validate([
@@ -63,6 +63,10 @@ final class AiRestaurantAssistantController extends Controller
                 $history[] = ['role' => 'assistant', 'content' => $answer];
                 $request->session()->put('tidong_ai_food_history', array_slice($history, -6));
             }
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['answer' => $answer]);
         }
 
         return view('customer.ai-restaurant', [
