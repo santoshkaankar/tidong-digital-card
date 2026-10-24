@@ -22,6 +22,18 @@ class GlobalCatalogMasterController extends Controller {
         $data=$request->validate(['name'=>['required','string','max:150'],'code'=>['nullable','string','max:50'],'is_active'=>['required','boolean']]);
         $existing=DB::table($table)->where('id',$record)->first();
         abort_unless($existing,404);
+        if ($type==='item_categories' && $existing->parent_id !== null) {
+            $cursor=$existing->parent_id;
+            $seen=[];
+            while ($cursor !== null) {
+                if (isset($seen[$cursor])) return back()->withErrors(['name'=>'Invalid category hierarchy.']);
+                $seen[$cursor]=true;
+                $ancestor=DB::table($table)->where('id',$cursor)->first();
+                if (!$ancestor) break;
+                if (mb_strtolower(trim($ancestor->name))===mb_strtolower(trim($data['name']))) return back()->withErrors(['name'=>'A category cannot share a name with its ancestor.']);
+                $cursor=$ancestor->parent_id;
+            }
+        }
         $duplicate=DB::table($table)->where('id','!=',$record)->where('parent_id',$existing->parent_id)
             ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($data['name']))])->exists();
         if ($duplicate) return back()->withErrors(['name'=>'Name already exists in this group.']);
