@@ -35,6 +35,7 @@ class GlobalCatalogMasterController extends Controller {
             'is_active'=>['nullable','boolean']];
         if ($type==='variant_values') $rules['parent_id']=['required','integer',Rule::exists('global_catalog_variant_attributes','id')];
         if ($type==='item_categories') $rules['parent_id']=['nullable','integer',Rule::exists($table,'id')];
+        if ($type==='variant_attributes') $rules['code']=['required','string','max:50'];
         $data=$request->validate($rules);
         $parent=in_array($type,['item_categories','variant_values'],true)?($data['parent_id']??null):null;
         $exists=DB::table($table)->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($data['name']))])
