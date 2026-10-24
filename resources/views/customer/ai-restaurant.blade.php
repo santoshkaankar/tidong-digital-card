@@ -1,5 +1,5 @@
 @extends('customer.layout')
-@section('title', __('TIDONG Voice Food Assistant'))
+@section('title', __('TIDONG AI'))
 @section('content')
 <section class="mx-auto max-w-4xl space-y-5" aria-labelledby="food-ai-title">
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
