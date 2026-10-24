@@ -66,7 +66,7 @@ final class AiRestaurantAssistantController extends Controller
         } elseif ($locationHelpIntent) {
             $answer = 'पास के रेस्टोरेंट खोजने के लिए चैट में 📍 लोकेशन बटन दबाएँ। ब्राउज़र अनुमति माँगे तो Allow करें। अनुमति नहीं दिखे तो ब्राउज़र की Site Settings में Location को Allow करें। सामान्य सवालों के लिए लोकेशन जरूरी नहीं है।';
         } elseif ($restaurants === [] && $nearbyIntent && ($latitude === null || $longitude === null)) {
-            $answer = 'आपके पास कौन-से रेस्टोरेंट हैं, यह बताने के लिए एक बार लोकेशन अनुमति दें। बाकी सवाल आप बिना लोकेशन के भी पूछ सकते हैं।';
+            $answer = 'अभी मुझे आपकी लोकेशन की अनुमति नहीं मिली है, इसलिए मैं जाँच नहीं कर पा रही हूँ कि आपके आसपास TIDONG पर कौन-से पंजीकृत रेस्टोरेंट उपलब्ध हैं। कृपया 📍 बटन दबाकर लोकेशन शेयर करें या शहर का नाम बताएँ। दूसरे सामान्य सवालों के लिए लोकेशन जरूरी नहीं है।';
         } elseif ($restaurants === [] && $nearbyIntent) {
             $answer = 'आपकी लोकेशन के 12 किमी में अभी ऑर्डर लेने वाला कोई स्वीकृत रेस्टोरेंट नहीं मिला। दूसरे सवाल पूछ सकते हैं।';
         } else {
@@ -74,12 +74,16 @@ final class AiRestaurantAssistantController extends Controller
             $globalKey = 'tidong-ai-food:global:'.now()->format('Ymd');
             $dailyUser = (int) config('tidong_ai_restaurant.daily_user_requests', 20);
             $dailyGlobal = (int) config('tidong_ai_restaurant.daily_platform_requests', 250);
-            if (RateLimiter::tooManyAttempts($userKey, $dailyUser)
-                || RateLimiter::tooManyAttempts($globalKey, $dailyGlobal)) {
-                $answer = 'आज की AI बातचीत की सीमा पूरी हो गई है।';
+            $paidEnabled = (bool) config('tidong_ai_restaurant.paid_provider_enabled', false)
+                && (string) config('tidong_ai_restaurant.api_key', '') !== '';
+            if ($paidEnabled && (RateLimiter::tooManyAttempts($userKey, $dailyUser)
+                || RateLimiter::tooManyAttempts($globalKey, $dailyGlobal))) {
+                $answer = 'बाहरी AI की आज की सीमा पूरी है। सामान्य ग्राहक सहायता जारी है; My Orders या Explore में संबंधित जानकारी देखें।';
             } else {
-                RateLimiter::hit($userKey, 86400);
-                RateLimiter::hit($globalKey, 86400);
+                if ($paidEnabled) {
+                    RateLimiter::hit($userKey, 86400);
+                    RateLimiter::hit($globalKey, 86400);
+                }
                 $history = (array) $request->session()->get('tidong_ai_food_history', []);
                 $result = $assistant->answer($question, $restaurants, $history);
                 $answer = $result['text'];

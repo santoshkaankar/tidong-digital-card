@@ -96,7 +96,7 @@ final class AiRestaurantAssistantService
         $query = mb_strtolower(trim($message));
         // Free, instant conversational replies do not require GPS or a paid API.
         if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
-            return ['text' => 'नमस्ते! रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग, ऑर्डर या अकाउंट—किसमें मदद चाहिए?', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'नमस्ते! बताइए, मैं आपकी किस काम में सहायता कर सकती हूँ?', 'ai_available' => false, 'free_mode' => true];
         }
         if (preg_match('/(तुम कौन|आप कौन|who are you|क्या कर सकते|what can you do)/iu', $query)) {
             return ['text' => 'मैं TIDONG की मुफ्त ग्राहक सहायता हूँ। आप खाने, ग्रॉसरी, प्रिंटिंग, ऑर्डर या अकाउंट पर पूछ सकते हैं।', 'ai_available' => false, 'free_mode' => true];
@@ -105,7 +105,13 @@ final class AiRestaurantAssistantService
             return ['text' => 'आपका स्वागत है! TIDONG की सेवाओं, ऑर्डर प्रक्रिया या अपने अकाउंट के बारे में अगला सवाल पूछिए।', 'ai_available' => false, 'free_mode' => true];
         }
         if (preg_match('/(टैक्सी|टेक्सी|taxi|cab|कैब|घूमने|घूमना|घूमना चाहते|सैर|यात्रा|travel|trip|tour|पर्यटन|सफर)/iu', $query)) {
-            return ['text' => 'आप घूमने या टैक्सी की व्यवस्था पूछ रहे हैं। कहाँ से कहाँ जाना चाहते हैं? TIDONG पर सत्यापित सेवा उपलब्ध होने पर ही उसकी जानकारी दी जा सकती है; अभी इस चैट में टैक्सी बुकिंग की पुष्टि नहीं है।', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'आप घूमने या टैक्सी की व्यवस्था पूछ रहे हैं। कहाँ से कहाँ जाना चाहते हैं? TIDONG पर सत्यापित सेवा उपलब्ध होने पर ही उसकी जानकारी दी जा सकती है; TIDONG पर आपके क्षेत्र में पंजीकृत टैक्सी सेवा की जाँच अभी इस चैट में उपलब्ध नहीं है। इसका मतलब यह नहीं कि पूरे क्षेत्र में टैक्सी नहीं है। कृपया 📍 बटन से लोकेशन शेयर करें या शहर बताएँ; सत्यापित TIDONG व्यवसाय डेटा उपलब्ध होने पर ही जानकारी दी जाएगी।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(मैरिज|मेरिज|marriage|wedding|शादी|विवाह|एनिवर्सरी|anniversary|मैरिज होम|मैरिज प्लानर|wedding planner|event planner|बैंक्वेट|banquet|मंडप|वेडिंग|हवाई बुक)/iu', $query)) {
+            return ['text' => 'आप शादी, मैरिज होम, एनिवर्सरी या इवेंट प्लानिंग की व्यवस्था पूछ रहे हैं। किस शहर में और किस तारीख के लिए चाहिए? TIDONG पर आपके बताए क्षेत्र में इस सेवा का पंजीकृत व्यवसाय है या नहीं, इसकी जाँच अभी इस चैट में नहीं हो पाई है। इसलिए मैं यह दावा नहीं कर सकती कि आपके क्षेत्र में यह व्यवसाय नहीं है। कृपया 📍 बटन से अपनी लोकेशन शेयर करें या शहर का नाम बताएँ। इस सेवा के TIDONG व्यवसाय रिकॉर्ड की जाँच उपलब्ध होने पर ही मैं पंजीकृत व्यवसाय बता सकूँगी।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(लाइव ट्रैकिंग|live tracking|ट्रैकिंग देख|tracking देख|डिलीवरी होगा|डिलीवरी होगी|मेरे ऑर्डर का क्या|मेरे आर्डर का क्या|ऑर्डर का क्या हुआ|आर्डर का क्या हुआ)/iu', $query)) {
+            return ['text' => 'आप अपने ऑर्डर की असली स्थिति और डिलीवरी जानना चाहते हैं। इस AI चैट को अभी आपके निजी ऑर्डर या लाइव डिलीवरी रिकॉर्ड पढ़ने की अनुमति नहीं है, इसलिए मैं स्थिति का अनुमान नहीं लगाऊँगा। My Orders में संबंधित ऑर्डर खोलकर उपलब्ध स्थिति देखें; जानकारी न मिले तो सपोर्ट से संपर्क करें।', 'ai_available' => false, 'free_mode' => true];
         }
         // Detect the user's topic before responding. This assistant only has
         // verified restaurant catalogue facts; other modules receive navigation guidance only.
@@ -147,7 +153,7 @@ final class AiRestaurantAssistantService
             return ['text' => 'ऑर्डर के लिए Explore में स्टोर चुनें और Checkout करें। यह चैट भुगतान नहीं करती।', 'ai_available' => false, 'free_mode' => true];
         }
         if ($restaurants === []) {
-            return ['text' => 'रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग, डिलीवरी, ऑर्डर या अकाउंट—आप किस बारे में पूछ रहे हैं?', 'ai_available' => false, 'free_mode' => true];
+            return ['text' => 'मैं आपका सवाल पूरी तरह समझ नहीं पाई। कृपया थोड़ा और बताइए कि आपको क्या जानकारी या सहायता चाहिए। मैं उसी विषय पर जवाब दूँगी।', 'ai_available' => false, 'free_mode' => true];
         }
         $matches = [];
         foreach ($restaurants as $restaurant) {

@@ -52,6 +52,36 @@ class AiRestaurantAssistantServiceTest extends TestCase
         );
     }
 
+    public function test_unknown_question_asks_clarification_without_irrelevant_service_list(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $answer = app(AiRestaurantAssistantService::class)->answer('यह व्यवस्था कैसे मिलेगी', []);
+        $this->assertStringContainsString('सवाल पूरी तरह समझ नहीं', $answer['text']);
+        $this->assertStringNotContainsString('रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग', $answer['text']);
+    }
+
+    public function test_free_wedding_and_order_status_questions_are_not_generic(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        Http::fake();
+        foreach (['मुझे मैरिज होम देखना है शादी के लिए', 'मैरिज प्लानर चाहिए', 'मैरिज एनिवर्सरी देखना है'] as $question) {
+            $answer = app(AiRestaurantAssistantService::class)->answer($question, []);
+            $this->assertStringContainsString('TIDONG', $answer['text']);
+            $this->assertStringContainsString('पंजीकृत व्यवसाय', $answer['text']);
+        }
+        $tracking = app(AiRestaurantAssistantService::class)->answer('मेरे ऑर्डर का क्या हुआ डिलीवरी होगा नहीं होगा', []);
+        $this->assertStringContainsString('निजी ऑर्डर', $tracking['text']);
+        Http::assertNothingSent();
+    }
+
+    public function test_free_customer_chat_is_not_blocked_by_paid_daily_limits(): void
+    {
+        $source = file_get_contents(app_path('Http/Controllers/Customer/AiRestaurantAssistantController.php'));
+        $this->assertNotFalse($source);
+        $this->assertStringContainsString('if ($paidEnabled && (RateLimiter::tooManyAttempts', $source);
+        $this->assertStringContainsString('if ($paidEnabled) {', $source);
+    }
+
     public function test_free_taxi_and_travel_requests_get_relevant_safe_guidance(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
