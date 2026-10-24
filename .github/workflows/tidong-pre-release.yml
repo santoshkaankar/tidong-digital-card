@@ -91,5 +91,9 @@ jobs:
         run: php artisan route:list --json > /tmp/tidong-routes.json
       - name: Run TIDONG AI provider mock tests
         run: php artisan test --filter=AiRestaurantAssistant --stop-on-failure
+      - name: Prepare Vite assets for Blade-based feature tests
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
       - name: Run customer authentication and restaurant order tests
         run: php artisan test --filter='LoginRateLimitSecurityTest|PublicPasswordResetFlowTest|RestaurantQrRequestWorkflowTest|PosKdsCounterWorkflowTest|RestaurantTableQrMenuTest' --stop-on-failure
