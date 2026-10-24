@@ -198,6 +198,14 @@ final class GroceryOnlineStore
         if (!in_array($next, $allowed[$status] ?? [], true)) {
             throw ValidationException::withMessages(['status' => 'This status change is not allowed.']);
         }
+        // Paid, partially paid or otherwise settled orders need an explicit refund/reconciliation
+        // workflow. Never close and release their reserved stock on a status-only request.
+        // This guard remains effective even if a future controller exposes more transitions.
+        if (in_array($next, ['cancelled', 'rejected'], true) && $order->payment_status !== 'unpaid') {
+            throw ValidationException::withMessages([
+                'payment' => 'Payment was recorded. Complete the reviewed refund/reconciliation process before closing this order.',
+            ]);
+        }
         // Rejected/cancelled orders are always restocked atomically. Original movements survive.
         if (in_array($next, ['cancelled', 'rejected'], true)) {
             $allocations = DB::table('grocery_online_order_allocations')->where('order_id', $order->id)

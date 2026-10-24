@@ -112,6 +112,26 @@ final class GroceryOnlineStoreTest extends TestCase
         $this->assertSame(10000, (int) DB::table('grocery_stock_lots')->where('id', $lot)->value('available_qty_milli'));
     }
 
+    public function test_paid_order_cannot_be_cancelled_or_rejected_without_refund_reconciliation(): void
+    {
+        [$owner, $customer, $business, $branch, $product, $lot] = $this->setupStore();
+        $this->checkout($customer, $business, $branch, $product);
+        $order = DB::table('grocery_online_orders')->where('business_id', $business)->firstOrFail();
+
+        // Simulates a payment status recorded by an authorized payment integration.
+        DB::table('grocery_online_orders')->where('id', $order->id)->update(['payment_status' => 'paid']);
+        $this->actingAs($customer)->post(route('grocery.shop.orders.cancel', $order->id))
+            ->assertSessionHasErrors('payment');
+        $this->actingAs($owner)->post(route('vendor.grocery.online.status', [$business, $order->id]), [
+            'status' => 'rejected',
+        ])->assertSessionHasErrors('payment');
+
+        $this->assertSame('pending', DB::table('grocery_online_orders')->where('id', $order->id)->value('status'));
+        $this->assertSame(8000, (int) DB::table('grocery_stock_lots')->where('id', $lot)->value('available_qty_milli'));
+        $this->assertSame(1, DB::table('grocery_stock_movements')->where('product_id', $product)->count());
+        $this->assertSame(1, DB::table('grocery_online_order_events')->where('order_id', $order->id)->count());
+    }
+
     public function test_vendor_processes_order_but_other_vendor_cannot(): void
     {
         [$owner, $customer, $business, $branch, $product] = $this->setupStore();
