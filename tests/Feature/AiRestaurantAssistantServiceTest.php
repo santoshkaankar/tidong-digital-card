@@ -24,8 +24,40 @@ class AiRestaurantAssistantServiceTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_free_mode_never_sends_paid_requests_even_with_api_key(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        config()->set('tidong_ai_restaurant.api_key', 'existing-server-key-must-not-be-used');
+        Http::fake();
+
+        $catalogue = [[
+            'restaurant' => 'Test Cafe', 'outlet' => 'North Branch',
+            'menu' => [['name' => 'Paneer', 'price_rupees' => '120.00']],
+        ]];
+        $answer = app(AiRestaurantAssistantService::class)->answer('Paneer की कीमत?', $catalogue);
+
+        $this->assertTrue($answer['free_mode']);
+        $this->assertFalse($answer['ai_available']);
+        $this->assertStringContainsString('Paneer ₹120.00', $answer['text']);
+        Http::assertNothingSent();
+    }
+
+    public function test_free_mode_never_fabricates_unknown_food_or_order(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        Http::fake();
+        $answer = app(AiRestaurantAssistantService::class)->answer('Pizza ऑर्डर कर दो', [[
+            'restaurant' => 'Test Cafe', 'outlet' => 'North Branch',
+            'menu' => [['name' => 'Paneer', 'price_rupees' => '120.00']],
+        ]]);
+        $this->assertStringNotContainsString('Pizza ₹', $answer['text']);
+        $this->assertStringContainsString('ऑर्डर या भुगतान नहीं किया गया', $answer['text']);
+        Http::assertNothingSent();
+    }
+
     public function test_restaurant_answers_use_only_live_catalogue_and_do_not_offer_write_tools(): void
     {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', true);
         config()->set('tidong_ai_restaurant.api_key', 'test-only-no-real-secret');
         config()->set('tidong_ai_restaurant.model', 'gpt-4.1-mini');
 
