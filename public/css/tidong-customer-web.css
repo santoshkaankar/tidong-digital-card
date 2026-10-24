@@ -1,0 +1,43 @@
+/* Customer web dashboard: desktop-first website design, responsive without app chrome. */
+body.td-customer-shell{background:#f7f8fb!important;color:#17243a}
+.td-header{background:#fff!important;border-bottom:1px solid #e2e7ef!important;box-shadow:none!important}
+.td-header-inner{max-width:1440px;margin:auto}
+.td-brand-tag{background:#f1f4f9!important;color:#334155!important;border-radius:5px!important}
+.td-workspace{max-width:1440px;margin:0 auto;gap:0}
+.td-side{background:#fff!important;border-right:1px solid #e5e9f0!important;box-shadow:none!important}
+.td-side-title{color:#64748b!important}
+.td-side-link{border-radius:6px!important;color:#334155!important}
+.td-side-link.is-current{background:#edf2fb!important;color:#164b9b!important;box-shadow:none!important}
+.td-side-note{background:#f8fafc!important;border-radius:6px!important}
+.td-main{min-width:0;padding:28px!important}
+.td-welcome{font-size:1rem!important;color:#475569!important}
+.td-welcome-dot,.td-hero-art,.td-floating,.td-spark{display:none!important}
+.td-hero{background:#fff!important;color:#17243a!important;border:1px solid #e2e7ef!important;border-radius:10px!important;box-shadow:none!important;min-height:0!important}
+.td-hero-text{max-width:760px!important}
+.td-hero h1,.td-hero h1 em{color:#17243a!important;font-style:normal!important}
+.td-hero p{color:#475569!important}
+.td-hero-eyebrow{color:#475569!important;background:#f1f5f9!important;border-radius:4px!important}
+.td-button-white{background:#174b9a!important;color:#fff!important;border-radius:6px!important}
+.td-service-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;gap:14px!important}
+.td-service-tile,.td-feature-card,.td-quick-grid>a{background:#fff!important;color:#17243a!important;border:1px solid #e2e7ef!important;border-radius:8px!important;box-shadow:none!important;transform:none!important}
+.td-service-tile:hover,.td-quick-grid>a:hover{border-color:#9eb4d8!important;box-shadow:0 3px 12px rgba(15,23,42,.05)!important}
+.td-service-icon{background:#f2f5fa!important;border-radius:7px!important}
+.td-feature-emoji{display:none!important}
+.td-feature-card h2,.td-feature-card p,.td-service-tile strong{color:#17243a!important}
+.td-kicker,.td-small-tag{color:#52637b!important}
+.td-bottom-nav{display:none!important}
+@media(max-width:900px){
+ .td-header-inner{padding:10px 16px!important}
+ .td-workspace{display:block!important}
+ .td-main{padding:18px 14px 36px!important;width:100%!important;max-width:100%!important}
+ .td-hero{padding:22px 18px!important}
+ .td-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .td-side{box-shadow:8px 0 25px rgba(15,23,42,.12)!important}
+}
+@media(max-width:520px){
+ .td-hero h1{font-size:1.65rem!important;line-height:1.25!important}
+ .td-service-grid,.td-feature-row,.td-quick-grid{grid-template-columns:1fr!important}
+ .td-section-head{align-items:flex-start!important}
+ .td-top-account{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){.td-service-tile,.td-quick-grid>a{transition:none!important}}
