@@ -61,6 +61,21 @@ class LegalAdvisoryController extends Controller
         ]);
     }
 
+    public function progressPage(Request $request, int $engagement)
+    {
+        abort_unless(Feature::enabled('module')
+            && app(\App\Services\Platform\FeatureRegistry::class)->isEnabled('ai.professional_work_transparency'), 404);
+        $vendor = $request->user()->vendor()->firstOrFail();
+        $record = DB::table('legal_engagements as e')
+            ->join('legal_professional_profiles as p', 'p.id', '=', 'e.professional_id')
+            ->where('e.id', $engagement)->where('e.vendor_id', $vendor->id)
+            ->select('e.*', 'p.display_name as professional_name')->first();
+        abort_unless($record, 404);
+        $updates = DB::table('legal_work_updates')->where('engagement_id', $record->id)
+            ->orderByDesc('recorded_at')->limit(100)->get();
+        return view('vendor.legal-advisory.progress', compact('record', 'updates'));
+    }
+
     public function invite(Request $request)
     {
         abort_unless(Feature::enabled('hiring'), 404);
