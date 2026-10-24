@@ -29,6 +29,17 @@ class AiRestaurantAssistantServiceTest extends TestCase
         $this->assertSame(['GET', 'HEAD'], $route->methods());
     }
 
+    public function test_first_turn_greeting_is_session_scoped_and_keeps_question_answer(): void
+    {
+        $source = file_get_contents(app_path('Http/Controllers/Customer/AiRestaurantAssistantController.php'));
+        $this->assertNotFalse($source);
+        $this->assertStringContainsString("tidong_ai_food_started", $source);
+        $this->assertStringContainsString("नमस्ते! ", $source);
+        $this->assertStringContainsString("गुड मॉर्निंग!", $source);
+        $this->assertStringContainsString("गुड इवनिंग!", $source);
+        $this->assertStringContainsString("नमस्ते!", $source);
+    }
+
     public function test_location_help_is_answered_before_nearby_permission_prompt(): void
     {
         $source = file_get_contents(app_path('Http/Controllers/Customer/AiRestaurantAssistantController.php'));
