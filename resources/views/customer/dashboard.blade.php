@@ -1,10 +1,10 @@
 @extends('customer.layout')
 @section('title', __('Home'))
 @section('content')
-    <div class="td-welcome"><span>{{ __('Welcome back, :name', ['name' => \Illuminate\Support\Str::limit(auth()->user()->name, 40)]) }}</span><span class="td-welcome-dot" aria-hidden="true">✦</span></div>
+    <div class="td-welcome"><span>{{ __('Welcome back, :name', ['name' => \Illuminate\Support\Str::limit(auth()->user()->name, 40)]) }}</span></div>
     <section class="td-hero" aria-labelledby="hero-title">
         <div class="td-hero-text">
-            <span class="td-hero-eyebrow">🎁 {{ __('FEATURED: PERSONALIZED GIFTS') }}</span>
+            <span class="td-hero-eyebrow">{{ __('PERSONALIZED GIFTS') }}</span>
             <h1 id="hero-title">{{ __('Create something') }} <em>{{ __('special.') }}</em></h1>
             <p>{{ __('Explore personalized gifts, photo printing and more—all from your TIDONG home.') }}</p>
             @if($categories['sublimation']['directory_enabled'] ?? false)
@@ -24,7 +24,7 @@
     <section class="rounded-2xl border border-rose-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="td-ai-shortcut-title">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-rose-700">🎙️ TIDONG AI</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-rose-700">TIDONG AI</p>
                 <h2 id="td-ai-shortcut-title" class="mt-1 text-xl font-bold text-slate-900">{{ __('Ask about nearby restaurants and menus') }}</h2>
                 <p class="mt-1 text-sm text-slate-600">{{ __('Type your question or use the microphone. Location is optional until you want nearby results.') }}</p>
             </div>
