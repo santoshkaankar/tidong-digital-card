@@ -175,7 +175,7 @@
                 }
                 // Browser Hindi speech recognition sometimes hears the product name as 'मैडम'.
                 // Correct only the opening form of address, never words inside the question.
-                transcript = transcript.replace(/^\\s*मैडम(?=[,，।! ]|$)/u, 'टिडोंग');
+                transcript = transcript.replace(/^\s*मैडम(?=[,，।! ]|$)/u, 'टिडोंग');
                 message.value = transcript.trim();
                 resizeInput();
                 if (listening) status.textContent = '🔴 सुन रहा हूँ… ' + message.value + ' (भेजने से पहले जाँचें)';
