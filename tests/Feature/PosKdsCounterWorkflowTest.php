@@ -257,4 +257,48 @@ class PosKdsCounterWorkflowTest extends TestCase
             ->assertSessionHasNoErrors();
         $this->assertDatabaseHas('branches', ['id' => $branch, 'is_accepting_orders' => 0]);
     }
+    public function test_free_assistant_never_mutates_orders_and_rejects_other_vendor(): void
+    {
+        [$owner, , $business, $branch] = $this->setupShop();
+        $menu = $this->addItem($branch, 2500, 'Chapati');
+        $this->actingAs($owner);
+        $this->enableShop($business, $branch);
+        $this->post(route('pos.orders.store', $branch), [
+            'items' => [['menu_item_id'=>$menu, 'quantity'=>4]],
+        ])->assertSessionHasNoErrors();
+        $order = DB::table('pos_orders')->where('branch_id', $branch)->firstOrFail();
+        $this->post(route('kds.orders.free-ask', $order->id), [
+            'question'=>'कुल चपाती कितनी?',
+        ])->assertNotFound(); // Global Free Assistant toggle OFF by default.
+        $this->assertSame(4, (int) DB::table('pos_order_items')->where('order_id', $order->id)->value('quantity'));
+
+        [$other] = $this->setupShop();
+        $this->actingAs($other)->get(route('kds.branches.show', $branch))->assertNotFound();
+    }
+
+    public function test_paid_order_rejects_added_chapatis_without_changing_total(): void
+    {
+        [$owner, , $business, $branch] = $this->setupShop();
+        $menu = $this->addItem($branch, 2000, 'Chapati');
+        $this->actingAs($owner);
+        $this->enableShop($business, $branch);
+        $this->post(route('pos.orders.store', $branch), [
+            'items'=>[['menu_item_id'=>$menu, 'quantity'=>4]],
+        ])->assertSessionHasNoErrors();
+        $order = DB::table('pos_orders')->where('branch_id', $branch)->firstOrFail();
+        $item = DB::table('pos_order_items')->where('order_id', $order->id)->firstOrFail();
+        DB::table('pos_orders')->where('id', $order->id)->update(['payment_status'=>'paid']);
+
+        try {
+            app(\App\Services\Kds\TableOrderProgress::class)->change(
+                request()->setUserResolver(fn () => $owner), (int)$item->id, 'add', 2
+            );
+            $this->fail('A settled bill accepted new charges.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->assertArrayHasKey('order', $e->errors());
+        }
+        $this->assertDatabaseHas('pos_orders', ['id'=>$order->id,'total_paise'=>8000]);
+        $this->assertDatabaseHas('pos_order_items', ['id'=>$item->id,'quantity'=>4,'added_quantity'=>0]);
+    }
+
 }

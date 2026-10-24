@@ -1,0 +1,101 @@
+name: TIDONG Free KDS CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tidong-free-kds.yml'
+      - 'app/**'
+      - 'bootstrap/**'
+      - 'config/**'
+      - 'database/**'
+      - 'resources/views/**'
+      - 'routes/**'
+      - 'tests/**'
+      - 'composer.*'
+      - 'phpunit.xml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    name: PHP syntax and Composer validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+      - name: Validate Composer definition
+        run: composer validate --no-check-publish
+      - name: Lint PHP source, tests, config and routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          find app bootstrap config database routes tests -type f -name '*.php' -print0 |
+            xargs -0 -n1 php -l > /tmp/tidong-php-lint.txt
+          tail -n 8 /tmp/tidong-php-lint.txt
+          echo "Linted $(wc -l < /tmp/tidong-php-lint.txt) PHP files."
+
+  smoke:
+    name: Disposable MySQL, authentication, AI and POS tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-only
+          MYSQL_DATABASE: digital_test_db
+          MYSQL_USER: tidong_ci
+          MYSQL_PASSWORD: ci-temp-only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-root-only"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_DATABASE: digital_test_db
+      DB_USERNAME: tidong_ci
+      DB_PASSWORD: ci-temp-only
+      DB_URL: ''
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      MAIL_MAILER: array
+      QUEUE_CONNECTION: sync
+      OPENAI_API_KEY: ''
+      TIDONG_CUSTOMER_PUBLIC_REGISTRATION: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, pdo_mysql, bcmath, gd, zip
+          coverage: none
+          tools: composer:v2
+      - name: Install locked PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Prepare disposable .env and test key
+        run: |
+          printf '# Disposable GitHub Actions test environment only\n' > .env
+          echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+      - name: Build disposable database
+        run: php artisan migrate --force --no-interaction
+      - name: Inspect Laravel route registration
+        run: php artisan route:list --json > /tmp/tidong-routes.json
+      - name: Run Free KDS Hindi assistant unit tests (no paid API)
+        run: php artisan test --filter=FreeKitchenAssistantTest --stop-on-failure
+      - name: Prepare Vite assets for Blade-based feature tests
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+      - name: Run restaurant POS KDS QR regression tests
+        run: php artisan test --filter='PosKdsCounterWorkflowTest|RestaurantQrRequestWorkflowTest|RestaurantTableQrMenuTest' --stop-on-failure
