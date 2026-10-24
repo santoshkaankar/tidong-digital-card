@@ -104,4 +104,17 @@ class VendorBusinessSidebarTest extends TestCase
             ->assertOk()->assertSee('Vendor Main Menu')->assertSee('Open Business Dashboard')
             ->assertSee(route('vendor.business.workspace', $studio->id));
     }
+
+    public function test_vendor_dashboard_has_no_customer_dashboard_button(): void
+    {
+        [$user, $vendor] = $this->vendor();
+        $this->business($vendor, 'restaurant');
+
+        $this->actingAs($user)->get(route('vendor.home'))
+            ->assertOk()
+            ->assertSee('Vendor Dashboard')
+            ->assertSee('My Businesses')
+            ->assertDontSee('Customer Dashboard')
+            ->assertSee('Total Outlets');
+    }
 }
