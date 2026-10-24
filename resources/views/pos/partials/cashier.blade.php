@@ -132,7 +132,7 @@
             index++;
         }
         total.textContent = money.format(paise / 100);
-        empty.hidden = cart.size > 0;
+        empty.classList.toggle('hidden', cart.size > 0);
         submit.disabled = cart.size === 0;
     };
     const change = (id, amount) => {
@@ -163,7 +163,7 @@
         let matches = 0;
         menu.querySelectorAll('[data-cashier-item]').forEach(button => {
             const visible = button.dataset.name.toLocaleLowerCase().includes(q);
-            button.hidden = !visible;
+            button.classList.toggle('hidden', !visible);
             if (visible) matches++;
         });
         noMatch.classList.toggle('hidden', matches > 0 || q === '');
