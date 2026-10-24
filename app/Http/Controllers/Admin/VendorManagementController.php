@@ -89,7 +89,7 @@ class VendorManagementController extends Controller
         $vendorModules = array_map(function ($module) use ($registry, $vendor) {
             $module['enabled'] = $registry->isEnabledForVendor($module['code'], $vendor);
             return $module;
-        }, array_filter($registry->overview(), fn ($module) => $module['installed']));
+        }, array_filter($registry->overview(), fn ($module) => $module['installed'] && in_array($module['code'], ['delivery', 'pos', 'kds', 'sublimation', 'grocery', 'legal_advisory'], true)));
         return view(
             'vendor-management.show',
             compact('vendorRecord', 'businesses', 'basePath', 'canApprove', 'canReject', 'vendorModules')
