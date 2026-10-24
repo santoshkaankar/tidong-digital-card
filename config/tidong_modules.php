@@ -39,7 +39,7 @@ return [
     'affiliate' => ['name' => 'Affiliate Network (review)', 'installed' => true, 'default_enabled' => false, 'paths' => []],
     'billing' => ['name' => 'Billing Invoice Foundation (draft only)', 'installed' => false, 'default_enabled' => false, 'paths' => []],
     'ai_restaurant_assistant' => [
-        'name' => 'AI Restaurant Voice Assistant (read-only beta)',
+        'name' => 'TIDONG AI – Restaurant Voice Assistant (read-only beta)',
         'installed' => true, 'default_enabled' => false,
         'paths' => [],
     ],

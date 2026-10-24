@@ -3,7 +3,7 @@
 @section('content')
 <section class="mx-auto max-w-4xl space-y-5" aria-labelledby="food-ai-title">
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-        <span class="text-xs font-bold uppercase tracking-wider text-rose-700">{{ __('TIDONG SMART ASSISTANT') }}</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-rose-700">{{ __('TIDONG AI') }}</span>
         <h1 id="food-ai-title" class="mt-2 text-2xl font-bold text-slate-900">{{ __('बोलकर रेस्टोरेंट और मेन्यू पूछें') }}</h1>
         <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('हिन्दी में बोलिए या लिखिए। लोकेशन केवल आपकी अनुमति से मिलेगी। अभी यह रेस्टोरेंट और मेन्यू की जानकारी देता है; अपने आप ऑर्डर या भुगतान नहीं करता।') }}</p>
         <form method="POST" action="{{ route('customer.ai-restaurant.ask') }}" id="food-ai-form" class="mt-5 space-y-3">
@@ -25,7 +25,7 @@
     @if($answer !== null)
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" aria-live="polite">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-lg font-bold">{{ __('TIDONG का जवाब') }}</h2>
+                <h2 class="text-lg font-bold">{{ __('TIDONG AI का जवाब') }}</h2>
                 <button type="button" id="food-ai-speak" class="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold">{{ __('🔊 जवाब सुनें') }}</button>
             </div>
             <p id="food-ai-answer" class="mt-3 whitespace-pre-wrap text-base leading-7">{{ $answer }}</p>
