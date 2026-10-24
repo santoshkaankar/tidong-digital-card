@@ -52,6 +52,14 @@ class AiRestaurantAssistantServiceTest extends TestCase
         );
     }
 
+    public function test_unknown_question_asks_clarification_without_irrelevant_service_list(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $answer = app(AiRestaurantAssistantService::class)->answer('यह व्यवस्था कैसे मिलेगी', []);
+        $this->assertStringContainsString('सवाल पूरी तरह समझ नहीं', $answer['text']);
+        $this->assertStringNotContainsString('रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग', $answer['text']);
+    }
+
     public function test_free_wedding_and_order_status_questions_are_not_generic(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
