@@ -12,7 +12,15 @@ class TidongApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'TIDONG Customer',
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(colorSchemeSeed: const Color(0xFF087F71), useMaterial3: true),
+    theme: ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFFB91C1C),
+        primary: const Color(0xFFB91C1C),
+        secondary: const Color(0xFF881337),
+      ),
+      scaffoldBackgroundColor: const Color(0xFFFFFAFA),
+      useMaterial3: true,
+    ),
     home: const CustomerHome(),
   );
 }
