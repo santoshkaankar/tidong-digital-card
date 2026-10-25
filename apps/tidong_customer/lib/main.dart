@@ -2,6 +2,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const TidongApp());
@@ -112,6 +113,65 @@ class _ConsentGateState extends State<ConsentGate> {
   }
 }
 
+class TidongQrScanner extends StatefulWidget {
+  const TidongQrScanner({super.key});
+  @override
+  State<TidongQrScanner> createState() => _TidongQrScannerState();
+}
+
+class _TidongQrScannerState extends State<TidongQrScanner> {
+  bool handling = false;
+  final MobileScannerController scanner = MobileScannerController();
+
+  Future<void> _onDetect(BarcodeCapture capture) async {
+    if (handling || capture.barcodes.isEmpty) return;
+    final raw = capture.barcodes.first.rawValue;
+    final uri = raw == null ? null : Uri.tryParse(raw);
+    if (uri == null || uri.scheme != 'https' ||
+        uri.host.toLowerCase() != 'tidong.in' ||
+        !(uri.path.startsWith('/menu/') || uri.path.startsWith('/customer/'))) {
+      setState(() => handling = true);
+      await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+        title: const Text('Unsupported QR code'),
+        content: const Text('Only verified TIDONG links can be opened from this scanner.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+      ));
+      if (mounted) setState(() => handling = false);
+      return;
+    }
+    setState(() => handling = true);
+    await scanner.stop();
+    if (!mounted) return;
+    final open = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('Open TIDONG QR link?'),
+      content: Text(uri.toString()),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Open')),
+      ],
+    ));
+    if (open == true) await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (mounted) {
+      setState(() => handling = false);
+      await scanner.start();
+    }
+  }
+
+  @override
+  void dispose() { scanner.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Scan TIDONG QR')),
+    body: Column(children: [
+      Expanded(child: MobileScanner(controller: scanner, onDetect: _onDetect)),
+      const Padding(padding: EdgeInsets.all(16), child: Text(
+        'Scan a TIDONG restaurant table QR code. Links are checked before opening.',
+        textAlign: TextAlign.center)),
+    ]),
+  );
+}
+
 class CustomerHome extends StatefulWidget {
   const CustomerHome({super.key});
   @override
@@ -197,6 +257,15 @@ class _CustomerHomeState extends State<CustomerHome> {
     }
   }
 
+  Future<void> _openAi() async {
+    final uri = Uri.https('tidong.in', '/customer/assistant/food');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open TIDONG AI')),
+      );
+    }
+  }
+
   @override
   void dispose() {
     addressInput.dispose();
@@ -219,6 +288,19 @@ class _CustomerHomeState extends State<CustomerHome> {
               child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.my_location),
             onPressed: locating ? null : _detectLocation),
           onTap: _editAddress),
+        if (tab == 0) Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(children: [
+            Expanded(child: FilledButton.icon(
+              onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const TidongQrScanner())),
+              icon: const Icon(Icons.qr_code_scanner), label: const Text('Scan QR'))),
+            const SizedBox(width: 12),
+            Expanded(child: FilledButton.tonalIcon(
+              onPressed: _openAi,
+              icon: const Icon(Icons.auto_awesome), label: const Text('TIDONG AI'))),
+          ]),
+        ),
         Expanded(child: Center(child: Padding(padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Icon([Icons.home_outlined, Icons.search, Icons.shopping_cart_outlined,
