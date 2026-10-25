@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const TidongApp());
 
+const tidongConsentVersion = '2026-10-v1';
+
 class TidongApp extends StatelessWidget {
   const TidongApp({super.key});
 
@@ -21,8 +23,76 @@ class TidongApp extends StatelessWidget {
       scaffoldBackgroundColor: const Color(0xFFFFF5F7),
       useMaterial3: true,
     ),
-    home: const CustomerHome(),
+    home: const ConsentGate(),
   );
+}
+
+class ConsentGate extends StatefulWidget {
+  const ConsentGate({super.key});
+
+  @override
+  State<ConsentGate> createState() => _ConsentGateState();
+}
+
+class _ConsentGateState extends State<ConsentGate> {
+  bool loading = true;
+  bool accepted = false;
+  bool completed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConsent();
+  }
+
+  Future<void> _checkConsent() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      completed = prefs.getString('terms_consent_version') == tidongConsentVersion;
+      loading = false;
+    });
+  }
+
+  Future<void> _continue() async {
+    if (!accepted) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('terms_consent_version', tidongConsentVersion);
+    await prefs.setString('terms_consent_at', DateTime.now().toUtc().toIso8601String());
+    if (mounted) setState(() => completed = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (completed) return const CustomerHome();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Welcome to TIDONG')),
+      body: SafeArea(child: Center(child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: ListView(padding: const EdgeInsets.all(24), children: [
+          Icon(Icons.favorite_rounded, size: 70, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 18),
+          Text('Welcome to TIDONG', textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 18),
+          const Text('Before continuing, please review the TIDONG Terms & Conditions and Privacy Policy on tidong.in. Your consent is required to use this app.'),
+          const SizedBox(height: 12),
+          const Text('Location is optional and requested only when you use location features. Camera and microphone permissions are requested when using scanning or voice features.'),
+          const SizedBox(height: 20),
+          CheckboxListTile(
+            value: accepted,
+            onChanged: (value) => setState(() => accepted = value ?? false),
+            title: const Text('I agree to the TIDONG Terms & Conditions and Privacy Policy.'),
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          const SizedBox(height: 12),
+          FilledButton(onPressed: accepted ? _continue : null,
+            child: const Text('Accept and continue')),
+        ]),
+      ))),
+    );
+  }
 }
 
 class CustomerHome extends StatefulWidget {
