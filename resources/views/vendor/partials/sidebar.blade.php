@@ -49,6 +49,13 @@
         <span class="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200">Workspace</span>
     </div>
 
+    @if($navBranch)
+    <nav class="mt-3 border-b border-slate-700 pb-3" aria-label="Outlet item catalog">
+        <p class="mb-2 px-2 text-xs font-bold uppercase text-slate-400">Outlet Catalog</p>
+        <a href="{{ route('vendor.custom-items.index',['branch'=>$navBranch->id]) }}"
+           class="block rounded-lg px-3 py-2 text-sm text-white hover:bg-slate-800">Create / List Custom Items</a>
+    </nav>
+    @endif
     @if ($isStudio && $navBusiness)
     @php
         $studioRoot = ['business' => $navBusiness->id] + ($navBranch ? ['branch' => $navBranch->id] : []);
