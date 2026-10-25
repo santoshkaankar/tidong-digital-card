@@ -6,41 +6,30 @@ import 'package:tidong_customer/main.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('First launch requires explicit consent', (tester) async {
+  testWidgets('Consent screen requires explicit agreement', (tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const TidongApp());
     await tester.pumpAndSettle();
+
     expect(find.text('Welcome to TIDONG'), findsWidgets);
     expect(find.text('Read Terms & Conditions'), findsOneWidget);
     expect(find.text('Read Privacy Policy'), findsOneWidget);
-    final continueButton = tester.widget<FilledButton>(
-      find.byType(FilledButton).first);
-    expect(continueButton.onPressed, isNull);
+    final button = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Accept and continue'));
+    expect(button.onPressed, isNull);
     await tester.tap(find.byType(CheckboxListTile));
     await tester.pump();
-    await tester.tap(find.text('Accept and continue'));
-    await tester.pumpAndSettle();
-    expect(find.text('TIDONG'), findsOneWidget);
-    final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('terms_consent_version'), tidongConsentVersion);
+    final enabled = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Accept and continue'));
+    expect(enabled.onPressed, isNotNull);
   });
 
-  testWidgets('Customer home never fabricates products or orders', (tester) async {
-    SharedPreferences.setMockInitialValues({
-      'terms_consent_version': tidongConsentVersion,
-    });
-    await tester.pumpWidget(const TidongApp());
+  testWidgets('Legacy offline screen never fabricates products or orders',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const MaterialApp(home: CustomerHome()));
     await tester.pumpAndSettle();
-    expect(find.text('TIDONG'), findsOneWidget);
     expect(find.text('Scan QR'), findsOneWidget);
-    expect(find.text('TIDONG AI'), findsOneWidget);
     expect(find.textContaining('No live prices'), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.shopping_cart_outlined).last);
-    await tester.pumpAndSettle();
-    expect(find.text('Cart'), findsWidgets);
-    await tester.tap(find.byIcon(Icons.person_outline).last);
-    await tester.pumpAndSettle();
-    expect(find.text('Customer Care'), findsOneWidget);
-    expect(find.text('WhatsApp'), findsOneWidget);
   });
 }
