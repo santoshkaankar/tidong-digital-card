@@ -7,10 +7,13 @@
 <article class="rounded-xl bg-white p-5 shadow-sm space-y-3"><h2 class="font-bold">{{ $order->order_number }}</h2>
 <p class="font-semibold">{{ ucfirst($order->status) }} · {{ $order->dining_table_label ?: 'Counter' }} · {{ ucfirst($order->order_origin) }}</p>
 <p class="text-xs text-slate-500">{{ $order->placed_at }} · Payment: {{ $order->payment_status }}</p>
-<ul class="list-disc pl-5 text-sm">@foreach($items->get($order->id, collect()) as $item)<li>{{ $item->quantity }} × {{ $item->name_snapshot }}</li>@endforeach</ul>
+@php $orderLines = $items->get($order->id, collect()); $totalQuantity = $orderLines->sum(fn ($item) => (int) $item->quantity); @endphp
+<p class="text-sm font-semibold">Current order: {{ $orderLines->count() }} item lines · {{ $totalQuantity }} total units</p>
+<ul class="list-disc pl-5 text-sm">@foreach($orderLines as $item)<li>{{ $item->quantity }} × {{ $item->name_snapshot }}</li>@endforeach</ul>
 @if($order->customer_note)<p class="rounded-lg bg-amber-50 p-3 text-sm">Note: {{ $order->customer_note }}</p>@endif
 @php $next = ['received'=>'preparing','preparing'=>'ready','ready'=>'served'][$order->status] ?? null; @endphp
 @if($next)<form method="POST" action="{{ route('kds.orders.status', $order->id) }}">@csrf<input type="hidden" name="status" value="{{ $next }}"><button class="rounded-lg bg-blue-700 px-5 py-2 text-white">Mark {{ ucfirst($next) }}</button></form>@endif
 </article>
 @empty<div class="rounded-xl bg-white p-6 text-slate-500">No active Kitchen Orders.</div>@endforelse</div>
+<p class="text-center text-xs text-slate-500" role="note">AI can make mistake. KDS shows recorded order quantities; separate added batches and partially prepared quantities are not tracked here yet.</p>
 </main></body></html>

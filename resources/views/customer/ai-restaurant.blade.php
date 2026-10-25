@@ -27,6 +27,7 @@
 <button type="submit" id="food-ai-send" title="भेजें" aria-label="भेजें" class="h-8 w-8 shrink-0 rounded-full bg-rose-700 text-sm text-white">➤</button>
 </div><p id="food-ai-status" role="status" aria-live="polite" class="mt-2 text-xs text-slate-600"></p>
 </form>
+<p class="px-4 pb-3 text-center text-xs text-slate-500" role="note">AI can make mistake. कृपया ऑर्डर, कीमत और उपलब्धता की पुष्टि TIDONG के वास्तविक रिकॉर्ड से करें।</p>
 </section>
 <script>
 (() => {
