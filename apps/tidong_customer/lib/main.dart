@@ -3,6 +3,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const TidongApp());
@@ -111,6 +112,69 @@ class _ConsentGateState extends State<ConsentGate> {
       ))),
     );
   }
+}
+
+class TidongWebsitePage extends StatefulWidget {
+  const TidongWebsitePage({super.key, required this.path, required this.title});
+  final String path;
+  final String title;
+
+  @override
+  State<TidongWebsitePage> createState() => _TidongWebsitePageState();
+}
+
+class _TidongWebsitePageState extends State<TidongWebsitePage> {
+  late final WebViewController controller;
+  bool loading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageStarted: (_) { if (mounted) setState(() { loading = true; error = null; }); },
+        onPageFinished: (_) { if (mounted) setState(() => loading = false); },
+        onWebResourceError: (e) {
+          if (e.isForMainFrame == true && mounted) {
+            setState(() { loading = false; error = 'Page could not load. Check your connection.'; });
+          }
+        },
+        onNavigationRequest: (request) {
+          final uri = Uri.tryParse(request.url);
+          if (uri == null) return NavigationDecision.prevent;
+          if (uri.scheme == 'https' &&
+              (uri.host == 'tidong.in' || uri.host == 'www.tidong.in')) {
+            return NavigationDecision.navigate;
+          }
+          if (uri.scheme == 'https' || uri.scheme == 'mailto' || uri.scheme == 'tel') {
+            launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+          return NavigationDecision.prevent;
+        },
+      ))
+      ..loadRequest(Uri.https('tidong.in', widget.path));
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(widget.title), actions: [
+      IconButton(tooltip: 'Refresh', onPressed: () => controller.reload(),
+        icon: const Icon(Icons.refresh)),
+    ]),
+    body: Stack(children: [
+      WebViewWidget(controller: controller),
+      if (loading) const LinearProgressIndicator(),
+      if (error != null) Center(child: Card(child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(error!),
+          TextButton(onPressed: () => controller.reload(), child: const Text('Retry')),
+        ]),
+      ))),
+    ]),
+  );
 }
 
 class TidongQrScanner extends StatefulWidget {
@@ -257,6 +321,12 @@ class _CustomerHomeState extends State<CustomerHome> {
     }
   }
 
+  void _openWebsite(String path, String title) {
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => TidongWebsitePage(path: path, title: title),
+    ));
+  }
+
   Future<void> _openAi() async {
     final uri = Uri.https('tidong.in', '/customer/assistant/food');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
@@ -335,6 +405,26 @@ class _CustomerHomeState extends State<CustomerHome> {
               icon: const Icon(Icons.auto_awesome), label: const Text('TIDONG AI'))),
           ]),
         ),
+        if (tab == 0 || tab == 1 || tab == 3 || tab == 4)
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Wrap(spacing: 8, runSpacing: 8, children: [
+              OutlinedButton.icon(onPressed: () => _openWebsite('/login', 'Customer Login'),
+                icon: const Icon(Icons.login), label: const Text('Login')),
+              OutlinedButton.icon(onPressed: () => _openWebsite('/register', 'Register'),
+                icon: const Icon(Icons.person_add_alt), label: const Text('Register')),
+              if (tab == 0) FilledButton.tonalIcon(
+                onPressed: () => _openWebsite('/customer', 'Customer Dashboard'),
+                icon: const Icon(Icons.dashboard_outlined), label: const Text('Dashboard')),
+              if (tab == 1) FilledButton.tonalIcon(
+                onPressed: () => _openWebsite('/customer/explore', 'Explore'),
+                icon: const Icon(Icons.storefront_outlined), label: const Text('Explore Services')),
+              if (tab == 3) FilledButton.tonalIcon(
+                onPressed: () => _openWebsite('/customer/orders', 'My Orders'),
+                icon: const Icon(Icons.receipt_long), label: const Text('View Orders')),
+              if (tab == 4) FilledButton.tonalIcon(
+                onPressed: () => _openWebsite('/customer/profile', 'My Profile'),
+                icon: const Icon(Icons.person), label: const Text('Open Profile')),
+            ])),
         if (tab == 4) _contactLinks(),
         Expanded(child: Center(child: Padding(padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
