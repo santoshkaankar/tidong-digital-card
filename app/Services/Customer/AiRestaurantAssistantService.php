@@ -95,6 +95,13 @@ final class AiRestaurantAssistantService
     {
         $query = mb_strtolower(trim($message));
         // Free, instant conversational replies do not require GPS or a paid API.
+        if (preg_match('/^(good\\s*(morning|afternoon|evening|night)|gud\\s*(morning|afternoon|evening|night)|गुड\\s*(मॉर्निंग|मार्निंग|मॉरनिंग|आफ्टरनून|इवनिंग|नाइट)|सुप्रभात|शुभ\\s*(प्रभात|सुबह|दोपहर|संध्या|रात्रि))[!?. ।]*$/iu', $query, $greeting)) {
+            $period = mb_strtolower($greeting[1]);
+            $reply = preg_match('/morning|मॉर्निंग|मार्निंग|मॉरनिंग|सुप्रभात|प्रभात|सुबह/u', $period) ? 'गुड मॉर्निंग! आपका दिन शुभ हो।'
+                : (preg_match('/afternoon|आफ्टरनून|दोपहर/u', $period) ? 'गुड आफ्टरनून! आपका दिन अच्छा बीते।'
+                : (preg_match('/evening|इवनिंग|संध्या/u', $period) ? 'गुड इवनिंग! आपकी शाम शुभ हो।' : 'शुभ रात्रि! आराम से सोइए।'));
+            return ['text' => $reply, 'ai_available' => false, 'free_mode' => true];
+        }
         if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
             return ['text' => 'नमस्ते! बताइए, मैं आपकी किस काम में सहायता कर सकती हूँ?', 'ai_available' => false, 'free_mode' => true];
         }
