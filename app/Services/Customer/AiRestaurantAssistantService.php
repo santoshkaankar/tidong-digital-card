@@ -120,7 +120,7 @@ final class AiRestaurantAssistantService
                 '*', '×', 'x', 'X' => $a * $b,
                 '/', '÷' => $a / $b,
             };
-            $formatted = rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.');
+            $formatted = (rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.') ?: '0');
             return ['text' => 'उत्तर: '.$formatted, 'ai_available' => false, 'free_mode' => true];
         }
         if (preg_match('/^\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*%\\s*(?:of|का|की|के)\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*(?:\\?|कितना|कितना होगा)?\\s*$/iu', $query, $percent)) {
