@@ -15,7 +15,7 @@
             <label for="cashier-search" class="mb-2 block text-sm font-semibold text-slate-700">Find menu items</label>
             <input id="cashier-search" type="search" autocomplete="off" placeholder="Search by item name..."
                 class="mb-4 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100">
-            <div id="cashier-menu" class="grid max-h-[560px] grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3" aria-label="Menu items">
+            <div class="mb-4 rounded-xl border bg-indigo-50 p-3"><label for="cashier-voice-text" class="block font-semibold">Voice order draft / बोलकर ऑर्डर</label><p class="text-xs">Say or type: 2 Paneer, 3 Roti. Exact active menu names only. Confirm manually before ordering.</p><div class="mt-2 flex gap-2"><button id="cashier-voice-mic" type="button" class="rounded border bg-white px-3 py-2">🎙️ Speak</button><input id="cashier-voice-text" maxlength="400" class="min-w-0 flex-1 rounded border px-2" aria-label="Spoken order text"><button id="cashier-voice-parse" type="button" class="rounded bg-indigo-700 px-3 text-white">Draft</button></div><p id="cashier-voice-status" role="status" class="mt-2 text-xs">AI can make mistake. Voice never submits an order.</p></div><div id="cashier-menu" class="grid max-h-[560px] grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3" aria-label="Menu items">
                 @forelse ($cashierItems as $item)
                     <button type="button" data-cashier-item
                         data-id="{{ (int) $item->id }}"
@@ -157,6 +157,38 @@
             }
             draw();
         });
+    });
+    const voiceText = document.getElementById('cashier-voice-text');
+    const voiceStatus = document.getElementById('cashier-voice-status');
+    const voiceMic = document.getElementById('cashier-voice-mic');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { voiceMic.disabled = true; voiceMic.title = 'Type the order instead'; }
+    else voiceMic.addEventListener('click', () => {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'hi-IN';
+        recognition.onresult = event => { voiceText.value = event.results[0][0].transcript; voiceStatus.textContent = 'Speech captured. Prepare and review draft.'; };
+        recognition.onerror = () => { voiceStatus.textContent = 'Speech unavailable; type the order.'; };
+        recognition.start();
+    });
+    document.getElementById('cashier-voice-parse').addEventListener('click', () => {
+        const parts = voiceText.value.split(/[,;।]+/).map(x => x.trim()).filter(Boolean);
+        if (!parts.length || parts.length > 25) { voiceStatus.textContent = 'Enter 1 to 25 items.'; return; }
+        const draft = new Map();
+        const buttons = Array.from(menu.querySelectorAll('[data-cashier-item]'));
+        for (const part of parts) {
+            const m = part.match(/^(\\d{1,3})\\s+(.*)$/u);
+            if (!m || Number(m[1]) < 1 || Number(m[1]) > 100) { voiceStatus.textContent = 'Check quantity: ' + part; return; }
+            const found = buttons.filter(x => x.dataset.name.trim().toLocaleLowerCase() === m[2].trim().toLocaleLowerCase());
+            if (found.length !== 1) { voiceStatus.textContent = 'Exact menu match missing: ' + m[2]; return; }
+            const button = found[0], id = Number(button.dataset.id), price = Number(button.dataset.price);
+            const quantity = Number(m[1]) + (draft.get(id)?.quantity || 0);
+            if (!Number.isSafeInteger(id) || !Number.isSafeInteger(price) || price < 1 || quantity > 100) { voiceStatus.textContent = 'Invalid item or quantity'; return; }
+            draft.set(id, {id, price, quantity, name:button.dataset.name});
+        }
+        cart.clear();
+        for (const [id, item] of draft) cart.set(id, item);
+        draw();
+        voiceStatus.textContent = 'Draft ready. Verify table, quantities and total; submit manually.';
     });
     search.addEventListener('input', () => {
         const q = search.value.trim().toLocaleLowerCase();
