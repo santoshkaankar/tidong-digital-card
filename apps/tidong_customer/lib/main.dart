@@ -426,16 +426,20 @@ class _CustomerHomeState extends State<CustomerHome> {
                 icon: const Icon(Icons.person), label: const Text('Open Profile')),
             ])),
         if (tab == 4) _contactLinks(),
-        Expanded(child: Center(child: Padding(padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Expanded(child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const SizedBox(height: 8),
             Icon([Icons.home_outlined, Icons.search, Icons.shopping_cart_outlined,
-              Icons.receipt_long_outlined, Icons.person_outline][tab], size: 72),
-            const SizedBox(height: 16),
-            Text(titles[tab], style: Theme.of(context).textTheme.headlineMedium),
+              Icons.receipt_long_outlined, Icons.person_outline][tab], size: 56),
+            const SizedBox(height: 12),
+            Text(titles[tab], textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 12),
             const Text('TIDONG backend connection is pending. No live prices, orders or payments are shown.',
               textAlign: TextAlign.center),
-          ])))),
+          ],
+        )),
       ]),
       bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected: (i) => setState(() => tab = i),
         destinations: const [
