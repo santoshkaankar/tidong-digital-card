@@ -9,7 +9,7 @@ class CustomCatalogItemController extends Controller {
  private function branch(Request $request,int $branch) {
   $vendor=Vendor::where('user_id',$request->user()->id)->where('status','approved')->firstOrFail();
   $owned=DB::table('branches')->join('businesses','businesses.id','=','branches.business_id')
-    ->where('branches.id',$branch)->where('businesses.vendor_id',$vendor->id)
+    ->where('branches.id',$branch)->whereNull('branches.deleted_at')->whereNull('businesses.deleted_at')->where('businesses.vendor_id',$vendor->id)
     ->select('branches.id')->first();
   abort_unless($owned,404);
   return $vendor;
