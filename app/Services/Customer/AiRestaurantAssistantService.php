@@ -193,6 +193,22 @@ final class AiRestaurantAssistantService
                 'ai_available' => false, 'free_mode' => true,
             ];
         }
+        // Explain the underlying maths instead of treating every question as a lookup.
+        if (preg_match('/(gst|जीएसटी)/iu', $query)
+            && preg_match('/(include|included|inclusive|exclude|excluded|exclusive|इंक्लूड|इनक्लूड|एक्सक्लूड|सहित|बिना|समझा|फॉर्मूला|formula|difference|अंतर|फर्क|कैसे)/iu', $query)
+            && !preg_match('/[0-9]/u', $query)) {
+            return ['text' => "GST Included: दी गई कीमत में टैक्स पहले से शामिल होता है। बेस = कुल × 100 ÷ (100 + GST दर); टैक्स = कुल − बेस।\\nGST Excluded: दी गई कीमत बेस होती है। टैक्स = बेस × दर ÷ 100; कुल = बेस + टैक्स।\\nउदाहरण: 18% पर ₹1180 Included → बेस ₹1000, टैक्स ₹180। ₹1000 Excluded → कुल ₹1180। Included में GST दोबारा नहीं जोड़ते।", 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(percentage|प्रतिशत|percent|डिस्काउंट|छूट)/iu', $query)
+            && preg_match('/(formula|फॉर्मूला|कैसे|समझा|calculate|निकाल)/iu', $query)
+            && !preg_match('/[0-9]/u', $query)) {
+            return ['text' => 'प्रतिशत निकालने का नियम: हिस्सा = कुल × प्रतिशत ÷ 100। छूट की राशि = मूल कीमत × छूट% ÷ 100। नई कीमत = मूल कीमत − छूट। उदाहरण: ₹500 पर 10% छूट → ₹50 बचत, नई कीमत ₹450।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(औसत|average|avg)/iu', $query)
+            && preg_match('/(formula|फॉर्मूला|कैसे|समझा|meaning|मतलब)/iu', $query)
+            && !preg_match('/[0-9]/u', $query)) {
+            return ['text' => 'औसत = सभी संख्याओं का योग ÷ संख्याओं की गिनती। उदाहरण: 10, 20, 30 का योग 60 है; 3 संख्याएँ हैं, इसलिए औसत 20 है।', 'ai_available' => false, 'free_mode' => true];
+        }
         if (preg_match('/(रट्टू|तोते|एक ही जवाब|बार बार वही|बार-बार वही|repeat|repeating|रट लगा)/iu', $query)) {
             return ['text' => 'आप सही कह रहे हैं, एक ही जवाब बार-बार देना उपयोगी नहीं है। माफ कीजिए। आप जो पूछेंगे, उसी विषय पर सीधे जवाब देने की कोशिश करूँगी।', 'ai_available' => false, 'free_mode' => true];
         }
