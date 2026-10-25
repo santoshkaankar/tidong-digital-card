@@ -127,6 +127,51 @@ final class AiRestaurantAssistantService
             $value = (float) $percent[1] * (float) $percent[2] / 100;
             return ['text' => 'उत्तर: '.rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.'), 'ai_available' => false, 'free_mode' => true];
         }
+        // Free deterministic formula library: bounded numeric inputs only.
+        if (preg_match('/^\\s*(?:average|avg|औसत)\\s*(?:of|का|की|के|:)?\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?(?:\\s*[,،]\\s*[0-9]{1,8}(?:\\.[0-9]{1,3})?){1,19})\\s*\\??\\s*$/iu', $query, $average)) {
+            $values = array_map('floatval', preg_split('/\\s*[,،]\\s*/u', $average[1]));
+            $result = array_sum($values) / count($values);
+            return ['text' => 'औसत: '.(rtrim(rtrim(number_format($result, 4, '.', ''), '0'), '.') ?: '0'), 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/^\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*(?:%\\s*(?:discount|off|छूट)|प्रतिशत\\s*छूट)\\s*(?:on|of|पर|का)?\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*\\??\\s*$/iu', $query, $discount)) {
+            $rate = (float) $discount[1];
+            $price = (float) $discount[2];
+            if ($rate > 100) {
+                return ['text' => 'छूट 0 से 100 प्रतिशत के बीच होनी चाहिए।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $saved = $price * $rate / 100;
+            return ['text' => 'छूट: '.number_format($saved, 2, '.', '').' | छूट के बाद कीमत: '.number_format($price - $saved, 2, '.', ''), 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/^\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*%\\s*(?:gst|tax|जीएसटी)\\s*(?:on|of|पर|का)?\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*\\??\\s*$/iu', $query, $tax)) {
+            $rate = (float) $tax[1];
+            $base = (float) $tax[2];
+            if ($rate > 100) {
+                return ['text' => 'कृपया 0 से 100 के बीच टैक्स दर दें।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $amount = $base * $rate / 100;
+            return ['text' => 'टैक्स: '.number_format($amount, 2, '.', '').' | टैक्स सहित कुल: '.number_format($base + $amount, 2, '.', '').' (बेस कीमत पर टैक्स अतिरिक्त माना गया है)', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/^\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*(km|kilometers?|किमी|किलोमीटर|meters?|metres?|मीटर|kg|kilograms?|किलो|किलोग्राम|grams?|ग्राम|hours?|घंटे?|minutes?|मिनट)\\s*(?:to|in|से|में)\\s*(km|kilometers?|किमी|किलोमीटर|meters?|metres?|मीटर|kg|kilograms?|किलो|किलोग्राम|grams?|ग्राम|hours?|घंटे?|minutes?|मिनट)\\s*\\??\\s*$/iu', $query, $units)) {
+            $normalize = static function (string $unit): string {
+                return match (true) {
+                    (bool) preg_match('/^(km|kilometers?|किमी|किलोमीटर)$/iu', $unit) => 'km',
+                    (bool) preg_match('/^(meters?|metres?|मीटर)$/iu', $unit) => 'm',
+                    (bool) preg_match('/^(kg|kilograms?|किलो|किलोग्राम)$/iu', $unit) => 'kg',
+                    (bool) preg_match('/^(grams?|ग्राम)$/iu', $unit) => 'g',
+                    (bool) preg_match('/^(hours?|घंटे?)$/iu', $unit) => 'h',
+                    default => 'min',
+                };
+            };
+            $from = $normalize($units[2]);
+            $to = $normalize($units[3]);
+            $factors = ['km' => 1000, 'm' => 1, 'kg' => 1000, 'g' => 1, 'h' => 60, 'min' => 1];
+            $groups = ['km' => 'distance', 'm' => 'distance', 'kg' => 'weight', 'g' => 'weight', 'h' => 'time', 'min' => 'time'];
+            if ($groups[$from] !== $groups[$to]) {
+                return ['text' => 'इन दोनों इकाइयों के बीच रूपांतरण संभव नहीं है।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $result = (float) $units[1] * $factors[$from] / $factors[$to];
+            return ['text' => 'उत्तर: '.(rtrim(rtrim(number_format($result, 5, '.', ''), '0'), '.') ?: '0').' '.$to, 'ai_available' => false, 'free_mode' => true];
+        }
         if (preg_match('/(रट्टू|तोते|एक ही जवाब|बार बार वही|बार-बार वही|repeat|repeating|रट लगा)/iu', $query)) {
             return ['text' => 'आप सही कह रहे हैं, एक ही जवाब बार-बार देना उपयोगी नहीं है। माफ कीजिए। आप जो पूछेंगे, उसी विषय पर सीधे जवाब देने की कोशिश करूँगी।', 'ai_available' => false, 'free_mode' => true];
         }
