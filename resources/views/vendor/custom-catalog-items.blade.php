@@ -1,6 +1,4 @@
-@extends('layouts.vendor')
-@section('title','Custom Items')
-@section('content')
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Custom Items</title>@vite(['resources/css/app.css','resources/js/app.js'])</head><body class="bg-slate-100 text-slate-800">
 <div class="mx-auto max-w-5xl space-y-5 p-4">
  <h1 class="text-2xl font-bold">Outlet Custom Items</h1>
  <p class="text-sm text-slate-600">These items belong only to this outlet. They are not published to Global Masters.</p>
@@ -19,4 +17,4 @@
  @empty<tr><td colspan="3" class="p-4">No custom items yet.</td></tr>@endforelse
  </tbody></table></div>{{$items->links()}}
 </div>
-@endsection
+</body></html>
