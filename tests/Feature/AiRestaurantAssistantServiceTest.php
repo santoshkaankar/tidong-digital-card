@@ -145,6 +145,24 @@ class AiRestaurantAssistantServiceTest extends TestCase
         }
     }
 
+    public function test_free_ai_teaches_evergreen_math_concepts_without_paid_api(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'लाभ हानि का फॉर्मूला बताओ' => 'लाभ = बिक्री मूल्य',
+            'साधारण ब्याज क्या है' => 'साधारण ब्याज =',
+            'compound interest formula' => 'चक्रवृद्धि राशि',
+            'गति दूरी का फॉर्मूला' => 'दूरी = गति',
+            'आयत का क्षेत्रफल समझाओ' => 'लंबाई × चौड़ाई',
+            'अनुपात क्या है' => 'कुल 5 भाग',
+        ] as $input => $expected) {
+            $answer = $assistant->answer($input, []);
+            $this->assertStringContainsString($expected, $answer['text'], $input);
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
     public function test_free_ai_handles_small_talk_and_feedback_without_repeating_fallback(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
