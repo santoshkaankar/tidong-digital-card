@@ -138,3 +138,19 @@ require __DIR__.'/platform-operations.php';
 
 // TIDONG additive multi-module integration (no existing routes removed).
 require __DIR__.'/tidong_integrated_admin.php';
+
+// Global catalog masters are platform-managed; vendor creation requires a separate future grant.
+Route::middleware(['auth', EnsureSuperAdmin::class])
+    ->prefix('global-masters')->name('admin.global-masters.')
+    ->controller(\App\Http\Controllers\Admin\GlobalCatalogMasterController::class)
+    ->group(function () {
+        Route::get('/{type}', 'index')->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('index');
+        Route::post('/{type}', 'store')->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('store');
+        Route::put('/{type}/{record}', 'update')->where('type','brands|item_categories|units|variant_attributes|variant_values')->whereNumber('record')->name('update');
+    });
+
+Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('global-master-permissions')
+    ->name('admin.global-master-permissions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\VendorGlobalCatalogPermissionController::class,'index'])->name('index');
+        Route::put('/{vendor}', [\App\Http\Controllers\Admin\VendorGlobalCatalogPermissionController::class,'update'])->whereNumber('vendor')->name('update');
+    });

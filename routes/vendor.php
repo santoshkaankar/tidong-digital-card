@@ -53,3 +53,17 @@ require __DIR__.'/vendor-delivery.php';
 
 // TIDONG additive multi-module integration (no existing routes removed).
 require __DIR__.'/tidong_integrated_vendor.php';
+
+Route::middleware(['auth', EnsureVendorAccount::class])->prefix('branches/{branch}/custom-items')
+    ->whereNumber('branch')->name('vendor.custom-items.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Vendor\CustomCatalogItemController::class,'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Vendor\CustomCatalogItemController::class,'store'])->name('store');
+    });
+
+Route::middleware(['auth', EnsureVendorAccount::class])->prefix('global-catalog')
+    ->name('vendor.global-catalog.')->group(function () {
+        Route::get('/{type}', [\App\Http\Controllers\Vendor\VendorGlobalMasterController::class,'index'])
+          ->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('index');
+        Route::post('/{type}', [\App\Http\Controllers\Vendor\VendorGlobalMasterController::class,'store'])
+          ->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('store');
+    });
