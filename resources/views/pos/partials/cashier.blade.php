@@ -6,16 +6,16 @@
     <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
             <h2 id="cashier-heading" class="text-xl font-bold text-slate-900">Cashier POS</h2>
-            <p class="mt-1 text-sm text-slate-500">Tap an item to add it to the order. The server confirms prices when you place it.</p>
+            <p class="mt-1 text-sm text-slate-500">1. बोलें या आइटम चुनें → 2. टेबल चुनें → 3. ऑर्डर जाँचकर कन्फर्म करें। Final prices are verified by TIDONG.</p>
         </div>
         <a href="{{ route('pos.menu-library.index', $branchRecord->id) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">Manage Menu</a>
     </div>
     <div class="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
         <div class="min-w-0">
-            <label for="cashier-search" class="mb-2 block text-sm font-semibold text-slate-700">Find menu items</label>
+            <label for="cashier-search" class="mb-2 block text-sm font-semibold text-slate-700">या मेन्यू से आइटम चुनें</label>
             <input id="cashier-search" type="search" autocomplete="off" placeholder="Search by item name..."
                 class="mb-4 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100">
-            <div class="mb-4 rounded-xl border bg-indigo-50 p-3"><label for="cashier-voice-text" class="block font-semibold">Voice order draft / बोलकर ऑर्डर</label><p class="text-xs">Say or type: 2 Paneer, 3 Roti. Exact active menu names only. Confirm manually before ordering.</p><div class="mt-2 flex gap-2"><button id="cashier-voice-mic" type="button" class="rounded border bg-white px-3 py-2">🎙️ Speak</button><input id="cashier-voice-text" maxlength="400" class="min-w-0 flex-1 rounded border px-2" aria-label="Spoken order text"><button id="cashier-voice-parse" type="button" class="rounded bg-indigo-700 px-3 text-white">Draft</button></div><p id="cashier-voice-status" role="status" class="mt-2 text-xs">AI can make mistake. Voice never submits an order.</p></div><div id="cashier-menu" class="grid max-h-[560px] grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3" aria-label="Menu items">
+            <div class="mb-4 rounded-xl border bg-indigo-50 p-3"><label for="cashier-voice-text" class="block font-semibold">Step 1 · बोलकर ऑर्डर / Voice Order</label><p class="text-xs">Say or type: 2 Paneer, 3 Roti. Exact active menu names only. Confirm manually before ordering.</p><div class="mt-2 flex gap-2"><button id="cashier-voice-mic" type="button" class="rounded border bg-white px-3 py-2">🎙️ बोलें</button><input id="cashier-voice-text" maxlength="400" class="min-w-0 flex-1 rounded border px-2" aria-label="Spoken order text"><button id="cashier-voice-parse" type="button" class="rounded bg-indigo-700 px-3 text-white">ऑर्डर तैयार करें</button></div><p id="cashier-voice-status" role="status" class="mt-2 text-xs">AI can make mistake. Voice never submits an order.</p></div><div id="cashier-menu" class="grid max-h-[560px] grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3" aria-label="Menu items">
                 @forelse ($cashierItems as $item)
                     <button type="button" data-cashier-item
                         data-id="{{ (int) $item->id }}"
@@ -48,7 +48,7 @@
                 @csrf
                 <div id="cashier-hidden-items"></div>
                 <div>
-                    <label for="cashier-table" class="mb-1 block text-sm font-semibold">Order Type / Table</label>
+                    <label for="cashier-table" class="mb-1 block text-sm font-semibold">Step 2 · टेबल चुनें / Counter</label>
                     <select id="cashier-table" name="dining_table_id" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3">
                         <option value="">Counter / Takeaway</option>
                         @foreach ($diningTables as $diningTable)
@@ -62,7 +62,7 @@
                 </div>
                 <button id="cashier-place" type="submit" disabled
                     class="w-full rounded-xl bg-indigo-700 px-4 py-3 font-bold text-white hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50">
-                    Place Counter Order
+                    Step 3 · Confirm & Place Order
                 </button>
                 <p class="text-xs text-slate-600">The existing order workflow records new orders as <strong>unpaid</strong>. A bill request or a button click does not confirm a payment.</p>
             </form>
@@ -188,7 +188,7 @@
         cart.clear();
         for (const [id, item] of draft) cart.set(id, item);
         draw();
-        voiceStatus.textContent = 'Draft ready. Verify table, quantities and total; submit manually.';
+        voiceStatus.textContent = 'ऑर्डर तैयार है। टेबल, आइटम, मात्रा और कुल राशि जाँचें; फिर Step 3 पर कन्फर्म करें।';
     });
     search.addEventListener('input', () => {
         const q = search.value.trim().toLocaleLowerCase();
