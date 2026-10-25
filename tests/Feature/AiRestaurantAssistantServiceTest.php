@@ -68,11 +68,12 @@ class AiRestaurantAssistantServiceTest extends TestCase
         }
     }
 
-    public function test_unknown_question_asks_clarification_without_irrelevant_service_list(): void
+    public function test_unknown_question_has_topic_specific_honest_fallback(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
         $answer = app(AiRestaurantAssistantService::class)->answer('यह व्यवस्था कैसे मिलेगी', []);
-        $this->assertStringContainsString('सवाल पूरी तरह समझ नहीं', $answer['text']);
+        $this->assertStringContainsString('यह व्यवस्था कैसे मिलेगी', $answer['text']);
+        $this->assertStringContainsString('सत्यापित उत्तर', $answer['text']);
         $this->assertStringNotContainsString('रेस्टोरेंट, ग्रॉसरी, प्रिंटिंग', $answer['text']);
     }
 
