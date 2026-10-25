@@ -48,6 +48,7 @@ class GlobalCatalogMasterController extends Controller {
         if ($type==='variant_values') $rules['parent_id']=['required','integer',Rule::exists('global_catalog_variant_attributes','id')];
         if ($type==='item_categories') $rules['parent_id']=['nullable','integer',Rule::exists($table,'id')];
         if ($type==='variant_attributes') $rules['code']=['required','string','max:50'];
+        if ($type==='brands' || $type==='item_categories') $rules['image']=['nullable','image','mimes:jpeg,png,webp','max:2048'];
         $data=$request->validate($rules);
         $parent=in_array($type,['item_categories','variant_values'],true)?($data['parent_id']??null):null;
         $exists=DB::table($table)->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($data['name']))])
@@ -67,7 +68,8 @@ class GlobalCatalogMasterController extends Controller {
                 $cursor=$ancestor->parent_id;
             }
         }
-        DB::table($table)->insert(['name'=>trim($data['name']),'code'=>$data['code']??null,
+        $imagePath=$request->hasFile('image') ? $request->file('image')->store('global-masters','public') : null;
+        DB::table($table)->insert(['image_path'=>$imagePath,'name'=>trim($data['name']),'code'=>$data['code']??null,
             'owner_name'=>$type==='brands'?($data['owner_name']??null):null,'parent_id'=>$parent,
             'is_active'=>$request->boolean('is_active',true),'created_by_user_id'=>$request->user()->id,
             'created_at'=>now(),'updated_at'=>now()]);
