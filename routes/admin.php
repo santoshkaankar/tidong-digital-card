@@ -148,3 +148,9 @@ Route::middleware(['auth', EnsureSuperAdmin::class])
         Route::post('/{type}', 'store')->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('store');
         Route::put('/{type}/{record}', 'update')->where('type','brands|item_categories|units|variant_attributes|variant_values')->whereNumber('record')->name('update');
     });
+
+Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('global-master-permissions')
+    ->name('admin.global-master-permissions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\VendorGlobalCatalogPermissionController::class,'index'])->name('index');
+        Route::put('/{vendor}', [\App\Http\Controllers\Admin\VendorGlobalCatalogPermissionController::class,'update'])->whereNumber('vendor')->name('update');
+    });
