@@ -89,6 +89,25 @@ class AiRestaurantAssistantServiceTest extends TestCase
         }
     }
 
+    public function test_free_ai_formula_library_handles_average_discount_gst_and_units(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'average of 10, 20, 30' => 'औसत: 20',
+            '10% discount on 500' => 'छूट के बाद कीमत: 450.00',
+            '18% gst on 1000' => 'टैक्स सहित कुल: 1180.00',
+            '2 km to meters' => 'उत्तर: 2000 m',
+            '3 kg to grams' => 'उत्तर: 3000 g',
+            '2 hours to minutes' => 'उत्तर: 120 min',
+            '3 kg to meters' => 'रूपांतरण संभव नहीं',
+        ] as $input => $expected) {
+            $answer = $assistant->answer($input, []);
+            $this->assertStringContainsString($expected, $answer['text'], $input);
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
     public function test_free_ai_handles_small_talk_and_feedback_without_repeating_fallback(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
