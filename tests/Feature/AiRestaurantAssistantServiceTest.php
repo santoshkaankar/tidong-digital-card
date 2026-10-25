@@ -128,6 +128,23 @@ class AiRestaurantAssistantServiceTest extends TestCase
         }
     }
 
+    public function test_free_ai_explains_formulas_instead_of_only_calculating(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'GST include exclude का फर्क समझाओ' => ['GST Included', 'GST Excluded', 'दोबारा नहीं जोड़ते'],
+            'प्रतिशत का फॉर्मूला समझाओ' => ['प्रतिशत', 'छूट की राशि'],
+            'औसत कैसे निकालते हैं' => ['औसत =', 'संख्याओं की गिनती'],
+        ] as $input => $parts) {
+            $answer = $assistant->answer($input, []);
+            foreach ($parts as $part) {
+                $this->assertStringContainsString($part, $answer['text'], $input);
+            }
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
     public function test_free_ai_handles_small_talk_and_feedback_without_repeating_fallback(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
