@@ -14,11 +14,11 @@ class TidongApp extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFFB91C1C),
-        primary: const Color(0xFFB91C1C),
-        secondary: const Color(0xFF881337),
+        seedColor: const Color(0xFFF4A6B5),
+        primary: const Color(0xFFD94B69),
+        secondary: const Color(0xFFE78DA2),
       ),
-      scaffoldBackgroundColor: const Color(0xFFFFFAFA),
+      scaffoldBackgroundColor: const Color(0xFFFFF5F7),
       useMaterial3: true,
     ),
     home: const CustomerHome(),
