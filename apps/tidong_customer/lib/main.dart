@@ -77,7 +77,7 @@ class _ConsentGateState extends State<ConsentGate> {
   @override
   Widget build(BuildContext context) {
     if (loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (completed) return const CustomerHome();
+    if (completed) return const TidongWebsitePage(path: '/customer', title: 'TIDONG Customer');
     return Scaffold(
       appBar: AppBar(title: const Text('Welcome to TIDONG')),
       body: SafeArea(child: Center(child: ConstrainedBox(
