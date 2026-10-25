@@ -172,6 +172,27 @@ final class AiRestaurantAssistantService
             $result = (float) $units[1] * $factors[$from] / $factors[$to];
             return ['text' => 'उत्तर: '.(rtrim(rtrim(number_format($result, 5, '.', ''), '0'), '.') ?: '0').' '.$to, 'ai_available' => false, 'free_mode' => true];
         }
+        // GST inclusive: quoted total already contains GST; extract the embedded tax.
+        // GST exclusive: quoted base has no GST; add tax to calculate final total.
+        if (preg_match('/^\\s*(?:gst|जीएसटी)\\s*(?:include|included|inclusive|incl|इंक्लूड|इनक्लूड|सहित|समेत|exclude|excluded|exclusive|excl|एक्सक्लूड|एक्सक्लूसिव|बिना|अलग)\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*(?:at|@|पर)?\\s*([0-9]{1,3}(?:\\.[0-9]{1,3})?)\\s*%?\\s*$/iu', $query, $gstMode)) {
+            $inclusive = (bool) preg_match('/include|included|inclusive|incl|इंक्लूड|इनक्लूड|सहित|समेत/iu', $gstMode[0]);
+            $amount = (float) $gstMode[1];
+            $rate = (float) $gstMode[2];
+            if ($rate > 100) {
+                return ['text' => 'कृपया 0 से 100 के बीच GST दर दें।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $base = $inclusive ? $amount * 100 / (100 + $rate) : $amount;
+            $total = $inclusive ? $amount : $amount * (100 + $rate) / 100;
+            $tax = $total - $base;
+            return [
+                'text' => ($inclusive ? 'GST Included (कीमत में GST शामिल)' : 'GST Excluded (कीमत पर GST अलग से)')
+                    .' | बेस कीमत: '.number_format($base, 2, '.', '')
+                    .' | GST: '.number_format($tax, 2, '.', '')
+                    .' | कुल कीमत: '.number_format($total, 2, '.', '')
+                    .' (राउंडिंग 2 दशमलव तक)',
+                'ai_available' => false, 'free_mode' => true,
+            ];
+        }
         if (preg_match('/(रट्टू|तोते|एक ही जवाब|बार बार वही|बार-बार वही|repeat|repeating|रट लगा)/iu', $query)) {
             return ['text' => 'आप सही कह रहे हैं, एक ही जवाब बार-बार देना उपयोगी नहीं है। माफ कीजिए। आप जो पूछेंगे, उसी विषय पर सीधे जवाब देने की कोशिश करूँगी।', 'ai_available' => false, 'free_mode' => true];
         }
