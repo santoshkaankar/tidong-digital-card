@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 class VendorGlobalCatalogPermissionController extends Controller {
  public function index() {
   $vendors=DB::table('vendors')->leftJoin('vendor_global_catalog_permissions as grants','grants.vendor_id','=','vendors.id')
-   ->select('vendors.id','vendors.name','vendors.status','grants.can_create','grants.can_edit')
+   ->select('vendors.id','vendors.display_name','vendors.status','grants.can_create','grants.can_edit')
    ->orderBy('vendors.id')->paginate(30);
   return view('admin.vendor-global-catalog-permissions',compact('vendors'));
  }
