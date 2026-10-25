@@ -77,7 +77,7 @@ class _ConsentGateState extends State<ConsentGate> {
   @override
   Widget build(BuildContext context) {
     if (loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (completed) return const CustomerHome();
+    if (completed) return const TidongWebsitePage(path: '/customer', title: 'TIDONG Customer');
     return Scaffold(
       appBar: AppBar(title: const Text('Welcome to TIDONG')),
       body: SafeArea(child: Center(child: ConstrainedBox(
@@ -128,6 +128,14 @@ class _TidongWebsitePageState extends State<TidongWebsitePage> {
   bool loading = true;
   String? error;
 
+  Future<void> _handleBack() async {
+    if (await controller.canGoBack()) {
+      await controller.goBack();
+    } else if (mounted && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -158,7 +166,12 @@ class _TidongWebsitePageState extends State<TidongWebsitePage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => PopScope(
+    canPop: false,
+    onPopInvokedWithResult: (didPop, result) {
+      if (!didPop) _handleBack();
+    },
+    child: Scaffold(
     appBar: AppBar(title: Text(widget.title), actions: [
       IconButton(tooltip: 'Refresh', onPressed: () => controller.reload(),
         icon: const Icon(Icons.refresh)),
@@ -174,7 +187,7 @@ class _TidongWebsitePageState extends State<TidongWebsitePage> {
         ]),
       ))),
     ]),
-  );
+  ));
 }
 
 class TidongQrScanner extends StatefulWidget {
