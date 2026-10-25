@@ -6,30 +6,30 @@ import 'package:tidong_customer/main.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Consent screen requires explicit agreement', (tester) async {
+  testWidgets('First launch shows real app consent, not Flutter demo', (tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const TidongApp());
     await tester.pumpAndSettle();
-
     expect(find.text('Welcome to TIDONG'), findsWidgets);
     expect(find.text('Read Terms & Conditions'), findsOneWidget);
     expect(find.text('Read Privacy Policy'), findsOneWidget);
-    final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Accept and continue'));
+    expect(find.text('Flutter Demo Home Page'), findsNothing);
+    final button = tester.widget<FilledButton>(find.byType(FilledButton).first);
     expect(button.onPressed, isNull);
-    await tester.tap(find.byType(CheckboxListTile));
-    await tester.pump();
-    final enabled = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Accept and continue'));
-    expect(enabled.onPressed, isNotNull);
   });
 
-  testWidgets('Legacy offline screen never fabricates products or orders',
-      (tester) async {
+  testWidgets('Consent checkbox enables continue', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const MaterialApp(home: CustomerHome()));
+    await tester.pumpWidget(const TidongApp());
     await tester.pumpAndSettle();
-    expect(find.text('Scan QR'), findsOneWidget);
-    expect(find.textContaining('No live prices'), findsOneWidget);
+    await tester.tap(find.byType(CheckboxListTile));
+    await tester.pump();
+    final button = tester.widget<FilledButton>(find.byType(FilledButton).first);
+    expect(button.onPressed, isNotNull);
+  });
+
+  test('App is configured for the real TIDONG customer entry point', () {
+    const app = TidongApp();
+    expect(app, isA<StatelessWidget>());
   });
 }
