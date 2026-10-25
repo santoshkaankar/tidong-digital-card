@@ -162,7 +162,19 @@ final class AiRestaurantAssistantService
             return ['text' => 'ऑर्डर के लिए Explore में स्टोर चुनें और Checkout करें। यह चैट भुगतान नहीं करती।', 'ai_available' => false, 'free_mode' => true];
         }
         if ($restaurants === []) {
-            return ['text' => 'मैं आपका सवाल पूरी तरह समझ नहीं पाई। कृपया थोड़ा और बताइए कि आपको क्या जानकारी या सहायता चाहिए। मैं उसी विषय पर जवाब दूँगी।', 'ai_available' => false, 'free_mode' => true];
+            $question = trim(preg_replace('/\\s+/u', ' ', $message));
+            $question = mb_substr($question, 0, 110);
+            // An unmatched question is not an invitation to pretend we understood it.
+            // Echo the actual topic and state the free assistant's scope, instead of
+            // replying with the identical "I did not understand" on every turn.
+            $text = 'आपने पूछा: “'.$question.'”। ';
+            if (preg_match('/[?？]|क्या|क्यों|कैसे|कब|कहाँ|कौन|कितना|what|why|how|when|where|who/iu', $question)) {
+                $text .= 'इस सवाल का सत्यापित उत्तर अभी मेरे उपलब्ध TIDONG सहायता डेटा में नहीं है। मैं अनुमान लगाकर गलत जानकारी नहीं दूँगी।';
+            } else {
+                $text .= 'इस विषय की पुष्टि मेरे उपलब्ध TIDONG सहायता डेटा से नहीं हो रही है।';
+            }
+            $text .= ' आप TIDONG की सेवाओं, ऑर्डर, डिलीवरी या अकाउंट के बारे में पूछ सकते हैं।';
+            return ['text' => $text, 'ai_available' => false, 'free_mode' => true];
         }
         $matches = [];
         foreach ($restaurants as $restaurant) {
