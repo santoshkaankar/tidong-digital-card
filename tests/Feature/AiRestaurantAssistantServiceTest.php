@@ -52,6 +52,24 @@ class AiRestaurantAssistantServiceTest extends TestCase
         );
     }
 
+    public function test_free_ai_recognizes_common_multilingual_time_greetings(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'गुड मॉर्निंग' => 'गुड मॉर्निंग!',
+            'good morning' => 'गुड मॉर्निंग!',
+            'सुप्रभात' => 'गुड मॉर्निंग!',
+            'Good evening!' => 'गुड इवनिंग!',
+            'गुड नाइट' => 'शुभ रात्रि!',
+        ] as $input => $expected) {
+            $answer = $assistant->answer($input, []);
+            $this->assertStringContainsString($expected, $answer['text']);
+            $this->assertStringNotContainsString('समझ नहीं पाई', $answer['text']);
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
     public function test_free_ai_handles_small_talk_and_feedback_without_repeating_fallback(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
