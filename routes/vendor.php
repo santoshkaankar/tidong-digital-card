@@ -59,3 +59,11 @@ Route::middleware(['auth', EnsureVendorAccount::class])->prefix('branches/{branc
         Route::get('/', [\App\Http\Controllers\Vendor\CustomCatalogItemController::class,'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\Vendor\CustomCatalogItemController::class,'store'])->name('store');
     });
+
+Route::middleware(['auth', EnsureVendorAccount::class])->prefix('global-catalog')
+    ->name('vendor.global-catalog.')->group(function () {
+        Route::get('/{type}', [\App\Http\Controllers\Vendor\VendorGlobalMasterController::class,'index'])
+          ->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('index');
+        Route::post('/{type}', [\App\Http\Controllers\Vendor\VendorGlobalMasterController::class,'store'])
+          ->where('type','brands|item_categories|units|variant_attributes|variant_values')->name('store');
+    });
