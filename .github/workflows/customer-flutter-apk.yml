@@ -15,6 +15,7 @@ jobs:
         working-directory: apps/tidong_customer
         run: |
           flutter create --platforms android --project-name tidong_customer --org com.tidong .
+          python3 scripts/configure_android.py
       - name: Resolve dependencies
         working-directory: apps/tidong_customer
         run: flutter pub get
