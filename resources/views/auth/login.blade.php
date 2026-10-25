@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TIDONG | Sign In</title>
     @include('auth.partials.styles')
+    <style>
+      .tidong-login-logo { display:inline-flex; align-items:center; justify-content:center; max-width:100%; width:220px; min-height:56px; margin:0 auto 20px; padding:6px; }
+      .tidong-login-logo img { display:block; width:auto; max-width:100%; height:auto; max-height:64px; object-fit:contain; }
+      @media (max-width:480px) { .tidong-login-logo { width:180px; } .tidong-login-logo img { max-height:52px; } }
+    </style>
 </head>
 <body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
 
     <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-lg sm:p-8">
         <div class="mb-6 text-center">
-            <a href="{{ url('/') }}" class="mb-5 inline-flex items-center justify-center rounded-lg bg-white p-2" aria-label="TIDONG home"><img src="{{ asset('assets/tidong-full.jpeg') }}" class="h-12 w-auto max-w-full object-contain" alt="TIDONG"></a>
+            <a href="{{ url('/') }}" class="tidong-login-logo" aria-label="TIDONG home"><img src="{{ asset('assets/tidong-full.jpeg') }}" class="tidong-login-logo-image" alt="TIDONG"></a>
             <h1 class="text-3xl font-bold text-slate-800">Welcome Back</h1>
             <p class="mt-2 text-sm text-slate-500">
                 Sign in to your TIDONG account
