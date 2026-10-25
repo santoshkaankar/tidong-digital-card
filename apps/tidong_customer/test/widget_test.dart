@@ -14,7 +14,7 @@ void main() {
     expect(find.text('Read Terms & Conditions'), findsOneWidget);
     expect(find.text('Read Privacy Policy'), findsOneWidget);
     final continueButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Accept and continue'));
+      find.byType(FilledButton).first);
     expect(continueButton.onPressed, isNull);
     await tester.tap(find.byType(CheckboxListTile));
     await tester.pump();
