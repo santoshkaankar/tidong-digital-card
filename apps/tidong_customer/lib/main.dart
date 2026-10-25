@@ -289,6 +289,8 @@ class _CustomerHomeState extends State<CustomerHome> {
             icon: const Icon(Icons.alternate_email), label: const Text('X')),
           TextButton.icon(onPressed: () => _openContact(Uri.parse('https://www.instagram.com/tidong.in/')),
             icon: const Icon(Icons.camera_alt_outlined), label: const Text('Instagram')),
+          TextButton.icon(onPressed: () => _openContact(Uri.parse('mailto:care@tidong.in')),
+            icon: const Icon(Icons.support_agent), label: const Text('Customer Care')),
           TextButton.icon(onPressed: () => _openContact(Uri.parse('mailto:tidongindia@gmail.com')),
             icon: const Icon(Icons.email_outlined), label: const Text('Email')),
           TextButton.icon(onPressed: () => _openContact(Uri.parse('https://wa.me/919634759912')),
