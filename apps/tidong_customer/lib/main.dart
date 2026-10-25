@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const TidongApp());
@@ -54,6 +55,15 @@ class _ConsentGateState extends State<ConsentGate> {
     });
   }
 
+  Future<void> _openPolicy(String path) async {
+    final uri = Uri.https('tidong.in', path);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open policy page. Please try again.')),
+      );
+    }
+  }
+
   Future<void> _continue() async {
     if (!accepted) return;
     final prefs = await SharedPreferences.getInstance();
@@ -79,6 +89,13 @@ class _ConsentGateState extends State<ConsentGate> {
           const Text('Before continuing, please review the TIDONG Terms & Conditions and Privacy Policy on tidong.in. Your consent is required to use this app.'),
           const SizedBox(height: 12),
           const Text('Location is optional and requested only when you use location features. Camera and microphone permissions are requested when using scanning or voice features.'),
+          const SizedBox(height: 12),
+          Wrap(spacing: 8, children: [
+            TextButton(onPressed: () => _openPolicy('/terms-and-conditions'),
+              child: const Text('Read Terms & Conditions')),
+            TextButton(onPressed: () => _openPolicy('/privacy-overview'),
+              child: const Text('Read Privacy Policy')),
+          ]),
           const SizedBox(height: 20),
           CheckboxListTile(
             value: accepted,
