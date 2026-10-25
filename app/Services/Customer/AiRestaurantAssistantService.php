@@ -105,6 +105,28 @@ final class AiRestaurantAssistantService
         if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
             return ['text' => 'नमस्ते! बताइए, मैं आपकी किस काम में सहायता कर सकती हूँ?', 'ai_available' => false, 'free_mode' => true];
         }
+        // Safe deterministic maths: no eval(), no external API, no invented facts.
+        // Bound operands to keep calculations finite and predictable.
+        if (preg_match('/^\\s*(?:what is|calculate|solve|कितना होगा|हल करो|बताओ)?\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*([+*×xX÷\\/\\-])\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*(?:=|\\?|कितना|कितना होगा)?\\s*$/iu', $query, $math)) {
+            $a = (float) $math[1];
+            $b = (float) $math[3];
+            $operator = $math[2];
+            if (($operator === '/' || $operator === '÷') && $b == 0.0) {
+                return ['text' => 'शून्य से भाग नहीं किया जा सकता।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $value = match ($operator) {
+                '+' => $a + $b,
+                '-' => $a - $b,
+                '*', '×', 'x', 'X' => $a * $b,
+                '/', '÷' => $a / $b,
+            };
+            $formatted = rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.');
+            return ['text' => 'उत्तर: '.$formatted, 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/^\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*%\\s*(?:of|का|की|के)\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*(?:\\?|कितना|कितना होगा)?\\s*$/iu', $query, $percent)) {
+            $value = (float) $percent[1] * (float) $percent[2] / 100;
+            return ['text' => 'उत्तर: '.rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.'), 'ai_available' => false, 'free_mode' => true];
+        }
         if (preg_match('/(रट्टू|तोते|एक ही जवाब|बार बार वही|बार-बार वही|repeat|repeating|रट लगा)/iu', $query)) {
             return ['text' => 'आप सही कह रहे हैं, एक ही जवाब बार-बार देना उपयोगी नहीं है। माफ कीजिए। आप जो पूछेंगे, उसी विषय पर सीधे जवाब देने की कोशिश करूँगी।', 'ai_available' => false, 'free_mode' => true];
         }
