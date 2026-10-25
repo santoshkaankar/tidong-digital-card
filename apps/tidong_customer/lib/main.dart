@@ -266,6 +266,38 @@ class _CustomerHomeState extends State<CustomerHome> {
     }
   }
 
+  Future<void> _openContact(Uri uri) async {
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open link on this device.')),
+      );
+    }
+  }
+
+  Widget _contactLinks() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Card(child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Connect with TIDONG', style: Theme.of(context).textTheme.titleMedium),
+        Wrap(spacing: 4, runSpacing: 4, children: [
+          TextButton.icon(onPressed: () => _openContact(Uri.parse('https://www.youtube.com/@tidongin')),
+            icon: const Icon(Icons.play_circle_outline), label: const Text('YouTube')),
+          TextButton.icon(onPressed: () => _openContact(Uri.parse('https://www.facebook.com/profile.php?id=61575563442650')),
+            icon: const Icon(Icons.people_outline), label: const Text('Facebook')),
+          TextButton.icon(onPressed: () => _openContact(Uri.parse('https://x.com/TidongIndia')),
+            icon: const Icon(Icons.alternate_email), label: const Text('X')),
+          TextButton.icon(onPressed: () => _openContact(Uri.parse('https://www.instagram.com/tidong.in/')),
+            icon: const Icon(Icons.camera_alt_outlined), label: const Text('Instagram')),
+          TextButton.icon(onPressed: () => _openContact(Uri.parse('mailto:tidongindia@gmail.com')),
+            icon: const Icon(Icons.email_outlined), label: const Text('Email')),
+          TextButton.icon(onPressed: () => _openContact(Uri.parse('https://wa.me/919634759912')),
+            icon: const Icon(Icons.chat_outlined), label: const Text('WhatsApp')),
+        ]),
+      ]),
+    )),
+  );
+
   @override
   void dispose() {
     addressInput.dispose();
@@ -301,6 +333,7 @@ class _CustomerHomeState extends State<CustomerHome> {
               icon: const Icon(Icons.auto_awesome), label: const Text('TIDONG AI'))),
           ]),
         ),
+        if (tab == 4) _contactLinks(),
         Expanded(child: Center(child: Padding(padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Icon([Icons.home_outlined, Icons.search, Icons.shopping_cart_outlined,
