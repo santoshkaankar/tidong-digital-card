@@ -52,6 +52,117 @@ class AiRestaurantAssistantServiceTest extends TestCase
         );
     }
 
+    public function test_free_ai_recognizes_common_multilingual_time_greetings(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'गुड मॉर्निंग' => 'गुड मॉर्निंग!',
+            'good morning' => 'गुड मॉर्निंग!',
+            'सुप्रभात' => 'गुड मॉर्निंग!',
+            'Good evening!' => 'गुड इवनिंग!',
+            'गुड नाइट' => 'शुभ रात्रि!',
+        ] as $input => $expected) {
+            $answer = $assistant->answer($input, []);
+            $this->assertStringContainsString($expected, $answer['text']);
+            $this->assertStringNotContainsString('समझ नहीं पाई', $answer['text']);
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
+    public function test_free_ai_answers_basic_arithmetic_and_percentage_without_provider(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            '2 + 3' => 'उत्तर: 5',
+            '12 * 4' => 'उत्तर: 48',
+            '20 / 4' => 'उत्तर: 5',
+            '0 + 0' => 'उत्तर: 0',
+            '25% of 200' => 'उत्तर: 50',
+            '10% का 350' => 'उत्तर: 35',
+            '7 / 0' => 'शून्य से भाग नहीं किया जा सकता',
+        ] as $input => $expected) {
+            $answer = $assistant->answer($input, []);
+            $this->assertStringContainsString($expected, $answer['text'], $input);
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
+    public function test_free_ai_formula_library_handles_average_discount_gst_and_units(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'average of 10, 20, 30' => 'औसत: 20',
+            '10% discount on 500' => 'छूट के बाद कीमत: 450.00',
+            '18% gst on 1000' => 'टैक्स सहित कुल: 1180.00',
+            '2 km to meters' => 'उत्तर: 2000 m',
+            '3 kg to grams' => 'उत्तर: 3000 g',
+            '2 hours to minutes' => 'उत्तर: 120 min',
+            '3 kg to meters' => 'रूपांतरण संभव नहीं',
+        ] as $input => $expected) {
+            $answer = $assistant->answer($input, []);
+            $this->assertStringContainsString($expected, $answer['text'], $input);
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
+    public function test_free_ai_distinguishes_gst_included_and_excluded(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'gst include 1180 18%' => ['GST Included', 'बेस कीमत: 1000.00', 'GST: 180.00', 'कुल कीमत: 1180.00'],
+            'gst exclude 1000 18%' => ['GST Excluded', 'बेस कीमत: 1000.00', 'GST: 180.00', 'कुल कीमत: 1180.00'],
+            'जीएसटी सहित 112 12%' => ['GST Included', 'बेस कीमत: 100.00', 'GST: 12.00'],
+            'जीएसटी बिना 100 12%' => ['GST Excluded', 'GST: 12.00', 'कुल कीमत: 112.00'],
+            'gst include 100 0%' => ['GST: 0.00', 'कुल कीमत: 100.00'],
+            'gst exclude 100 101%' => ['0 से 100 के बीच GST दर'],
+        ] as $input => $parts) {
+            $answer = $assistant->answer($input, []);
+            foreach ($parts as $part) {
+                $this->assertStringContainsString($part, $answer['text'], $input);
+            }
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
+    public function test_free_ai_explains_formulas_instead_of_only_calculating(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'GST include exclude का फर्क समझाओ' => ['GST Included', 'GST Excluded', 'दोबारा नहीं जोड़ते'],
+            'प्रतिशत का फॉर्मूला समझाओ' => ['प्रतिशत', 'छूट की राशि'],
+            'औसत कैसे निकालते हैं' => ['औसत =', 'संख्याओं की गिनती'],
+        ] as $input => $parts) {
+            $answer = $assistant->answer($input, []);
+            foreach ($parts as $part) {
+                $this->assertStringContainsString($part, $answer['text'], $input);
+            }
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
+    public function test_free_ai_teaches_evergreen_math_concepts_without_paid_api(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'लाभ हानि का फॉर्मूला बताओ' => 'लाभ = बिक्री मूल्य',
+            'साधारण ब्याज क्या है' => 'साधारण ब्याज =',
+            'compound interest formula' => 'चक्रवृद्धि राशि',
+            'गति दूरी का फॉर्मूला' => 'दूरी = गति',
+            'आयत का क्षेत्रफल समझाओ' => 'लंबाई × चौड़ाई',
+            'अनुपात क्या है' => 'कुल 5 भाग',
+        ] as $input => $expected) {
+            $answer = $assistant->answer($input, []);
+            $this->assertStringContainsString($expected, $answer['text'], $input);
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
     public function test_free_ai_handles_small_talk_and_feedback_without_repeating_fallback(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);

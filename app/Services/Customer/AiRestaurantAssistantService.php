@@ -95,8 +95,154 @@ final class AiRestaurantAssistantService
     {
         $query = mb_strtolower(trim($message));
         // Free, instant conversational replies do not require GPS or a paid API.
+        if (preg_match('/^(good\\s*(morning|afternoon|evening|night)|gud\\s*(morning|afternoon|evening|night)|गुड\\s*(मॉर्निंग|मार्निंग|मॉरनिंग|आफ्टरनून|इवनिंग|नाइट)|सुप्रभात|शुभ\\s*(प्रभात|सुबह|दोपहर|संध्या|रात्रि))[!?. ।]*$/iu', $query, $greeting)) {
+            $period = mb_strtolower($greeting[1]);
+            $reply = preg_match('/morning|मॉर्निंग|मार्निंग|मॉरनिंग|सुप्रभात|प्रभात|सुबह/u', $period) ? 'गुड मॉर्निंग! आपका दिन शुभ हो।'
+                : (preg_match('/afternoon|आफ्टरनून|दोपहर/u', $period) ? 'गुड आफ्टरनून! आपका दिन अच्छा बीते।'
+                : (preg_match('/evening|इवनिंग|संध्या/u', $period) ? 'गुड इवनिंग! आपकी शाम शुभ हो।' : 'शुभ रात्रि! आराम से सोइए।'));
+            return ['text' => $reply, 'ai_available' => false, 'free_mode' => true];
+        }
         if (preg_match('/^(hi|hello|hey|namaste|नमस्ते|हेलो|हाय|नमस्कार)[!?. ]*$/iu', $query)) {
             return ['text' => 'नमस्ते! बताइए, मैं आपकी किस काम में सहायता कर सकती हूँ?', 'ai_available' => false, 'free_mode' => true];
+        }
+        // Safe deterministic maths: no eval(), no external API, no invented facts.
+        // Bound operands to keep calculations finite and predictable.
+        if (preg_match('/^\\s*(?:what is|calculate|solve|कितना होगा|हल करो|बताओ)?\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*([+*×xX÷\\/\\-])\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*(?:=|\\?|कितना|कितना होगा)?\\s*$/iu', $query, $math)) {
+            $a = (float) $math[1];
+            $b = (float) $math[3];
+            $operator = $math[2];
+            if (($operator === '/' || $operator === '÷') && $b == 0.0) {
+                return ['text' => 'शून्य से भाग नहीं किया जा सकता।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $value = match ($operator) {
+                '+' => $a + $b,
+                '-' => $a - $b,
+                '*', '×', 'x', 'X' => $a * $b,
+                '/', '÷' => $a / $b,
+            };
+            $formatted = (rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.') ?: '0');
+            return ['text' => 'उत्तर: '.$formatted, 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/^\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*%\\s*(?:of|का|की|के)\\s*([0-9]{1,9}(?:\\.[0-9]{1,4})?)\\s*(?:\\?|कितना|कितना होगा)?\\s*$/iu', $query, $percent)) {
+            $value = (float) $percent[1] * (float) $percent[2] / 100;
+            return ['text' => 'उत्तर: '.rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.'), 'ai_available' => false, 'free_mode' => true];
+        }
+        // Free deterministic formula library: bounded numeric inputs only.
+        if (preg_match('/^\\s*(?:average|avg|औसत)\\s*(?:of|का|की|के|:)?\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?(?:\\s*[,،]\\s*[0-9]{1,8}(?:\\.[0-9]{1,3})?){1,19})\\s*\\??\\s*$/iu', $query, $average)) {
+            $values = array_map('floatval', preg_split('/\\s*[,،]\\s*/u', $average[1]));
+            $result = array_sum($values) / count($values);
+            return ['text' => 'औसत: '.(rtrim(rtrim(number_format($result, 4, '.', ''), '0'), '.') ?: '0'), 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/^\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*(?:%\\s*(?:discount|off|छूट)|प्रतिशत\\s*छूट)\\s*(?:on|of|पर|का)?\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*\\??\\s*$/iu', $query, $discount)) {
+            $rate = (float) $discount[1];
+            $price = (float) $discount[2];
+            if ($rate > 100) {
+                return ['text' => 'छूट 0 से 100 प्रतिशत के बीच होनी चाहिए।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $saved = $price * $rate / 100;
+            return ['text' => 'छूट: '.number_format($saved, 2, '.', '').' | छूट के बाद कीमत: '.number_format($price - $saved, 2, '.', ''), 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/^\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*%\\s*(?:gst|tax|जीएसटी)\\s*(?:on|of|पर|का)?\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*\\??\\s*$/iu', $query, $tax)) {
+            $rate = (float) $tax[1];
+            $base = (float) $tax[2];
+            if ($rate > 100) {
+                return ['text' => 'कृपया 0 से 100 के बीच टैक्स दर दें।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $amount = $base * $rate / 100;
+            return ['text' => 'टैक्स: '.number_format($amount, 2, '.', '').' | टैक्स सहित कुल: '.number_format($base + $amount, 2, '.', '').' (बेस कीमत पर टैक्स अतिरिक्त माना गया है)', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/^\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*(km|kilometers?|किमी|किलोमीटर|meters?|metres?|मीटर|kg|kilograms?|किलो|किलोग्राम|grams?|ग्राम|hours?|घंटे?|minutes?|मिनट)\\s*(?:to|in|से|में)\\s*(km|kilometers?|किमी|किलोमीटर|meters?|metres?|मीटर|kg|kilograms?|किलो|किलोग्राम|grams?|ग्राम|hours?|घंटे?|minutes?|मिनट)\\s*\\??\\s*$/iu', $query, $units)) {
+            $normalize = static function (string $unit): string {
+                return match (true) {
+                    (bool) preg_match('/^(km|kilometers?|किमी|किलोमीटर)$/iu', $unit) => 'km',
+                    (bool) preg_match('/^(meters?|metres?|मीटर)$/iu', $unit) => 'm',
+                    (bool) preg_match('/^(kg|kilograms?|किलो|किलोग्राम)$/iu', $unit) => 'kg',
+                    (bool) preg_match('/^(grams?|ग्राम)$/iu', $unit) => 'g',
+                    (bool) preg_match('/^(hours?|घंटे?)$/iu', $unit) => 'h',
+                    default => 'min',
+                };
+            };
+            $from = $normalize($units[2]);
+            $to = $normalize($units[3]);
+            $factors = ['km' => 1000, 'm' => 1, 'kg' => 1000, 'g' => 1, 'h' => 60, 'min' => 1];
+            $groups = ['km' => 'distance', 'm' => 'distance', 'kg' => 'weight', 'g' => 'weight', 'h' => 'time', 'min' => 'time'];
+            if ($groups[$from] !== $groups[$to]) {
+                return ['text' => 'इन दोनों इकाइयों के बीच रूपांतरण संभव नहीं है।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $result = (float) $units[1] * $factors[$from] / $factors[$to];
+            return ['text' => 'उत्तर: '.(rtrim(rtrim(number_format($result, 5, '.', ''), '0'), '.') ?: '0').' '.$to, 'ai_available' => false, 'free_mode' => true];
+        }
+        // GST inclusive: quoted total already contains GST; extract the embedded tax.
+        // GST exclusive: quoted base has no GST; add tax to calculate final total.
+        if (preg_match('/^\\s*(?:gst|जीएसटी)\\s*(?:include|included|inclusive|incl|इंक्लूड|इनक्लूड|सहित|समेत|exclude|excluded|exclusive|excl|एक्सक्लूड|एक्सक्लूसिव|बिना|अलग)\\s*([0-9]{1,8}(?:\\.[0-9]{1,3})?)\\s*(?:at|@|पर)?\\s*([0-9]{1,3}(?:\\.[0-9]{1,3})?)\\s*%?\\s*$/iu', $query, $gstMode)) {
+            $inclusive = (bool) preg_match('/include|included|inclusive|incl|इंक्लूड|इनक्लूड|सहित|समेत/iu', $gstMode[0]);
+            $amount = (float) $gstMode[1];
+            $rate = (float) $gstMode[2];
+            if ($rate > 100) {
+                return ['text' => 'कृपया 0 से 100 के बीच GST दर दें।', 'ai_available' => false, 'free_mode' => true];
+            }
+            $base = $inclusive ? $amount * 100 / (100 + $rate) : $amount;
+            $total = $inclusive ? $amount : $amount * (100 + $rate) / 100;
+            $tax = $total - $base;
+            return [
+                'text' => ($inclusive ? 'GST Included (कीमत में GST शामिल)' : 'GST Excluded (कीमत पर GST अलग से)')
+                    .' | बेस कीमत: '.number_format($base, 2, '.', '')
+                    .' | GST: '.number_format($tax, 2, '.', '')
+                    .' | कुल कीमत: '.number_format($total, 2, '.', '')
+                    .' (राउंडिंग 2 दशमलव तक)',
+                'ai_available' => false, 'free_mode' => true,
+            ];
+        }
+        // Explain the underlying maths instead of treating every question as a lookup.
+        if (preg_match('/(gst|जीएसटी)/iu', $query)
+            && preg_match('/(include|included|inclusive|exclude|excluded|exclusive|इंक्लूड|इनक्लूड|एक्सक्लूड|सहित|बिना|समझा|फॉर्मूला|formula|difference|अंतर|फर्क|कैसे)/iu', $query)
+            && !preg_match('/[0-9]/u', $query)) {
+            return ['text' => "GST Included: दी गई कीमत में टैक्स पहले से शामिल होता है। बेस = कुल × 100 ÷ (100 + GST दर); टैक्स = कुल − बेस।\\nGST Excluded: दी गई कीमत बेस होती है। टैक्स = बेस × दर ÷ 100; कुल = बेस + टैक्स।\\nउदाहरण: 18% पर ₹1180 Included → बेस ₹1000, टैक्स ₹180। ₹1000 Excluded → कुल ₹1180। Included में GST दोबारा नहीं जोड़ते।", 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(percentage|प्रतिशत|percent|डिस्काउंट|छूट)/iu', $query)
+            && preg_match('/(formula|फॉर्मूला|कैसे|समझा|calculate|निकाल)/iu', $query)
+            && !preg_match('/[0-9]/u', $query)) {
+            return ['text' => 'प्रतिशत निकालने का नियम: हिस्सा = कुल × प्रतिशत ÷ 100। छूट की राशि = मूल कीमत × छूट% ÷ 100। नई कीमत = मूल कीमत − छूट। उदाहरण: ₹500 पर 10% छूट → ₹50 बचत, नई कीमत ₹450।', 'ai_available' => false, 'free_mode' => true];
+        }
+        if (preg_match('/(औसत|average|avg)/iu', $query)
+            && preg_match('/(formula|फॉर्मूला|कैसे|समझा|meaning|मतलब)/iu', $query)
+            && !preg_match('/[0-9]/u', $query)) {
+            return ['text' => 'औसत = सभी संख्याओं का योग ÷ संख्याओं की गिनती। उदाहरण: 10, 20, 30 का योग 60 है; 3 संख्याएँ हैं, इसलिए औसत 20 है।', 'ai_available' => false, 'free_mode' => true];
+        }
+        // Verified evergreen learning topics, entirely offline and without API billing.
+        // Require a topic AND an explanation cue to avoid hijacking other intents.
+        $learningTopics = [
+            [
+                'topic' => '/(profit|loss|लाभ|हानि|मुनाफा|नुकसान)/iu',
+                'answer' => 'लाभ = बिक्री मूल्य − लागत मूल्य। हानि = लागत मूल्य − बिक्री मूल्य। लाभ प्रतिशत = लाभ ÷ लागत मूल्य × 100। उदाहरण: लागत ₹800, बिक्री ₹1000 → लाभ ₹200 और लाभ 25%।',
+            ],
+            [
+                'topic' => '/(simple interest|साधारण ब्याज|सिंपल इंटरेस्ट)/iu',
+                'answer' => 'साधारण ब्याज = मूलधन × वार्षिक ब्याज दर × समय (वर्षों में) ÷ 100। उदाहरण: ₹1000 पर 10% सालाना, 2 वर्ष → ₹200 ब्याज। यह चक्रवृद्धि ब्याज नहीं है।',
+            ],
+            [
+                'topic' => '/(compound interest|चक्रवृद्धि ब्याज|कंपाउंड इंटरेस्ट)/iu',
+                'answer' => 'वार्षिक चक्रवृद्धि राशि = मूलधन × (1 + वार्षिक दर ÷ 100) ^ वर्षों की संख्या। ब्याज = राशि − मूलधन। दूसरी compounding frequency पर फॉर्मूला बदलता है।',
+            ],
+            [
+                'topic' => '/(speed|distance|गति|दूरी|चाल)/iu',
+                'answer' => 'दूरी = गति × समय। गति = दूरी ÷ समय। समय = दूरी ÷ गति। इकाइयाँ समान रखें: 60 किमी/घंटा पर 2 घंटे में 120 किमी दूरी।',
+            ],
+            [
+                'topic' => '/(area|perimeter|क्षेत्रफल|परिमाप)/iu',
+                'answer' => 'आयत का क्षेत्रफल = लंबाई × चौड़ाई; परिमाप = 2 × (लंबाई + चौड़ाई)। वर्ग का क्षेत्रफल = भुजा² और परिमाप = 4 × भुजा। क्षेत्रफल वर्ग इकाइयों में होता है।',
+            ],
+            [
+                'topic' => '/(ratio|अनुपात|रेशियो)/iu',
+                'answer' => 'अनुपात दो मात्राओं की तुलना है। 2:3 का अर्थ कुल 5 भाग; ₹500 को 2:3 में बाँटें तो ₹200 और ₹300 मिलेंगे।',
+            ],
+        ];
+        if (preg_match('/(क्या है|क्या होता|समझा|समझाओ|बताओ|फॉर्मूला|formula|how|what is|explain|कैसे निकाल)/iu', $query)) {
+            foreach ($learningTopics as $topic) {
+                if (preg_match($topic['topic'], $query)) {
+                    return ['text' => $topic['answer'], 'ai_available' => false, 'free_mode' => true];
+                }
+            }
         }
         if (preg_match('/(रट्टू|तोते|एक ही जवाब|बार बार वही|बार-बार वही|repeat|repeating|रट लगा)/iu', $query)) {
             return ['text' => 'आप सही कह रहे हैं, एक ही जवाब बार-बार देना उपयोगी नहीं है। माफ कीजिए। आप जो पूछेंगे, उसी विषय पर सीधे जवाब देने की कोशिश करूँगी।', 'ai_available' => false, 'free_mode' => true];
