@@ -19,7 +19,7 @@ class GlobalCatalogMasterController extends Controller {
     }
     public function update(Request $request,string $type,int $record) {
         $table=$this->table($type);
-        $data=$request->validate(['name'=>['required','string','max:150'],'code'=>['nullable','string','max:50'],'is_active'=>['required','boolean']]);
+        $data=$request->validate(['name'=>['required','string','max:150'],'code'=>['nullable','string','max:50'],'is_active'=>['required','boolean'], 'owner_name'=>['nullable','string','max:200'],'image'=>['nullable','image','mimes:jpeg,png,webp','max:2048']]);
         $existing=DB::table($table)->where('id',$record)->first();
         abort_unless($existing,404);
         if ($type==='item_categories' && $existing->parent_id !== null) {
@@ -37,7 +37,10 @@ class GlobalCatalogMasterController extends Controller {
         $duplicate=DB::table($table)->where('id','!=',$record)->where('parent_id',$existing->parent_id)
             ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($data['name']))])->exists();
         if ($duplicate) return back()->withErrors(['name'=>'Name already exists in this group.']);
-        DB::table($table)->where('id',$record)->update(['name'=>trim($data['name']),'code'=>$data['code']??null,'is_active'=>(bool)$data['is_active'],'updated_at'=>now()]);
+        $changes=['name'=>trim($data['name']),'code'=>$data['code']??null,'is_active'=>(bool)$data['is_active'],'updated_at'=>now()];
+        if ($type==='brands') $changes['owner_name']=$data['owner_name']??$existing->owner_name;
+        if (in_array($type,['brands','item_categories'],true) && $request->hasFile('image')) $changes['image_path']=$request->file('image')->store('global-masters','public');
+        DB::table($table)->where('id',$record)->update($changes);
         return back()->with('success','Global record updated.');
     }
     public function store(Request $request,string $type) {
