@@ -70,6 +70,25 @@ class AiRestaurantAssistantServiceTest extends TestCase
         }
     }
 
+    public function test_free_ai_answers_basic_arithmetic_and_percentage_without_provider(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            '2 + 3' => 'उत्तर: 5',
+            '12 * 4' => 'उत्तर: 48',
+            '20 / 4' => 'उत्तर: 5',
+            '0 + 0' => 'उत्तर: 0',
+            '25% of 200' => 'उत्तर: 50',
+            '10% का 350' => 'उत्तर: 35',
+            '7 / 0' => 'शून्य से भाग नहीं किया जा सकता',
+        ] as $input => $expected) {
+            $answer = $assistant->answer($input, []);
+            $this->assertStringContainsString($expected, $answer['text'], $input);
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
     public function test_free_ai_handles_small_talk_and_feedback_without_repeating_fallback(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
