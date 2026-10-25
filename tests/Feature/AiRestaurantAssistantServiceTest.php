@@ -108,6 +108,26 @@ class AiRestaurantAssistantServiceTest extends TestCase
         }
     }
 
+    public function test_free_ai_distinguishes_gst_included_and_excluded(): void
+    {
+        config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
+        $assistant = app(AiRestaurantAssistantService::class);
+        foreach ([
+            'gst include 1180 18%' => ['GST Included', 'बेस कीमत: 1000.00', 'GST: 180.00', 'कुल कीमत: 1180.00'],
+            'gst exclude 1000 18%' => ['GST Excluded', 'बेस कीमत: 1000.00', 'GST: 180.00', 'कुल कीमत: 1180.00'],
+            'जीएसटी सहित 112 12%' => ['GST Included', 'बेस कीमत: 100.00', 'GST: 12.00'],
+            'जीएसटी बिना 100 12%' => ['GST Excluded', 'GST: 12.00', 'कुल कीमत: 112.00'],
+            'gst include 100 0%' => ['GST: 0.00', 'कुल कीमत: 100.00'],
+            'gst exclude 100 101%' => ['0 से 100 के बीच GST दर'],
+        ] as $input => $parts) {
+            $answer = $assistant->answer($input, []);
+            foreach ($parts as $part) {
+                $this->assertStringContainsString($part, $answer['text'], $input);
+            }
+            $this->assertTrue($answer['free_mode']);
+        }
+    }
+
     public function test_free_ai_handles_small_talk_and_feedback_without_repeating_fallback(): void
     {
         config()->set('tidong_ai_restaurant.paid_provider_enabled', false);
