@@ -209,6 +209,41 @@ final class AiRestaurantAssistantService
             && !preg_match('/[0-9]/u', $query)) {
             return ['text' => 'औसत = सभी संख्याओं का योग ÷ संख्याओं की गिनती। उदाहरण: 10, 20, 30 का योग 60 है; 3 संख्याएँ हैं, इसलिए औसत 20 है।', 'ai_available' => false, 'free_mode' => true];
         }
+        // Verified evergreen learning topics, entirely offline and without API billing.
+        // Require a topic AND an explanation cue to avoid hijacking other intents.
+        $learningTopics = [
+            [
+                'topic' => '/(profit|loss|लाभ|हानि|मुनाफा|नुकसान)/iu',
+                'answer' => 'लाभ = बिक्री मूल्य − लागत मूल्य। हानि = लागत मूल्य − बिक्री मूल्य। लाभ प्रतिशत = लाभ ÷ लागत मूल्य × 100। उदाहरण: लागत ₹800, बिक्री ₹1000 → लाभ ₹200 और लाभ 25%।',
+            ],
+            [
+                'topic' => '/(simple interest|साधारण ब्याज|सिंपल इंटरेस्ट)/iu',
+                'answer' => 'साधारण ब्याज = मूलधन × वार्षिक ब्याज दर × समय (वर्षों में) ÷ 100। उदाहरण: ₹1000 पर 10% सालाना, 2 वर्ष → ₹200 ब्याज। यह चक्रवृद्धि ब्याज नहीं है।',
+            ],
+            [
+                'topic' => '/(compound interest|चक्रवृद्धि ब्याज|कंपाउंड इंटरेस्ट)/iu',
+                'answer' => 'वार्षिक चक्रवृद्धि राशि = मूलधन × (1 + वार्षिक दर ÷ 100) ^ वर्षों की संख्या। ब्याज = राशि − मूलधन। दूसरी compounding frequency पर फॉर्मूला बदलता है।',
+            ],
+            [
+                'topic' => '/(speed|distance|गति|दूरी|चाल)/iu',
+                'answer' => 'दूरी = गति × समय। गति = दूरी ÷ समय। समय = दूरी ÷ गति। इकाइयाँ समान रखें: 60 किमी/घंटा पर 2 घंटे में 120 किमी दूरी।',
+            ],
+            [
+                'topic' => '/(area|perimeter|क्षेत्रफल|परिमाप)/iu',
+                'answer' => 'आयत का क्षेत्रफल = लंबाई × चौड़ाई; परिमाप = 2 × (लंबाई + चौड़ाई)। वर्ग का क्षेत्रफल = भुजा² और परिमाप = 4 × भुजा। क्षेत्रफल वर्ग इकाइयों में होता है।',
+            ],
+            [
+                'topic' => '/(ratio|अनुपात|रेशियो)/iu',
+                'answer' => 'अनुपात दो मात्राओं की तुलना है। 2:3 का अर्थ कुल 5 भाग; ₹500 को 2:3 में बाँटें तो ₹200 और ₹300 मिलेंगे।',
+            ],
+        ];
+        if (preg_match('/(क्या है|क्या होता|समझा|समझाओ|बताओ|फॉर्मूला|formula|how|what is|explain|कैसे निकाल)/iu', $query)) {
+            foreach ($learningTopics as $topic) {
+                if (preg_match($topic['topic'], $query)) {
+                    return ['text' => $topic['answer'], 'ai_available' => false, 'free_mode' => true];
+                }
+            }
+        }
         if (preg_match('/(रट्टू|तोते|एक ही जवाब|बार बार वही|बार-बार वही|repeat|repeating|रट लगा)/iu', $query)) {
             return ['text' => 'आप सही कह रहे हैं, एक ही जवाब बार-बार देना उपयोगी नहीं है। माफ कीजिए। आप जो पूछेंगे, उसी विषय पर सीधे जवाब देने की कोशिश करूँगी।', 'ai_available' => false, 'free_mode' => true];
         }
