@@ -16,6 +16,8 @@ jobs:
         run: |
           flutter create --platforms android --project-name tidong_customer --org com.tidong .
           python3 scripts/configure_android.py
+          grep -q 'runApp(const TidongApp())' lib/main.dart
+          if grep -q 'Flutter Demo Home Page' lib/main.dart; then echo 'ERROR: Flutter demo detected'; exit 1; fi
       - name: Resolve dependencies
         working-directory: apps/tidong_customer
         run: flutter pub get
