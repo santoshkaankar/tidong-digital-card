@@ -1,3 +1,5 @@
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,6 +26,7 @@ class CustomerHome extends StatefulWidget {
 class _CustomerHomeState extends State<CustomerHome> {
   int tab = 0;
   String address = '';
+  bool locating = false;
   final addressInput = TextEditingController();
 
   @override
@@ -55,6 +58,50 @@ class _CustomerHomeState extends State<CustomerHome> {
     }
   }
 
+  Future<void> _detectLocation() async {
+    setState(() => locating = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        throw Exception('Please enable location services');
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw Exception('Location permission not granted. Enter address manually.');
+      }
+      final point = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium));
+      final results = await placemarkFromCoordinates(point.latitude, point.longitude);
+      if (!mounted) return;
+      final p = results.isEmpty ? null : results.first;
+      addressInput.text = p == null
+        ? '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}'
+        : [p.street, p.subLocality, p.locality, p.administrativeArea, p.postalCode]
+            .where((v) => v != null && v.trim().isNotEmpty).join(', ');
+      final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+        title: const Text('Confirm delivery location'),
+        content: TextField(controller: addressInput, maxLines: 3,
+          decoration: const InputDecoration(labelText: 'Full address, house number and PIN')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save address')),
+        ],
+      ));
+      if (confirmed == true && addressInput.text.trim().isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('delivery_address', addressInput.text.trim());
+        if (mounted) setState(() => address = addressInput.text.trim());
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => locating = false);
+    }
+  }
+
   @override
   void dispose() {
     addressInput.dispose();
@@ -71,7 +118,12 @@ class _CustomerHomeState extends State<CustomerHome> {
       body: Column(children: [
         ListTile(leading: const Icon(Icons.place_outlined),
           title: Text(address.isEmpty ? 'Set delivery address' : address, maxLines: 1, overflow: TextOverflow.ellipsis),
-          trailing: const Icon(Icons.edit_outlined), onTap: _editAddress),
+          trailing: IconButton(
+            tooltip: 'Use current location',
+            icon: locating ? const SizedBox(width: 20, height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.my_location),
+            onPressed: locating ? null : _detectLocation),
+          onTap: _editAddress),
         Expanded(child: Center(child: Padding(padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Icon([Icons.home_outlined, Icons.search, Icons.shopping_cart_outlined,
