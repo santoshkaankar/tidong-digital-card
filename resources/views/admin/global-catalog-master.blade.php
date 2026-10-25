@@ -17,11 +17,12 @@
     {{ $records->links() }}
 </div>
 <dialog id="create-master" class="w-[min(94vw,34rem)] rounded-xl p-0 shadow-2xl backdrop:bg-black/50">
-<form method="POST" action="{{ route('admin.global-masters.store', ['type'=>$type]) }}" class="space-y-4 p-6">
+<form method="POST" enctype="multipart/form-data" action="{{ route('admin.global-masters.store', ['type'=>$type]) }}" class="space-y-4 p-6">
     @csrf
     <h2 class="text-xl font-bold">Create {{ $title }}</h2>
     <label class="block text-sm font-semibold">Name *<input name="name" required maxlength="150" value="{{ old('name') }}" class="mt-1 w-full rounded-lg border p-3"></label>
     <label class="block text-sm font-semibold">Code (optional)<input name="code" maxlength="50" value="{{ old('code') }}" class="mt-1 w-full rounded-lg border p-3"></label>
+    @if(in_array($type,['brands','item_categories']))<label class="block text-sm font-semibold">Image (JPG, PNG, WebP; max 2 MB)<input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="mt-1 w-full rounded-lg border p-3"></label>@endif
     @if($type==='brands')<label class="block text-sm font-semibold">Brand Owner / Firm<input name="owner_name" maxlength="200" class="mt-1 w-full rounded-lg border p-3"></label>@endif
     @if($type==='variant_values' || $type==='item_categories')
         <label class="block text-sm font-semibold">{{ $type==='variant_values'?'Attribute *':'Parent Category (optional)' }}
