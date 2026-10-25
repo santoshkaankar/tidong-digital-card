@@ -52,6 +52,7 @@
                 @foreach(['brands'=>'Brand Master','item_categories'=>'Item Categories','units'=>'Units of Measure','variant_attributes'=>'Variant Attributes','variant_values'=>'Variant Values'] as $masterType=>$masterLabel)
                     <a href="{{ route('admin.global-masters.index',['type'=>$masterType]) }}" class="block rounded-lg px-4 py-2 hover:bg-slate-800">{{ $masterLabel }}</a>
                 @endforeach
+                <a href="{{ route('admin.global-master-permissions.index') }}" class="block rounded-lg px-4 py-2 hover:bg-slate-800">Vendor Global Permissions</a>
                 <a href="{{ route('admin.global-menu.index') }}" class="block rounded-lg px-4 py-2 hover:bg-slate-800">Global Item Master</a>
 
                 <p class="px-4 pb-1 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
