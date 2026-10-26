@@ -34,12 +34,14 @@
     @endif
 
     <section class="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="vendor-setup-title">
-        <h2 id="vendor-setup-title" class="text-xl font-bold text-slate-900">Get your store ready — step by step</h2>
-        <p class="mt-2 text-sm text-slate-600">Business approval is only the first step. Customers see a store once its outlet is set up and ordering is separately enabled.</p>
-        <ol class="mt-4 grid gap-3 text-sm md:grid-cols-3">
-            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">1. Choose your business</strong><span class="mt-1 block text-slate-600">Open its dashboard below. Approved businesses can move to outlet setup.</span><a class="mt-2 inline-block font-semibold text-blue-700 underline" href="#vendor-businesses">View my businesses →</a></li>
-            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">2. Add an outlet</strong><span class="mt-1 block text-slate-600">Enter outlet name and address in the outlet form below that business. Each outlet has its own setup.</span><a class="mt-2 inline-block font-semibold text-blue-700 underline" href="#vendor-businesses">Go to outlet setup →</a></li>
-            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">3. Prepare to accept orders</strong><span class="mt-1 block text-slate-600">Add menu or products, licences and required settings. Ordering stays OFF until separately activated.</span></li>
+        <h2 id="vendor-setup-title" class="text-xl font-bold text-slate-900">Your TIDONG setup — in the right order</h2>
+        <p class="mt-2 text-sm text-slate-600">Follow these steps. Approval alone does not make a store visible to customers.</p>
+        <ol class="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-5">
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">1. Business</strong><span class="mt-1 block text-slate-600">Create and get it approved.</span><a class="mt-2 inline-block font-semibold text-blue-700 underline" href="#vendor-businesses">My businesses →</a></li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">2. Outlet</strong><span class="mt-1 block text-slate-600">Add a real branch to each business.</span><a class="mt-2 inline-block font-semibold text-blue-700 underline" href="#vendor-businesses">Add outlet →</a></li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">3. Items and prices</strong><span class="mt-1 block text-slate-600">Use your business dashboard to prepare the menu or products.</span></li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">4. Activate ordering</strong><span class="mt-1 block text-slate-600">Finish checks and enable orders when ready.</span></li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4"><strong class="block text-slate-900">5. Manage orders</strong><span class="mt-1 block text-slate-600">Receive and process customer orders.</span></li>
         </ol>
     </section>
 
@@ -49,7 +51,9 @@
             <p class="mt-2 text-slate-600">Your application needs approval before you can add Businesses and Branches. New orders are disabled.</p>
         </section>
     @else
-        <section class="rounded-xl bg-white p-6 shadow-sm">
+        <details id="vendor-create-business" class="rounded-xl bg-white shadow-sm" {{ $businesses->isEmpty() ? 'open' : '' }}>
+            <summary class="cursor-pointer list-item rounded-xl p-5 text-lg font-semibold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">Create another business <span class="ml-2 text-sm font-normal text-slate-500">Only if you need a new business, not a new outlet</span></summary>
+                    <section class="rounded-xl bg-white p-6 shadow-sm">
             <h2 class="text-lg font-semibold">Create a Business</h2>
             <p class="mt-1 text-sm text-slate-600">Each Business requires platform approval before operating. You can create multiple Businesses.</p>
             <form method="POST" action="{{ route('vendor.businesses.store') }}" class="mt-5 flex flex-wrap items-end gap-3">
@@ -98,6 +102,7 @@
                 <button class="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">Add Business</button>
             </form>
         </section>
+        </details>
     @endif
 
     <section id="vendor-businesses" class="space-y-4">
