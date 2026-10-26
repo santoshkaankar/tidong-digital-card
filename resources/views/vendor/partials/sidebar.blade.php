@@ -16,38 +16,29 @@
     $isApproved = $navBusiness && $navBusiness->status === 'approved';
 @endphp
 <style>
-/* Keep the desktop navigation independent from the dashboard scroll. */
-@media (min-width: 1280px) {
-  #tidong-vendor-sidebar {
-    position: sticky;
-    top: 1rem;
-    align-self: flex-start;
-    min-width: 18rem;
-    width: 18rem;
-    height: calc(100vh - 2rem);
-    height: calc(100dvh - 2rem);
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
-    scrollbar-width: thin;
-  }
-  #tidong-vendor-sidebar.tidong-nav-collapsed {
-    width: 3.75rem;
-    min-width: 3.75rem;
-    overflow-x: hidden;
-  }
-}
+#tidong-vendor-sidebar { scrollbar-width: thin; }
 #tidong-vendor-sidebar.tidong-nav-collapsed .tidong-sidebar-body { display: none; }
+#tidong-vendor-sidebar a:focus-visible,
+#tidong-vendor-sidebar summary:focus-visible,
+#tidong-vendor-sidebar button:focus-visible { outline: 2px solid #fda4af; outline-offset: 2px; }
+@media(min-width:1280px) {
+  #tidong-vendor-sidebar { position:sticky;top:1rem;align-self:flex-start;width:18rem;min-width:18rem;max-height:calc(100dvh - 2rem);overflow-y:auto;overscroll-behavior-y:contain; }
+  #tidong-vendor-sidebar.tidong-nav-collapsed { width:5rem;min-width:5rem;overflow-x:hidden; }
+  #tidong-vendor-sidebar.tidong-nav-collapsed .tidong-sidebar-brand-label {display:none;}
+}
+@media(max-width:1279px) {#tidong-vendor-sidebar {width:100%;}}
 </style>
-<aside id="tidong-vendor-sidebar" aria-label="Vendor and business navigation" class="no-print w-full shrink-0 rounded-2xl bg-slate-950 p-4 text-white shadow-lg lg:w-72">
-    <div class="mb-2 flex justify-end">
+<aside id="tidong-vendor-sidebar" aria-label="Vendor and business navigation" class="no-print w-full shrink-0 self-start rounded-2xl border border-slate-800 bg-slate-950 p-3 text-white shadow-lg sm:p-4">
+    <div class="flex items-center justify-between gap-2">
+        <a href="{{ route('vendor.home') }}" aria-label="TIDONG Vendor Dashboard" class="flex min-w-0 items-center gap-2 rounded-lg text-white">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-lg font-black">T</span>
+            <span class="tidong-sidebar-brand-label truncate text-base font-extrabold tracking-wide">TIDONG <span class="text-rose-300">Vendor</span></span>
+        </a>
         <button id="tidong-sidebar-toggle" type="button" aria-controls="tidong-sidebar-body" aria-expanded="true"
-                class="rounded-lg border border-slate-600 px-2 py-1.5 text-xs text-white hover:bg-slate-800" title="Hide or show navigation">Hide menu</button>
+                class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-600 px-3 text-sm font-semibold text-white hover:bg-slate-800" title="Show or hide navigation">Menu</button>
     </div>
-    <div id="tidong-sidebar-body" class="tidong-sidebar-body">
-    <div class="flex items-center justify-between gap-3 border-b border-slate-700 pb-4">
-        <a href="{{ route('vendor.home') }}" class="text-lg font-extrabold tracking-wide text-white">TIDONG <span class="text-rose-300">Vendor</span></a>
-        <span class="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200">Workspace</span>
-    </div>
+    <div id="tidong-sidebar-body" class="tidong-sidebar-body mt-3 space-y-3 border-t border-slate-700 pt-3">
+    <p class="px-2 text-xs font-bold uppercase tracking-widest text-slate-400">Workspace Navigation</p>
 
     @if(\Illuminate\Support\Facades\DB::table('vendor_global_catalog_permissions')->where('vendor_id',optional($navBusiness)->vendor_id ?? optional($navBusinesses->first())->vendor_id)->where('can_create',true)->exists())
     <nav class="mt-3 border-b border-slate-700 pb-3" aria-label="Global catalog creation">
@@ -82,7 +73,7 @@
     @endphp
     <nav class="mt-4 border-b border-slate-700 pb-4" aria-label="Sublimation studio menu">
         <p class="mb-2 px-2 text-xs font-bold uppercase tracking-wider text-rose-300">Sublimation Studio</p>
-        <div class="grid grid-cols-2 gap-1 lg:grid-cols-1">
+        <div class="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-1">
             @foreach ($studioMenus as $entry)
                 @php
                     $active = isset($entry['query'])
@@ -98,10 +89,10 @@
                 @endif
             @endforeach
         </div>
-        <p class="mt-2 px-2 text-xs text-slate-400">Select any menu. Sidebar scrolls separately from the page.</p>
+        <p class="mt-2 px-2 text-xs text-slate-400">Studio tools · Current outlet only.</p>
     </nav>
     @endif
-    <details class="mt-3" @if(!$isStudio) open @endif>
+    <details class="rounded-xl bg-slate-900/80 p-2" @if(!$isStudio) open @endif>
         <summary class="cursor-pointer rounded-lg px-2 py-2 text-xs font-bold uppercase tracking-wider text-slate-300">Vendor Main Menu</summary>
         <nav class="mt-1 space-y-1 text-sm" aria-label="Main vendor menu">
             <a href="{{ route('vendor.home') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800 {{ !$navBusiness ? 'bg-blue-700 font-semibold' : '' }}">Vendor Dashboard</a>
@@ -113,9 +104,9 @@
             <span class="block px-3 py-2 text-slate-400" title="Not released yet">Consolidated Reports · Planned</span>
         </nav>
     </details>
-    <div class="mt-4 border-t border-slate-700 pt-4">
+    <div class="rounded-xl bg-slate-900/80 p-3">
         <p class="px-2 text-xs font-bold uppercase tracking-wider text-slate-300">Switch Business</p>
-        <nav class="mt-2 max-h-56 space-y-1 overflow-y-auto text-sm" aria-label="Vendor businesses">
+        <nav class="mt-2 space-y-1 text-sm xl:max-h-56 xl:overflow-y-auto" aria-label="Vendor businesses">
             @forelse ($navBusinesses as $option)
                 <a href="{{ route('vendor.business.workspace', $option->id) }}"
                     @if ($navBusiness && (int) $navBusiness->id === (int) $option->id) aria-current="page" @endif
@@ -204,14 +195,22 @@
     const apply = (collapsed) => {
         sidebar.classList.toggle('tidong-nav-collapsed', collapsed);
         button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-        button.textContent = collapsed ? '☰' : 'Hide menu';
+        button.textContent = collapsed ? 'Menu' : 'Close';
         button.setAttribute('aria-label', collapsed ? 'Show navigation menu' : 'Hide navigation menu');
     };
-    try { apply(sessionStorage.getItem('tidongVendorNavCollapsed') === '1'); } catch (_) { apply(false); }
+    const media = window.matchMedia('(min-width: 1280px)');
+    const key = () => media.matches ? 'tidongVendorNavDesktop' : 'tidongVendorNavMobile';
+    const restore = () => {
+        let saved = null;
+        try { saved = sessionStorage.getItem(key()); } catch (_) {}
+        apply(saved === null ? !media.matches : saved === '1');
+    };
+    restore();
+    if (media.addEventListener) media.addEventListener('change', restore);
     button.addEventListener('click', () => {
         const collapsed = !sidebar.classList.contains('tidong-nav-collapsed');
         apply(collapsed);
-        try { sessionStorage.setItem('tidongVendorNavCollapsed', collapsed ? '1' : '0'); } catch (_) {}
+        try { sessionStorage.setItem(key(), collapsed ? '1' : '0'); } catch (_) {}
     });
 })();
 </script>

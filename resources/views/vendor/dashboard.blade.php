@@ -3,26 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vendor Dashboard - Digital Platform</title>
+    <title>Vendor Dashboard · TIDONG</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-800">
 <div class="mx-auto flex max-w-screen-2xl flex-col items-start gap-5 p-4 xl:flex-row xl:p-6">
     @include('vendor.partials.sidebar', ['navBusinesses' => $businesses])
 <main class="w-full min-w-0 flex-1 space-y-6">
-    <header class="flex flex-wrap items-start justify-between gap-4 rounded-xl bg-white p-6 shadow-sm">
-        <div>
-            <h1 class="text-2xl font-bold">{{ $vendor->display_name }}</h1>
-            <p class="mt-1 text-sm text-slate-500">Vendor Code: {{ $vendor->vendor_code }}</p>
-            <p class="mt-2 font-semibold">Approval: {{ ucfirst($vendor->status) }}</p>
+    <header class="flex flex-wrap items-start justify-between gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <div class="min-w-0 flex-1">
+            <p class="text-xs font-bold uppercase tracking-widest text-blue-700">TIDONG · Vendor Workspace</p>
+            <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Vendor Dashboard</h1>
+            <p class="mt-2 break-words text-base font-semibold text-slate-700">{{ $vendor->display_name }}</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                <span class="rounded-full bg-slate-100 px-3 py-1.5 text-slate-600">Vendor Code: {{ $vendor->vendor_code }}</span>
+                <span class="rounded-full px-3 py-1.5 font-semibold {{ $vendor->status === 'approved' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900' }}">Approval: {{ ucfirst($vendor->status) }}</span>
+            </div>
         </div>
-        <div class="flex gap-3">
-            <a href="{{ route('customer.home') }}" class="rounded-lg border px-4 py-2">Customer Dashboard</a>
-            <form method="POST" action="{{ route('logout') }}">@csrf
-                <button class="rounded-lg border px-4 py-2" type="submit">Logout</button>
+        <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <a href="#vendor-businesses" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 sm:flex-none">My Businesses</a>
+            <form method="POST" action="{{ route('logout') }}" class="flex-1 sm:flex-none">@csrf
+                <button class="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700" type="submit">Logout</button>
             </form>
         </div>
     </header>
+    <section aria-label="Vendor workspace overview" class="grid gap-3 sm:grid-cols-3">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <p class="text-sm text-slate-500">Businesses</p>
+            <p class="mt-1 text-2xl font-bold text-slate-950">{{ $businesses->count() }}</p>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <p class="text-sm text-slate-500">Approved Businesses</p>
+            <p class="mt-1 text-2xl font-bold text-emerald-800">{{ $businesses->where('status', 'approved')->count() }}</p>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <p class="text-sm text-slate-500">Total Outlets</p>
+            <p class="mt-1 text-2xl font-bold text-slate-950">{{ $businesses->sum(fn ($business) => $business->branches->count()) }}</p>
+        </div>
+    </section>
 
     @if (session('success'))
         <div class="rounded-lg bg-green-50 p-4 text-green-800">{{ session('success') }}</div>
@@ -100,14 +118,14 @@
         </section>
     @endif
 
-    <section id="vendor-businesses" class="space-y-4">
-        <h2 class="text-xl font-semibold">Your Businesses ({{ $businesses->count() }})</h2>
+    <section id="vendor-businesses" class="scroll-mt-6 space-y-4" aria-labelledby="vendor-businesses-title">
+        <h2 id="vendor-businesses-title" class="text-xl font-bold text-slate-900">Your Businesses <span class="font-normal text-slate-500">({{ $businesses->count() }})</span></h2>
         @forelse ($businesses as $business)
-            <article class="rounded-xl bg-white p-6 shadow-sm">
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-wrap justify-between gap-4">
                     <div>
                         <h3 class="text-lg font-bold">{{ $business->name }}</h3>
-                        <a href="{{ route('vendor.business.workspace', $business->id) }}" class="mt-3 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white">Open Business Dashboard</a>
+                        <a href="{{ route('vendor.business.workspace', $business->id) }}" class="mt-3 inline-flex min-h-11 items-center rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">Open Business Dashboard</a>
                         <p class="text-sm text-slate-600">{{ $business->business_type }} | Status: {{ ucfirst($business->status) }}</p>
                         <p class="text-sm font-semibold {{ $business->is_accepting_orders ? 'text-emerald-700' : 'text-amber-700' }}">Customer ordering: {{ $business->is_accepting_orders ? 'ON' : 'OFF — setup required' }}</p>
                         @if (in_array($business->business_type, ['sublimation', 'custom_printing', 'printing'], true))
@@ -117,9 +135,18 @@
                     <div class="text-sm font-semibold {{ $business->branches->isEmpty() ? 'text-amber-700' : 'text-emerald-700' }}">{{ $business->branches->isEmpty() ? 'Next step: Add your first outlet' : $business->branches->count().' outlet(s) registered' }}</div>
                 </div>
                 @if ($business->branches->isNotEmpty())
-                    <ul class="mt-4 list-inside list-disc text-sm">
+                    <ul class="mt-4 space-y-2" aria-label="Outlets for {{ $business->name }}">
                         @foreach ($business->branches as $branch)
-                            <li>{{ $branch->name }} — {{ $branch->city ?: 'City not set' }} ({{ $branch->branch_code }}) <a href="{{ route('vendor.branch.edit', $branch->id) }}" class="ml-2 text-blue-700 underline">Request Branch Edit</a> <a href="{{ route('vendor.branch.licenses.index', $branch->id) }}" class="ml-2 text-blue-700 underline">GST / FSSAI / Licences</a></li>
+                            <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+                                <div class="min-w-0">
+                                    <p class="break-words font-semibold text-slate-900">{{ $branch->name }}</p>
+                                    <p class="mt-1 text-xs text-slate-500">{{ $branch->city ?: 'City not set' }} · {{ $branch->branch_code }}</p>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ route('vendor.branch.edit', $branch->id) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 font-medium text-blue-800 hover:bg-blue-50">Request Branch Edit</a>
+                                    <a href="{{ route('vendor.branch.licenses.index', $branch->id) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 font-medium text-blue-800 hover:bg-blue-50">GST / FSSAI / Licences</a>
+                                </div>
+                            </li>
                         @endforeach
                     </ul>
                 @endif
